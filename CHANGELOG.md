@@ -2,6 +2,26 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [Unreleased] - 2026-07-30 (46)
+
+### Corregido — Posición de Penales y calidad de salida
+
+- El módulo Penales se desplazó globalmente 7px hacia la izquierda y 100px hacia abajo (`translate(27.6px, 85.2px)` → `translate(20.6px, 185.2px)`), conservando exactamente su escala `0.8`, geometría interna, textos, indicadores y lógica.
+- La nueva posición se calculó con los bounding boxes alfa reales: Penales y Tarjetas comparten ahora borde visible izquierdo `x=43` e inferior `y=1030` en Program 1920×1080.
+- Se midió la superposición entre Marcador Zócalo y Marcador Principal. El desplazamiento vigente de `-8px` hace coincidir el borde derecho de ambos cuadros dorados en `x=461`; no se agregó otro desplazamiento porque moverlo a la derecha empeoraría una coincidencia ya exacta.
+- Se incorporó `assets/images/gla-favicon.png`, extraído del logo oficial de GLA ya utilizado por la Mosca, y se enlazó como favicon PNG de 64×64 en Master Control y Program.
+- Se documentó la configuración de calidad requerida para OBS/vMix: Browser Input, escena y salida en 1920×1080, zoom 100% y sin escalado CSS adicional. También se aclaró que el Preview Monitor se reduce deliberadamente y no debe utilizarse como referencia de nitidez.
+- La auditoría confirmó que Program trabaja realmente a 1920×1080, los canvas alfa se crean a 1920×1080, sus videos fuente activos son 1920×2160 por el empaquetado color+alfa, y Anton Regular carga correctamente. No se agregaron filtros, suavizados ni escalados globales: la pixelación general observada fuera de Program corresponde a captura o reescalado posterior cuando OBS/vMix no respeta esas dimensiones.
+
+### Verificado
+
+- Program independiente: viewport y `#stage` de 1920×1080, `visualViewport.scale=1`, canvas de render 1920×1080 y Anton disponible mediante `document.fonts`.
+- Captura comparativa de Marcador Principal + Marcador Zócalo: capas correctas, cuadro dorado alineado y contador visible.
+- Captura comparativa de Penales + Tarjetas: misma línea inferior y borde izquierdo; escala de Penales sin cambios.
+- Replay, VAR, zócalo largo simple y zócalo corto simple cargaron sus fuentes 1920×2160 sobre canvas 1920×1080. Formación cargó cuatro titulares y tres suplentes dentro de un viewport de 274×299 sin desbordar su área.
+- Master Control conservó el título `GLA Master Control`; Master y Program resolvieron el favicon con HTTP 200 y `Content-Type: image/png`. Las consolas revisadas no mostraron errores ni warnings.
+- La ventana final de prueba se cerró por su timeout antes de repetir VS Prepartido y un segundo ciclo completo IN→OUT→IN de Penales; esas dos repeticiones no se consideran verificadas en esta corrida. No se modificó su código.
+
 ## [Unreleased] - 2026-07-30 (45)
 
 ### Eliminado — Assets retirados de Transiciones, Fullscreen y Placa-L

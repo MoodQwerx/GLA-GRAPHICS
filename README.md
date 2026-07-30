@@ -26,8 +26,12 @@ Identidad visual: dorado + negro, estetica broadcast premium inspirada en grafic
 3. Ancho: `1920`, Alto: `1080`.
 4. Fondo transparente (no marcar color de fondo).
 5. **No** tildar "Apagar fuente cuando no este visible" (shutdown source when not visible) — si se apaga, pierde la conexion con el Master Control y no muestra graficas al volver a estar visible sin reconectar.
+6. Mantener el zoom del navegador en `100%` y no agregar CSS personalizado que escale el contenido.
+7. Configurar la escena y la salida de OBS/vMix en `1920x1080`. Capturar el Browser Input a una resolucion menor y ampliarlo despues produce perdida de nitidez que CSS no puede recuperar.
 
 El Program arranca siempre vacio: ninguna grafica se muestra hasta que el operador la manda al aire desde el Master Control.
+
+El Preview Monitor del Master Control reduce deliberadamente el Program para que entre en el panel y sirve como referencia operativa, no como control de nitidez. Para evaluar calidad usar `http://localhost:4400/program` como salida independiente a 1920x1080, zoom 100%.
 
 ## Uso del Master Control
 

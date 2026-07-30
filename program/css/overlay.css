@@ -344,16 +344,12 @@
    Se escala 0.8x y se traslada con un unico transform (transform-origin
    0 0): asi video + overlay de texto/circulos/escudos escalan y se
    mueven juntos, sin recrear ni recortar el asset.
-   Margen izquierdo: 50px, igual al del marcador principal (medido igual,
-   x50-461 sin transform). Margen inferior: 150px — punto medio entre
-   100px (el usuario lo vio muy pegado al borde, "te pasaste") y 200px
-   (confirmado visible pero con demasiado aire de mas). En un Browser
-   Source de vMix/OBS a 1920x1080 real cualquiera de estos valores es
-   "correcto" — la diferencia es puramente estetica una vez que entra en
-   cuadro.
+   Alineacion global medida contra Tarjeta: ambos assets terminan con
+   borde visible izquierdo x43 e inferior y1030 en Program 1920x1080.
+   Se conserva la escala 0.8 y toda la geometria interna de Penales.
    Calculo: final = translate + escala*nativo
-     izquierda: 0.8*28 + tx = 50  -> tx = 27.6
-     abajo: 0.8*1056 + ty = 1080-150 -> ty = 85.2
+     izquierda: 0.8*28 + tx = 43   -> tx = 20.6
+     abajo: 0.8*1056 + ty = 1030   -> ty = 185.2
    width/height explicitos: sin esto el contenedor (que solo tiene hijos
    position:absolute, ".content" > ".av-target"/".gfx-overlay") colapsa a
    0x0 y el transform queda aplicado sobre una caja de referencia vacia
@@ -366,7 +362,7 @@
   width: 1920px;
   height: 1080px;
   transform-origin: 0 0;
-  transform: translate(27.6px, 85.2px) scale(0.8);
+  transform: translate(20.6px, 185.2px) scale(0.8);
 }
 
 /* Las 3 casillas de penal se posicionan una por una con blob-detection
