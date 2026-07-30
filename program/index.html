@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>GLA Program / Overlay</title>
+<link rel="stylesheet" href="css/theme.css" />
+<link rel="stylesheet" href="css/overlay.css" />
+</head>
+<body>
+<div id="stage">
+  <!-- Marcador -->
+  <!-- Marcador Zocalo antes que el marcador principal a proposito: el orden
+       de estos nodos define el apilado real (ver docs/ARCHITECTURE.md), y
+       este modulo tiene que quedar DETRAS del marcador principal (que lo
+       "pisa" en el margen medido donde se superponen — ver
+       program/css/overlay.css). Tiempo adicional, en cambio, NO va pisado
+       por el marcador principal (queda apenas debajo, sin superposicion
+       real) asi que su orden respecto de scoreboard no es significativo;
+       se lo deja despues, como el resto de la familia Marcador. -->
+  <div id="mod-marcadorZocalo" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-scoreboard" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-marcadorTiempoAdicional" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-marcadorEntretiempo" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-marcadorPenales" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+
+  <!-- Placas -->
+  <div id="mod-formacionEquipos" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-vsPrepartido" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-vsResultado" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+
+  <!-- Eventos -->
+  <div id="mod-tarjeta" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-cambios" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-gol" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+
+  <!-- VAR / Replay -->
+  <div id="mod-varCheck" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-replay" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+
+  <!-- Mosca -->
+  <div id="mod-bug" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+
+  <!-- Zocalos -->
+  <div id="mod-longSimple" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-longDouble" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-shortSimple" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-shortDouble" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-vs" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+
+  <!-- Tablas (sin asset nuevo todavia, posicionamiento propio en CSS) -->
+  <div id="mod-sideTable" class="gfx is-hidden"><div class="content"></div></div>
+  <div id="mod-upcoming" class="gfx is-hidden"><div class="content"></div></div>
+</div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

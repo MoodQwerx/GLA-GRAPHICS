@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GLA Master Control</title>
+<link rel="stylesheet" href="/program/css/theme.css" />
+<link rel="stylesheet" href="css/master.css" />
+</head>
+<body>
+<header class="mc-header">
+  <div class="mc-brand">GLA <span>MASTER CONTROL</span></div>
+  <div class="mc-header-actions">
+    <div id="conn-status" class="conn off">CONECTANDO...</div>
+  </div>
+</header>
+
+<div class="mc-body">
+  <nav id="tab-bar" class="tab-bar"></nav>
+
+  <main id="mc-panel" class="mc-panel">
+    <div class="panel-head">
+      <h1 id="panel-title">-</h1>
+      <span id="panel-status" class="status-pill off">FUERA DE AIRE</span>
+    </div>
+
+    <div id="fields-container" class="fields-container"></div>
+    <div id="extra-container" class="extra-container"></div>
+
+    <div class="actions-bar">
+      <button id="btn-out" type="button" class="btn btn-out">SACAR DEL AIRE</button>
+      <button id="btn-update" type="button" class="btn btn-update">ACTUALIZAR</button>
+      <button id="btn-take" type="button" class="btn btn-take">TOMAR AL AIRE</button>
+    </div>
+  </main>
+
+  <aside class="mc-right">
+    <div class="preview-frame">
+      <div class="preview-scale-wrap">
+        <iframe id="preview-iframe" class="preview-iframe" title="Preview del Program" scrolling="no" tabindex="-1"></iframe>
+      </div>
+    </div>
+
+    <div class="preview-info">
+      <div class="preview-info-row">
+        <span class="preview-info-label">WEB BROWSER:</span>
+      </div>
+      <div class="preview-info-row preview-url-row">
+        <span id="preview-url" class="preview-url"></span>
+        <button id="btn-copy-url" type="button" class="btn-copy" title="Copiar URL">Copiar</button>
+      </div>
+      <div class="preview-info-row">
+        <span class="preview-info-label">RESOLUCIÓN:</span>
+        <span>1920x1080</span>
+      </div>
+      <div class="preview-info-caption">MASTER CONTROL PANEL<br />PREVIEW MONITOR</div>
+    </div>
+
+    <button id="btn-stop-all" type="button" class="btn-stop-all">STOP ALL</button>
+  </aside>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

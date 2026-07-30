@@ -1,0 +1,553 @@
+/* Master Control — panel de operador. Comparte paleta con program/css/theme.css,
+   pero NO la tipografia: Anton Regular es exclusiva de las graficas al aire
+   (Program). El panel de operador necesita una fuente estandar, legible en
+   textos chicos y comoda para muchas horas de uso — se sobreescriben aca las
+   variables de fuente (cascada CSS: este archivo se carga despues de theme.css). */
+:root {
+  --font-display: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+}
+
+/* Layout tipo "app shell": el header ocupa su alto natural (flex-shrink:0)
+   y ".mc-body" llena el resto exacto del viewport (flex:1, min-height:0
+   para que un hijo flex pueda de verdad scrollear en vez de desbordar).
+   Ni html ni body scrollean — cada columna interna (tab-bar / mc-panel /
+   mc-right) tiene su PROPIO overflow-y:auto, asi el header y las otras
+   columnas nunca se mueven cuando se hace scroll en una de ellas, y
+   resetear el scroll de "entrar a una pestaña" significa simplemente
+   poner scrollTop=0 en el contenedor de contenido (#mc-panel), sin tocar
+   la pagina entera (ver selectModule/renderPanel en js/main.js). */
+html, body {
+  width: auto;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--black);
+  font-family: var(--font-body);
+}
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.mc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 28px;
+  background: #111113;
+  border-bottom: 2px solid var(--gold);
+  flex-shrink: 0;
+}
+
+@media (max-width: 1100px) {
+  /* Ventanas angostas: se abandona el esquema de columnas con scroll
+     propio (no entran comodamente) y se vuelve a una pagina normal que
+     scrollea entera — la columna derecha pasa a ocupar el ancho completo
+     debajo del contenido en vez de romper el layout. */
+  html, body {
+    height: auto;
+    overflow: visible;
+  }
+}
+
+.mc-brand {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: var(--white);
+}
+.mc-brand span { color: var(--gold); }
+
+.mc-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.conn {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--grey-dim);
+  color: var(--grey);
+}
+.conn.on { border-color: var(--gold); color: var(--gold-bright); }
+.conn.off { border-color: #6b2020; color: #d16c6c; }
+
+.btn-stop-all {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 9px 18px;
+  border-radius: 4px;
+  border: 1px solid #7a2222;
+  background: #2c1717;
+  color: #f0a5a5;
+  cursor: pointer;
+}
+.btn-stop-all:hover { background: #7a2222; color: var(--white); }
+
+.mc-body {
+  display: grid;
+  /* Sidebar de navegacion a su ancho fijo de siempre; el espacio restante
+     se reparte exactamente 50:50 entre el panel de controles y el
+     Preview Monitor (minmax(0,1fr) en vez de 1fr para que ninguna de las
+     dos columnas se desborde por contenido ancho — inputs largos,
+     iframe escalado, etc. — y arrastre scroll horizontal). */
+  grid-template-columns: 260px minmax(0, 1fr) minmax(0, 1fr);
+  flex: 1;
+  min-height: 0;
+}
+
+@media (max-width: 1100px) {
+  .mc-body {
+    display: block;
+    height: auto;
+  }
+}
+
+.tab-bar {
+  width: 260px;
+  background: #111113;
+  border-right: 1px solid #26262a;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+@media (max-width: 1100px) {
+  .tab-bar {
+    width: auto;
+    height: auto;
+    overflow: visible;
+  }
+}
+
+.tab-category {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--grey-dim);
+  padding: 14px 10px 4px;
+}
+.tab-category:first-child { padding-top: 4px; }
+
+.tab {
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--grey);
+  padding: 12px 14px;
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.tab:hover { background: #1c1c20; color: var(--white); }
+.tab.active { background: #1c1c20; border-color: var(--gold-dim); color: var(--white); }
+.tab.on-air::after {
+  content: '● EN AIRE';
+  font-size: 10px;
+  color: var(--gold-bright);
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.mc-panel {
+  padding: 28px 40px;
+  overflow-y: auto;
+  min-height: 0;
+  min-width: 0;
+}
+
+@media (max-width: 1100px) {
+  .mc-panel {
+    overflow: visible;
+    height: auto;
+  }
+}
+
+.mc-right {
+  /* Sin width fijo: la columna ocupa exactamente su track de grid
+     (minmax(0,1fr), la misma fraccion que .mc-panel — ver .mc-body) en
+     vez de quedar angosta y pegada al borde derecho. */
+  min-width: 0;
+  background: #111113;
+  border-left: 1px solid #26262a;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+@media (max-width: 1100px) {
+  .mc-right {
+    width: auto;
+    height: auto;
+    overflow: visible;
+    border-left: none;
+    border-top: 1px solid #26262a;
+  }
+}
+
+.preview-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #000;
+  border: 1px solid var(--gold-dim);
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.preview-scale-wrap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1920px;
+  height: 1080px;
+  transform-origin: top left;
+  /* La escala real se calcula en js/main.js contra el ancho renderizado
+     de ".preview-frame" (ver setupPreviewMonitor) para que el iframe
+     muestre siempre la composicion 1920x1080 completa, nunca recortada. */
+}
+
+.preview-iframe {
+  width: 1920px;
+  height: 1080px;
+  border: none;
+  display: block;
+  /* El preview es solo de monitoreo: nunca debe capturar mouse/teclado
+     ni permitir interaccion accidental con el Program real. */
+  pointer-events: none;
+}
+
+.preview-info {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--grey);
+  background: #17171a;
+  border: 1px solid #2c2c31;
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.preview-info-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.preview-info-label {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--gold-bright);
+}
+
+.preview-url-row { margin-bottom: 2px; }
+
+.preview-url {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--white);
+  word-break: break-all;
+  user-select: all;
+  cursor: text;
+}
+
+.btn-copy {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--gold-dim);
+  background: transparent;
+  color: var(--gold-bright);
+  cursor: pointer;
+}
+.btn-copy:hover { background: #1c1c20; }
+.btn-copy.copied { border-color: var(--gold); color: var(--gold); }
+
+.preview-info-caption {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid #26262a;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  line-height: 1.5;
+  color: var(--grey-dim);
+  text-transform: uppercase;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #26262a;
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+}
+.panel-head h1 {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--white);
+  margin: 0;
+}
+
+.status-pill {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 6px 14px;
+  border-radius: 20px;
+}
+.status-pill.on { background: var(--gold); color: var(--black); }
+.status-pill.off { background: #26262a; color: var(--grey); }
+
+.fields-container {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--gold-bright);
+  margin-bottom: 6px;
+}
+
+.field input[type="text"],
+.field input[type="number"],
+.field textarea,
+.field select {
+  width: 100%;
+  background: #17171a;
+  border: 1px solid #2c2c31;
+  border-radius: 4px;
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 15px;
+  padding: 10px 12px;
+  outline: none;
+}
+.field input[type="text"]:focus,
+.field input[type="number"]:focus,
+.field textarea:focus,
+.field select:focus { border-color: var(--gold); }
+.field textarea { resize: vertical; }
+.field select { cursor: pointer; }
+
+.list-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.list-row {
+  display: flex;
+  gap: 8px;
+}
+.list-row input { flex: 1; }
+
+.btn-remove {
+  background: #2c1717;
+  color: #e39a9a;
+  border: 1px solid #4a2323;
+  border-radius: 4px;
+  width: 38px;
+  cursor: pointer;
+}
+.btn-add {
+  align-self: flex-start;
+  background: transparent;
+  border: 1px dashed var(--gold-dim);
+  color: var(--gold-bright);
+  border-radius: 4px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.btn-add:hover { background: #1c1c20; }
+
+.penalty-editor {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.kick-btn {
+  min-width: 64px;
+  padding: 10px 12px;
+  border-radius: 4px;
+  border: 1px solid #2c2c31;
+  background: #17171a;
+  color: var(--grey);
+  font-weight: 700;
+  cursor: pointer;
+}
+.kick-btn.kick-scored { background: var(--gold); border-color: var(--gold); color: var(--black); }
+.kick-btn.kick-missed { background: #2c1717; border-color: #4a2323; color: #e39a9a; }
+
+.extra-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.clock-box {
+  background: #17171a;
+  border: 1px solid #2c2c31;
+  border-radius: 6px;
+  padding: 16px 18px;
+}
+
+.clock-box-title {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--gold-bright);
+  margin-bottom: 10px;
+}
+
+.clock-display {
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 900;
+  color: var(--white);
+  margin-bottom: 12px;
+}
+
+.clock-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-clock {
+  padding: 9px 16px;
+  border-radius: 4px;
+  border: 1px solid var(--gold-dim);
+  background: transparent;
+  color: var(--gold-bright);
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-clock:hover { background: #1c1c20; }
+.btn-clock-set { border-color: #2c2c31; color: var(--white); }
+.btn-clock-danger { border-color: #4a2323; color: #e39a9a; }
+
+.clock-manual {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.clock-manual input {
+  width: 70px;
+  background: #101012;
+  border: 1px solid #2c2c31;
+  border-radius: 4px;
+  color: var(--white);
+  padding: 8px 10px;
+  font-family: var(--font-body);
+}
+
+.actions-bar {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid #26262a;
+}
+
+.btn {
+  flex: 1;
+  padding: 14px 18px;
+  border-radius: 4px;
+  border: none;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+.btn-take { background: var(--gold); color: var(--black); }
+.btn-take:hover { background: var(--gold-bright); }
+.btn-update { background: transparent; border: 1px solid var(--gold-dim); color: var(--gold-bright); }
+.btn-update:hover { background: #1c1c20; }
+.btn-out { background: #1c1c1e; border: 1px solid #35353a; color: var(--grey); }
+.btn-out:hover { background: #26262a; color: var(--white); }
+.formation-editor {
+  display: grid;
+  gap: 18px;
+}
+.formation-list-section {
+  display: grid;
+  gap: 8px;
+}
+.formation-list-section h2 {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.7px;
+}
+.formation-player-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px 34px 34px;
+  gap: 6px;
+}
+.formation-player-row input {
+  min-width: 0;
+}
+.formation-row-action {
+  min-height: 34px;
+  border: 1px solid #35353a;
+  border-radius: 4px;
+  background: #20242b;
+  color: var(--white);
+  cursor: pointer;
+}
+.formation-row-action.remove {
+  color: #ff8a8a;
+}
+.formation-row-action:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.formation-add {
+  justify-self: start;
+}
+.formation-limit-note {
+  margin: 0;
+  color: var(--grey);
+  font-size: 11px;
+}

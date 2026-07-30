@@ -1,0 +1,1562 @@
+/* Layout, animaciones y estilo visual de cada modulo del Program/Overlay.
+   Estado (mostrar/ocultar) lo maneja program/js/main.js agregando/quitando
+   las clases .is-in / .is-hidden sobre el elemento raiz .gfx de cada modulo. */
+
+#stage {
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+}
+
+.gfx {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-out) var(--ease-out), transform var(--dur-out) var(--ease-out);
+}
+
+.gfx.is-hidden {
+  display: none;
+}
+
+.gfx.is-in {
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity var(--dur-in) var(--ease-in), transform var(--dur-in) var(--ease-in);
+}
+
+/* La inmensa mayoria de los modulos son un asset de video real (.mov
+   transcodificado a color+alfa, o un opaco) que ya ocupa el frame completo
+   de 1920x1080 con su propio contenido posicionado adentro — por eso todos
+   comparten el mismo anclaje al 0,0 del stage. La animacion de entrada/salida
+   la aporta el propio video; el contenedor solo hace un fundido de opacidad. */
+.gfx-fullstage {
+  left: 0;
+  top: 0;
+}
+
+/* ============================================================
+   Estructura compartida por los modulos que usan
+   program/js/alpha-video.js (createAlphaVideo / createPlainVideo).
+   ============================================================ */
+.av-target {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+}
+.alpha-video-src {
+  display: none;
+}
+.alpha-video-canvas,
+.plain-video {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+}
+.gfx-overlay {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  pointer-events: none;
+}
+
+/* ============================================================
+   Entrada/salida en dos tiempos para modulos "sequencedReveal" (ver
+   shared/modules.js): el asset entra solo, el contenido dinamico
+   (".gfx-overlay": escudos, texto, numeros) queda oculto hasta que
+   program/js/main.js le agrega ".content-in" — recien despues de que la
+   animacion horneada del asset termina de asentarse (ver
+   --dur-content-delay en theme.css). Al Sacar del aire se invierte: main.js
+   quita ".content-in" primero (el contenido se apaga con este mismo
+   fundido) y solo despues de --dur-content quita ".is-in" de la raiz
+   (recien ahi arranca la salida del asset). La marca ".sequenced" la
+   agrega program/js/main.js una sola vez al arrancar, leyendo el flag del
+   schema — no hace falta tocar program/index.html ni ningun renderer. */
+.gfx.sequenced .gfx-overlay {
+  opacity: 0;
+  transition: opacity var(--dur-content) var(--ease-in);
+}
+.gfx.sequenced .gfx-overlay.content-in {
+  opacity: 1;
+}
+
+/* Imagen de fondo estatica a resolucion nativa 1920x1080 (assets PNG con
+   alfa real ya resuelta en el propio archivo, sin video ni composicion en
+   canvas) — usada por los modulos que no tienen un .mov de origen (ver
+   Marcador Zocalo y Tiempo adicional). Sin transform: el PNG ya viene
+   ubicado en su posicion final. */
+.gfx-bg-image {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  display: block;
+}
+
+/* Circulo de color de camiseta/escudo, reutilizado en varios modulos. */
+.ov-dot {
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   MARCADOR
+   Grilla medida con muestreo de pixeles (ffmpeg, no a ojo) sobre el
+   frame real del asset (assets/marcador/marcador-principal-alpha.mp4):
+   celdas negro/dorado/negro/gris/dorado contiguas con ~2px de separacion
+   (el bevel/linea divisoria del propio diseno), y las dos celdas de
+   equipo con el mismo ancho (simetria A/B). Centrado vertical verificado
+   con getBoundingClientRect en Chromium: con align-items:center e
+   idéntico top/height en las 5 celdas, el centro visual de cada texto
+   cae exactamente en el eje y=68 — no hace falta ningun ajuste manual.
+   El equipo SIEMPRE se carga como codigo de 3 letras (ARG, BRA, ESP...):
+   el tamaño de fuente de .ov-name esta calculado (canvas.measureText con
+   Anton) para ser el mas grande posible sin salirse de la celda con el
+   codigo mas ancho posible a ese tamaño, no para acomodar nombres largos.
+   ============================================================ */
+.ov-team-a, .ov-team-b {
+  position: absolute;
+  top: 54px;
+  width: 104px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.ov-team-a { left: 54px; }
+.ov-team-b { left: 238px; }
+.ov-team-a .ov-dot, .ov-team-b .ov-dot,
+.ov-ent-team-a .ov-dot, .ov-ent-team-b .ov-dot {
+  width: 9px;
+  height: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  flex-shrink: 0;
+}
+.ov-crest {
+  height: 26px;
+  width: auto;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+.ov-name {
+  /* Sin flex-grow: el grupo escudo+circulo+codigo se centra como una sola
+     unidad (justify-content:center del padre). max-width es un limite de
+     seguridad (celda 104 menos escudo+circulo+2 gaps) para no romper el
+     layout si alguna vez se carga algo mas largo que 3 letras — con un
+     codigo de 3 letras nunca se llega a usar (ver medicion arriba). */
+  flex: 0 1 auto;
+  max-width: 60px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ov-score {
+  position: absolute;
+  left: 160px;
+  top: 54px;
+  width: 76px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 900;
+  color: var(--black);
+}
+.ov-period {
+  /* font-size medido con canvas.measureText (Anton): el mayor que sigue
+     entrando en la celda de 31px con "1T"/"2T"/"ET", con la misma altura
+     de tinta (~19px) que el codigo de equipo, para presencia equivalente. */
+  position: absolute;
+  left: 344px;
+  top: 54px;
+  width: 31px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--black);
+}
+.ov-clock {
+  /* font-size medido con canvas.measureText (Anton): el mayor que sigue
+     entrando en la celda de 85px con "00:00", con la misma altura de
+     tinta (~19px) que el codigo de equipo y el periodo, para presencia
+     visual equivalente entre las tres celdas. */
+  position: absolute;
+  left: 376px;
+  top: 54px;
+  width: 85px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--black);
+}
+
+/* ============================================================
+   MARCADOR - ENTRETIEMPO
+   Asset propio (marcador-entretiempo-alpha.mp4), grilla medida por
+   separado con ffmpeg (no coincide con la del marcador principal, es un
+   video distinto): fila equipo A / resultado / equipo B en el mismo eje
+   vertical (top:54, height:28) que el resto de la familia "marcador".
+   Los datos (escudo, color, codigo, goles) se leen en vivo del modulo
+   "scoreboard" (ver program/js/renderers/marcadorEntretiempo.js) — por
+   eso reutiliza las mismas clases .ov-crest/.ov-dot/.ov-name ya definidas
+   arriba para el marcador principal, con el mismo criterio de tamaño y
+   centrado, solo con su propia posicion/ancho de celda.
+   ============================================================ */
+.ov-ent-team-a, .ov-ent-team-b {
+  position: absolute;
+  top: 54px;
+  width: 105px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.ov-ent-team-a { left: 29px; }
+.ov-ent-team-b { left: 210px; }
+/* Escudo y circulo un poco mas grandes que en el marcador principal:
+   estas celdas son mas anchas (105px) y sobra espacio para darles mas
+   presencia sin tocar las reglas genericas .ov-crest/.ov-dot (usadas
+   tambien por el marcador principal, que no se toca). */
+.ov-ent-team-a .ov-crest, .ov-ent-team-b .ov-crest {
+  height: 28px;
+}
+.ov-ent-team-a .ov-dot, .ov-ent-team-b .ov-dot {
+  width: 10px;
+  height: 10px;
+}
+.ov-ent-team-a .ov-name, .ov-ent-team-b .ov-name {
+  font-size: 22px;
+  max-width: 58px;
+}
+.ov-ent-score {
+  position: absolute;
+  left: 136px;
+  top: 54px;
+  width: 72px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 900;
+  color: var(--black);
+}
+
+/* ============================================================
+   TIEMPO ADICIONAL — asset PNG estatico (reemplazo del .mp4 con alfa
+   compuesto que usaba antes). Coordenadas nativas del PNG medidas con
+   lectura de alfa real, pixel a pixel:
+     - chip gris de "+minutos": x351-384, y78-108 (34x31).
+     - recuadro dorado del contador: x386-470, y77-110 (85x34).
+   Misma logica de datos que antes (addedMinutes + reloj compartido),
+   solo cambia donde se dibuja el overlay de texto.
+
+   Realineacion horizontal con el Marcador principal (eje X, sin cambios
+   respecto de la ronda anterior): este PNG viene 9px corrido a la derecha
+   respecto del marco real del marcador principal. Medido comparando
+   bordes reales de alfa de ambos assets (no a ojo, perfiles de alfa
+   columna por columna): el recuadro dorado nativo termina en x470;
+   restando 9px termina en x461, coincidiendo EXACTO con el borde derecho
+   real del marcador principal (medido en vivo sobre
+   marcador-principal-alpha.mp4: x50-461,y23-84).
+
+   Realineacion vertical (eje Y, corregida en esta ronda): el diseño
+   original de este modulo NO va pisado por el marcador principal — a
+   diferencia de Marcador Zocalo, tiene que quedar apenas por DEBAJO,
+   sin superposicion. El borde inferior del marcador principal no es un
+   corte duro: el perfil de alfa real muestra opacidad plena hasta y83,
+   una fila de transicion en y84 (~49% opaco) y transparencia total desde
+   y85 — el borde real cae en y≈84.5. El recuadro dorado nativo empieza en
+   y77 con borde superior duro (transparente en y76, opaco en y77, sin
+   fila intermedia). Bajando el conjunto +7px, el recuadro dorado pasa a
+   empezar en y84 — coincide con esa fila de transicion del marcador
+   principal (asienta el conjunto justo contra el borde real, sin dejar
+   un hueco y sin taparlo). Transform aplicado sobre el nodo raiz (mismo
+   patron que "#mod-marcadorPenales" mas abajo, con width/height
+   explicitos para que el transform no quede sobre una caja de referencia
+   vacia): NO reescala, NO cambia proporciones, solo reposiciona el
+   conjunto imagen+overlay como una unidad rigida. */
+#mod-marcadorTiempoAdicional {
+  width: 1920px;
+  height: 1080px;
+  transform: translate(-9px, 7px);
+}
+.ov-added-label {
+  position: absolute;
+  left: 351px;
+  top: 78px;
+  width: 34px;
+  height: 31px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--black);
+}
+.ov-added-clock {
+  position: absolute;
+  left: 386px;
+  top: 77px;
+  width: 85px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--black);
+}
+
+/* ============================================================
+   MARCADOR DE PENALES — abajo a la izquierda.
+   Bounding box real medido con deteccion de blobs sobre canal alfa (no a
+   ojo): x28-404, y900-1056 (377x157) dentro del frame nativo del asset.
+   Se escala 0.8x y se traslada con un unico transform (transform-origin
+   0 0): asi video + overlay de texto/circulos/escudos escalan y se
+   mueven juntos, sin recrear ni recortar el asset.
+   Margen izquierdo: 50px, igual al del marcador principal (medido igual,
+   x50-461 sin transform). Margen inferior: 150px — punto medio entre
+   100px (el usuario lo vio muy pegado al borde, "te pasaste") y 200px
+   (confirmado visible pero con demasiado aire de mas). En un Browser
+   Source de vMix/OBS a 1920x1080 real cualquiera de estos valores es
+   "correcto" — la diferencia es puramente estetica una vez que entra en
+   cuadro.
+   Calculo: final = translate + escala*nativo
+     izquierda: 0.8*28 + tx = 50  -> tx = 27.6
+     abajo: 0.8*1056 + ty = 1080-150 -> ty = 85.2
+   width/height explicitos: sin esto el contenedor (que solo tiene hijos
+   position:absolute, ".content" > ".av-target"/".gfx-overlay") colapsa a
+   0x0 y el transform queda aplicado sobre una caja de referencia vacia
+   — funciona en la mayoria de motores pero es un caso limite ambiguo
+   segun el spec de CSS Transforms; se fija el tamaño real del lienzo
+   (1920x1080) para que el origen/escala se calculen sobre una caja
+   valida, sin depender de ese comportamiento implicito.
+   ============================================================ */
+#mod-marcadorPenales {
+  width: 1920px;
+  height: 1080px;
+  transform-origin: 0 0;
+  transform: translate(27.6px, 85.2px) scale(0.8);
+}
+
+/* Las 3 casillas de penal se posicionan una por una con blob-detection
+   sobre el frame real (canal blanco de los 3 numeros), no con flex/gaps
+   uniformes — los 3 casilleros no caen a distancia pareja, y asumir una
+   separacion uniforme fue lo que los dejaba cada vez mas desalineados de
+   casillero en casillero. Estan en coordenadas nativas (el transform del
+   contenedor de arriba ya se encarga de escalarlas y moverlas junto con
+   el video).
+
+   Escudo + codigo + resultado como UN SOLO BLOQUE recalculado de cero
+   (no ancho fijo + posiciones sueltas: se calcula el ancho total real del
+   conjunto y se reparte dentro de la zona util, x28 a x237 = 209px):
+     escudo: se subio la altura a 38px (antes 32) para darle mas presencia.
+       Los 6 escudos comparten la MISMA relacion de aspecto nativa
+       (61x65 = 0.9385, verificado con Image.naturalWidth/Height de los 6
+       archivos en assets/crests/), asi que el ancho real a esa altura es
+       siempre 38 * 61/65 = 35.66px exactos, no una estimacion.
+     gap escudo->codigo: 14px (antes 10) — mas aire dentro del grupo
+       identidad de equipo.
+     codigo: ancho fijo bajado de 90 a 80px pero con el font-size subido
+       de 30 a 32 (mismo criterio de "ancho fijo" que antes, para que el
+       gap hacia el resultado no dependa de cuantas letras se muestren).
+       Verificado con canvas.measureText (Anton 700, letter-spacing 0.5px,
+       fuente cargada antes de medir): el codigo real mas ancho de los 6
+       equipos actuales (GAM) mide 52.99px de avance a 30px de fuente,
+       ~56.5px a 32px — entra holgado en 80px. Incluso "MMM" (peor caso
+       teorico, ninguna sigla real lo usa) mide ~72.3px a 32px, sigue
+       entrando.
+     gap codigo->resultado: 20px (antes 10, vecino del "gap escudo->codigo"
+       de 14 pero notoriamente mayor) — separacion natural pedida entre la
+       identidad del equipo y el resultado, sin exagerar.
+     resultado: se mantiene en 39px de ancho / 34px de fuente (sin tocar,
+       ya validado en la correccion anterior).
+   Con eso, el ancho total del bloque (escudo+gap+codigo+gap+resultado):
+     35.66 + 14 + 80 + 20 + 39 = 188.66px
+   margen resultante a cada lado de la zona util (209 - 188.66 = 20.34):
+     10.17px por lado (redondeado: escudo arranca en 28+10=38, el
+     resultado termina en 38+129.66+20+39=226.66, a 10.34px del separador
+     x237) — simetrico dentro de una fraccion de pixel, y da lugar a que
+     los gaps INTERNOS (14 y 20) sean notoriamente mas grandes que antes
+     (10 y 10), que es donde estaba la sensacion de "todo comprimido".
+   El codigo (.ov-pen-name) sigue con un ANCHO FIJO (flex-basis, no
+   max-width elastico) por el mismo motivo que antes: el gap hacia el
+   resultado no debe variar segun cuantas letras entren. */
+.ov-pen-team {
+  position: absolute;
+  left: 38px;
+  width: 129.66px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+.ov-pen-teamA { top: 942px; }
+.ov-pen-teamB { top: 1003.5px; }
+.ov-pen-crest {
+  height: 38px;
+  width: auto;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+.ov-pen-name {
+  flex: 0 0 80px;
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Resultado del partido (reemplaza al circulo de color de camiseta, que
+   se saco de este grafico — los colores de camiseta siguen existiendo
+   solo en el marcador principal). "left" recalculado junto con todo el
+   bloque de arriba (".ov-pen-team": ahora termina en 38+129.66=167.66,
+   +20px de gap = 187.66) para dejar ~10px de aire antes del separador
+   vertical dorado (x237), coherente con el margen izquierdo del escudo.
+   Ancho/fuente sin cambios (39px / 34px) — ya validados. Color en negro
+   (fijado en la correccion anterior, NO se vuelve a tocar aca) para
+   contraste sobre el circulo dorado donde cae el numero, mismo criterio
+   que el resultado del marcador principal. */
+.ov-pen-score {
+  position: absolute;
+  left: 187.66px;
+  width: 39px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 900;
+  color: var(--black);
+}
+.ov-pen-scoreA { top: 942px; }
+.ov-pen-scoreB { top: 1003.5px; }
+
+/* Titulo editable del zocalo superior. CORRECCION IMPORTANTE (ver
+   CHANGELOG): las rondas anteriores asumieron que el asset no tenia
+   ningun zocalo dibujado, basandose en un escaneo binario de alfa
+   (transparente si alfa<10). Eso hizo que se ignorara que la banda
+   y899-927 del asset es un ZOCALO REAL, solo que SEMI-TRANSPARENTE
+   (~69% opaco, alfa=177, color casi negro) en vez de opaco — se ve gris
+   al componer sobre cualquier fondo, separado del cuerpo solido del
+   grafico por una fina linea dorada (y928-933, alfa 255) antes de que
+   empiece el negro opaco del bloque principal (y934+). Medido leyendo
+   el frame crudo del .mov original (alfa real, no aproximado) con
+   barrido de valores de alfa punto por punto, no solo si es >0 o no.
+   El zocalo tiene esquinas redondeadas (a y899 el ancho util es
+   x48-384, se abre a x28-404 recien en y920) asi que el texto se ubica
+   bien adentro de la zona ya plana:
+     top = 900 (native, borde superior del zocalo)
+     height = 27 (bottom = 927, justo antes de la linea dorada en 928)
+   Ancho/margen horizontal sin cambios (left=38, width=356 = 38 a 394,
+   ya entra comodo dentro del ancho util del zocalo incluso en su fila
+   mas angosta, y905 ya mide x35-397). TITLE_MAX_FONT bajo de 32 a 22
+   (ver renderer): medido con canvas.measureText que "PENALES" en Anton
+   800 a 22px tiene ~21px de tinta real (ascenso+descenso), entra con
+   ~3px de aire arriba y abajo dentro de los 27px del zocalo real. */
+.ov-pen-title {
+  position: absolute;
+  left: 38px;
+  width: 356px;
+  top: 900px;
+  height: 27px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--white);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* Los 6 indicadores viven ahora en ".ov-pen-kicks-layer", que en el
+   renderer (marcadorPenales.js) se inserta ANTES que ".av-target" en el
+   DOM — quedan por DETRAS del video. Se confirmo por lectura directa del
+   frame crudo del .mp4 (no a ojo): los 3 casilleros de cada fila son
+   pixeles OPACOS pintados dentro del propio asset (alpha≈253 en el canal
+   de mascara, en las coordenadas x=265/313/362, y=962/1023.5) — no un
+   elemento CSS. Por eso hoy estos indicadores quedan completamente
+   tapados y su posicion no tiene ningun efecto visible; van a aparecer
+   recien cuando se reemplace el asset por la version con esos 6
+   casilleros recortados/transparentes (pendiente, sin fecha).
+   Reposicion (solo preparacion, sin efecto visible con el asset actual):
+   antes el grupo de 3 circulos quedaba pegado al separador vertical
+   (x237) con apenas 9px de aire (246-237) mientras el borde derecho del
+   asset (x404) le quedaba a 23px (404-381) — desbalanceado. Se recalculo
+   para centrar el conjunto en la zona util derecha (separador x237 a
+   borde x404 = 167px de ancho):
+     ancho real del conjunto (3 circulos de 38px + 2 huecos ya medidos
+     entre centros, 48/49px de paso) = de el borde izq. del primer
+     circulo al borde der. del tercero = 135px
+     margen por lado = (167 - 135) / 2 = 16px
+     primer circulo arranca en 237 + 16 = 253 (antes 246, +7px)
+   Se conservo intacto el paso interno entre los 3 circulos (48px/49px,
+   medido por blob-detection, no uniforme) — se desplazo el bloque
+   completo +7px, sin tocar la separacion relativa entre casilleros. */
+.ov-pen-kick {
+  position: absolute;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(245, 245, 241, 0.92);
+  box-shadow: 0 0 0 2px rgba(10, 10, 12, 0.25) inset;
+}
+.ov-pen-kick--pending { background: rgba(245, 245, 241, 0.92); box-shadow: 0 0 0 2px rgba(10, 10, 12, 0.25) inset; }
+.ov-pen-kick--scored { background: rgba(46, 204, 113, 0.92); box-shadow: 0 0 0 2px #2ecc71 inset; }
+.ov-pen-kick--missed { background: rgba(231, 76, 60, 0.92); box-shadow: 0 0 0 2px #e74c3c inset; }
+.ov-pen-kicksA [data-kick="0"] { left: 253px; top: 943px; }
+.ov-pen-kicksA [data-kick="1"] { left: 301px; top: 943px; }
+.ov-pen-kicksA [data-kick="2"] { left: 350px; top: 943px; }
+.ov-pen-kicksB [data-kick="0"] { left: 253px; top: 1004.5px; }
+.ov-pen-kicksB [data-kick="1"] { left: 301px; top: 1004.5px; }
+.ov-pen-kicksB [data-kick="2"] { left: 350px; top: 1004.5px; }
+
+/* ============================================================
+   MARCADOR ZOCALO (reemplaza al ex Shootout) — arriba a la izquierda,
+   DETRAS del marcador principal (ver orden de nodos en program/index.html).
+   Coordenadas nativas del PNG (1920x1080), medidas con lectura de alfa
+   real, pixel a pixel:
+     - franja oscura para el titulo: x59-381, y62-109 (323x48).
+     - recuadro dorado para el contador: x382-469, y77-109 (88x33).
+
+   Realineacion con el Marcador principal: comparando el ancho real de
+   este conjunto (franja+recuadro, x59 a x469 = 411px nativos) contra el
+   ancho real del marcador principal (medido en vivo sobre
+   marcador-principal-alpha.mp4, canal alfa real: x50-461,y23-84 = 412px,
+   borde inferior plano en y84 verificado en 13 columnas distintas) se ve
+   que son practicamente el mismo ancho — este PNG viene 9px corrido a la
+   derecha (ancho real 411px, 1px mas angosto que el marcador principal:
+   412px — confirmado con perfiles de alfa columna por columna, ambos
+   bordes son practicamente duros, sin difuminado real). Con ese 1px de
+   diferencia de ancho no se puede hacer coincidir EXACTO el borde
+   izquierdo Y el derecho a la vez: se prioriza el borde derecho (el que
+   sostiene el recuadro dorado del contador, el elemento con mas peso
+   visual) con un corrimiento de -8px en vez de -9px — el borde izquierdo
+   de la franja queda a 1px del borde izquierdo real del marcador
+   principal (51 vs 50), diferencia inevitable e imperceptible por ese
+   ancho real de 1px, mientras que el recuadro dorado coincide EXACTO
+   (469-8=461) con el borde derecho real del marcador principal (x461).
+   Transform sobre el nodo raiz (mismo patron que "#mod-marcadorPenales"
+   mas abajo): NO reescala, NO cambia proporciones, solo reposiciona
+   imagen+overlay como una unidad rigida.
+
+   El marcador principal se pinta despues en el DOM y por eso queda
+   visualmente encima: de la franja oscura de este modulo, tras el
+   corrimiento, solo queda visible su mitad inferior — y85 a y109 (25px,
+   el corrimiento es horizontal, el eje vertical no cambia) — y es ahi, no
+   en el alto completo del PNG, donde se centra el titulo.
+   ============================================================ */
+#mod-marcadorZocalo {
+  width: 1920px;
+  height: 1080px;
+  transform: translate(-8px, 0);
+}
+.ov-zocalo-titulo {
+  position: absolute;
+  left: 59px;
+  top: 85px;
+  width: 323px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--white);
+  overflow: hidden;
+}
+/* Caja de centrado del contador recortada a la porcion REALMENTE VISIBLE
+   del recuadro dorado (y85-109, misma franja que el titulo de arriba), no
+   al alto completo del PNG (y77-109): el marcador principal tapa y77-84,
+   asi que centrar el texto contra la caja nativa completa lo deja viendose
+   alto respecto de lo que en verdad se ve en pantalla. Verificado que no
+   es un problema de linea base de fuente (formula de verticalCorrection
+   de text-fit.js aplicada a "00:00" en Anton 800 20px da 0 de correccion:
+   el propio align-items:center ya centra bien la tinta del texto) — el
+   unico ajuste necesario era achicar la caja a la zona visible real. */
+.ov-zocalo-clock {
+  position: absolute;
+  left: 382px;
+  top: 85px;
+  width: 88px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--black);
+}
+
+/* ============================================================
+   PLACAS (fullscreen / mid-full)
+   ============================================================ */
+
+/* Formación: el PNG entregado contiene las seis camisetas ya posicionadas
+   sobre un lienzo 1920x1080. Se usa completo, sin recortar ni recrear sus
+   piezas con CSS. Los slots siguen el orden visual medido en el PSD:
+   arquero, campo derecha, campo izquierda, centro, ataque derecha, ataque
+   izquierda. */
+.ov-formacion-shirts {
+  position: absolute;
+  inset: 0;
+  width: 1920px;
+  height: 1080px;
+}
+.ov-formacion-slot {
+  position: absolute;
+  width: 228px;
+  height: 161px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  text-align: center;
+  overflow: hidden;
+}
+.ov-formacion-slot-0 { left: 702px; top: 680px; }
+.ov-formacion-slot-1 { left: 1058px; top: 564px; }
+.ov-formacion-slot-2 { left: 354px; top: 561px; }
+.ov-formacion-slot-3 { left: 703px; top: 426px; }
+.ov-formacion-slot-4 { left: 909px; top: 208px; }
+.ov-formacion-slot-5 { left: 482px; top: 208px; }
+.ov-formacion-number {
+  position: absolute;
+  left: 46px;
+  top: 39px;
+  width: 136px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-size: 44px;
+  line-height: 1;
+}
+.ov-formacion-player-name {
+  position: absolute;
+  left: 8px;
+  top: 128px;
+  width: 212px;
+  height: 29px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-size: 18px;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ov-formacion-crest {
+  position: absolute;
+  left: 1437px;
+  top: 184px;
+  width: 170px;
+  height: 205px;
+  object-fit: contain;
+}
+.ov-formacion-subs-title {
+  position: absolute;
+  left: 1380px;
+  top: 438px;
+  width: 274px;
+  font-family: var(--font-display);
+  font-size: 31px;
+  font-weight: 800;
+  color: var(--white);
+  text-transform: uppercase;
+  text-align: center;
+}
+.ov-formacion-subs-viewport {
+  position: absolute;
+  left: 1380px;
+  top: 504px;
+  width: 274px;
+  height: 299px;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--white);
+  text-align: center;
+}
+.ov-formacion-subs-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.24;
+}
+.ov-formacion-sub {
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ov-formacion-subs-track {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  animation: formacion-subs-scroll var(--subs-duration) linear infinite;
+}
+@keyframes formacion-subs-scroll {
+  to { transform: translateY(calc(-1 * var(--subs-distance))); }
+}
+#mod-formacionEquipos:not(.is-in) .ov-formacion-subs-track {
+  animation-play-state: paused;
+}
+
+/* VS Prepartido / VS Resultado */
+.ov-vsfull-teamA, .ov-vsfull-teamB {
+  position: absolute;
+  top: 400px;
+  width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.ov-vsfull-teamA { left: 520px; }
+.ov-vsfull-teamB { left: 1000px; }
+.ov-vsfull-crest {
+  width: 150px;
+  height: 170px;
+  object-fit: contain;
+}
+.ov-vsfull-name {
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--white);
+  text-align: center;
+  max-width: 400px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ov-vsfull-separator {
+  position: absolute;
+  left: 910px;
+  top: 500px;
+  width: 100px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 42px;
+  font-weight: 900;
+  color: var(--white);
+}
+.ov-vsfull-score {
+  position: absolute;
+  top: 760px;
+  width: 150px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 50px;
+  font-weight: 900;
+  color: var(--black);
+}
+.ov-vsfull-scoreA { left: 690px; }
+.ov-vsfull-scoreB { left: 1080px; }
+
+/* ============================================================
+   EVENTOS
+   ============================================================ */
+/* Tarjeta: sin escala (a diferencia de Penales, que se escala 0.8x) — el
+   asset se usa a su tamaño nativo, solo se corrige la coordenada Y.
+
+   Borde inferior compartido de esta familia de zocalos bajado de 930px a
+   1030px (a pedido del usuario, "quedo demasiado alto" — referencia
+   visual con el sector marcado en una captura, sin coordenadas exactas
+   extraibles del archivo; se prioriza dejar margen real contra el borde
+   del frame en vez de pegarlo del todo, por la razon ya documentada mas
+   abajo de "Cambios": pegarlo al borde 1080 se vio cortado en un
+   navegador de escritorio a menos de 100% de zoom). Bajar SOLO en Y,
+   igual formula que antes (ty = nuevo_borde - bbox_bottom_nativo), sin
+   tocar el eje X de ningun modulo de esta familia:
+     Tarjeta: bbox nativo bottom=1041 (medido con lectura de alfa real de
+       los 3 .mov, ver comentario de ".ov-tarjeta-team" mas abajo) ->
+       ty = 1030 - 1041 = -11px
+   Sin transform X (translateX:0): el margen izquierdo actual (bbox
+   nativo x43, que ya cae comodo dentro de 0-1920) no necesitaba ajuste. */
+#mod-tarjeta {
+  transform: translateY(-11px);
+}
+
+/* Tarjeta: bounding box y slots medidos con lectura directa del alfa real
+   de los 3 .mov originales (ai-gfx/eventos/tarjeta-*.mov, identicos en
+   geometria, solo cambia el color de la tarjeta/la variante de video) —
+   bbox del asset x43-508,y944-1041; borde dorado hasta x48; una linea
+   divisoria dorada fina en x135 separa un primer casillero (x49-134,
+   vacio en el asset, reservado para el escudo) del casillero grande de
+   texto (x136-452, antes de donde el icono de color de la tarjeta ya
+   viene dibujado en el asset — eso no se toca).
+   Region plana (sin el redondeo de las esquinas) del zocalo: y950 a
+   y1028 aprox (medido con lectura de alfa) — ambas cajas (escudo y
+   jugador) usan "top:954,height:70" para quedar bien adentro de esa zona
+   con margen (4px arriba/abajo), en vez de la fila angosta de 50px que
+   usaban antes (heredada de un primer tamaño de fuente chico).
+   Escudo: subido de 64 a 72px de alto ("un poco mas grande", ajuste fino
+   de escala pedido tomando una imagen de referencia) — con la
+   proporcion real de los 6 escudos (61x65 = 0.938, ya verificada en
+   Marcador de Penales), el ancho es 72*61/65 = 67.54px.
+   Centrado: espacio COMPLETO entre el borde izquierdo del asset (x43,
+   el borde dorado incluido) y la linea divisoria (x135) — centro real =
+   (43+135)/2 = 89. Box sin cambios: left:43,width:92 (centro 43+46=89).
+   A este nuevo tamaño el escudo queda a ~7.2px del borde dorado y
+   ~11.2px de la linea divisoria — sigue sin tocar ninguno de los dos.
+   "top" bajado de 954 a 958.5 (mismo ajuste y mismo motivo que
+   ".ov-tarjeta-jugador": centrar verticalmente contra el centro real
+   del icono de color de la tarjeta, y967-1020, centro 993.5) para que
+   escudo y nombre queden alineados entre si en el eje Y. */
+.ov-tarjeta-team {
+  position: absolute;
+  left: 43px;
+  width: 92px;
+  top: 958.5px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ov-tarjeta-crest {
+  height: 72px;
+  width: auto;
+  object-fit: contain;
+}
+/* Nombre del jugador: ajuste fino de escala y separaciones (imagen de
+   referencia de proporciones, no de diseño — el diseño ya es el mismo
+   asset). Recorrido de left:144 a left:150 (+15px desde la linea
+   divisoria x135, antes 9px — "un poco mas separado de la linea" pedido)
+   y de width:300 a width:292 (right:442, dejando 10px de margen antes
+   del icono de color de la tarjeta en x452, antes 8px — "margen de
+   seguridad antes del recuadro de la tarjeta").
+   El tamaño de fuente sigue sin ser fijo: se calcula en el renderer
+   (fitNameFontSize + NAME_MAX_FONT, ver program/js/renderers/tarjeta.js)
+   para aprovechar el ancho disponible sin invadir el icono. El
+   centrado vertical lo corrige en vivo "measureVerticalCorrection"
+   (mismo mecanismo ya validado, ver CHANGELOG) — centra la tinta real
+   dentro de ESTA caja, por eso alcanza con mover la caja para reubicar
+   el centro visual del nombre.
+   "top" bajado de 954 a 958.5 para alinear el centro vertical del
+   nombre con el centro real del icono de color de la tarjeta (medido
+   con lectura de alfa: icono en y967-1020, centro=993.5, contra el
+   centro anterior de esta caja en 989 — diferencia de 4.5px). */
+.ov-tarjeta-jugador {
+  position: absolute;
+  left: 150px;
+  top: 958.5px;
+  width: 292px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--white);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Cambios: mismo borde inferior compartido que el resto de la familia
+   (bajado de 930px a 1030px, ver comentario de "#mod-tarjeta" mas arriba).
+   Sin escala (igual que Tarjeta, el asset no se redimensiona):
+     bbox nativo bottom = 1037 (ver comentario de abajo)
+     ty = 1030 - 1037 = -7
+   Antes de la correccion original el modulo no tenia transform (top:0 del
+   stage completo) y el asset quedaba con su borde inferior en y1037 de
+   pantalla — muy cerca del borde del frame (1080), lo que en un navegador
+   de escritorio a menos de 100% de zoom se veia cortado, igual que le paso
+   a Tarjeta; por eso el nuevo borde compartido (1030) sigue dejando 50px
+   de margen real contra 1080, no pegado del todo.
+   Sin cambio horizontal (translateX:0): el borde izquierdo nativo
+   (x43) coincide con el de Tarjeta y ya cae comodo dentro de 0-1920. */
+#mod-cambios {
+  transform: translateY(-7px);
+}
+
+/* Cambios: mismo criterio de composicion que Marcador de Penales/Tarjeta
+   (bounding box y slots medidos con lectura directa del alfa real de
+   ai-gfx/eventos/cambios.mov, no a ojo). Bbox del asset: x43-439,
+   y861-1037. El borde izquierdo (x43) y la linea divisoria (x132-135)
+   coinciden casi exacto con los de Tarjeta (comparten diseño de
+   plantilla) — por eso el escudo usa el mismo centro horizontal ya
+   validado ahi: (43+135)/2 = 89.
+   Estructura vertical (medida con lectura de alfa, no a ojo):
+     y861-901: zocalo semi-transparente superior (mismo criterio y misma
+       logica que el titulo de Penales, ver ".ov-pen-title" y
+       "fitTitleFontSize" en marcadorPenales.js) — ver ".ov-cambio-title"
+       mas abajo.
+     y902-908: linea dorada divisoria entre el zocalo y la fila "entra".
+     y909-970: fila "entra" (flecha verde, ingreso).
+     y971-973: linea dorada divisoria entre las dos filas.
+     y974-1031: fila "sale" (flecha roja, egreso).
+     y1032-1037: borde inferior.
+   El escudo es UN SOLO casillero para ambas filas (una sustitucion es
+   siempre del mismo equipo): x49-132, y903-1035 (envuelve las dos
+   filas). Se centra ahi con el mismo tamaño que en Tarjeta (72px de
+   alto, criterio de "presencia" consistente entre ambos modulos). */
+/* Titulo editable del zocalo superior — misma logica que
+   ".ov-pen-title" (Marcador de Penales): banda semi-transparente real
+   del asset en y862-901, separada del cuerpo por una linea dorada en
+   y902-908. Caja con 5px de colchon contra esa linea (bottom:896,
+   height:30, top:866) y 10px de margen horizontal contra el bbox del
+   asset (x43-439 -> left:53, width:376). El tamaño de fuente se ajusta
+   en JS (fitTitleFontSize, ver renderer) en vez de un valor fijo. */
+.ov-cambio-title {
+  position: absolute;
+  left: 53px;
+  width: 376px;
+  top: 866px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--white);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.ov-cambio-team {
+  position: absolute;
+  left: 43px;
+  width: 92px;
+  top: 903px;
+  height: 132px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ov-cambio-crest {
+  height: 72px;
+  width: auto;
+  object-fit: contain;
+}
+/* Entra/sale: mismo criterio que el nombre del jugador en Tarjeta —
+   ancho/posicion horizontal fijos (left:150, 15px de aire desde la
+   linea divisoria x135; width:220, dejando margen antes de la flecha de
+   color que arranca en x380), tamaño de fuente YA NO fijo (se calcula
+   en el renderer, fitTextFontSize + TEXT_MAX_FONT, aprovechando el
+   ancho sin invadir la flecha) y centrado vertical corregido en vivo
+   (measureVerticalCorrection, mismo mecanismo que Tarjeta). "top"/
+   "height" de cada fila calculados sobre el area negra real de esa
+   fila (909-970 para "entra", 974-1031 para "sale"). */
+.ov-cambio-entra, .ov-cambio-sale {
+  position: absolute;
+  left: 150px;
+  width: 220px;
+  display: flex;
+  align-items: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--white);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ov-cambio-entra { top: 910px; height: 60px; }
+.ov-cambio-sale { top: 974px; height: 57px; }
+
+/* ============================================================
+   VAR / REPLAY — mismo borde inferior compartido que el resto de la
+   familia (bajado de 930px a 1030px, ver comentario de "#mod-tarjeta" mas
+   arriba) (bbox real x39-423,y950-1048, medido con lectura de alfa de
+   ai-gfx/var/var-chequeo.mov y ai-gfx/replay/replay-sponsor.mov —
+   ambos assets comparten exactamente la misma geometria).
+     ty = 1030 - 1048 = -18
+   Sin escala ni translateX (el borde izquierdo nativo, x39, ya cae
+   comodo dentro de 0-1920, igual que Tarjeta).
+   ============================================================ */
+#mod-varCheck {
+  transform: translateY(-18px);
+}
+#mod-replay {
+  transform: translateY(-18px);
+}
+/* Placa de sponsor: no es un casillero del asset (que no tiene ninguno
+   reservado para esto) sino una placa propia, independiente, que
+   aparece pegada a la derecha de la barra "REPLAY" cuando hay sponsor
+   cargado. Recentrada verticalmente contra el centro real del bbox
+   (950+1048)/2=999 (antes top:985,height:56 -> centro 1013, 14px mas
+   abajo del centro real). Tamaño de fuente responsivo (ver
+   program/js/renderers/replay.js) en vez de un valor fijo (16px). */
+.ov-replay-sponsor {
+  position: absolute;
+  left: 445px;
+  top: 971px;
+  height: 56px;
+  display: none;
+  align-items: center;
+  padding: 0 18px;
+  background: var(--black-glass);
+  border: 1px solid var(--gold-dim);
+  border-radius: 10px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--gold-bright);
+}
+
+/* ============================================================
+   MOSCA
+   ============================================================ */
+/* El asset ya trae horneados el logo "LocalStrike" Y la etiqueta "VIVO"
+   (con su propio punto/badge negro) como parte del video. Medido con
+   lectura de alfa real sobre el frame ya asentado (t=3s, luego de que
+   termina la animacion de entrada — ver ai-gfx/mosca/mosca-localstrike.mov):
+     - Franja dorada en blanco (el "casillero" real, debajo del logo
+       LocalStrike horneado y a la izquierda de la etiqueta VIVO
+       horneada): x1700-1797, y84-117 (bbox 1920x1080).
+   ".ov-mosca-vivo" queda oculto (display:none) porque el VIVO ya viene
+   en el asset — mostrarlo duplicaria el badge. ".ov-mosca-clock" ocupa
+   esa franja dorada real (antes ahi iba un texto editable a mano; ese
+   campo se elimino del schema — ver shared/modules.js — y el renderer
+   ahora dibuja solo la hora del sistema, ver program/js/renderers/bug.js).
+
+   #mod-bug lleva un scale() fijo para que la Mosca tenga menos presencia
+   en pantalla sin recrear el asset ni tocar su animacion: transform-origin
+   en la esquina superior derecha (100% 0%, la esquina real de pantalla
+   mas cercana al contenido) para que ese punto quede fijo y todo el
+   conjunto (video + overlay) se achique parejo hacia adentro, conservando
+   proporcion y posicion relativa exactas. */
+#mod-bug {
+  width: 1920px;
+  height: 1080px;
+  transform: scale(0.85);
+  transform-origin: 100% 0%;
+}
+
+.ov-mosca-vivo {
+  display: none;
+}
+.ov-mosca-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e74c3c;
+}
+.ov-mosca-clock {
+  position: absolute;
+  right: 123px;
+  top: 84px;
+  width: 97px;
+  height: 33px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--black);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   ZOCALOS — pasada global de composicion (mismo criterio que Tarjeta:
+   bounding box y zonas medidas con lectura directa del alfa real de
+   cada .mov en ai-gfx/, no a ojo; tamaño de fuente responsivo via
+   program/js/text-fit.js en vez de valores fijos).
+
+   Posicion de cada modulo (borde inferior compartido con el resto de la
+   familia, ty = 1030 - bbox_bottom_nativo, salvo donde se indique lo
+   contrario):
+     #mod-longSimple: SIN transform — es una barra a todo el ancho que
+       toca el borde inferior por diseño (ver comentario de
+       ".ov-long-simple-text" mas abajo); forzarla a 1030 dejaria un hueco
+       vacio debajo de una barra pensada para llegar hasta el borde.
+     #mod-longDouble, #mod-shortSimple, #mod-shortDouble: ajuste leve
+       adicional a pedido del usuario ("bajarlos unos pocos pixeles" mas,
+       manteniendo coherencia entre los tres) — el borde compartido de
+       estos 3 pasa de 1030px a 1045px (+15px, MISMO delta para los tres;
+       tarjeta/cambios/varCheck/replay/vs no fueron mencionados y quedan
+       en 1030px sin cambios). tx sin cambios en ningun caso:
+         #mod-longDouble: bbox y879-1020, centro horizontal 988 (no 960) ->
+           ty = 1045-1020 = 25; tx = 960-988 = -28.
+         #mod-shortSimple: bbox y879-978, centro horizontal 981.5 ->
+           ty = 1045-978 = 67; tx = 960-981.5 = -21.5.
+         #mod-shortDouble: bbox y866-1011, centro horizontal 959.5 (ya
+           centrado), ajuste puntual posterior de +5px en Y -> ty=39;
+           tx = 960-959.5 = 0.5.
+     #mod-vs: bbox y929-996 (variante "normal"), centro horizontal 942.5,
+       sigue en el borde compartido de 1030px (no mencionado en este
+       pedido) -> ty = 1030-996 = 34; tx = 960-942.5 = 17.5.
+   ============================================================ */
+#mod-longDouble {
+  transform: translate(-28px, 25px);
+}
+#mod-shortSimple {
+  transform: translate(-21.5px, 67px);
+}
+#mod-shortDouble {
+  transform: translate(0.5px, 39px);
+}
+#mod-vs {
+  transform: translate(17.5px, 34px);
+}
+
+/* Zocalo largo simple: bbox real x0-1919,y934-1079 — es una barra a todo
+   el ancho, pegada al borde inferior POR DISEÑO (el propio asset toca
+   y1079, el ultimo pixel del frame); a diferencia de las tarjetas tipo
+   "placa flotante", esta no se reposiciona en Y — moverla generaria un
+   hueco visible debajo de una barra pensada para llegar hasta el borde.
+   Zona de texto real: entre dos acentos dorados del asset en x279 y
+   x1614 (medidos con lectura de alfa) — box con margen de 10px a cada
+   lado: left:289,width:1315. Centrado verticalmente contra el centro
+   real del bbox (934+1079)/2=1006.5: top:982,height:50 (centro 1007). */
+.ov-long-simple-text {
+  position: absolute;
+  left: 289px;
+  top: 982px;
+  width: 1315px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--white);
+  text-align: center;
+}
+
+/* Zocalo largo doble: bbox real x568-1408,y879-1020 (centro horizontal
+   988, corregido con translateX en "#mod-longDouble" mas abajo). Dos
+   filas reales medidas con lectura de alfa (columna x700): fila 1
+   (titulo) y887-971 (centro 929), fila 2 (bajada) y979-1020 (centro
+   1000) — la posicion anterior de la fila 2 (top:942) no correspondia a
+   ninguna medicion real, quedaba mucho mas arriba de su zona. Ambas filas
+   pasan a usar flex+altura fija (antes solo "text-align:center" sin
+   altura, lo que impedia aplicar la misma correccion de centrado
+   vertical que el resto del sistema). */
+.ov-long-double-line1 {
+  position: absolute;
+  left: 610px;
+  top: 894px;
+  width: 760px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--white);
+  text-align: center;
+}
+.ov-long-double-line2 {
+  position: absolute;
+  left: 610px;
+  top: 982px;
+  width: 760px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--gold-bright);
+  text-align: center;
+}
+
+/* Zocalo corto simple: bbox real x589-1374,y879-978. Zona de texto
+   (columna x700): y887-971 (centro 929). Box: top:904,height:50 (centro
+   929, coincide exacto). */
+.ov-short-simple-text {
+  position: absolute;
+  left: 615px;
+  top: 904px;
+  width: 690px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--white);
+  text-align: center;
+}
+
+/* Zocalo corto doble: bbox real x692-1227,y866-1011. Dos filas medidas
+   con lectura de alfa (columna x800): nombre y874-958 (centro 916), rol
+   y966-1012 (centro 989) — el rol anterior (top:927) quedaba invadiendo
+   la fila del nombre, no correspondia a la zona real medida. Ambas pasan
+   a flex+altura fija por el mismo motivo que zocalo largo doble. */
+.ov-short-double-name {
+  position: absolute;
+  left: 710px;
+  top: 881px;
+  width: 500px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--white);
+  text-align: center;
+}
+.ov-short-double-role {
+  position: absolute;
+  left: 710px;
+  top: 971px;
+  width: 500px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--gold-bright);
+  text-align: center;
+}
+
+/* Zocalo VS compacto (bottom-center, con variantes de renglon). Bbox
+   real (variante "normal") x488-1397,y929-996, centro horizontal 942.5
+   (corregido con translateX en "#mod-vs" mas abajo, hasta 960).
+   Reconstruido de punta a punta con lectura de alfa real (no a ojo):
+
+   Horizontal (fila y963, en la zona plana sin redondeo de esquinas):
+     x494-827: zona negra equipo A (333px)
+     x828-1057: bloque central dorado (229px)
+     x1058-1391: zona negra equipo B (333px)
+   No hay ningun casillero interno para escudo dentro de las zonas negras
+   (son un rectangulo uniforme, sin divisoria) — a diferencia de
+   Tarjeta/Cambios, el escudo y el nombre comparten la MISMA zona negra,
+   repartida en dos sub-bloques con margen consistente (12px):
+     equipo A: escudo pegado al extremo izquierdo del zocalo (arranca en
+       x494+12=506), nombre a su derecha (hacia el centro)
+     equipo B: nombre a la izquierda (viniendo del centro), escudo
+       pegado al extremo derecho del zocalo (termina en x1391-12=1379)
+   Escudo: 50px de alto (proporcion real 61x65 -> ancho 46.92px),
+   centrado verticalmente contra el centro real del bbox
+   (929+996)/2=962.5 -> top = 962.5-25 = 937.5.
+     equipo A: left = 494+12 = 506 (termina en 506+46.92=552.92)
+     equipo B: left = 1391-12-46.92 = 1332.08 ≈ 1332 (termina en 1379)
+   Nombre: gap de 12px contra su escudo, mismo criterio de auto-ajuste de
+   fuente que Tarjeta/Cambios (nombre COMPLETO, no abreviatura, ver
+   program/js/renderers/vs.js). Ancho resultante 250px cada uno (simetrico):
+     equipo A: left = 552.92+12 = 564.92 ≈ 565, right = 827-12 = 815
+       -> width = 815-565 = 250.
+     equipo B: left = 1058+12 = 1070, right = 1332-12 = 1320
+       -> width = 1320-1070 = 250.
+   El nombre NACE del centro y se expande hacia su propio escudo (pedido
+   explicito de diseno): equipo A con justify-content:flex-end (el texto
+   termina pegado al borde derecho del box, x815, contra el centro) y
+   equipo B con flex-start (el texto arranca en el borde izquierdo, x1070,
+   contra el centro) — lo opuesto a "pegar" el nombre al escudo.
+
+   Bloque central (828-1057, 229px): el asset tiene DOS muescas negras
+   decorativas (arriba y abajo, colgando de cada borde) que pellizcan el
+   dorado hasta una "cintura" centrada en x942.5, de x904 a x981 (medido
+   con barrido horizontal fila por fila dentro de la banda de la muesca,
+   y=931..935 y 990..994 -> minX/maxX consistentes ~904-981). Esa cintura
+   es la marca visual real del diseno para el ESTADO (unico contenido del
+   centro real, sin resultado, sin superposicion). Las muescas NO alcanzan
+   los flancos (x828-902 / x982-1057): esos dos costados quedan libres en
+   toda la altura del bbox (929-996) y son los "recuadros amarillos"
+   reales del asset para el gol de cada equipo (izquierdo = local, derecho
+   = visitante) — confirmado visualmente en composite (ver
+   vs_center_only.png): el dorado es un gradiente uniforme sin corte de
+   color, la division es de FORMA (la cintura de las muescas), no de color.
+     gol local (izq):  left:828, width:74  (828-902)
+     estado (centro):  left:902, width:80  (902-982), banda vertical seaguera
+       de muesca 940-984 (dentro de la zona sin muesca 939-986)
+     gol visitante(der): left:982, width:75 (982-1057)
+   Los goles, al quedar fuera del rango horizontal de la muesca, usan la
+   misma banda vertical que los escudos (937.5-987.5, 50px) para
+   aprovechar mas alto sin riesgo de pisar la muesca. 74+80+75 = 229,
+   suma exacta del bloque central real. */
+.ov-vs-crestA, .ov-vs-crestB {
+  position: absolute;
+  top: 937.5px;
+  height: 50px;
+  width: auto;
+  object-fit: contain;
+}
+.ov-vs-crestA { left: 506px; }
+.ov-vs-crestB { left: 1332px; }
+
+.ov-vs-teamA, .ov-vs-teamB {
+  position: absolute;
+  top: 943px;
+  width: 250px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--white);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.ov-vs-teamA { left: 565px; justify-content: flex-end; }
+.ov-vs-teamB { left: 1070px; justify-content: flex-start; }
+
+.ov-vs-goalA, .ov-vs-goalB {
+  position: absolute;
+  top: 937.5px;
+  width: 74px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 900;
+  color: var(--black);
+}
+.ov-vs-goalA { left: 828px; }
+.ov-vs-goalB { left: 982px; width: 75px; }
+
+.ov-vs-status {
+  position: absolute;
+  left: 902px;
+  width: 80px;
+  top: 940px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--black);
+}
+
+/* Listas de goleadores (local/visitante): usan el espacio real que le
+   sobra al asset por ENCIMA de la fila fija (escudo/nombre/gol/estado,
+   siempre en y929-996 sea cual sea el renglon) en las variantes mas
+   altas — medido con lectura de alfa real de los 4 .mov, ultimo frame
+   asentado, mismo ancho horizontal (x488-1396) y mismo borde inferior
+   (996) en las 4, solo cambia donde empieza arriba:
+     normal: y930-996 (66px) -> CERO espacio libre arriba, sin lista.
+     fino:   y894-996 (102px) -> 36px libres arriba de la fila.
+     medio:  y832-996 (164px) -> 98px libres arriba de la fila.
+     alto:   y774-996 (222px) -> 156px libres arriba de la fila.
+   Caja de cada lista: mismo ancho que la zona negra de su equipo
+   (x494-827 local, x1058-1391 visitante, 333px) menos 20px de margen a
+   cada lado; termina 6px arriba de la fila fija (y924) y empieza 8px
+   abajo del borde superior real de cada variante — por eso el "top" y el
+   "height" varian por variante y se activan con el atributo
+   "data-renglon" que ya fija el propio renderer (program/js/renderers/
+   vs.js) sobre ".content". En "normal" no hay regla: quedan en
+   "display:none" (base), no hay a donde ponerlas sin invadir la fila. El
+   contenido real (cuantas lineas entran a que tamaño) lo decide en vivo
+   "fitLinesFontSize"/"applyFittedLines" (program/js/text-fit.js) leyendo
+   el alto real de la caja que resulta de estas reglas — la geometria vive
+   en CSS, no se duplica en JS. */
+.ov-vs-scorersA, .ov-vs-scorersB {
+  position: absolute;
+  display: none;
+  align-items: center;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--white);
+  white-space: nowrap;
+  line-height: 1;
+}
+.ov-vs-scorersA {
+  left: 514px;
+  width: 308px;
+  justify-content: flex-end;
+  text-align: right;
+}
+.ov-vs-scorersB {
+  left: 1063px;
+  width: 308px;
+  justify-content: flex-start;
+  text-align: left;
+}
+.ov-vs-scorers-track {
+  display: flex;
+  width: max-content;
+  gap: 48px;
+  animation: vs-scorers-left var(--scorers-duration) linear infinite;
+}
+.ov-vs-scorers-static {
+  display: inline-block;
+  width: max-content;
+}
+.ov-vs-scorersA .ov-vs-scorers-track {
+  animation-name: vs-scorers-right;
+}
+@keyframes vs-scorers-left {
+  to { transform: translateX(calc(-1 * var(--scorers-distance))); }
+}
+@keyframes vs-scorers-right {
+  from { transform: translateX(calc(-1 * var(--scorers-distance))); }
+  to { transform: translateX(0); }
+}
+#mod-vs:not(.is-in) .ov-vs-scorers-track {
+  animation-play-state: paused;
+}
+.fitted-line-more {
+  color: var(--grey);
+  opacity: 0.85;
+}
+
+#mod-vs .content[data-renglon="alto"] .ov-vs-scorersA,
+#mod-vs .content[data-renglon="alto"] .ov-vs-scorersB {
+  display: flex;
+  top: 845px;
+  height: 34px;
+}
+#mod-vs .content[data-renglon="medio"] .ov-vs-scorersA,
+#mod-vs .content[data-renglon="medio"] .ov-vs-scorersB {
+  display: flex;
+  top: 865px;
+  height: 34px;
+}
+#mod-vs .content[data-renglon="fino"] .ov-vs-scorersA,
+#mod-vs .content[data-renglon="fino"] .ov-vs-scorersB {
+  display: flex;
+  top: 896px;
+  height: 28px;
+}
+
+/* ============================================================
+   TABLA LATERAL DERECHA (sin asset nuevo todavia)
+   ============================================================ */
+#mod-sideTable {
+  right: 40px;
+  top: 220px;
+  width: 420px;
+  transform: translateX(40px);
+}
+#mod-sideTable.is-in { transform: translateX(0); }
+
+.side-table {
+  background: var(--black-glass);
+  border-left: 3px solid var(--gold);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.side-table-header {
+  padding: 14px 20px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--black);
+}
+.side-table-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  font-size: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.side-table-row .team { flex: 1; text-transform: uppercase; }
+.side-table-row .team.away { text-align: right; }
+.side-table-row .score {
+  min-width: 54px;
+  text-align: center;
+  color: var(--gold-bright);
+  font-weight: 800;
+  font-family: var(--font-display);
+}
+
+/* ============================================================
+   PROXIMOS ENCUENTROS (sin asset nuevo todavia)
+   ============================================================ */
+#mod-upcoming {
+  left: 80px;
+  bottom: 360px;
+  width: 460px;
+  transform: translateX(-30px);
+}
+#mod-upcoming.is-in { transform: translateX(0); }
+
+.upcoming-box {
+  background: var(--black-glass);
+  border-left: 3px solid var(--gold);
+}
+.upcoming-header {
+  padding: 10px 18px;
+  color: var(--black);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.upcoming-row {
+  padding: 8px 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 15px;
+}
+.upcoming-row .match {
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.upcoming-row .info {
+  color: var(--gold-bright);
+  font-size: 13px;
+  margin-top: 2px;
+}
