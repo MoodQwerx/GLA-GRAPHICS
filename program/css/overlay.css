@@ -339,17 +339,34 @@
 
 /* ============================================================
    MARCADOR DE PENALES — abajo a la izquierda.
-   Bounding box real medido con deteccion de blobs sobre canal alfa (no a
-   ojo): x28-404, y900-1056 (377x157) dentro del frame nativo del asset.
-   Se escala 0.8x y se traslada con un unico transform (transform-origin
-   0 0): asi video + overlay de texto/circulos/escudos escalan y se
-   mueven juntos, sin recrear ni recortar el asset.
-   Alineacion global medida contra Tarjeta: ambos assets terminan con
-   borde visible izquierdo x43 e inferior y1030 en Program 1920x1080.
-   Se conserva la escala 0.8 y toda la geometria interna de Penales.
+   Asset reemplazado por PENALES_2 (mismo perfil tecnico que el original:
+   ProRes 4444 con alfa, 1920x1080, 30fps, 5s) — medido de nuevo con
+   lectura de alfa real, no reutilizando a ciegas las coordenadas viejas:
+   bounding box identico al original, x30-402,y900-1056 (2px de diferencia
+   contra el x28-404 previo, dentro del margen de deteccion de blob), y
+   misma banda de titulo semi-transparente (y900-927, alfa~174/255) mas
+   linea divisoria dorada (y928-933) y divisor escudo/codigo en x237 —
+   por eso ninguna coordenada interna de escudo/codigo/resultado/titulo/
+   indicadores cambio, solo la posicion del contenedor. Se sigue
+   escalando 0.8x y trasladando con un unico transform (transform-origin
+   0 0): video y overlay de texto/circulos/escudos se mueven juntos, sin
+   recrear ni recortar el asset.
+   Reposicion pedida por el usuario ("quedo muy arriba, bajalo hasta que
+   se vea equilibrado con el resto de los zocalos inferiores"): medido
+   comparando el frame real compuesto de Penales contra el de Tarjeta con
+   ambos al aire simultaneamente (getBoundingClientRect real, no a ojo).
+   Con el borde inferior compartido (y1030, igual que Tarjeta) el borde
+   SUPERIOR de Penales quedaba 27.8px mas arriba que el de Tarjeta — al
+   tener 2 filas de indicadores en vez de 1, su caja es mas alta y
+   sobresalia por encima de sus vecinos aunque el borde inferior ya
+   coincidiera. Se bajo el conjunto esos mismos 27.8px para que el borde
+   SUPERIOR de ambos empareje (visualmente equilibrado, ninguno sobresale
+   sobre el otro); el borde inferior pasa de y1030 a y1057.8, todavia
+   comodo dentro del frame (22.2px de margen contra 1080).
    Calculo: final = translate + escala*nativo
-     izquierda: 0.8*28 + tx = 43   -> tx = 20.6
-     abajo: 0.8*1056 + ty = 1030   -> ty = 185.2
+     izquierda: 0.8*28 + tx = 43     -> tx = 20.6 (sin cambios)
+     arriba banda titulo: 0.8*900 + ty = 933 (tope real de Tarjeta, native
+       944 - 11) -> ty = 933 - 720 = 213
    width/height explicitos: sin esto el contenedor (que solo tiene hijos
    position:absolute, ".content" > ".av-target"/".gfx-overlay") colapsa a
    0x0 y el transform queda aplicado sobre una caja de referencia vacia
@@ -362,7 +379,7 @@
   width: 1920px;
   height: 1080px;
   transform-origin: 0 0;
-  transform: translate(20.6px, 185.2px) scale(0.8);
+  transform: translate(20.6px, 213px) scale(0.8);
 }
 
 /* Las 3 casillas de penal se posicionan una por una con blob-detection

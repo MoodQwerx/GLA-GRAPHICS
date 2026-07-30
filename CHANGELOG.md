@@ -2,6 +2,23 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [Unreleased] - 2026-07-30 (47)
+
+### Cambiado — Nuevo asset de Penales y reposición vertical
+
+- Se reemplazó el video fuente de Penales (`assets/marcador/marcador-penales-alpha.mp4`) por la transcodificación del nuevo asset entregado `PENALES_2.mov`, sin tocar animaciones, timing ni lógica del módulo (`program/js/renderers/marcador-penales.js` no se modificó).
+- Se verificó por ffprobe que `PENALES_2.mov` tiene el mismo perfil técnico que el asset anterior (ProRes 4444, `yuva444p12le`, 1920×1080, 30fps, 5s) y se transcodificó con la misma receta color+alfa apilado en uso para el resto de los módulos (`vstack` color/alfa → H.264 `yuv420p`, `crf 16`, `preset slow`).
+- Se midió a nivel de píxel (alfa y color) que la geometría interna del nuevo asset es prácticamente idéntica a la anterior: bounding box del cuadro (`x30-402, y900-1056` vs `x28-404, y900-1056` original), banda de título, línea divisoria entre filas y divisor escudo/código en `x=237` — por lo que no fue necesario ajustar ningún otro valor de posicionamiento interno.
+- Se corrigió la posición vertical del módulo: `transform: translate(20.6px, 185.2px) scale(0.8)` → `translate(20.6px, 213px) scale(0.8)` en `program/css/overlay.css`. La escala permanece sin cambios (`0.8`). El ajuste de +27.8px se calculó comparando el borde superior real de Penales con el de Tarjeta (ambos ya compartían el borde inferior en `y=1030`, pero el cuadro de Penales es más alto por sus dos filas de indicadores de penales contra la única fila de Tarjeta), de modo que ambos bordes superiores queden alineados y el conjunto de zócalos inferiores se vea visualmente equilibrado.
+- Se conservó `ai-gfx/marcador/marcador-penales.mov` (asset original) sin modificar y se agregó `ai-gfx/marcador/marcador-penales-2.mov` como nueva fuente de diseño (ambos fuera de git, solo locales).
+
+### Verificado
+
+- Program en `http://localhost:4400/program`: tres ciclos consecutivos OUT→TAKE de Penales con datos reales (título, escudo, código, series de penales anotados/errados) sin errores de consola.
+- Comparación en vivo (Tarjeta + Penales tomados al aire simultáneamente) confirmando bordes superiores alineados en la nueva posición mediante captura compuesta con líneas de referencia.
+- Se confirmó que la escala (`0.8`) y las animaciones de entrada/salida del módulo no se alteraron: solo cambiaron el archivo de video fuente y el valor `translateY` del transform.
+- Estado de prueba (Penales y Tarjeta) devuelto a OUT al finalizar la verificación.
+
 ## [Unreleased] - 2026-07-30 (46)
 
 ### Corregido — Posición de Penales y calidad de salida
