@@ -62,12 +62,21 @@ function timeToMs(value) {
 }
 
 // Duraciones compartidas del secuenciado asset -> contenido (ver
-// --dur-content-delay/--dur-content en program/css/theme.css): se leen una
-// sola vez de ":root" en vez de hardcodear los mismos numeros aca, para que
-// tocar el CSS siga siendo la unica fuente de verdad de estos tiempos.
+// --dur-content-delay/--dur-content en program/css/theme.css y
+// program/css/overlay.css): se leen del CSS en vez de hardcodear los
+// mismos numeros aca, para que tocar el CSS siga siendo la unica fuente de
+// verdad de estos tiempos. --dur-content-delay se lee POR MODULO (no una
+// sola vez de ":root"): cada asset con movimiento horneado se asienta en un
+// tiempo real distinto (medido con diff de frames reales, ver CHANGELOG.md),
+// asi que cada "#mod-<id>" en overlay.css define su propio valor — un
+// zocalo rapido no tiene por que esperar lo mismo que una placa grande. Si
+// un modulo "sequencedReveal" no define el suyo, hereda el default de
+// ":root" (fallback conservador). --dur-content (velocidad del propio
+// fundido del contenido, entrada y salida) si es un unico valor compartido:
+// no hay evidencia de que necesite variar por modulo.
 const rootStyle = getComputedStyle(document.documentElement);
-const CONTENT_DELAY_MS = timeToMs(rootStyle.getPropertyValue('--dur-content-delay'));
 const CONTENT_FADE_MS = timeToMs(rootStyle.getPropertyValue('--dur-content'));
+const contentDelayMs = {};
 
 function isSequenced(id) {
   return !!MODULES[id].sequencedReveal;
@@ -87,9 +96,14 @@ function cancelContentExit(id) {
   }
 }
 
+// querySelectorAll (no querySelector): la mayoria de los modulos tiene un
+// unico ".gfx-overlay", pero algunos (ej. Marcador de Penales, que ademas
+// tiene una capa de indicadores de penales por DETRAS del video) tienen mas
+// de uno — los dos tienen que revelarse/ocultarse juntos, o el segundo
+// quedaria con opacity:0 para siempre.
 function setContentVisible(target, visible) {
-  const overlay = target.content.querySelector('.gfx-overlay');
-  if (overlay) overlay.classList.toggle('content-in', visible);
+  const overlays = target.content.querySelectorAll('.gfx-overlay');
+  overlays.forEach((overlay) => overlay.classList.toggle('content-in', visible));
 }
 
 function exitTransitionMs(root) {
@@ -135,8 +149,14 @@ for (const id of MODULE_IDS) {
 
   // Marca una sola vez, al arrancar, que clase CSS ("sequenced" en
   // overlay.css) tiene que secuenciar su contenido — asi program/index.html
-  // y cada renderer no necesitan saber nada de este mecanismo.
-  if (MODULES[id].sequencedReveal) root.classList.add('sequenced');
+  // y cada renderer no necesitan saber nada de este mecanismo. Tambien lee,
+  // una sola vez, el delay de este modulo puntual (--dur-content-delay
+  // definido sobre "#mod-<id>" en overlay.css, o el default de ":root" si
+  // el modulo no define el suyo).
+  if (MODULES[id].sequencedReveal) {
+    root.classList.add('sequenced');
+    contentDelayMs[id] = timeToMs(getComputedStyle(root).getPropertyValue('--dur-content-delay'));
+  }
 
   // Al terminar la transicion de salida (opacity llega a 0), recien ahi
   // ocultamos el nodo del todo y limpiamos el contenido.
@@ -214,7 +234,7 @@ function applyModuleState(id, moduleState) {
           delete contentRevealTimers[id];
           contentRevealed[id] = true;
           setContentVisible(target, true);
-        }, CONTENT_DELAY_MS);
+        }, contentDelayMs[id]);
       }
     }
 

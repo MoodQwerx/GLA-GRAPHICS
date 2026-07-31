@@ -32,16 +32,23 @@
 
   /* Secuenciado asset -> contenido para modulos "sequencedReveal" (ver
      shared/modules.js y program/js/main.js). --dur-content-delay es cuanto
-     esperar, al Tomar al aire, antes de revelar ".gfx-overlay": medido
-     con diff de frames reales sobre los 9 assets afectados (Tarjeta ~1.2s,
-     Cambios ~1.1s, Replay ~1.4s, VAR ~1.8s con dos fases, Zocalos
-     largo/corto simple/doble y VS entre 1.1s y 1.6s) — 1.8s cubre el caso
-     mas lento medido, con el mismo valor para los 9, sin ajustes por
-     modulo. --dur-content es la velocidad del propio fundido del
-     contenido (entrada Y salida) y, a la salida, cuanto se espera con el
-     asset todavia arriba antes de empezar a sacarlo (contenido primero,
-     asset despues). */
-  --dur-content-delay: 1.8s;
+     esperar, al Tomar al aire, antes de revelar ".gfx-overlay". Hasta la
+     revision global de animaciones de 2026-07-30 este era un unico valor
+     (1.8s) compartido por los 9 modulos que tenian el flag, calculado para
+     cubrir el caso mas lento medido — eso dejaba "tiempo muerto" real en
+     los modulos mas rapidos (ej. Zocalo corto doble se asienta en ~0.25s
+     pero esperaba 1.8s igual). Ahora CADA modulo "sequencedReveal" define
+     su propio --dur-content-delay sobre su "#mod-<id>" en overlay.css,
+     medido por separado (diff real de frames del video compuesto en vivo,
+     no a ojo — ver CHANGELOG.md para el metodo y la tabla completa). Este
+     valor en ":root" es solo un fallback defensivo por si algun modulo
+     nuevo declara "sequencedReveal" sin definir el suyo — no lo usa
+     ningun modulo real hoy. --dur-content es la velocidad del propio
+     fundido del contenido (entrada Y salida) y, a la salida, cuanto se
+     espera con el asset todavia arriba antes de empezar a sacarlo
+     (contenido primero, asset despues); es un unico valor compartido, sin
+     evidencia de que necesite variar por modulo. */
+  --dur-content-delay: 1s;
   --dur-content: 0.2s;
 }
 

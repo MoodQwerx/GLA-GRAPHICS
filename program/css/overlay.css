@@ -69,21 +69,59 @@
 /* ============================================================
    Entrada/salida en dos tiempos para modulos "sequencedReveal" (ver
    shared/modules.js): el asset entra solo, el contenido dinamico
-   (".gfx-overlay": escudos, texto, numeros) queda oculto hasta que
+   (".gfx-overlay": escudos, texto, numeros — puede haber mas de uno por
+   modulo, ver Marcador de Penales) queda oculto hasta que
    program/js/main.js le agrega ".content-in" — recien despues de que la
    animacion horneada del asset termina de asentarse (ver
-   --dur-content-delay en theme.css). Al Sacar del aire se invierte: main.js
-   quita ".content-in" primero (el contenido se apaga con este mismo
-   fundido) y solo despues de --dur-content quita ".is-in" de la raiz
-   (recien ahi arranca la salida del asset). La marca ".sequenced" la
-   agrega program/js/main.js una sola vez al arrancar, leyendo el flag del
-   schema — no hace falta tocar program/index.html ni ningun renderer. */
+   --dur-content-delay, definido POR MODULO sobre su "#mod-<id>" en este
+   mismo archivo — buscar cada bloque para el valor y la medicion real que
+   lo respalda; ":root" en theme.css solo da un fallback). Al Sacar del
+   aire se invierte: main.js quita ".content-in" primero (el contenido se
+   apaga con este mismo fundido) y solo despues de --dur-content quita
+   ".is-in" de la raiz (recien ahi arranca la salida del asset). La marca
+   ".sequenced" la agrega program/js/main.js una sola vez al arrancar,
+   leyendo el flag del schema — no hace falta tocar program/index.html ni
+   ningun renderer. Aplica hoy a 15 modulos (Marcador, Entretiempo,
+   Penales, Tarjeta, Cambios, Replay, Mosca, los 5 Zocalos, VS compacto,
+   Formacion, VS Prepartido, VS Con resultado); Marcador Zocalo y Tiempo
+   Adicional quedan afuera porque su asset es un PNG estatico sin
+   movimiento propio que esperar, y VAR Chequeo tiene el flag pero sin
+   contenido dinamico propio (texto horneado en el video), asi que no
+   tiene ningun efecto visible. */
 .gfx.sequenced .gfx-overlay {
   opacity: 0;
   transition: opacity var(--dur-content) var(--ease-in);
 }
 .gfx.sequenced .gfx-overlay.content-in {
   opacity: 1;
+}
+
+/* --dur-content-delay por modulo para "sequencedReveal" que no tienen
+   ningun otro ajuste de posicion/escala propio (por eso no aparecen en
+   ningun otro bloque "#mod-<id>" de este archivo) — valores medidos con
+   diff de frames reales del video compuesto en vivo (ver CHANGELOG.md,
+   revision global de animaciones 2026-07-30). */
+#mod-scoreboard {
+  /* ~0.8s. */
+  --dur-content-delay: 800ms;
+}
+#mod-marcadorEntretiempo {
+  /* ~1.1s. */
+  --dur-content-delay: 1100ms;
+}
+#mod-formacionEquipos {
+  /* ~1.2s — placa fullscreen con la secuencia mas amplia (titulares +
+     escudo + suplentes), sin tiempos muertos. */
+  --dur-content-delay: 1200ms;
+}
+#mod-vsPrepartido {
+  /* ~2.2s — placa fullscreen grande, puede tardar un poco mas que un
+     zocalo sin sentirse pesada. */
+  --dur-content-delay: 2200ms;
+}
+#mod-vsResultado {
+  /* ~2.3s, mismo criterio que VS Prepartido. */
+  --dur-content-delay: 2300ms;
 }
 
 /* Imagen de fondo estatica a resolucion nativa 1920x1080 (assets PNG con
@@ -380,6 +418,12 @@
   height: 1080px;
   transform-origin: 0 0;
   transform: translate(20.6px, 213px) scale(0.8);
+  /* Asentamiento medido (ver CHANGELOG.md, revision global de animaciones
+     2026-07-30): ~0.3s. Modulo con DOS ".gfx-overlay" (la capa de
+     indicadores de penales detras del video, y la capa principal de
+     titulo/escudos/resultado encima) — program/js/main.js las revela y
+     oculta juntas. */
+  --dur-content-delay: 300ms;
 }
 
 /* Las 3 casillas de penal se posicionan una por una con blob-detection
@@ -844,6 +888,9 @@
    nativo x43, que ya cae comodo dentro de 0-1920) no necesitaba ajuste. */
 #mod-tarjeta {
   transform: translateY(-11px);
+  /* Asentamiento real del asset medido con diff de frames en vivo (ver
+     CHANGELOG.md, revision global de animaciones 2026-07-30): ~1s. */
+  --dur-content-delay: 1000ms;
 }
 
 /* Tarjeta: bounding box y slots medidos con lectura directa del alfa real
@@ -937,6 +984,9 @@
    (x43) coincide con el de Tarjeta y ya cae comodo dentro de 0-1920. */
 #mod-cambios {
   transform: translateY(-7px);
+  /* Asentamiento medido (ver CHANGELOG.md, revision global de animaciones
+     2026-07-30): ~0.9s. */
+  --dur-content-delay: 900ms;
 }
 
 /* Cambios: mismo criterio de composicion que Marcador de Penales/Tarjeta
@@ -1040,6 +1090,9 @@
 }
 #mod-replay {
   transform: translateY(-18px);
+  /* Asentamiento medido (ver CHANGELOG.md, revision global de animaciones
+     2026-07-30): ~0.7s. */
+  --dur-content-delay: 700ms;
 }
 /* Placa de sponsor: no es un casillero del asset (que no tiene ninguno
    reservado para esto) sino una placa propia, independiente, que
@@ -1091,6 +1144,9 @@
   height: 1080px;
   transform: scale(0.85);
   transform-origin: 100% 0%;
+  /* Asentamiento medido (ver CHANGELOG.md, revision global de animaciones
+     2026-07-30): ~0.3s — el unico contenido dinamico es el reloj HH:MM. */
+  --dur-content-delay: 300ms;
 }
 
 .ov-mosca-vivo {
@@ -1154,15 +1210,29 @@
    ============================================================ */
 #mod-longDouble {
   transform: translate(-28px, 25px);
+  /* Asentamiento medido (ver CHANGELOG.md, revision global de animaciones
+     2026-07-30): ~1.6s — el mas lento de los zocalos inferiores. */
+  --dur-content-delay: 1600ms;
 }
 #mod-shortSimple {
   transform: translate(-21.5px, 67px);
+  /* Asentamiento medido (ver CHANGELOG.md, revision global de animaciones
+     2026-07-30): ~1.5s. */
+  --dur-content-delay: 1500ms;
 }
 #mod-shortDouble {
   transform: translate(0.5px, 39px);
+  /* Asentamiento medido (ver CHANGELOG.md, revision global de animaciones
+     2026-07-30): ~0.5s — el mas rapido de los zocalos inferiores. */
+  --dur-content-delay: 500ms;
 }
 #mod-vs {
   transform: translate(17.5px, 34px);
+  /* Asentamiento del armado inicial medido (ver CHANGELOG.md, revision
+     global de animaciones 2026-07-30): ~0.9s. Distinto del pulso
+     decorativo periodico que sigue despues (no es "todavia asentandose",
+     es movimiento continuo intencional del asset — no hay que esperarlo). */
+  --dur-content-delay: 900ms;
 }
 
 /* Zocalo largo simple: bbox real x0-1919,y934-1079 — es una barra a todo
@@ -1174,6 +1244,12 @@
    x1614 (medidos con lectura de alfa) — box con margen de 10px a cada
    lado: left:289,width:1315. Centrado verticalmente contra el centro
    real del bbox (934+1079)/2=1006.5: top:982,height:50 (centro 1007). */
+#mod-longSimple {
+  /* Asentamiento medido (ver CHANGELOG.md, revision global de animaciones
+     2026-07-30): ~1.6s — el mas lento de los zocalos inferiores, empatado
+     con Zocalo largo doble. */
+  --dur-content-delay: 1600ms;
+}
 .ov-long-simple-text {
   position: absolute;
   left: 289px;

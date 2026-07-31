@@ -2,6 +2,65 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [Unreleased] - 2026-07-30 (49)
+
+### Corregido — Revisión global de animaciones de entrada y salida (asset → contenido)
+
+Auditoría de todas las animaciones de entrada/salida de Program, pedida por el usuario para corregir dos problemas: contenido apareciendo antes o junto con el asset, y animaciones más lentas de lo necesario. Se revisó primero si existía lógica compartida (sí: `sequencedReveal`, ver `docs/ARCHITECTURE.md`) y se corrigió desde ahí, en vez de parches por módulo.
+
+**Diagnóstico:** el mecanismo `sequencedReveal` (asset entra solo, contenido se revela después) solo estaba aplicado a 9 módulos (Tarjeta, Cambios, VAR Chequeo, Replay, los 5 Zócalos). El resto de los módulos con video + contenido dinámico superpuesto (Marcador principal, Entretiempo, Penales, Mosca, Formación, VS Prepartido, VS Con resultado) no lo tenían: su `.gfx-overlay` se hacía visible al mismo tiempo que el asset empezaba a animar (mismo fundido de opacidad del contenedor), es decir, escudos/nombres/resultado podían quedar flotando mientras el asset todavía se estaba armando — el problema #1 reportado. Además, los 9 módulos que sí tenían el mecanismo compartían un único `--dur-content-delay: 1.8s` (el caso más lento medido, VAR), lo que dejaba tiempo muerto real en los módulos más rápidos — ej. Zócalo corto doble se asienta en ~0.25s reales pero esperaba 1.8s igual — el problema #2 reportado.
+
+**Corrección en la lógica compartida** (`program/js/main.js`, `program/css/overlay.css`, `program/css/theme.css`, `shared/modules.js` — ningún renderer individual tocado):
+- `sequencedReveal: true` agregado a 7 módulos nuevos en `shared/modules.js`: `scoreboard` (Marcador principal), `marcadorEntretiempo`, `marcadorPenales`, `formacionEquipos`, `vsPrepartido`, `vsResultado`, `bug` (Mosca). Total: 15 módulos con el mecanismo activo (16 con VAR Chequeo, que lo tiene pero no tiene contenido dinámico propio, así que no tiene efecto visible).
+- `--dur-content-delay` dejó de ser un único valor en `:root` compartido por todos: ahora cada módulo lo define sobre su propio `#mod-<id>` en `overlay.css`, medido individualmente (ver tabla más abajo). `:root` en `theme.css` conserva un valor de 1s solo como fallback defensivo para un futuro módulo que declare el flag sin definir el suyo — hoy ningún módulo real lo usa.
+- `program/js/main.js`: `contentDelayMs` pasó de una constante global leída una vez de `:root` a un mapa por módulo, leído una vez por módulo (mismo patrón, misma función `timeToMs`, sin duplicar lógica) desde el `getComputedStyle` de su propio `#mod-<id>`.
+- `setContentVisible` (la función que agrega/quita `.content-in`) pasó de `querySelector('.gfx-overlay')` a `querySelectorAll('.gfx-overlay')`: Marcador de Penales tiene DOS `.gfx-overlay` (la capa de indicadores de penales, detrás del video, y la capa principal de título/escudos/resultado, encima) y las dos tienen que revelarse/ocultarse juntas — con `querySelector` la segunda capa hubiera quedado permanentemente invisible al activarle `sequencedReveal`. Este fue el único ajuste de código requerido para que el mecanismo compartido funcionara en un módulo con más de una capa de contenido.
+- La secuencia de salida (contenido primero, asset después, con el mismo `--dur-content` de 0.2s como espera entre ambos) no se modificó: ya funcionaba correctamente en los 9 módulos existentes y ahora se hereda automáticamente en los 7 nuevos, sin lógica adicional.
+
+**Metodología de medición** (reemplaza a la anterior, que leía frames del `.mp4` crudo con `ffmpeg`/`getImageData` fuera del navegador): se instrumentó cada asset en Program real, dibujando el `<video>` en reproducción sobre un canvas 2D chico (192×108, 10x downsample) en cada `requestAnimationFrame` y calculando la diferencia media contra el frame anterior — el "asentamiento" es el último momento con diferencia real (por encima de un umbral de ruido) dentro de los primeros 2 segundos del clip (más allá de eso cualquier pulso es decorativo continuo, no armado inicial — ver el caso de VS más abajo), más un margen fijo de 250ms para absorber variación de reproducción real entre corridas, redondeado a los 100ms más cercanos hacia arriba. Esta medición reemplaza también los valores históricos previamente documentados en comentarios de `theme.css` (estimados a ojo sobre frames extraídos): la nueva medición, sobre reproducción real, dio sistemáticamente tiempos de asentamiento más cortos que la estimación anterior (ej. Tarjeta ~0.85s real medido vs. ~1.2s estimado antes).
+
+**Caso especial — VS compacto:** su asset tiene un pulso decorativo periódico que sigue después del armado inicial (parte del diseño del asset, no se toca). Se identificó el límite entre "armado inicial" (termina ~0.5-0.6s) y "pulso decorativo" (empieza ~0.7s y se repite el resto del clip) inspeccionando la serie de diferencias cruda, y se usó ese límite — no el final del clip — para no esperar indefinidamente un movimiento que nunca termina de "asentarse" porque es intencional.
+
+**Tabla de tiempos de revelado de contenido (`--dur-content-delay`) — antes y después:**
+
+| Módulo | Antes | Después |
+|---|---|---|
+| Marcador principal (`scoreboard`) | sin secuenciar (contenido junto al asset) | 800ms |
+| Marcador - Entretiempo | sin secuenciar | 1100ms |
+| Marcador de Penales | sin secuenciar | 300ms |
+| Mosca (`bug`) | sin secuenciar | 300ms |
+| Formación | sin secuenciar | 1200ms |
+| VS Prepartido | sin secuenciar | 2200ms |
+| VS Con resultado | sin secuenciar | 2300ms |
+| Tarjeta | 1800ms (valor único compartido) | 1000ms |
+| Cambios | 1800ms | 900ms |
+| Replay | 1800ms | 700ms |
+| Zócalo largo simple | 1800ms | 1600ms |
+| Zócalo largo doble | 1800ms | 1600ms |
+| Zócalo corto simple | 1800ms | 1500ms |
+| Zócalo corto doble | 1800ms | 500ms |
+| VS compacto (`vs`) | 1800ms | 900ms |
+| VAR Chequeo | 1800ms (sin efecto, no tiene contenido) | sin cambios (sigue sin efecto) |
+
+Módulos sin cambios porque no aplica el mecanismo (assets estáticos o sin capa de contenido separada): Marcador Zócalo y Tiempo Adicional (PNG estático, sin movimiento horneado que esperar — el contenido ya aparece junto con el asset ya formado, sin desfase posible), Gol (`oneShot`, sin `.gfx-overlay`), Tabla lateral y Próximos encuentros (sin asset de video, su propia animación de deslizamiento no separa "asset" de "contenido").
+
+### Verificado
+
+- **Secuencia de entrada**, con `MutationObserver` real sobre cambios de clase (no polling): en los 15 módulos con contenido, se confirmó que el asset entra (`.is-in` en la raíz) inmediatamente al Tomar al aire, el contenido permanece sin `.content-in` hasta el delay configurado, y `.content-in` aparece en un tiempo real dentro de ~10-90ms del valor configurado (ej. Tarjeta configurado 1000ms, medido 1028-1044ms en 3 corridas; Marcador principal configurado 800ms, medido 824ms; VS Prepartido configurado 2200ms, medido 2223-2232ms en 3 corridas).
+- **Secuencia de salida**: confirmado en todos los casos probados que `.content-in` se quita antes que `.is-in` de la raíz, con el gap de 200ms (`--dur-content`) entre ambos eventos, en cada ciclo.
+- **Marcador de Penales (dos `.gfx-overlay`)**: confirmado en 3 ciclos que ambas capas (indicadores de penales detrás del video, y título/escudos/resultado encima) reciben `.content-in` en el mismo instante, tanto al entrar como al salir — sin la corrección de `querySelectorAll` la capa principal hubiera quedado invisible.
+- **VS compacto (pulso decorativo)**: confirmado en 3 ciclos que el contenido se revela a los ~900ms (armado inicial) y no se ve afectado por el pulso decorativo continuo que sigue después.
+- **Ciclos repetidos**: se probaron 3 ciclos consecutivos TAKE→OUT (Tarjeta, Marcador de Penales, VS compacto, Formación, VS Prepartido) y 1 ciclo en el resto de los 15 módulos con contenido, todos sobre Program real sin recargar la página ni el Master Control, con resultados consistentes entre corridas.
+- **Regresión en módulos no tocados**: Marcador Zócalo, Tiempo Adicional, Gol, VAR Chequeo, Tabla lateral y Próximos encuentros probados con TAKE/OUT, sin cambios de comportamiento.
+- **Consola**: sin errores en ninguna de las pruebas anteriores.
+- **60 FPS**: con 4 módulos con video simultáneos al aire (Marcador + Mosca + VS + Tarjeta, escenario realista de un vivo), 9.32ms/frame promedio (~107fps), 1 long task puntual (111ms, coincide con la creación simultánea de 4 contextos WebGL nuevos, no un problema sostenido) — sin regresión respecto de la auditoría de rendimiento previa (entrada 48).
+- **Persistencia**: probado sin recargar Program ni Master Control en ningún momento; `data` de cada módulo no se tocó (solo se agregó/ajustó el flag `sequencedReveal` y timings de CSS, sin tocar contratos de datos).
+
+### No verificado
+
+- No se probó en OBS/vMix real fuera de este entorno de desarrollo (mismo límite que la entrada 48).
+- Los valores de `--dur-content-delay` se midieron con una única corrida por módulo (mas margen de 250ms para absorber variación) en vez de promediar múltiples corridas — se considera suficiente dado el margen aplicado, pero no se descarta un ajuste fino puntual si en uso real algún módulo se siente todavía levemente rápido o lento.
+
 ## [Unreleased] - 2026-07-30 (48)
 
 ### Corregido — Auditoría de rendimiento de Program: cuello de botella real en el compositor de video con alfa

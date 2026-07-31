@@ -59,6 +59,7 @@ export const MODULES = {
     category: 'Marcador',
     layer: 'top-left',
     live: true,
+    sequencedReveal: true,
     fields: [
       { key: 'teamA', label: 'Equipo local', type: FIELD_TYPES.SELECT, options: TEAM_OPTIONS },
       { key: 'teamAColor', label: 'Color de camiseta - local', type: FIELD_TYPES.SELECT, options: TEAM_COLOR_OPTIONS },
@@ -105,6 +106,7 @@ export const MODULES = {
     // cambios que el operador haga en el marcador principal sin tener
     // que tocar este modulo.
     live: true,
+    sequencedReveal: true,
     fields: [],
     defaults: {},
   },
@@ -119,6 +121,7 @@ export const MODULES = {
     // marcadorPenales.js) — el operador solo carga el estado de cada
     // penal, no vuelve a tipear el equipo.
     live: true,
+    sequencedReveal: true,
     fields: [
       { key: 'titulo', label: 'Título', type: FIELD_TYPES.TEXT },
       { key: 'kicksA', label: 'Tandas equipo A', type: FIELD_TYPES.PENALTY_SERIES, count: 3 },
@@ -162,6 +165,7 @@ export const MODULES = {
     category: 'Placas',
     layer: 'fullscreen',
     live: true,
+    sequencedReveal: true,
     fields: [
       {
         key: 'teamSide',
@@ -184,6 +188,7 @@ export const MODULES = {
     category: 'Placas',
     layer: 'fullscreen',
     live: true,
+    sequencedReveal: true,
     fields: [],
     defaults: {},
   },
@@ -194,6 +199,7 @@ export const MODULES = {
     category: 'Placas',
     layer: 'fullscreen',
     live: true,
+    sequencedReveal: true,
     fields: [],
     defaults: {},
   },
@@ -314,6 +320,7 @@ export const MODULES = {
     label: 'Mosca LocalStrike',
     category: 'Mosca',
     layer: 'top-right',
+    sequencedReveal: true,
     fields: [],
     defaults: {},
   },
