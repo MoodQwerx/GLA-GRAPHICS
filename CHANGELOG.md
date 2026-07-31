@@ -2,6 +2,35 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [Unreleased] - 2026-07-31 (51)
+
+### Corregido — Contenido de los Zócalos sincronizado con el destello real de entrada
+
+A pedido explícito del usuario, se corrigió el criterio de `--dur-content-delay` de los Zócalos: en la entrada 50 el delay apuntaba a "el asset ya terminó de asentarse del todo" (asentamiento + margen mínimo), pero el usuario señaló que eso seguía sintiéndose tarde — quería que el contenido aparezca **durante** el destello (flash de luz) de la animación de entrada, no después. Se midió brillo medio por frame (no solo diferencia frame a frame como antes) durante la reproducción real de cada asset, con un `setInterval` en vez de `requestAnimationFrame` (el entorno de pruebas throttlea `requestAnimationFrame` cuando el panel de navegador no está visualmente desplegado; `setInterval` no depende de eso).
+
+- **Zócalo largo doble** y **Zócalo corto simple**: ambos assets muestran una meseta oscura de brillo (~0.4-0.85s) y luego un pico de brillo claro y sostenido — el destello real — de ~0.88s a ~1.3s. El delay se movió a **880ms** (antes 1350ms / 1250ms respectivamente) para que el contenido empiece a aparecer justo cuando arranca el destello; con `--dur-content` de 0.2s, queda completamente visible ~1.08s, todavía dentro de la ventana del destello.
+- **Zócalo largo simple** (desactivado, ver entrada 48): no se pudo remedir porque el asset runtime ya no existe; se aplicó el mismo valor (880ms) por consistencia histórica con Zócalo largo doble, para que quede listo al reactivarlo.
+- **Zócalo corto doble**: revisado — su asset NO tiene un pico de brillo propio (sube suave y se aplana ~0.37s, sin destello posterior). Se conservó su valor (250ms) sin cambios: no hay destello con el que sincronizar.
+- **VS compacto**: revisado — no tiene un destello único sino un pulso decorativo periódico continuo (ya documentado en la entrada 49). Su valor actual (650ms) ya cae dentro de uno de esos pulsos, no en un hueco silencioso entre dos, así que ya está sincronizado con "un" destello y no se cambió.
+- No se tocó ningún asset, escala, posición ni lógica funcional — únicamente `--dur-content-delay` en `program/css/overlay.css`, reutilizando el mismo mecanismo compartido (`program/js/main.js`, sin cambios en esta entrada).
+
+### Corregido — Indicadores del Marcador de Penales reposicionados sobre los huecos reales del asset
+
+El comentario existente en `overlay.css` afirmaba que los 3 casilleros de cada fila eran píxeles opacos horneados en el asset, sin ningún hueco transparente real, y que la posición de los indicadores CSS no tenía ningún efecto visible — eso era así para el asset original, pero quedó desactualizado después del reemplazo por PENALES_2 (entrada 46) sin haber sido revisado en ese momento para este detalle puntual. A pedido explícito del usuario, se remidió desde cero (no a ojo): se leyó el canal alfa real del `.mp4` en reproducción y se calculó, por columna, la densidad de píxeles transparentes dentro de la franja vertical de cada casillero — un solo corte horizontal atraviesa el número "1/2/3" horneado dentro de cada hueco y da una lectura partida en dos, así que se usó una franja completa (no una fila) y se combinaron los dos lóbulos de cada hueco partido por el número.
+
+- Centro real medido de los 3 huecos (fila A): **x≈265.5, x≈312.5, x≈361.5** (paso ≈47-49px, consistente con lo ya documentado).
+- Posición vigente de los indicadores CSS: centro en x=272/320/369 (`left` 253/301/350, círculo de 38px) — **~6 a 6.5px corridos a la derecha** respecto de los huecos reales, de forma consistente en los 3 casilleros y en ambas filas (A y B).
+- Corrección: se corrieron los 6 indicadores (blancos/verdes/rojos vía `.ov-pen-kick--pending/scored/missed`, 3 por equipo) **-6px en X únicamente** — `left`: 253→247, 301→295, 350→344, igual en `.ov-pen-kicksA` y `.ov-pen-kicksB`. `top`, ancho, alto y separación relativa entre casilleros no se tocaron.
+- Verificado tras el cambio: el centro de cada círculo CSS (247+19=266, 295+19=314, 344+19=363) cae dentro de ±1.5px del hueco real medido.
+- Se corrigió además el comentario de `overlay.css` que describía el asset viejo (afirmaba "sin efecto visible"), dejando registrada la medición nueva y la fecha.
+
+### Verificado
+
+- **Zócalos:** confirmado con `MutationObserver` real (no polling) que en Zócalo largo doble y Zócalo corto simple el contenido se revela a ~900-920ms (configurado 880ms, dentro de ~20-40ms de margen de red/JS normal), repetido en varios ciclos consecutivos con resultados consistentes; Zócalo corto doble y VS compacto probados sin cambios (276ms/671ms, coincidiendo con lo configurado). En todos los casos el asset entra primero (`.is-in` en la raíz) y el contenido nunca aparece antes; a la salida el contenido desaparece antes que el asset (sin cambios en esa lógica).
+- **Penales:** probado en 3 ciclos consecutivos TAKE→OUT con combinaciones de pendiente/gol/errado en ambos equipos (incluyendo los 3 estados simultáneos en una misma fila) — la lógica de estados (clases `--pending/--scored/--missed`) funciona igual que antes, sin cambios; solo cambió la posición horizontal de los 6 indicadores.
+- Consola sin errores en ninguna de las pruebas de esta entrada. Todos los módulos usados quedaron devueltos a `OUT` al finalizar.
+- `git diff` acotado a `program/css/overlay.css` (único archivo de código tocado) y este `CHANGELOG.md`.
+
 ## [Unreleased] - 2026-07-31 (50)
 
 ### Corregido — Delay de contenido más corto en Tarjeta y los Zócalos

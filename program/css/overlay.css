@@ -567,30 +567,30 @@
   overflow: hidden;
 }
 
-/* Los 6 indicadores viven ahora en ".ov-pen-kicks-layer", que en el
-   renderer (marcadorPenales.js) se inserta ANTES que ".av-target" en el
-   DOM — quedan por DETRAS del video. Se confirmo por lectura directa del
-   frame crudo del .mp4 (no a ojo): los 3 casilleros de cada fila son
-   pixeles OPACOS pintados dentro del propio asset (alpha≈253 en el canal
-   de mascara, en las coordenadas x=265/313/362, y=962/1023.5) — no un
-   elemento CSS. Por eso hoy estos indicadores quedan completamente
-   tapados y su posicion no tiene ningun efecto visible; van a aparecer
-   recien cuando se reemplace el asset por la version con esos 6
-   casilleros recortados/transparentes (pendiente, sin fecha).
-   Reposicion (solo preparacion, sin efecto visible con el asset actual):
-   antes el grupo de 3 circulos quedaba pegado al separador vertical
-   (x237) con apenas 9px de aire (246-237) mientras el borde derecho del
-   asset (x404) le quedaba a 23px (404-381) — desbalanceado. Se recalculo
-   para centrar el conjunto en la zona util derecha (separador x237 a
-   borde x404 = 167px de ancho):
-     ancho real del conjunto (3 circulos de 38px + 2 huecos ya medidos
-     entre centros, 48/49px de paso) = de el borde izq. del primer
-     circulo al borde der. del tercero = 135px
-     margen por lado = (167 - 135) / 2 = 16px
-     primer circulo arranca en 237 + 16 = 253 (antes 246, +7px)
-   Se conservo intacto el paso interno entre los 3 circulos (48px/49px,
-   medido por blob-detection, no uniforme) — se desplazo el bloque
-   completo +7px, sin tocar la separacion relativa entre casilleros. */
+/* Los 6 indicadores viven en ".ov-pen-kicks-layer", que en el renderer
+   (marcadorPenales.js) se inserta ANTES que ".av-target" en el DOM —
+   quedan por DETRAS del video.
+   NOTA (2026-07-31): el comentario anterior aca decia que los 3
+   casilleros de cada fila eran pixeles OPACOS horneados en el asset, sin
+   ningun hueco transparente real, y que por eso la posicion de estos
+   indicadores no tenia ningun efecto visible. Eso era cierto para el
+   asset viejo pero quedo desactualizado desde el reemplazo por
+   PENALES_2 (ver CHANGELOG.md): se volvio a medir desde cero, a pedido
+   explicito del usuario, con deteccion de blobs sobre el canal alfa real
+   (densidad de transparencia por columna en una franja Y que cubre cada
+   circulo completo, no una sola fila — un solo corte horizontal
+   atraviesa el numero "1/2/3" horneado dentro de cada hueco y da un
+   patron partido en dos, no el hueco real completo). Con esa deteccion,
+   el centro real de cada hueco transparente (fila A, y943-981 nominal)
+   quedo en x≈266, x≈313.5 y x≈362.5 (paso ≈47-49px, igual que antes) —
+   mientras que las posiciones vigentes (x253/301/350, centro de un
+   circulo de 38px en x272/320/369) quedaban ~6-6.5px corridas a la
+   DERECHA respecto de esos huecos reales, de forma consistente en los 3
+   casilleros y en las 2 filas. Se corrigio corriendo el conjunto -6px en
+   X (sin tocar Y, tamaño ni separacion relativa): left 253->247,
+   301->295, 350->344, igual en ambas filas. Con esto el centro de cada
+   circulo CSS (247+19=266, 295+19=314, 344+19=363) cae dentro de +-1px
+   del hueco real medido. */
 .ov-pen-kick {
   position: absolute;
   width: 38px;
@@ -602,12 +602,12 @@
 .ov-pen-kick--pending { background: rgba(245, 245, 241, 0.92); box-shadow: 0 0 0 2px rgba(10, 10, 12, 0.25) inset; }
 .ov-pen-kick--scored { background: rgba(46, 204, 113, 0.92); box-shadow: 0 0 0 2px #2ecc71 inset; }
 .ov-pen-kick--missed { background: rgba(231, 76, 60, 0.92); box-shadow: 0 0 0 2px #e74c3c inset; }
-.ov-pen-kicksA [data-kick="0"] { left: 253px; top: 943px; }
-.ov-pen-kicksA [data-kick="1"] { left: 301px; top: 943px; }
-.ov-pen-kicksA [data-kick="2"] { left: 350px; top: 943px; }
-.ov-pen-kicksB [data-kick="0"] { left: 253px; top: 1004.5px; }
-.ov-pen-kicksB [data-kick="1"] { left: 301px; top: 1004.5px; }
-.ov-pen-kicksB [data-kick="2"] { left: 350px; top: 1004.5px; }
+.ov-pen-kicksA [data-kick="0"] { left: 247px; top: 943px; }
+.ov-pen-kicksA [data-kick="1"] { left: 295px; top: 943px; }
+.ov-pen-kicksA [data-kick="2"] { left: 344px; top: 943px; }
+.ov-pen-kicksB [data-kick="0"] { left: 247px; top: 1004.5px; }
+.ov-pen-kicksB [data-kick="1"] { left: 295px; top: 1004.5px; }
+.ov-pen-kicksB [data-kick="2"] { left: 344px; top: 1004.5px; }
 
 /* ============================================================
    MARCADOR ZOCALO (reemplaza al ex Shootout) — arriba a la izquierda,
@@ -1213,31 +1213,45 @@
    ============================================================ */
 #mod-longDouble {
   transform: translate(-28px, 25px);
-  /* Asentamiento real ~1.3s. Ajustado a pedido explicito del usuario
-     (2026-07-31): margen de seguridad recortado de 250ms a ~50-70ms sobre
-     ese mismo asentamiento medido (ver CHANGELOG.md) — el mas lento de
-     los zocalos inferiores, no se puede bajar mas sin arriesgar texto
-     flotando sobre el asset todavia en movimiento. */
-  --dur-content-delay: 1350ms;
+  /* Re-sincronizado a pedido explicito del usuario (2026-07-31) contra el
+     DESTELLO real del asset, no contra el asentamiento total: medido
+     brillo medio por frame (no solo diff) durante la reproduccion real —
+     el asset tiene una meseta oscura ~0.4-0.85s y recien ahi arranca un
+     pico de brillo claro (destello) de ~0.88s a ~1.3s, con el pico entre
+     ~0.95s y ~1.15s (ver CHANGELOG.md para la serie completa). El
+     contenido tiene que empezar a aparecer apenas arranca ese destello
+     (no antes, no despues de que termine todo) — con --dur-content de
+     0.2s, queda completamente visible a los ~1.08s, todavia dentro de la
+     ventana del destello (termina ~1.3s). */
+  --dur-content-delay: 880ms;
 }
 #mod-shortSimple {
   transform: translate(-21.5px, 67px);
-  /* Asentamiento real ~1.2s. Margen recortado a pedido del usuario
-     (2026-07-31), ver CHANGELOG.md. */
-  --dur-content-delay: 1250ms;
+  /* Mismo destello (misma ventana ~0.88-1.3s) y mismo criterio que Zocalo
+     largo doble — ver ese comentario. Re-sincronizado a pedido explicito
+     del usuario (2026-07-31). */
+  --dur-content-delay: 880ms;
 }
 #mod-shortDouble {
   transform: translate(0.5px, 39px);
   /* Asentamiento real ~0.2s — el mas rapido de los zocalos inferiores.
-     Margen recortado a pedido del usuario (2026-07-31), ver CHANGELOG.md. */
+     Revisado en la sincronizacion contra el destello (2026-07-31): a
+     diferencia de Zocalo largo doble/corto simple, este asset NO tiene un
+     pico de brillo (destello) propio — su brillo sube suave y se aplana
+     ~0.37s, sin ningun salto posterior — asi que no hay "destello" con el
+     que sincronizar y el valor medido antes (asentamiento + margen
+     minimo) se conserva sin cambios. */
   --dur-content-delay: 250ms;
 }
 #mod-vs {
   transform: translate(17.5px, 34px);
-  /* Asentamiento del armado inicial ~0.55-0.6s (distinto del pulso
-     decorativo periodico que sigue despues — no hay que esperarlo, es
-     movimiento continuo intencional del asset). Margen recortado a
-     pedido del usuario (2026-07-31), ver CHANGELOG.md. */
+  /* Asentamiento del armado inicial ~0.55-0.6s. Revisado en la
+     sincronizacion contra el destello (2026-07-31): este asset no tiene
+     un destello unico sino un pulso decorativo periodico continuo (brillo
+     estable, ver comentario de mas arriba sobre el pulso); el valor
+     actual ya cae dentro de uno de esos pulsos (no en un hueco silencioso
+     entre dos), asi que ya queda sincronizado con "un" destello sin
+     necesidad de cambiarlo. */
   --dur-content-delay: 650ms;
 }
 
@@ -1251,13 +1265,13 @@
    lado: left:289,width:1315. Centrado verticalmente contra el centro
    real del bbox (934+1079)/2=1006.5: top:982,height:50 (centro 1007). */
 #mod-longSimple {
-  /* Asentamiento real ~1.3s. Ajustado a pedido explicito del usuario
-     (2026-07-31): margen de seguridad recortado de 250ms a ~50-70ms sobre
-     el mismo asentamiento medido (ver CHANGELOG.md) — mismo criterio que
-     Zocalo largo doble. Valor conservado aunque el modulo este
-     desactivado (ver mas abajo) para que quede listo tal cual al
-     reactivarlo. */
-  --dur-content-delay: 1350ms;
+  /* Re-sincronizado (2026-07-31) contra el mismo destello que Zocalo largo
+     doble/corto simple, mismo criterio (ver esos comentarios) — no se
+     pudo remedir directamente porque el asset runtime ya no existe (modulo
+     desactivado, ver mas abajo), asi que se aplica el mismo valor por
+     consistencia historica entre los tres. Valor conservado aunque el
+     modulo este desactivado para que quede listo tal cual al reactivarlo. */
+  --dur-content-delay: 880ms;
 }
 .ov-long-simple-text {
   position: absolute;
