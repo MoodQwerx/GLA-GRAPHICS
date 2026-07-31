@@ -551,3 +551,33 @@ body {
   color: var(--grey);
   font-size: 11px;
 }
+.grupos-editor {
+  display: grid;
+  gap: 18px;
+}
+.grupos-rows-section {
+  display: grid;
+  gap: 8px;
+}
+.grupos-rows-section h2 {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.7px;
+}
+.grupos-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 70px;
+  gap: 6px;
+}
+.grupos-row select {
+  min-width: 0;
+}
+.grupos-puntos-input {
+  min-width: 0;
+  text-align: center;
+}
+.grupos-limit-note {
+  margin: 0;
+  color: var(--grey);
+  font-size: 11px;
+}

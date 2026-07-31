@@ -22,6 +22,7 @@ import vsResultado from './vsResultado.js';
 import tarjeta from './tarjeta.js';
 import cambios from './cambios.js';
 import gol from './gol.js';
+import grupos from './grupos.js';
 
 // Registro de funciones de render: id de modulo -> (contentEl, data, justTaken, onOneShotEnded) => void
 export const renderers = {
@@ -46,4 +47,5 @@ export const renderers = {
   tarjeta,
   cambios,
   gol,
+  grupos,
 };

@@ -5,6 +5,7 @@ import { renderFields } from './field-editors.js';
 import { renderScoreboardClockPanel } from './scoreboard-clock-panel.js';
 import { renderLiveClockDisplay } from './live-clock-display.js';
 import { renderFormationListPanel } from './formation-list-panel.js';
+import { renderGruposPanel } from './grupos-panel.js';
 
 // Draft local por modulo: lo que el operador esta editando. Se inicializa
 // una sola vez con el snapshot del servidor al conectar; despues queda bajo
@@ -20,7 +21,7 @@ for (const id of MODULE_IDS) {
 }
 
 // Orden de categorias en el panel (broadcast: lo mas usado en vivo primero).
-const CATEGORY_ORDER = ['Marcador', 'Eventos', 'VAR / Replay', 'Zocalos', 'Mosca', 'Placas', 'Tablas'];
+const CATEGORY_ORDER = ['Marcador', 'Eventos', 'VAR / Replay', 'Zocalos', 'Mosca', 'Placas', 'Grupos', 'Tablas'];
 
 const tabBar = document.getElementById('tab-bar');
 const mcPanel = document.getElementById('mc-panel');
@@ -140,6 +141,10 @@ function renderPanel() {
     });
   } else if (activeId === 'formacionEquipos') {
     panelCleanup = renderFormationListPanel(extraContainer, draft[activeId], () => {
+      scheduleAutoSave(idForThisRender);
+    });
+  } else if (activeId === 'grupos') {
+    panelCleanup = renderGruposPanel(extraContainer, draft[activeId], () => {
       scheduleAutoSave(idForThisRender);
     });
   } else if (mod.autoRunClock) {

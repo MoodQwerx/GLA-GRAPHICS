@@ -2,6 +2,34 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [Unreleased] - 2026-07-31 (52)
+
+### Agregado — Nuevo módulo GRUPOS (Grupo 1 / Grupo 2)
+
+A pedido explícito del usuario se agregó una nueva sección **GRUPOS** en Master Control, con un único módulo (`grupos`) y un selector de variante que elige qué PNG mostrar: Grupo 1 o Grupo 2. Los dos PNG (`GRUPO1.png`/`GRUPO2.png`, entregados por el usuario ya preparados y escalados a 1920×1080 con alfa real) se copiaron sin modificar a `assets/grupos/grupo-1.png` y `assets/grupos/grupo-2.png` (runtime) y a `ai-gfx/grupos/` (archivo de diseño, fuera de git como el resto de `ai-gfx/`); los originales en la raíz del proyecto se dejaron intactos. No se tocó ni reescaló ningún PNG.
+
+**Medición del asset (no a ojo):** se leyó el canal alfa/color real de ambos PNG en el navegador (mismo criterio que el resto del proyecto) y se confirmó que Grupo 1 y Grupo 2 comparten exactamente la misma geometría: placa en x1556-1900,y50-466, con **3 filas de equipo** cada uno (medidas por separado, no asumidas iguales de antemano), mismo alto (84px) y mismo paso vertical (~101px). Cada fila tiene un recuadro de escudo angosto a la izquierda (x1578-1622, dividido del resto por una línea dorada en x1622) y una celda ancha (x1622-1880) con espacio para nombre (izquierda) y puntos (derecha, alineados bajo la etiqueta "PTS" horneada en el asset, x1823-1851).
+
+**Reutilización del catálogo de equipos (sin duplicar nada):** cada fila solo guarda un `teamId` (mismo catálogo global `shared/teams.js` que usa `scoreboard` para `teamA`/`teamB`) y un campo de puntos libre. Escudo (`crestFile`) y nombre completo (`teamName`, no abreviatura) se derivan siempre de ese ID mediante las mismas funciones que ya usan Marcador principal, Entretiempo, Penales, Tarjetas, Cambios y VS — no se agregó un segundo catálogo ni una carga manual de imagen o texto en ningún lado.
+
+**Arquitectura:**
+- `shared/modules.js`: nueva entrada `grupos` (categoría "Grupos", `fields: []` — sin campos genéricos, ver más abajo) con `defaults` separados por variante: `grupo1.filas`/`grupo2.filas`, cada uno un arreglo fijo de 3 `{ teamId, puntos }`. Cada variante guarda su propio arreglo por separado a propósito: son grupos de equipos distintos, cambiar el selector no pisa lo cargado en el otro grupo.
+- `program/js/renderers/grupos.js` (nuevo): mismo patrón que `marcadorZocalo.js`/`marcadorTiempoAdicional.js` (imagen estática `<img class="gfx-bg-image">`, sin video/canvas) — reconstruye el `.gfx-overlay` solo cuando cambia la variante (mismo criterio que `tarjeta.js` con su campo `tipo`), y en cada render vuelve a resolver escudo/nombre/puntos de las 3 filas de la variante activa. Usa `applyFittedText` (`program/js/text-fit.js`, ya existente) para el nombre, sin reimplementar el auto-ajuste de fuente.
+- `master-control/js/grupos-panel.js` (nuevo) + registro en `master-control/js/main.js`: panel dedicado (mismo criterio que `formation-list-panel.js`/`scoreboard-clock-panel.js`, ver `docs/ARCHITECTURE.md`) porque el editor genérico de schema (`field-editors.js`) no tiene un tipo de campo que combine un `<select>` de equipo por fila con una cantidad de filas fija que además depende de la variante elegida (`FIELD_TYPES.LIST` sólo soporta inputs de texto libre y listas de largo variable con agregar/quitar). El panel renderiza el selector de variante y, por fila, un `<select>` con las mismas `TEAM_OPTIONS` que usa `scoreboard` más un input de puntos — autoguardado con el mismo mecanismo (`onDirty`/debounce) que el resto de Master Control.
+- `program/css/overlay.css` / `master-control/css/master.css`: posicionamiento del contenido (medido, ver arriba) y estilos mínimos del panel, reutilizando las clases/convenciones ya existentes (`.gfx-overlay`, `.field`, patrón de `.formation-*`).
+- `program/index.html`: nuevo nodo `<div id="mod-grupos">`. `README.md`, `docs/MODULES.md`, `docs/ARCHITECTURE.md` y `.agents/project-context.md` actualizados (22 módulos en total, 8 categorías).
+
+**Nota operativa:** el servidor Node en ejecución tenía en memoria el schema anterior (sin `grupos`) y no lo actualiza solo al editar `shared/modules.js` — a diferencia de deshabilitar un módulo (donde el estado de más no rompe nada), agregar uno nuevo sí requiere reiniciar el proceso del servidor para que el `STATE_SNAPSHOT` incluya la clave `grupos`; si no, Master Control tira un error silencioso al abrir esa pestaña (`serverState['grupos']` queda `undefined`). Se reinició el servidor como parte de esta entrega.
+
+### Verificado
+
+- Master Control: la sección "GRUPOS" aparece en la barra lateral; el panel muestra el selector de variante (Grupo 1/Grupo 2) y exactamente 3 filas, cada una con su desplegable de equipo y su campo de puntos.
+- Se cargaron equipos y puntos distintos en Grupo 1 y Grupo 2, confirmando que cada variante conserva sus propios datos al alternar el selector (no se pisan entre sí).
+- Program: al tomar al aire, el escudo se carga automáticamente desde `assets/crests/`, el nombre completo aparece solo (sin escribirlo a mano) y los puntos se muestran en su campo — verificado visualmente con una composición real (asset + overlay, posiciones reales vía `getBoundingClientRect`) confirmando escudo, nombre y puntos centrados y alineados dentro de cada fila, sin invadir casilleros vecinos.
+- Cambio de variante **con el módulo ya al aire** (UPDATE, no solo TAKE): el PNG y el contenido cambian correctamente al del otro grupo.
+- Persistencia: datos guardados en `data/master-control-state.json` confirmados tras un **reinicio real del proceso del servidor** (no solo un refresh) — variante, equipos, escudos y puntos de ambos grupos se recuperaron correctamente al reabrir Master Control; el status volvió a `OUT`, comportamiento esperado y sin cambios respecto del resto del sistema.
+- Consola sin errores en Master Control ni en Program en ninguna de las pruebas anteriores.
+
 ## [Unreleased] - 2026-07-31 (51)
 
 ### Corregido — Contenido de los Zócalos sincronizado con el destello real de entrada

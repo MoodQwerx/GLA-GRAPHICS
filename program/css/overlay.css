@@ -1591,6 +1591,67 @@
 }
 
 /* ============================================================
+   GRUPOS — PNG estatico (sin video, entregado ya preparado y escalado a
+   1920x1080 por el usuario; no se reescala ni se reposiciona). Grupo 1 y
+   Grupo 2 comparten exactamente la misma geometria (medida por separado
+   sobre el canal alfa/color real de cada PNG, no a ojo, y confirmada
+   idéntica en ambos): cuadro de la placa en x1556-1900,y50-466; 3 filas
+   de equipo con el mismo alto y paso vertical:
+     fila 0: top=150px, height=84px (borde dorado real y150-234)
+     fila 1: top=252px, height=84px (borde dorado real y252-336)
+     fila 2: top=352px, height=84px (borde dorado real y352-436)
+   Cada fila se divide en escudo (recuadro angosto a la izquierda,
+   x1578-1622, linea divisoria dorada en x1622) y una celda ancha
+   (x1622-1880) que aloja nombre completo (izquierda) y puntos (derecha,
+   alineado bajo la etiqueta "PTS" horneada en el asset, x1823-1851). */
+#mod-grupos {
+  width: 1920px;
+  height: 1080px;
+}
+.ov-grupos-crest {
+  position: absolute;
+  left: 1578px;
+  width: 44px;
+  height: 64px;
+  object-fit: contain;
+}
+.ov-grupos-crest[data-row="0"] { top: 160px; }
+.ov-grupos-crest[data-row="1"] { top: 262px; }
+.ov-grupos-crest[data-row="2"] { top: 362px; }
+.ov-grupos-name {
+  position: absolute;
+  left: 1630px;
+  width: 170px;
+  height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--white);
+  overflow: hidden;
+}
+.ov-grupos-name[data-row="0"] { top: 150px; }
+.ov-grupos-name[data-row="1"] { top: 252px; }
+.ov-grupos-name[data-row="2"] { top: 352px; }
+.ov-grupos-puntos {
+  position: absolute;
+  left: 1805px;
+  width: 70px;
+  height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--gold-bright);
+}
+.ov-grupos-puntos[data-row="0"] { top: 150px; }
+.ov-grupos-puntos[data-row="1"] { top: 252px; }
+.ov-grupos-puntos[data-row="2"] { top: 352px; }
+
+/* ============================================================
    TABLA LATERAL DERECHA (sin asset nuevo todavia)
    ============================================================ */
 #mod-sideTable {

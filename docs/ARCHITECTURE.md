@@ -37,7 +37,7 @@ Mensajes (definidos en `shared/constants.js` → `WS_MSG`):
 
 | Direccion | Tipo | Payload | Efecto |
 |---|---|---|---|
-| servidor → clientes | `STATE_SNAPSHOT` | `{ state }` | Se envia al conectar; estado completo de los 21 modulos registrados. |
+| servidor → clientes | `STATE_SNAPSHOT` | `{ state }` | Se envia al conectar; estado completo de los 22 modulos registrados. |
 | servidor → clientes | `MODULE_UPDATE` | `{ moduleId, moduleState }` | Se retransmite cada vez que un modulo cambia. |
 | Master Control → servidor | `TAKE` | `{ moduleId, data }` | Actualiza los datos y pone `status = ON`. |
 | Master Control → servidor | `UPDATE` | `{ moduleId, data }` | Actualiza los datos sin tocar `status` (util para editar en caliente). |

@@ -45,7 +45,7 @@ El Preview Monitor del Master Control reduce deliberadamente el Program para que
 
 ## Modulos incluidos
 
-21 graficas agrupadas por categoria (20 disponibles en el panel; Zocalo largo simple esta desactivado temporalmente, ver `docs/MODULES.md`) — Marcador (marcador principal, tiempo adicional, entretiempo, penales, marcador zocalo — titulo + contador sobre imagen estatica, detras del marcador principal), Placas (formacion de equipos, VS prepartido, VS con resultado), Eventos (tarjeta, cambios, gol), VAR / Replay (VAR chequeo, replay con sponsor), Mosca (LocalStrike), Zocalos (largo simple — desactivado —, largo doble, corto simple/doble, VS compacto) y Tablas (tabla lateral, proximos encuentros).
+22 graficas agrupadas por categoria (21 disponibles en el panel; Zocalo largo simple esta desactivado temporalmente, ver `docs/MODULES.md`) — Marcador (marcador principal, tiempo adicional, entretiempo, penales, marcador zocalo — titulo + contador sobre imagen estatica, detras del marcador principal), Placas (formacion de equipos, VS prepartido, VS con resultado), Eventos (tarjeta, cambios, gol), VAR / Replay (VAR chequeo, replay con sponsor), Mosca (LocalStrike), Zocalos (largo simple — desactivado —, largo doble, corto simple/doble, VS compacto), Grupos (Grupo 1 / Grupo 2 — imagen estatica con escudo, nombre y puntos por equipo, tomados del mismo catalogo que el Marcador principal) y Tablas (tabla lateral, proximos encuentros).
 
 Cada grafica usa el asset original entregado por el usuario (nunca una recreacion en CSS), reproducido con canal alfa real cuando es video o mostrado directo cuando es una imagen estatica con alfa (PNG). Ver el detalle de campos, asset y posicion de cada modulo en [docs/MODULES.md](docs/MODULES.md).
 

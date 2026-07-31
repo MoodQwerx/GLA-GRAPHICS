@@ -38,7 +38,7 @@ El servidor mantiene por módulo `{ status, data }`. `data` se persiste en `data
 
 El Program permite varias capas simultáneas. No existe exclusión automática de fullscreen. El campo `layer` del schema es descriptivo; el orden de apilado efectivo depende del DOM y CSS.
 
-Hay 21 módulos registrados en siete categorías. Los módulos con `live`, `oneShot` o `autoRunClock` tienen ciclos de vida especiales definidos en `shared/modules.js`.
+Hay 22 módulos registrados en ocho categorías. Los módulos con `live`, `oneShot` o `autoRunClock` tienen ciclos de vida especiales definidos en `shared/modules.js`.
 
 ## Restricciones operativas
 

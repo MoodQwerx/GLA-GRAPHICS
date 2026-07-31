@@ -436,6 +436,36 @@ export const MODULES = {
   },
 
   // ---------------------------------------------------------------------
+  // GRUPOS
+  // ---------------------------------------------------------------------
+  // Un unico modulo con un selector de variante ("variante": que PNG
+  // mostrar, Grupo 1 o Grupo 2) en vez de dos modulos separados — mismo
+  // criterio que Tarjeta (un campo elige que asset/variante se usa). Sin
+  // "fields" genericos: el selector de variante y las filas (escudo +
+  // nombre automaticos desde el catalogo de equipos + puntos) viven en un
+  // panel dedicado (master-control/js/grupos-panel.js) porque la cantidad
+  // de filas y el desplegable de equipo por fila no entran en el editor
+  // generico de schema (FIELD_TYPES.LIST no soporta un SELECT por fila ni
+  // una cantidad fija sin agregar/quitar — ver docs/ARCHITECTURE.md).
+  // Cada variante guarda su propio arreglo de filas por separado (no
+  // comparten datos entre si): son grupos de equipos distintos, cambiar
+  // el selector no tiene por que pisar lo cargado en el otro grupo.
+  // Cantidad de filas medida directamente sobre cada PNG (alfa/color real,
+  // no a ojo): ambos assets traen exactamente 3 casilleros de equipo.
+  grupos: {
+    id: 'grupos',
+    label: 'Grupos',
+    category: 'Grupos',
+    layer: 'fullscreen',
+    fields: [],
+    defaults: {
+      variante: 'grupo1',
+      grupo1: { filas: [{ teamId: '', puntos: '' }, { teamId: '', puntos: '' }, { teamId: '', puntos: '' }] },
+      grupo2: { filas: [{ teamId: '', puntos: '' }, { teamId: '', puntos: '' }, { teamId: '', puntos: '' }] },
+    },
+  },
+
+  // ---------------------------------------------------------------------
   // Sin asset nuevo todavia (se mantienen del sistema anterior)
   // ---------------------------------------------------------------------
   sideTable: {

@@ -126,13 +126,22 @@ Desactivado a pedido explicito del usuario (2026-07-31) hasta que haya un asset 
 - **Goleadores**: cada viewport termina 6px antes/después de su recuadro dorado (`local x514-822`; `visitante x1063-1371`) y usa `overflow:hidden`. Cada lado mide su contenido después de estar visible: si entra, queda estático; si excede, crea un único loop CSS lineal a 24px/s con duración calculada por su propio ancho. OUT elimina el DOM/animación; un nuevo IN crea exactamente un track por lado.
 - **Limitación conocida**: toda la geometría (zonas de equipo, bloque central, escudos, muescas) se midió solo sobre la variante "normal"; si "alto"/"medio"/"fino" tienen proporciones distintas, podrían necesitar un ajuste puntual aparte.
 
+## Grupos
+
+### 20. Grupos (`grupos`)
+- **Assets** (variant selector por campo `variante`, panel dedicado — ver `master-control/js/grupos-panel.js`): [`assets/grupos/grupo-1.png`](../assets/grupos/grupo-1.png) (Grupo 1) / [`assets/grupos/grupo-2.png`](../assets/grupos/grupo-2.png) (Grupo 2). PNG estatico con alfa real, entregado ya preparado y escalado a 1920×1080 por el usuario — sin video, sin transcodificar, sin transform ni reescalado.
+- **Posicion**: placa en la esquina superior derecha, x1556-1900,y50-466 (medido sobre el canal alfa/color real de cada PNG, idéntica en ambas variantes). 3 filas de equipo con el mismo alto y paso vertical: fila 0 top=150px, fila 1 top=252px, fila 2 top=352px, todas height=84px.
+- **Campos por fila** (panel dedicado, no el editor genérico — la cantidad fija de filas y el desplegable de equipo por fila no entran en `FIELD_TYPES.LIST`): equipo (mismo catálogo global que el Marcador principal, `shared/teams.js`) y puntos (texto/numérico libre). Escudo y nombre completo (no abreviatura) se derivan siempre del `teamId` elegido — nunca se cargan ni se escriben a mano. Cada variante (Grupo 1/Grupo 2) guarda su propio arreglo de filas por separado; cambiar el selector no pisa los datos del otro grupo.
+- **Cantidad de filas**: 3 en ambas variantes, medida directamente sobre cada PNG — no se puede agregar ni quitar desde el panel.
+- **Composición por fila**: recuadro de escudo angosto a la izquierda (x1578-1622, 44×64px, `object-fit:contain`), línea divisoria dorada en x1622, y una celda ancha (x1622-1880) con el nombre completo a la izquierda (auto-ajuste hasta 28px vía `program/js/text-fit.js`) y los puntos a la derecha (28px, alineados bajo la etiqueta "PTS" horneada en el asset, x1823-1851).
+
 ## Tablas (sistema anterior, sin asset de video nuevo)
 
-### 20. Tabla lateral derecha (`sideTable`)
+### 21. Tabla lateral derecha (`sideTable`)
 - **Posicion**: franja vertical sobre el lado derecho (HTML/CSS, no video).
 - **Campos**: titulo de la tabla, lista de resultados (equipo A, goles A, equipo B, goles B) — filas ilimitadas, se agregan/quitan desde Master Control.
 
-### 21. Proximos encuentros (`upcoming`)
+### 22. Proximos encuentros (`upcoming`)
 - **Posicion**: zocalito vertical inferior izquierdo (HTML/CSS, no video).
 - **Campos**: titulo, lista de partidos (equipo A, equipo B, fecha/hora o competicion).
 
