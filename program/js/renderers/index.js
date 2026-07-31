@@ -5,7 +5,10 @@ import marcadorEntretiempo from './marcadorEntretiempo.js';
 import marcadorPenales from './marcadorPenales.js';
 import marcadorZocalo from './marcadorZocalo.js';
 import sideTable from './sideTable.js';
-import longSimple from './longSimple.js';
+// DESACTIVADO TEMPORALMENTE junto con su entrada en shared/modules.js (ver
+// ese archivo) — descomentar esta linea y la del registro mas abajo para
+// reactivar. El archivo longSimple.js no se toco.
+// import longSimple from './longSimple.js';
 import longDouble from './longDouble.js';
 import shortSimple from './shortSimple.js';
 import shortDouble from './shortDouble.js';
@@ -29,7 +32,7 @@ export const renderers = {
   marcadorPenales,
   marcadorZocalo,
   sideTable,
-  longSimple,
+  // longSimple, // DESACTIVADO TEMPORALMENTE — ver comentario junto al import mas arriba.
   longDouble,
   shortSimple,
   shortDouble,

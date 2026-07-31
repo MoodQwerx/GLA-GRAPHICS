@@ -2,6 +2,50 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [Unreleased] - 2026-07-31 (50)
+
+### Corregido — Delay de contenido más corto en Tarjeta y los Zócalos
+
+A pedido explícito del usuario, se acortó aún más el tiempo entre la entrada del asset y la revelación del contenido (`--dur-content-delay`) en Tarjeta y los 5 Zócalos (`longSimple`, `longDouble`, `shortSimple`, `shortDouble`, `vs`), sin tocar el orden asset→contenido ni la lógica compartida (`program/js/main.js`, sin cambios en esta entrada). El delay sigue teniendo un piso real: no puede bajar del momento en que el asset efectivamente termina de asentarse (si no, el nombre/escudo/texto volvería a aparecer flotando sobre un asset todavía en movimiento — el problema que motivó la revisión anterior). Lo que se recortó fue el margen de seguridad artificial agregado sobre ese asentamiento real, medido con la misma metodología de diff de frames en vivo ya documentada: de 250ms a ~50-70ms.
+
+| Módulo | Antes (entrada 49) | Después |
+|---|---|---|
+| Tarjeta | 1000ms | 800ms |
+| Zócalo largo simple* | 1600ms | 1350ms |
+| Zócalo largo doble | 1600ms | 1350ms |
+| Zócalo corto simple | 1500ms | 1250ms |
+| Zócalo corto doble | 500ms | 250ms |
+| VS compacto | 900ms | 650ms |
+
+\* Zócalo largo simple está desactivado temporalmente (ver más abajo); su valor se actualizó igual para que quede correcto al reactivarlo.
+
+No se tocaron Cambios, Replay, VAR Chequeo, Marcador principal, Entretiempo, Penales, Mosca, Formación, VS Prepartido ni VS Con resultado — el usuario pidió específicamente Tarjeta y los Zócalos, y no hay evidencia de que el resto necesite el mismo ajuste.
+
+### Eliminado — Zócalo Largo Simple desactivado temporalmente
+
+A pedido explícito del usuario, se retiró el módulo Zócalo Largo Simple de Master Control y Program hasta que haya un asset de reemplazo, **preservando toda su lógica comentada** para reactivarlo en minutos:
+
+- `shared/modules.js`: la entrada `longSimple` (schema, campos, defaults, flag `sequencedReveal`) se comentó completa con un bloque `/* ... */` en vez de borrarse — al no estar en `MODULES`/`MODULE_IDS`, Master Control (que genera su panel desde este schema) deja de mostrarlo automáticamente, sin tocar ningún archivo de `master-control/`.
+- `program/js/renderers/index.js`: el `import` y la entrada en el registro `renderers` se comentaron. El archivo `program/js/renderers/longSimple.js` (toda la lógica de render) **no se tocó** — queda intacto, simplemente sin importarse.
+- `program/index.html`: el nodo `<div id="mod-longSimple">` se comentó (ya no existe en el DOM de Program).
+- `program/css/overlay.css`: el posicionamiento y el `--dur-content-delay` de `#mod-longSimple` **no se tocaron** (quedan activos en el archivo, listos para cuando se reactive — no hacen nada mientras el nodo no exista en el HTML).
+- `assets/zocalos/zocalo-largo-simple-alpha.mp4` (asset runtime transcodificado): **eliminado** del repositorio, tal como pidió el usuario. El original de diseño `ai-gfx/zocalos/zocalo-largo-simple.mov` **se conservó** sin tocar (no se pidió borrarlo, y sirve de referencia si el reemplazo se deriva del mismo diseño).
+- Estado/persistencia: no se tocó `data/master-control-state.json` ni el contrato `{status, data}`; un eventual dato persistido de `longSimple` de sesiones anteriores queda inerte (el servidor ya no lo expone en el panel ni lo puede recibir por WebSocket, pero no se borró ni se migró).
+
+**Para reactivar cuando haya asset nuevo:** descomentar los 3 bloques marcados "DESACTIVADO TEMPORALMENTE" (`shared/modules.js`, `program/js/renderers/index.js`, `program/index.html`), reemplazar el archivo en `assets/zocalos/zocalo-largo-simple-alpha.mp4` por la transcodificación del asset nuevo, y verificar/ajustar el posicionamiento y `--dur-content-delay` en `overlay.css` si la geometría del nuevo asset difiere de la anterior.
+
+Documentación actualizada en `README.md`, `docs/MODULES.md` y `docs/ARCHITECTURE.md` para reflejar que el módulo está temporalmente desactivado.
+
+### Verificado
+
+- Master Control: "Zócalo largo simple" ya no aparece en la categoría Zócalos (confirmado leyendo el texto de la página); el resto de los Zócalos sigue apareciendo sin cambios.
+- Program: `document.getElementById('mod-longSimple')` devuelve `null` (el nodo no existe en el DOM).
+- Los cambios son archivos estáticos (HTML/CSS/JS servidos directo desde disco): se confirmó que no hace falta reiniciar el proceso del servidor para que Master Control y Program reflejen el módulo desactivado — alcanza con recargar la página.
+- Tiempos nuevos de revelado de contenido confirmados con `MutationObserver` real (no polling) sobre Tarjeta, VS compacto, Zócalo largo doble, Zócalo corto simple y Zócalo corto doble: todos dentro de ~25-50ms del valor configurado, en una pestaña de navegador sin degradación de temporizadores. **Nota de metodología:** una primera tanda de mediciones en la pestaña de pruebas que venía usándose desde hace varias horas de sesión mostró desvíos grandes e inconsistentes (hasta ~750ms); se aisló la causa con una prueba de control (`setTimeout(1250)` corriendo solo, sin ninguna lógica de la app, tardó 1996ms en esa misma pestaña) — confirmando que era degradación de temporizadores de esa pestaña puntual (no del código) tras uso muy prolongado. Repetido en una pestaña nueva, los tiempos coincidieron con precisión.
+- Secuencia asset→contenido y contenido→asset (orden) confirmada intacta en todos los módulos probados: el asset entra primero, el contenido se revela después en el tiempo configurado, y a la salida el contenido desaparece antes que el asset (gap de 200ms sin cambios).
+- Consola sin errores en todas las pruebas de esta entrada.
+- Estado de prueba devuelto a `OUT` en todos los módulos usados al finalizar.
+
 ## [Unreleased] - 2026-07-30 (49)
 
 ### Corregido — Revisión global de animaciones de entrada y salida (asset → contenido)

@@ -328,17 +328,28 @@ export const MODULES = {
   // ---------------------------------------------------------------------
   // ZOCALOS
   // ---------------------------------------------------------------------
-  longSimple: {
-    id: 'longSimple',
-    label: 'Zocalo largo simple',
-    category: 'Zocalos',
-    layer: 'bottom-wide',
-    sequencedReveal: true,
-    fields: [
-      { key: 'text', label: 'Texto', type: FIELD_TYPES.TEXT },
-    ],
-    defaults: { text: '' },
-  },
+  // DESACTIVADO TEMPORALMENTE a pedido explicito del usuario (2026-07-31):
+  // falta reemplazar el asset. Toda la logica (schema, renderer en
+  // program/js/renderers/longSimple.js, registro en
+  // program/js/renderers/index.js, nodo en program/index.html) se
+  // conserva intacta, solo comentada — al no estar en MODULES/MODULE_IDS
+  // el modulo desaparece solo del panel de Master Control (generado desde
+  // este schema) y del loop de program/js/main.js, sin tocar ningun otro
+  // archivo. Para reactivar cuando haya asset nuevo: descomentar este
+  // bloque, el import+entrada en program/js/renderers/index.js, y el
+  // <div id="mod-longSimple"> en program/index.html (buscar "DESACTIVADO
+  // TEMPORALMENTE" en cada archivo).
+  // longSimple: {
+  //   id: 'longSimple',
+  //   label: 'Zocalo largo simple',
+  //   category: 'Zocalos',
+  //   layer: 'bottom-wide',
+  //   sequencedReveal: true,
+  //   fields: [
+  //     { key: 'text', label: 'Texto', type: FIELD_TYPES.TEXT },
+  //   ],
+  //   defaults: { text: '' },
+  // },
 
   longDouble: {
     id: 'longDouble',
