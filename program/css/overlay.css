@@ -1603,11 +1603,49 @@
    Cada fila se divide en escudo (recuadro angosto a la izquierda,
    x1578-1622, linea divisoria dorada en x1622) y una celda ancha
    (x1622-1880) que aloja nombre completo (izquierda) y puntos (derecha,
-   alineado bajo la etiqueta "PTS" horneada en el asset, x1823-1851). */
+   alineado bajo la etiqueta "PTS" horneada en el asset, x1823-1851).
+
+   Modos de posicion (2026-07-31, a pedido explicito del usuario): cada
+   modulo interno ".ov-grupos-card" es un contenedor de 1920x1080 que
+   envuelve una copia completa de imagen+overlay (misma estructura y
+   coordenadas de fila de siempre, sin cambios) — reposicionar un modo
+   es solo aplicarle un transform a este contenedor, nunca a las filas
+   individuales:
+     - Placa L (posicion aprobada original, sin cambios): top = sin
+       transform. bottom (Grupo 2 apilado debajo de Grupo 1 en el mismo
+       modo) = translateY(440px) = altura real de la placa (416px,
+       y50-466) + 24px de separacion visual -> el segundo cuadro cae en
+       y490-906, dentro del frame (1080) con 174px de aire debajo, sin
+       tocar al primero (24px de hueco real entre y466 y y490).
+     - Fullscreen abajo derecha: mismo ancho/alto nativo (344x416), sin
+       reescalar. Margen de seguridad elegido: 40px contra el borde
+       derecho y 40px contra el inferior -> borde derecho final en
+       1920-40=1880, borde inferior final en 1080-40=1040. Como el
+       cuadro ya nace en x1556-1900 (bottom=1080-1040 - ya sale a
+       1900, margen derecho nativo 20px) y y50-466, el transform
+       necesario es translate(1880-1900, 1040-466) = translate(-20px,
+       574px).
+     - Fullscreen abajo izquierda: mismo criterio, espejado en X con el
+       mismo margen de 40px del lado izquierdo -> borde izquierdo final
+       en 40px, es decir left final = 40 (cuadro nativo ancho 344,
+       arranca en x1556) -> transform translate(40-1556, 574) =
+       translate(-1516px, 574px). Mismo desplazamiento vertical que el
+       modo derecho (misma escala, simetria real). */
 #mod-grupos {
   width: 1920px;
   height: 1080px;
 }
+.ov-grupos-card {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+}
+.ov-grupos-card--placaL-top { transform: translate(0, 0); }
+.ov-grupos-card--placaL-bottom { transform: translate(0, 440px); }
+.ov-grupos-card--fs-derecha { transform: translate(-20px, 574px); }
+.ov-grupos-card--fs-izquierda { transform: translate(-1516px, 574px); }
 .ov-grupos-crest {
   position: absolute;
   left: 1578px;
@@ -1618,10 +1656,16 @@
 .ov-grupos-crest[data-row="0"] { top: 160px; }
 .ov-grupos-crest[data-row="1"] { top: 262px; }
 .ov-grupos-crest[data-row="2"] { top: 362px; }
+/* Nombre: pedido explicito del usuario (2026-07-31) de separarlo un poco
+   mas de la linea divisoria dorada (x1622) — antes left:1630 (8px de
+   aire), ahora left:1640 (18px de aire), un ajuste minimo. El borde
+   derecho de la caja se conserva igual (1800, sin invadir la zona de
+   puntos que arranca en 1805): width baja de 170 a 160 para compensar.
+   Tamaño de fuente, alineacion vertical, escudos y puntos sin cambios. */
 .ov-grupos-name {
   position: absolute;
-  left: 1630px;
-  width: 170px;
+  left: 1640px;
+  width: 160px;
   height: 84px;
   display: flex;
   align-items: center;

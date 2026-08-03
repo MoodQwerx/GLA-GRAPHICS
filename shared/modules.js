@@ -452,6 +452,19 @@ export const MODULES = {
   // el selector no tiene por que pisar lo cargado en el otro grupo.
   // Cantidad de filas medida directamente sobre cada PNG (alfa/color real,
   // no a ojo): ambos assets traen exactamente 3 casilleros de equipo.
+  //
+  // "posicion" (agregado 2026-07-31, a pedido explicito del usuario):
+  // modo de salida — 'placaL' (posicion aprobada original: Grupo 1 y
+  // Grupo 2 se muestran juntos, apilados) o 'fullscreenDerecha'/
+  // 'fullscreenIzquierda' (un unico grupo, elegido con "variante", en la
+  // esquina inferior correspondiente). "variante" pasa a ser relevante
+  // solo en los modos fullscreen ("Grupo visible" en el panel); en modo
+  // Placa L se ignora porque se muestran ambos grupos siempre. El orden
+  // de cada tabla (mayor a menor puntaje) NO se persiste por separado:
+  // se recalcula siempre en el renderer (program/js/renderers/grupos.js)
+  // a partir de "puntos", con un sort estable para que los empates
+  // conserven el orden de carga original sin inventar un criterio de
+  // desempate adicional.
   grupos: {
     id: 'grupos',
     label: 'Grupos',
@@ -459,6 +472,7 @@ export const MODULES = {
     layer: 'fullscreen',
     fields: [],
     defaults: {
+      posicion: 'placaL',
       variante: 'grupo1',
       grupo1: { filas: [{ teamId: '', puntos: '' }, { teamId: '', puntos: '' }, { teamId: '', puntos: '' }] },
       grupo2: { filas: [{ teamId: '', puntos: '' }, { teamId: '', puntos: '' }, { teamId: '', puntos: '' }] },

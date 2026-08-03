@@ -581,3 +581,23 @@ body {
   color: var(--grey);
   font-size: 11px;
 }
+.grupos-edit-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.grupos-edit-tab {
+  min-height: 34px;
+  border: 1px solid #35353a;
+  border-radius: 4px;
+  background: #20242b;
+  color: var(--grey);
+  cursor: pointer;
+  font-size: 12px;
+}
+.grupos-edit-tab.active {
+  background: var(--gold-dim);
+  border-color: var(--gold-bright);
+  color: var(--black);
+  font-weight: 700;
+}

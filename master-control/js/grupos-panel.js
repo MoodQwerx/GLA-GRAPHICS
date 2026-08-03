@@ -5,6 +5,12 @@ const VARIANTS = [
   { id: 'grupo2', label: 'Grupo 2' },
 ];
 
+const POSICIONES = [
+  { id: 'placaL', label: 'PLACA L' },
+  { id: 'fullscreenDerecha', label: 'FULLSCREEN — ABAJO DERECHA' },
+  { id: 'fullscreenIzquierda', label: 'FULLSCREEN — ABAJO IZQUIERDA' },
+];
+
 // Panel dedicado (no el editor generico de schema, ver docs/ARCHITECTURE.md):
 // el editor generico (field-editors.js) no tiene un tipo de campo que
 // combine un SELECT de equipo por fila con una cantidad de filas fija (sin
@@ -17,43 +23,112 @@ const VARIANTS = [
 // selector no pisa lo cargado en el otro grupo. Escudo y nombre completo
 // NUNCA se escriben a mano: se derivan siempre del mismo catalogo de
 // equipos que usa el Marcador principal (TEAM_OPTIONS/crestFile/teamName,
-// shared/teams.js) a partir del "teamId" elegido en el desplegable.
+// shared/teams.js) a partir del "teamId" elegido en el desplegable. El
+// orden de exhibicion (mayor a menor puntaje) se calcula solo en Program
+// (program/js/renderers/grupos.js) — este panel edita los datos crudos
+// tal como se cargan, sin reordenar filas mientras el operador tipea.
+//
+// "posicion" (2026-07-31): modo de salida. En Placa L se muestran Grupo 1
+// y Grupo 2 juntos siempre, asi que el selector de "Grupo visible" no
+// aplica y se oculta (evita un control redundante/confuso) — se muestra
+// una nota aclarando que van los dos. En los modos fullscreen si aplica,
+// porque solo se muestra un grupo por vez.
+//
+// "editingGrupo" es un toggle puramente local del panel (no se persiste,
+// no afecta lo que esta al aire): decide que tabla de filas se ve para
+// editar en este momento. Existe porque el operador tiene que poder
+// cargar/editar AMBOS grupos sin importar el modo de salida elegido (ej.
+// preparar el Grupo 2 con anticipacion mientras el modo fullscreen activo
+// todavia muestra el Grupo 1).
 export function renderGruposPanel(container, data, onDirty) {
   const root = document.createElement('div');
   root.className = 'grupos-editor';
   container.appendChild(root);
 
+  let editingGrupo = data.variante === 'grupo2' ? 'grupo2' : 'grupo1';
+
   function render() {
     root.innerHTML = '';
 
-    const varianteField = document.createElement('div');
-    varianteField.className = 'field';
-    const varianteLabel = document.createElement('label');
-    varianteLabel.textContent = 'Variante (asset a mostrar)';
-    varianteField.appendChild(varianteLabel);
-    const varianteSelect = document.createElement('select');
-    for (const opt of VARIANTS) {
+    // --- Posicion ---
+    const posicionField = document.createElement('div');
+    posicionField.className = 'field';
+    const posicionLabel = document.createElement('label');
+    posicionLabel.textContent = 'Posición';
+    posicionField.appendChild(posicionLabel);
+    const posicionSelect = document.createElement('select');
+    for (const opt of POSICIONES) {
       const option = document.createElement('option');
       option.value = opt.id;
       option.textContent = opt.label;
-      varianteSelect.appendChild(option);
+      posicionSelect.appendChild(option);
     }
-    varianteSelect.value = data.variante || 'grupo1';
-    varianteSelect.addEventListener('change', () => {
-      data.variante = varianteSelect.value;
+    posicionSelect.value = POSICIONES.some((p) => p.id === data.posicion) ? data.posicion : 'placaL';
+    posicionSelect.addEventListener('change', () => {
+      data.posicion = posicionSelect.value;
       onDirty();
       render();
     });
-    varianteField.appendChild(varianteSelect);
-    root.appendChild(varianteField);
+    posicionField.appendChild(posicionSelect);
+    root.appendChild(posicionField);
 
-    const variante = data.variante === 'grupo2' ? 'grupo2' : 'grupo1';
-    const filas = data[variante].filas;
+    const posicion = posicionSelect.value;
+    const esFullscreen = posicion === 'fullscreenDerecha' || posicion === 'fullscreenIzquierda';
+
+    // --- Grupo visible (solo fullscreen) / nota (Placa L) ---
+    if (esFullscreen) {
+      const varianteField = document.createElement('div');
+      varianteField.className = 'field';
+      const varianteLabel = document.createElement('label');
+      varianteLabel.textContent = 'Grupo visible';
+      varianteField.appendChild(varianteLabel);
+      const varianteSelect = document.createElement('select');
+      for (const opt of VARIANTS) {
+        const option = document.createElement('option');
+        option.value = opt.id;
+        option.textContent = opt.label;
+        varianteSelect.appendChild(option);
+      }
+      varianteSelect.value = data.variante === 'grupo2' ? 'grupo2' : 'grupo1';
+      varianteSelect.addEventListener('change', () => {
+        data.variante = varianteSelect.value;
+        editingGrupo = varianteSelect.value;
+        onDirty();
+        render();
+      });
+      varianteField.appendChild(varianteSelect);
+      root.appendChild(varianteField);
+    } else {
+      const note = document.createElement('p');
+      note.className = 'grupos-limit-note';
+      note.textContent = 'En Placa L se muestran Grupo 1 (arriba) y Grupo 2 (abajo) al mismo tiempo.';
+      root.appendChild(note);
+    }
+
+    // --- Toggle local: que tabla se esta editando ---
+    const tabs = document.createElement('div');
+    tabs.className = 'grupos-edit-tabs';
+    for (const opt of VARIANTS) {
+      const tab = document.createElement('button');
+      tab.type = 'button';
+      tab.className = 'grupos-edit-tab';
+      tab.classList.toggle('active', editingGrupo === opt.id);
+      tab.textContent = `Editar ${opt.label}`;
+      tab.addEventListener('click', () => {
+        if (editingGrupo === opt.id) return;
+        editingGrupo = opt.id;
+        render();
+      });
+      tabs.appendChild(tab);
+    }
+    root.appendChild(tabs);
+
+    const filas = data[editingGrupo].filas;
 
     const section = document.createElement('section');
     section.className = 'grupos-rows-section';
     const heading = document.createElement('h2');
-    heading.textContent = VARIANTS.find((v) => v.id === variante).label.toUpperCase();
+    heading.textContent = VARIANTS.find((v) => v.id === editingGrupo).label.toUpperCase();
     section.appendChild(heading);
 
     filas.forEach((fila, index) => {
@@ -92,7 +167,7 @@ export function renderGruposPanel(container, data, onDirty) {
 
     const note = document.createElement('p');
     note.className = 'grupos-limit-note';
-    note.textContent = `El asset de ${VARIANTS.find((v) => v.id === variante).label} trae ${filas.length} casilleros de equipo — la cantidad de filas no se puede cambiar.`;
+    note.textContent = `El asset de ${VARIANTS.find((v) => v.id === editingGrupo).label} trae ${filas.length} casilleros de equipo — la cantidad de filas no se puede cambiar. El orden final al aire se calcula solo por puntos (mayor a menor).`;
     section.appendChild(note);
 
     root.appendChild(section);
