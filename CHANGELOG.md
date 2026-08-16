@@ -2,6 +2,28 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [Unreleased] - 2026-08-16 (72)
+
+### Cambiado — MARCADOR: reemplazo único de la pieza .MOV
+
+Pedido explícito del usuario: reemplazar únicamente el `.mov` que usa el módulo MARCADOR (MARCADOR PRINCIPAL / `scoreboard`) por `MARCADOR_nuevo_2.mov`, sin tocar texto, contador, equipos/escudos, animaciones/lógica, Master Control ni ningún otro módulo.
+
+**Localización**: el `.mov` fuente en uso era `ai-gfx/marcador/marcador-principal.mov` (ProRes 4444, `yuva444p12le`, 1920×1080, 30fps, 5s). Program no reproduce ese `.mov` directamente (ningún navegador decodifica ProRes con alfa) — usa la versión ya transcodificada `assets/marcador/marcador-principal-alpha.mp4` (H.264, color+alfa apilado verticalmente, ver `program/js/alpha-video.js`), referenciada por `VIDEO_SRC` en `program/js/renderers/scoreboard.js`.
+
+**Reemplazo**: `MARCADOR_nuevo_2.mov` tiene el mismo perfil técnico exacto que el original (ProRes 4444, `yuva444p12le`, 1920×1080, 30fps, 5s — confirmado con `ffprobe`), así que se transcodificó con la misma receta ya validada en el proyecto (`ffmpeg`, `vstack` color/alfa → H.264 `yuv420p`, `crf 16`, `preset slow`) y el resultado (1920×2160, 101KB) reemplazó **el mismo archivo/ruta** `assets/marcador/marcador-principal-alpha.mp4` — cero cambios de código, `VIDEO_SRC` no se tocó porque el nombre de archivo servido no cambió.
+
+Los originales anteriores se conservaron como backup (no se borró nada): `ai-gfx/marcador/marcador-principal-anterior.mov` (fuente vieja) y `assets/marcador/marcador-principal-alpha-anterior.mp4` (mp4 servido viejo). `MARCADOR_nuevo_2.mov` pasó a ser la nueva fuente en `ai-gfx/marcador/marcador-principal.mov` (mismo nombre que la fuente anterior).
+
+### Verificado (contra el servidor real, WebSocket directo + `getImageData` sobre el canvas compuesto de Program)
+
+1. **TAKE**: `mod-scoreboard` pasa a `is-in` correctamente.
+2. **Se reproduce el .mov nuevo**: escaneo de la textura compuesta en pleno playback (t≈2.2s) encontró contenido opaco real en `x50-460, y24-84` (esquina superior izquierda, coincide con el diseño "chico" del marcador) — el nuevo asset decodifica y compone con canal alfa real, no en blanco. Al terminar el clip (t=5s, `ended:true`) el canvas conserva ese último frame de forma estática, igual que el resto de los módulos con `.mov`.
+3. **UPDATE** funciona: cambio de goles en caliente (`3-1` → `5-2`) se reflejó sin recrear el video ni cortar la reproducción.
+4. **OUT** funciona: `mod-scoreboard` pasa a `is-hidden`.
+5. **No cambió nada más**: cero archivos de código modificados (ni `scoreboard.js`, ni `alpha-video.js`, ni Master Control, ni ningún otro renderer) — sólo se reemplazaron los dos archivos binarios de asset, ambos con el mismo nombre/ruta que ya usaba el sistema.
+
+Nota aparte (no relacionada con este cambio, se dejó constancia): `playFromStart()` no arrancó la reproducción automáticamente al hacer TAKE vía WebSocket directo en este entorno de prueba — mismo síntoma reproducido con `bug`/Mosca (módulo no tocado en esta tarea), así que es una particularidad del entorno de automatización del navegador de esta sesión (autoplay programático), no un bug de este cambio ni del proyecto; llamando `video.play()` manualmente el video reprodujo y compuso sin problema. Se restauraron a valores conocidos los datos de `scoreboard`/`bug` tocados durante la verificación (equipos/colores/goles de `scoreboard` a los que estaban configurados al inicio de esta sesión, ambos módulos de vuelta `FUERA DE AIRE`).
+
 ## [Unreleased] - 2026-08-16 (71)
 
 ### Corregido — Arranque compatible con Render
