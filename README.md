@@ -19,6 +19,10 @@ Identidad visual: dorado + negro, estetica broadcast premium inspirada en grafic
    - **[Q]** cierra todo el software (servidor incluido) y termina — no hace falta abrir otro archivo para apagarlo.
 5. Si esa ventana se cerro de otra forma y el servidor quedo corriendo, ejecutar [end.bat](end.bat) para cerrarlo manualmente.
 
+## Actualizaciones desde `gla.futbol`
+
+Las tablas, planteles, grupos y resultados se actualizan solo mediante los botones del Master Control; no hay polling. El servidor conserva el ultimo snapshot valido, de modo que una falla de Internet no borra la carga anterior. Los nombres y estadisticas vienen de la web, pero escudos, abreviaturas, colores e identidad grafica siempre se resuelven desde el catalogo local.
+
 ## Agregar el Program en OBS o vMix
 
 1. En OBS: **Fuentes → + → Navegador (Browser Source)** · En vMix: **Add Input → Browser**.

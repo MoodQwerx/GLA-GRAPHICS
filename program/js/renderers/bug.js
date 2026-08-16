@@ -1,4 +1,5 @@
 import { createAlphaVideo } from '../alpha-video.js';
+import { applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
 
 const VIDEO_SRC = '/assets/mosca/mosca-localstrike-alpha.mp4';
 
@@ -30,8 +31,14 @@ function buildStructure(el) {
   `;
   el._alphaVideo = createAlphaVideo(el.querySelector('.av-target'), VIDEO_SRC);
 
+  // "clock" (2026-08-15, auditoria completa): el ajuste vivo se guarda en
+  // el propio nodo (el._clockAdjust) porque este tick corre en un
+  // setInterval propio, fuera del ciclo normal de render -- renderBug lo
+  // actualiza en cada llamada (ver mas abajo) para que un cambio de
+  // posicion/tamaño hecho en caliente se vea en el siguiente tick, sin
+  // esperar a que el modulo se saque y se vuelva a tomar al aire.
   const clockEl = el.querySelector('.ov-mosca-clock');
-  const tick = () => { clockEl.textContent = currentClock(); };
+  const tick = () => { applyPlainTextAdjust(clockEl, currentClock(), el._clockAdjust || {}); };
   tick();
   el._clockInterval = setInterval(tick, 1000);
 }
@@ -40,6 +47,8 @@ export default function renderBug(contentEl, data, justTaken) {
   if (!contentEl._alphaVideo) {
     buildStructure(contentEl);
   }
+  contentEl._clockAdjust = readTextAdjust(data.textAdjust, 'clock');
+  applyPlainTextAdjust(contentEl.querySelector('.ov-mosca-clock'), currentClock(), contentEl._clockAdjust);
   if (justTaken) {
     contentEl._alphaVideo.playFromStart();
   }

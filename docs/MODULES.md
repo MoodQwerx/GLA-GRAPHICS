@@ -42,6 +42,7 @@ Ciclo de vida comun a todos: arrancan en **OUT**, se muestran con **TOMAR AL AIR
 ## Placas (fullscreen)
 
 ### 6. Formacion de equipos (`formacionEquipos`)
+- **Plantel web**: para el LOCAL/VISITANTE activo se ofrece el snapshot sincronizado de `gla.futbol` y el boton `ACTUALIZAR PLANTILLA DESDE WEB`. `AGREGAR JUGADOR DEL PLANTEL` carga el formato TV; `PERSONALIZADO / ESCRIBIR NOMBRE` conserva el alta manual y todos los presets/editores existentes.
 - **Assets**: [`assets/placas/formacion-equipos.mp4`](../assets/placas/formacion-equipos.mp4), transcodificado desde el nuevo `ai-gfx/placas-mid-full/formacion/formacion.mov` como color+matte 1920x2160; y [`assets/placas/formacion-camisetas.png`](../assets/placas/formacion-camisetas.png), usado completo a 1920x1080 por encima del video. El PSD entregado se usa solo como referencia de posiciones.
 - **Equipo**: un único desplegable `EQUIPO A MOSTRAR` (LOCAL/VISITANTE). Nombre y escudo se resuelven en vivo desde `scoreboard`; no existe carga manual duplicada del equipo. Flag `live: true`.
 - **Titulares**: editor ordenado en Master Control (`master-control/js/formation-list-panel.js`) con sintaxis `DORSAL. NOMBRE`, alta, edición, eliminación y botones subir/bajar. El asset dispone de seis slots medidos: arquero primero; luego campo derecha, campo izquierda, centro, ataque derecha y ataque izquierda.
@@ -61,6 +62,7 @@ Ciclo de vida comun a todos: arrancan en **OUT**, se muestran con **TOMAR AL AIR
 Tarjetas, Cambios, VAR Chequeo, Replay y los cinco Zocalos (`longSimple` — desactivado temporalmente, ver su ficha mas abajo —, `longDouble`, `shortSimple`, `shortDouble`, `vs`) forman una misma familia de "zocalos inferiores": comparten el mismo borde inferior de pantalla (**1030px**, bajado desde 930px a pedido del usuario — ver `program/css/overlay.css` para la medicion completa de cada `ty`) y el flag `sequencedReveal: true` (`shared/modules.js`): al Tomar al aire, el asset entra solo y el contenido dinamico (escudos, texto, numeros) recien se revela cuando la animacion horneada del asset termina de asentarse; al Sacar del aire el orden se invierte, el contenido desaparece primero y recien despues sale el asset. Logica 100% compartida en `program/js/main.js` y `program/css/overlay.css` — ningun renderer individual la implementa. El mismo mecanismo aplica ademas a Marcador principal, Entretiempo, Penales, Mosca, Formacion, VS Prepartido y VS Con resultado (no son "zocalos inferiores" pero tambien tienen asset con movimiento propio + contenido dinamico superpuesto). Cada modulo espera su propio tiempo medido (entre 0.3s y 2.3s segun la pieza, no un umbral unico) — ver el detalle completo en `docs/ARCHITECTURE.md` ("Entrada/salida en dos tiempos") y `CHANGELOG.md`.
 
 ### 9. Tarjetas (`tarjeta`)
+- **Plantel web**: LOCAL/VISITANTE muestra el nombre real del Marcador. El jugador puede elegirse del snapshot (`DORSAL. NOMBRE TV`) o escribirse manualmente; tipo de tarjeta, renderer y escudo local permanecen sin cambios.
 - **Assets** (variant selector por campo `tipo`): [`tarjeta-amarilla-alpha.mp4`](../assets/eventos/tarjeta-amarilla-alpha.mp4) / [`tarjeta-roja-alpha.mp4`](../assets/eventos/tarjeta-roja-alpha.mp4) / [`tarjeta-azul-alpha.mp4`](../assets/eventos/tarjeta-azul-alpha.mp4). Un unico modulo/solapa para las 3 — no hay pestañas ni modulos separados por color.
 - **Posicion**: abajo a la izquierda, borde inferior del asset a 1030px de pantalla (bbox nativo bottom=1041 -> `translateY(-11px)`, ver nota de familia mas arriba).
 - **Campos**: `equipo` (select: Local/Visitante — sin escudo/codigo propio, lee en vivo el ID `teamA`/`teamB` de `scoreboard` y resuelve su escudo con el catalogo central), `tipo` (select: amarilla/roja/azul — determina el asset exacto que se reproduce), `jugador` (texto libre, un unico campo, sin separar numero y nombre).
@@ -68,6 +70,7 @@ Tarjetas, Cambios, VAR Chequeo, Replay y los cinco Zocalos (`longSimple` — des
 - **Nombre del jugador**: tamaño de fuente responsivo (ya no fijo) — `program/js/renderers/tarjeta.js` calcula con `canvas.measureText` el tamaño mas grande posible (hasta 56px) que entra en el ancho real disponible (300px, entre la linea divisoria y el icono de color de la tarjeta), con achicado automatico solo si el nombre es largo (nunca por debajo de 20px).
 
 ### 10. Cambios (`cambios`)
+- **Plantel web**: LOCAL/VISITANTE muestra el nombre real. Entra y Sale ofrecen dropdowns del plantel sincronizado y conservan sus campos manuales; titulo, renderer y escudo local permanecen sin cambios.
 - **Asset**: [`assets/eventos/cambios-alpha.mp4`](../assets/eventos/cambios-alpha.mp4). Mismo criterio de composicion que Tarjeta (bounding box y slots medidos con lectura de alfa real): borde izquierdo y linea divisoria en las mismas coordenadas, mismo tamaño de escudo (72px de alto).
 - **Posicion**: abajo a la izquierda, mismo borde inferior compartido que Tarjeta (1030px de pantalla; bbox nativo bottom=1037 -> `translateY(-7px)`).
 - **Campos**: `equipo` (select: Local/Visitante — sin escudo/codigo propio, lee en vivo de `scoreboard`, `live: true`, mismo patron que `tarjeta`: una sustitucion es siempre del mismo equipo, un unico escudo para "entra" y "sale"), `entra` (texto libre), `sale` (texto libre), `titulo` (texto libre para el zocalo superior, default "CAMBIO").
@@ -129,6 +132,7 @@ Desactivado a pedido explicito del usuario (2026-07-31) hasta que haya un asset 
 ## Grupos
 
 ### 20. Grupos (`grupos`)
+- **Actualizacion web**: el boton manual carga Grupo A y Grupo B desde `Relampago #2 2026`, conserva el orden/posicion oficial y guarda tambien las estadisticas oficiales aunque el asset visible muestre equipo y puntos. Ante error conserva la carga anterior.
 - **Assets** (variant selector por campo `variante`, panel dedicado — ver `master-control/js/grupos-panel.js`): [`assets/grupos/grupo-1.png`](../assets/grupos/grupo-1.png) (Grupo 1) / [`assets/grupos/grupo-2.png`](../assets/grupos/grupo-2.png) (Grupo 2). PNG estatico con alfa real, entregado ya preparado y escalado a 1920×1080 por el usuario — sin video, sin transcodificar, sin transform ni reescalado.
 - **Posicion**: placa en la esquina superior derecha, x1556-1900,y50-466 (medido sobre el canal alfa/color real de cada PNG, idéntica en ambas variantes). 3 filas de equipo con el mismo alto y paso vertical: fila 0 top=150px, fila 1 top=252px, fila 2 top=352px, todas height=84px.
 - **Campos por fila** (panel dedicado, no el editor genérico — la cantidad fija de filas y el desplegable de equipo por fila no entran en `FIELD_TYPES.LIST`): equipo (mismo catálogo global que el Marcador principal, `shared/teams.js`) y puntos (texto/numérico libre). Escudo y nombre completo (no abreviatura) se derivan siempre del `teamId` elegido — nunca se cargan ni se escriben a mano. Cada variante (Grupo 1/Grupo 2) guarda su propio arreglo de filas por separado; cambiar el selector no pisa los datos del otro grupo.
@@ -137,9 +141,25 @@ Desactivado a pedido explicito del usuario (2026-07-31) hasta que haya un asset 
 
 ## Tablas (sistema anterior, sin asset de video nuevo)
 
-### 21. Tabla lateral derecha (`sideTable`)
-- **Posicion**: franja vertical sobre el lado derecho (HTML/CSS, no video).
-- **Campos**: titulo de la tabla, lista de resultados (equipo A, goles A, equipo B, goles B) — filas ilimitadas, se agregan/quitan desde Master Control.
+### 21. Resultados (`sideTable`)
+- **Actualizacion web**: dos botones independientes cargan fase de grupos o playoffs de `Relampago #2 2026` en la misma estructura de hasta 9 encuentros. Equipos, goles, estado/hora y orden vienen del JSON estructurado; los escudos siguen siendo locales y los datos quedan editables.
+- **Playoffs**: la actualización devuelve exactamente seis IDs estables: `CUARTOS 1`, `CUARTOS 2`, `SEMIS 1`, `SEMIS 2`, `GLA FEM FECHA 1` y `GRAN FINAL`. Los partidos que `knockoutMatches` ya publica reemplazan su slot; los ausentes quedan como placeholders sin equipos ni goles, con horarios 13:00, 14:00, 15:00 y 16:00 para los cuatro slots futuros. Cada actualización reemplaza el array completo, por lo que no duplica encuentros.
+- **Posición**: composición de brackets sobre el lateral derecho, compatible con Placa L y los dos modos fullscreen existentes. Usa el recorte del asset 1920×1080 [`assets/tablas/resultados-sin-vs.png`](../assets/tablas/resultados-sin-vs.png), sin reescalarlo ni alterar su relación con otros zócalos.
+- **Campos**: título, posición y hasta 9 encuentros persistentes. Cada encuentro conserva equipos, escudos derivados del catálogo, goles, estado y hora específica.
+- **Tanda / vista**: Program mantiene una única tira con los 9 encuentros y muestra como máximo 6. `PARTIDOS 1–6` presenta los primeros seis; `PARTIDOS 4–9` desplaza la misma tira tres filas y muestra 4–7, 4–8 o 4–9 según haya 7, 8 o 9 cargados. El cambio usa una transición vertical reversible; no hace OUT del módulo ni pierde los datos que quedan fuera del viewport.
+
+### Tabla Global (`posiciones`)
+- Conserva las paginas 1-6 y 7-11, la estetica y el renderer existentes. `ACTUALIZAR DESDE WEB` usa exclusivamente `leagueStandings` y respeta el orden oficial de Liga.
+
+### Posiciones Torneo (`posicionesTorneo`)
+- Reutiliza el asset, renderer, TAKE/UPDATE/OUT, ajuste global y editores por columna de Posiciones. Tiene una unica pagina 1-6 y sincroniza `tournamentStandings` del Relampago #2; escudos/nombres se resuelven localmente.
+
+### Tablas de rendimiento (`goleadores`, `asistidores`, `jugadores`)
+- Cada panel persiste `LIGA | TORNEO` y snapshots separados. Liga usa `leagueStats`; Torneo usa `lightningTournaments[].stats`. La tabla de mejores conserva la formula `(G+A)/PJ`: la web no publica un promedio oficial. En el payload verificado, `stats.appearances` de Torneo existe pero esta vacio, por lo que PJ queda en 0 sin inventar apariciones.
+
+### Estrellas (`estrellas`)
+- `LIGA | TORNEO` selecciona y persiste la fuente, con snapshots separados. `ACTUALIZAR MEJORES DESDE WEB` consolida G/A por `playerId`, filtra por los equipos LOCAL/VISITANTE y toma el primer jugador del ranking `(G+A)/PJ`; PJ es siempre el valor `played` del equipo en `leagueStandings` o `tournamentStandings`, nunca una aparición individual.
+- Cada selección automática conserva id, dorsal, nombre, apellido, apodo, nombre completo, equipo, G, A, PJ y promedio. `FORMATO DEL JUGADOR` alterna `NÚMERO + APODO` (con fallback a inicial/apellido) y `NÚMERO + INICIAL + APELLIDO` sin cambiar jugador ni estadísticas. La carga sigue editable manualmente y el título continúa fijo en `LOS MEJORES DE CADA EQUIPO`.
 
 ### 22. Proximos encuentros (`upcoming`)
 - **Posicion**: zocalito vertical inferior izquierdo (HTML/CSS, no video).

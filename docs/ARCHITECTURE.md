@@ -45,6 +45,16 @@ Mensajes (definidos en `shared/constants.js` → `WS_MSG`):
 
 El servidor es la unica fuente de verdad. Master Control y Program reciben exactamente los mismos mensajes — si se abre un segundo Master Control (otra compu, otro monitor), ambos quedan sincronizados.
 
+## Integracion manual con `gla.futbol`
+
+Las actualizaciones web se ejecutan exclusivamente en el servidor y solo al pulsar un boton del Master Control. `server/glaFutbolClient.js` descarga `https://gla.futbol/` y decodifica el payload estructurado de React Server Components (`self.__next_f`); no scrapea tablas HTML ni importa logos remotos. Liga usa `product.leagueStats`/`product.leagueStandings`. El torneo Relampago #2 usa el objeto de `product.lightningTournaments` (tambien disponible bajo `seasons[].tournaments`) y sus campos `stats`, `groups`, `knockoutMatches` y `tournamentStandings`.
+
+`server/glaFutbolSync.js` normaliza esos datos al contrato ya consumido por cada modulo. Los snapshots Liga/Torneo de Goleadores, Asistidores y Mejores Jugadores viven separados dentro del `data` persistido de cada modulo; cambiar la fuente conserva la seleccion y no mezcla arrays. Los resultados de fase de grupos/playoffs tambien conservan snapshots independientes. Una respuesta fallida no llama a `applyUpdate`, por lo que no vacia el ultimo dato valido.
+
+Estrellas consolida goles/asistencias por `playerId`, pero PJ pertenece siempre al equipo: Liga usa `leagueStandings.played` y Torneo `lightningTournaments[].tournamentStandings[].played`. No consulta ni calcula apariciones individuales. La identidad original se completa desde `product.players` (id, dorsal, nombre, apellido, apodo, nombre completo y equipo); formato visible y snapshots Liga/Torneo son proyecciones persistidas que no reemplazan esos campos ni mezclan fuentes.
+
+Los planteles son un catalogo transversal, no el estado de una grafica. `server/glaFutbolRosters.js` los normaliza y guarda el ultimo snapshot valido en `data/gla-futbol-rosters.json`. Tarjetas, Cambios y Formacion consultan `/api/planteles/:teamId`, pero siguen permitiendo escritura manual. Todos los equipos web se resuelven contra `assets/crests/`; solo se persiste el `teamId` local y nunca se descarga ni reemplaza un escudo.
+
 ## Animacion de entrada/salida (Program)
 
 El Program no tiene una maquina de estados de animacion propia: reacciona a `status` (`OUT`/`ON`) con clases CSS y deja que el navegador maneje la transicion:

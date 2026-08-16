@@ -466,6 +466,10 @@ body {
 .btn-clock:hover { background: #1c1c20; }
 .btn-clock-set { border-color: #2c2c31; color: var(--white); }
 .btn-clock-danger { border-color: #4a2323; color: #e39a9a; }
+/* "active" (2026-08-15): usado por los botones de periodo 1T/2T/ET/
+   PERSONALIZADO (ver master-control/js/scoreboard-clock-panel.js) para
+   marcar cual esta elegido, mismo lenguaje visual que ".tab.active". */
+.btn-clock.active { background: var(--gold); border-color: var(--gold); color: var(--black); }
 
 .clock-manual {
   display: flex;
@@ -551,6 +555,208 @@ body {
   color: var(--grey);
   font-size: 11px;
 }
+.formation-side-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.formation-side-tab {
+  min-height: 34px;
+  border: 1px solid #35353a;
+  border-radius: 4px;
+  background: #20242b;
+  color: var(--grey);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.formation-side-tab.active {
+  background: var(--gold-dim);
+  border-color: var(--gold-bright);
+  color: var(--black);
+  font-weight: 700;
+}
+.formation-side-tab:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.formation-transition-note {
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--gold-dim);
+  border-radius: 4px;
+  background: #201c10;
+  color: var(--gold-bright);
+  font-size: 12px;
+}
+.short-double-editor {
+  display: grid;
+  gap: 22px;
+}
+.short-double-section {
+  display: grid;
+  gap: 10px;
+}
+.short-double-section h2, .short-double-section h3 {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.7px;
+}
+.short-double-section h3 {
+  font-size: 12px;
+  color: var(--gold-bright);
+}
+.short-double-group {
+  display: grid;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid #26262a;
+  border-radius: 6px;
+  background: #16161a;
+}
+.short-double-group-heading {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.7px;
+  color: var(--grey);
+}
+.short-double-air {
+  display: grid;
+  gap: 10px;
+}
+.short-double-air-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+}
+.short-double-air-btn {
+  min-height: 38px;
+  border: 1px solid #35353a;
+  border-radius: 4px;
+  background: #20242b;
+  color: var(--grey);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.short-double-air-btn.active {
+  background: var(--gold-dim);
+  border-color: var(--gold-bright);
+  color: var(--black);
+}
+.short-double-air-btn--out.active {
+  background: #2c1717;
+  border-color: #7a2222;
+  color: #f0a5a5;
+}
+
+/* Control de edicion manual de posicion/tamaño por campo de texto
+   (2026-08-14, pedido explicito del usuario) -- ver
+   master-control/js/text-adjust-control.js. Compacto a proposito ("no
+   necesito inputs complicados... botones/flechitas simples y rapidos de
+   usar durante la operacion"): una sola fila angosta debajo del input de
+   texto al que pertenece, sin ocupar espacio extra en el layout salvo
+   cuando el campo declara "adjustable". */
+.text-adjust {
+  margin-top: 4px;
+  display: grid;
+  gap: 4px;
+}
+.text-adjust-label {
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  color: var(--grey-dim);
+  text-transform: uppercase;
+}
+.text-adjust-row {
+  display: grid;
+  grid-template-columns: repeat(6, 30px) auto auto;
+  gap: 4px;
+  align-items: center;
+}
+.text-adjust-btn {
+  min-width: 30px;
+  min-height: 26px;
+  border: 1px solid #35353a;
+  border-radius: 4px;
+  background: #20242b;
+  color: var(--grey);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+}
+.text-adjust-btn:hover {
+  background: #262b33;
+  color: var(--white);
+}
+.text-adjust-btn:active {
+  background: var(--gold-dim);
+  color: var(--black);
+}
+.text-adjust-reset {
+  min-height: 26px;
+  padding: 0 8px;
+  border: 1px solid #35353a;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--grey);
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  justify-self: start;
+}
+.text-adjust-reset:hover {
+  border-color: #7a2222;
+  color: #f0a5a5;
+}
+.text-adjust-readout {
+  font-family: monospace;
+  font-size: 10px;
+  color: var(--grey);
+  justify-self: start;
+  white-space: nowrap;
+}
+.text-adjust-readout.is-zero {
+  color: var(--grey-dim);
+}
+
+/* "AJUSTE DE COMPOSICIÓN" (2026-08-14, pedido explicito del usuario):
+   reusa los mismos ".text-adjust-btn/reset/readout" de arriba (mismo
+   concepto de botones, misma UI) para posicion/escala GLOBAL de todo el
+   modulo -- ver master-control/js/composition-control.js, montado una
+   sola vez por modulo desde #composition-container (index.html). */
+.composition-container {
+  margin-top: 22px;
+}
+.composition-adjust {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--gold-dim);
+  border-radius: 6px;
+  background: #16140c;
+}
+.composition-adjust h2 {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.7px;
+  color: var(--gold-bright);
+}
+.composition-adjust-note {
+  margin: 0;
+  color: var(--grey);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.composition-adjust-row {
+  grid-template-columns: repeat(6, 30px) auto auto;
+}
+
 .grupos-editor {
   display: grid;
   gap: 18px;
@@ -600,4 +806,239 @@ body {
   border-color: var(--gold-bright);
   color: var(--black);
   font-weight: 700;
+}
+
+.performance-editor,
+.performance-rows {
+  display: grid;
+  gap: 12px;
+}
+.performance-note,
+.performance-empty {
+  margin: 0;
+  color: var(--grey);
+  font-size: 11px;
+}
+.performance-sync {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.performance-sync-btn {
+  padding: 9px 16px;
+  border-radius: 4px;
+  border: 1px solid var(--gold-dim);
+  background: transparent;
+  color: var(--gold-bright);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+}
+.performance-sync-btn:hover:not(:disabled) { background: #1c1c20; }
+.performance-sync-btn.active {
+  background: var(--gold-dim);
+  color: #111;
+}
+.performance-sync-btn:disabled { opacity: 0.5; cursor: default; }
+.performance-source-tabs,
+.match-roster-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.match-roster-panel {
+  flex-direction: column;
+  padding: 12px;
+  border: 1px solid #35353a;
+  border-radius: 6px;
+  background: #1b1b1e;
+}
+.match-roster-panel h3 { margin: 0; color: var(--gold-bright); font-size: 12px; }
+.performance-sync-status {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--grey);
+}
+.performance-sync-status.success { color: var(--gold-bright); }
+.performance-sync-status.error { color: #e39a9a; }
+.performance-sync-updated-at {
+  color: var(--grey);
+  font-size: 10px;
+}
+.performance-sync-warning {
+  margin: 0;
+  color: #d1a86c;
+  font-size: 11px;
+}
+.performance-row-editor {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #35353a;
+  border-radius: 6px;
+  background: #1b1b1e;
+}
+.performance-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--gold-bright);
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+.performance-remove {
+  border: 1px solid #5a3030;
+  border-radius: 4px;
+  background: transparent;
+  color: #ff9a9a;
+  padding: 5px 8px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+}
+.performance-identity {
+  display: grid;
+  grid-template-columns: 34px minmax(120px, 0.8fr) minmax(150px, 1.2fr);
+  gap: 8px;
+  align-items: center;
+}
+.performance-identity select,
+.performance-identity input,
+.performance-field input {
+  min-width: 0;
+  width: 100%;
+}
+.performance-crest-preview {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+.performance-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.performance-editor--goleadores .performance-stats,
+.performance-editor--asistidores .performance-stats {
+  grid-template-columns: 1fr;
+}
+.performance-field {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.performance-field > span {
+  color: var(--gold-bright);
+  font-size: 11px;
+  font-weight: 700;
+}
+.performance-field input,
+.performance-computed {
+  min-height: 34px;
+  padding: 7px 8px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: #111;
+  color: var(--white);
+  text-align: center;
+  font: inherit;
+}
+.performance-computed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold-bright);
+}
+.performance-add {
+  justify-self: start;
+  flex: none;
+}
+.performance-add:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ============================================================
+   MARCADOR unificado (2026-08-15): sub-nav dentro del panel + toggle
+   Marcador<->Entretiempo. Mismo lenguaje visual que ".tab"/".tab.active"/
+   ".tab.on-air" (tab-bar), pero en fila horizontal en vez de columna.
+   ============================================================ */
+.marcador-subnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #26262a;
+}
+.marcador-subnav-btn {
+  position: relative;
+  background: #17171a;
+  border: 1px solid #2c2c31;
+  color: var(--grey);
+  padding: 9px 14px;
+  border-radius: 20px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.marcador-subnav-btn:hover { background: #1c1c20; color: var(--white); }
+.marcador-subnav-btn.active { background: #1c1c20; border-color: var(--gold-dim); color: var(--white); }
+.marcador-subnav-btn.on-air { border-color: var(--gold); color: var(--gold-bright); }
+.marcador-subnav-btn.on-air::after {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold-bright);
+  margin-left: 7px;
+  vertical-align: middle;
+}
+
+.marcador-entretiempo-toggle {
+  margin-left: auto;
+  background: transparent;
+  border: 1px dashed var(--gold-dim);
+  color: var(--gold-bright);
+  padding: 9px 14px;
+  border-radius: 20px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.marcador-entretiempo-toggle:hover { background: #1c1c20; }
+.marcador-entretiempo-toggle:disabled { opacity: 0.5; cursor: default; }
+
+/* "FIN DEL CONTADOR" / PERSONALIZADO de periodo: mismo look que
+   ".clock-manual input" pero mas anchos (necesitan mostrar "MM:SS" o
+   texto libre completo, no un numero de 2 digitos). */
+.clock-end-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--grey);
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+.clock-end-input {
+  flex: 1;
+  min-width: 90px;
+  width: auto !important;
+  background: #101012;
+  border: 1px solid #2c2c31;
+  border-radius: 4px;
+  color: var(--white);
+  padding: 8px 10px;
+  font-family: var(--font-body);
 }

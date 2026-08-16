@@ -1,7 +1,20 @@
 import { FIELD_TYPES, PENALTY_KICK_STATUS } from '../../shared/constants.js';
+import { renderTextAdjustControl } from './text-adjust-control.js';
 
 const KICK_CYCLE = [PENALTY_KICK_STATUS.PENDING, PENALTY_KICK_STATUS.SCORED, PENALTY_KICK_STATUS.MISSED];
 const KICK_LABEL = { pending: '—', scored: 'GOL', missed: 'X' };
+
+// Compartido por "adjustable:true" (campo TEXT) y "ADJUST_ONLY" (texto sin
+// input propio) -- si el modulo todavia no tiene "textAdjust" en su
+// estado persistido (dato viejo, de antes de este mecanismo) lo crea aca
+// mismo, mismo shape que "textAdjustDefaults()" en shared/modules.js.
+export function mountAdjustControl(wrap, data, key, onDirty) {
+  if (!data.textAdjust || typeof data.textAdjust !== 'object') data.textAdjust = {};
+  if (!data.textAdjust[key] || typeof data.textAdjust[key] !== 'object') {
+    data.textAdjust[key] = { dx: 0, dy: 0, dSize: 0 };
+  }
+  renderTextAdjustControl(wrap, data.textAdjust[key], onDirty);
+}
 
 // Genera el panel de edicion completo a partir del schema de un modulo.
 // `data` se muta in-place (es el draft local del operador); `onDirty` se
@@ -30,6 +43,20 @@ export function renderFields(container, fields, data, onDirty) {
         onDirty();
       });
       wrap.appendChild(input);
+
+      // "adjustable" (2026-08-14, pedido explicito del usuario): campos de
+      // texto que ademas de tipear el texto pueden ajustarse en X/Y/tamaño
+      // con flechitas, sin tocar codigo.
+      if (field.adjustable) {
+        mountAdjustControl(wrap, data, field.key, onDirty);
+      }
+    } else if (field.type === FIELD_TYPES.ADJUST_ONLY) {
+      // Texto visible en Program que no se tipea aca (viene del Marcador,
+      // de un reloj en vivo, o es un rotulo fijo del asset/diseño) pero
+      // igual tiene que poder ajustarse en posicion/tamaño (2026-08-15,
+      // auditoria completa pedida por el usuario). Sin input: solo la
+      // etiqueta (ya agregada arriba) + el control de ajuste.
+      mountAdjustControl(wrap, data, field.key, onDirty);
     } else if (field.type === FIELD_TYPES.TEXTAREA) {
       const textarea = document.createElement('textarea');
       textarea.rows = 3;

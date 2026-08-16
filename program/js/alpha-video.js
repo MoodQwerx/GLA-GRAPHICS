@@ -258,14 +258,45 @@ export function createAlphaVideo(el, src, { onEnded } = {}) {
       }
       video.removeEventListener('play', handlePlay);
       if (onEnded) video.removeEventListener('ended', onEnded);
-      video.pause();
-      video.removeAttribute('src');
-      video.load();
-      if (glCtx) {
-        glCtx.gl.deleteTexture(glCtx.texture);
-        glCtx.gl.deleteProgram(glCtx.program);
-        glCtx.gl.getExtension('WEBGL_lose_context')?.loseContext();
+
+      // Fix confirmado (2026-08-06, valida el parpadeo blanco global al
+      // sacar del aire piezas con MOV -- ver CHANGELOG/historial de la
+      // investigacion): la liberacion real del video/contexto WebGL se
+      // difiere dos frames (dos requestAnimationFrame anidados) para que
+      // corra recien despues de que el modulo ya quedo oculto por el flujo
+      // normal (".gfx.is-hidden", ver finishOut() en main.js, sin cambios) y
+      // de que el navegador haya tenido un par de frames para asentar ese
+      // cambio de composicion antes de tocar el decodificador/contexto.
+      // "video"/"glCtx" quedan capturados en el closure de ESTA llamada a
+      // createAlphaVideo() (no en una variable compartida del modulo), asi
+      // que si el usuario vuelve a hacer TAKE sobre el mismo contenedor
+      // antes de que este diferido corra, la instancia nueva crea su propio
+      // closure con sus propias referencias via otro createAlphaVideo() y no
+      // se pisan entre si.
+      //
+      // Respaldo con setTimeout: requestAnimationFrame no se ejecuta con
+      // pestaña oculta/minimizada (throttling del navegador) -- sin esto,
+      // el video/contexto de un modulo sacado del aire con la pestaña de
+      // Program no visible en ese instante quedarian sin liberar nunca. El
+      // setTimeout es independiente de rAF (corre igual este oculta o no la
+      // pestaña) y usa la misma guarda "released", asi que cualquiera de
+      // los dos caminos que llegue primero libera una unica vez; el que
+      // llegue segundo no hace nada.
+      let released = false;
+      function releaseNow() {
+        if (released) return;
+        released = true;
+        video.pause();
+        video.removeAttribute('src');
+        video.load();
+        if (glCtx) {
+          glCtx.gl.deleteTexture(glCtx.texture);
+          glCtx.gl.deleteProgram(glCtx.program);
+          glCtx.gl.getExtension('WEBGL_lose_context')?.loseContext();
+        }
       }
+      requestAnimationFrame(() => requestAnimationFrame(releaseNow));
+      setTimeout(releaseNow, 200);
     },
   };
 }

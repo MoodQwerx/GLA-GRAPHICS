@@ -1,4 +1,5 @@
 import { TEAM_OPTIONS } from '../../shared/teams.js';
+import { mountAdjustControl } from './field-editors.js';
 
 const VARIANTS = [
   { id: 'grupo1', label: 'Grupo 1' },
@@ -46,6 +47,25 @@ export function renderGruposPanel(container, data, onDirty) {
   container.appendChild(root);
 
   let editingGrupo = data.variante === 'grupo2' ? 'grupo2' : 'grupo1';
+  let syncStatus = null;
+
+  async function syncFromWeb() {
+    syncStatus = { kind: 'loading', text: 'Actualizando...' };
+    render();
+    try {
+      const response = await fetch('/api/grupos/sync-web', { method: 'POST' });
+      const body = await response.json().catch(() => null);
+      if (!response.ok || !body?.ok) throw new Error(body?.error || `HTTP ${response.status}`);
+      data.grupo1 = body.grupo1;
+      data.grupo2 = body.grupo2;
+      data.ultimaActualizacionWeb = body.ultimaActualizacionWeb;
+      syncStatus = { kind: 'success', text: 'GRUPOS A Y B ACTUALIZADOS', unmatchedTeams: body.unmatchedTeams || [] };
+      onDirty();
+    } catch (error) {
+      syncStatus = { kind: 'error', text: 'ERROR AL ACTUALIZAR', detail: error.message };
+    }
+    render();
+  }
 
   function render() {
     root.innerHTML = '';
@@ -71,6 +91,30 @@ export function renderGruposPanel(container, data, onDirty) {
     });
     posicionField.appendChild(posicionSelect);
     root.appendChild(posicionField);
+
+    const syncRow = document.createElement('div');
+    syncRow.className = 'performance-sync';
+    const syncButton = document.createElement('button');
+    syncButton.type = 'button';
+    syncButton.className = 'performance-sync-btn';
+    syncButton.textContent = 'ACTUALIZAR DESDE WEB';
+    syncButton.disabled = syncStatus?.kind === 'loading';
+    syncButton.addEventListener('click', syncFromWeb);
+    syncRow.appendChild(syncButton);
+    if (syncStatus) {
+      const status = document.createElement('span');
+      status.className = `performance-sync-status ${syncStatus.kind}`;
+      status.textContent = syncStatus.text;
+      if (syncStatus.detail) status.title = syncStatus.detail;
+      syncRow.appendChild(status);
+    }
+    root.appendChild(syncRow);
+    if (syncStatus?.unmatchedTeams?.length) {
+      const warning = document.createElement('p');
+      warning.className = 'performance-sync-warning';
+      warning.textContent = `Sin equipo local equivalente para: ${syncStatus.unmatchedTeams.join(', ')}`;
+      root.appendChild(warning);
+    }
 
     const posicion = posicionSelect.value;
     const esFullscreen = posicion === 'fullscreenDerecha' || posicion === 'fullscreenIzquierda';
@@ -171,6 +215,29 @@ export function renderGruposPanel(container, data, onDirty) {
     section.appendChild(note);
 
     root.appendChild(section);
+
+    // "AJUSTE DE TEXTOS" (2026-08-15, auditoria completa): un unico ajuste
+    // por columna ("nombre"/"puntos") compartido entre Grupo 1 y Grupo 2 --
+    // ambas tarjetas reusan exactamente la misma clase CSS por fila (ver
+    // cardMarkup en program/js/renderers/grupos.js), asi que un control por
+    // columna alcanza para las dos, sin duplicarlo por grupo.
+    const adjustSection = document.createElement('section');
+    const adjustHeading = document.createElement('h2');
+    adjustHeading.textContent = 'AJUSTE DE TEXTOS (Grupo 1 y Grupo 2)';
+    adjustSection.appendChild(adjustHeading);
+    for (const { key, label } of [
+      { key: 'nombre', label: 'Columna Nombre de equipo' },
+      { key: 'puntos', label: 'Columna Puntos' },
+    ]) {
+      const wrap = document.createElement('div');
+      wrap.className = 'field';
+      const lbl = document.createElement('label');
+      lbl.textContent = label;
+      wrap.appendChild(lbl);
+      mountAdjustControl(wrap, data, key, onDirty);
+      adjustSection.appendChild(wrap);
+    }
+    root.appendChild(adjustSection);
   }
 
   render();

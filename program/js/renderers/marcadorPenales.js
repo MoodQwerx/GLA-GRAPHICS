@@ -1,5 +1,7 @@
 import { createAlphaVideo } from '../alpha-video.js';
+import { PROGRAM_FONT_FAMILY } from '../program-fonts.js';
 import { crestFile, teamAbbr } from '../../../shared/teams.js';
+import { applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
 
 const VIDEO_SRC = '/assets/marcador/marcador-penales-alpha.mp4';
 
@@ -9,9 +11,11 @@ const TITLE_BOX_WIDTH = 356; // ancho real de .ov-pen-title
 const TITLE_SAFETY_MARGIN = 6; // colchon para que nunca quede pegado al borde del zocalo
 const TITLE_MAX_WIDTH = TITLE_BOX_WIDTH - TITLE_SAFETY_MARGIN;
 
+const FONT_FAMILY = PROGRAM_FONT_FAMILY;
+
 let measureCtx = null;
 function measureWidth(text, fontSize) {
-  measureCtx.font = `800 ${fontSize}px Anton`;
+  measureCtx.font = `800 ${fontSize}px ${FONT_FAMILY}`;
   // El CSS de .ov-pen-title tiene letter-spacing:0.5px — measureText no lo
   // aplica solo, hay que igualarlo en el contexto o el ancho medido queda
   // sistematicamente mas angosto que el texto realmente renderizado (con
@@ -32,7 +36,7 @@ function measureWidth(text, fontSize) {
 // aunque el texto renderizado despues si use Anton (mas ancha).
 async function fitTitleFontSize(text) {
   if (!measureCtx) measureCtx = document.createElement('canvas').getContext('2d');
-  await document.fonts.load(`800 ${TITLE_MAX_FONT}px Anton`);
+  await document.fonts.load(`800 ${TITLE_MAX_FONT}px ${FONT_FAMILY}`);
   const widthAtMax = measureWidth(text, TITLE_MAX_FONT);
   if (widthAtMax <= TITLE_MAX_WIDTH) return TITLE_MAX_FONT;
   let size = Math.floor(TITLE_MAX_FONT * (TITLE_MAX_WIDTH / widthAtMax));
@@ -122,22 +126,33 @@ export default function renderMarcadorPenales(contentEl, data, justTaken, onOneS
 
   const sb = (allData && allData.scoreboard) || {};
 
+  const ta = data.textAdjust;
+  const titleAdjust = readTextAdjust(ta, 'titulo');
   const titleEl = contentEl.querySelector('.ov-pen-title');
-  const titleText = data.titulo || '';
+  // "suddenDeath" (2026-08-15, pedido explicito del usuario): sin asset
+  // nuevo ni elemento aparte -- reusa el mismo zocalo/auto-ajuste de
+  // fuente del titulo (ver shared/modules.js), asi que si la tanda esta
+  // marcada como MUERTE SUBITA eso se ve en el mismo lugar donde siempre
+  // se mira el titulo, visible pero sin invadir el resto de la pieza.
+  const titleText = data.suddenDeath
+    ? `${(data.titulo || 'PENALES').trim()} — MUERTE SÚBITA`
+    : (data.titulo || '');
   titleEl.textContent = titleText;
+  titleEl.style.translate = `${titleAdjust.dx || 0}px ${titleAdjust.dy || 0}px`;
   fitTitleFontSize(titleText).then((size) => {
-    titleEl.style.fontSize = `${size}px`;
+    if (titleEl.textContent !== titleText) return;
+    titleEl.style.fontSize = `${Math.max(1, size + (titleAdjust.dSize || 0))}px`;
   });
 
   const teamAEl = contentEl.querySelector('.ov-pen-teamA');
-  teamAEl.querySelector('.ov-pen-name').textContent = teamAbbr(sb.teamA);
+  applyPlainTextAdjust(teamAEl.querySelector('.ov-pen-name'), teamAbbr(sb.teamA), readTextAdjust(ta, 'nameA'));
   setCrest(teamAEl.querySelector('.ov-pen-crest'), sb.teamA);
-  contentEl.querySelector('.ov-pen-scoreA').textContent = sb.scoreA ?? '';
+  applyPlainTextAdjust(contentEl.querySelector('.ov-pen-scoreA'), sb.scoreA ?? '', readTextAdjust(ta, 'scoreA'));
   paintKicks(contentEl.querySelector('.ov-pen-kicksA'), data.kicksA);
 
   const teamBEl = contentEl.querySelector('.ov-pen-teamB');
-  teamBEl.querySelector('.ov-pen-name').textContent = teamAbbr(sb.teamB);
+  applyPlainTextAdjust(teamBEl.querySelector('.ov-pen-name'), teamAbbr(sb.teamB), readTextAdjust(ta, 'nameB'));
   setCrest(teamBEl.querySelector('.ov-pen-crest'), sb.teamB);
-  contentEl.querySelector('.ov-pen-scoreB').textContent = sb.scoreB ?? '';
+  applyPlainTextAdjust(contentEl.querySelector('.ov-pen-scoreB'), sb.scoreB ?? '', readTextAdjust(ta, 'scoreB'));
   paintKicks(contentEl.querySelector('.ov-pen-kicksB'), data.kicksB);
 }

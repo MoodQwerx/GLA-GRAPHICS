@@ -1,7 +1,8 @@
 import { createAlphaVideo } from '../alpha-video.js';
 import { MATCH_STATUS_OPTIONS } from '../../../shared/modules.js';
 import { crestFile, teamName } from '../../../shared/teams.js';
-import { applyFittedText } from '../text-fit.js';
+import { sponsorFile } from '../../../shared/sponsors.js';
+import { applyFittedText, fitFontSize, readTextAdjust } from '../text-fit.js';
 
 const VIDEO_BY_RENGLON = {
   normal: '/assets/zocalos/zocalo-vs-alpha.mp4',
@@ -16,25 +17,35 @@ const STATUS_LABELS = Object.fromEntries(MATCH_STATUS_OPTIONS.map((s) => [s.id, 
 // (ver overlay.css) — mismo criterio de auto-ajuste que Tarjeta/Cambios.
 // Nombre COMPLETO (no abreviatura): box de 250px, compartido con el
 // escudo dentro de la misma zona negra del asset (ver overlay.css).
-const TEAM_MAX_FONT = 26;
+// Fuentes de nombre/gol/estado subidas levemente (2026-08-03, pedido
+// explicito del usuario: "aumentá levemente el tamaño" / "aumente
+// claramente de tamaño" para el estado) — solo estas constantes de
+// auto-ajuste, sin tocar boxes horizontales ni logica de datos.
+const TEAM_MAX_FONT = 30;
 const TEAM_MIN_FONT = 14;
 const TEAM_BOX_WIDTH = 250;
 const TEAM_SAFETY_MARGIN = 14;
 const TEAM_MAX_WIDTH = TEAM_BOX_WIDTH - TEAM_SAFETY_MARGIN;
+// Unico ajuste vertical para ambos equipos. Antes applyFittedText calculaba
+// un translateY distinto segun los glifos de cada nombre (por ejemplo,
+// "Brarg" -2px y "Dou FC" +0.5px), aunque las dos cajas CSS fueran
+// identicas. El auto-ajuste conserva la logica compartida de font-size,
+// pero la longitud/contenido ya no puede cambiar la posicion vertical.
+const TEAM_VERTICAL_OFFSET = 0.5;
 
 // Gol de cada equipo: recuadro amarillo lateral propio (74-75px, ver
 // overlay.css), separado del estado real (bloque central angosto,
 // 80px, marcado por la cintura de las muescas del asset).
-const GOAL_MAX_FONT = 30;
+const GOAL_MAX_FONT = 40;
 const GOAL_MIN_FONT = 16;
 const GOAL_BOX_WIDTH = 74;
-const GOAL_SAFETY_MARGIN = 20;
+const GOAL_SAFETY_MARGIN = 10;
 const GOAL_MAX_WIDTH = GOAL_BOX_WIDTH - GOAL_SAFETY_MARGIN;
 
-const STATUS_MAX_FONT = 14;
-const STATUS_MIN_FONT = 9;
+const STATUS_MAX_FONT = 28;
+const STATUS_MIN_FONT = 11;
 const STATUS_BOX_WIDTH = 80;
-const STATUS_SAFETY_MARGIN = 10;
+const STATUS_SAFETY_MARGIN = 4;
 const STATUS_MAX_WIDTH = STATUS_BOX_WIDTH - STATUS_SAFETY_MARGIN;
 
 // Goleadores: tipografia mas chica y menos pesada que resultado (900) y
@@ -54,6 +65,45 @@ function setCrest(imgEl, crestId) {
   } else {
     imgEl.removeAttribute('src');
     imgEl.style.visibility = 'hidden';
+  }
+}
+
+async function applyTeamName(el, text, adjust = {}) {
+  const { dx = 0, dy = 0, dSize = 0 } = adjust;
+  el.textContent = text;
+  el.style.transform = `translate(${dx}px, ${TEAM_VERTICAL_OFFSET + dy}px)`;
+  const size = await fitFontSize(text, {
+    maxFont: TEAM_MAX_FONT,
+    minFont: TEAM_MIN_FONT,
+    maxWidth: TEAM_MAX_WIDTH,
+    weight: 800,
+  });
+  // Evita que una medicion asincronica anterior pise una actualizacion mas
+  // reciente si el operador cambia de equipo rapidamente.
+  if (el.textContent === text) el.style.fontSize = `${Math.max(1, size + dSize)}px`;
+}
+
+// Ajuste de posicion/tamaño para los bloques de goleadores (2026-08-15,
+// auditoria completa): a diferencia del resto de este archivo, estos dos
+// bloques NUNCA pasan por fitFontSize/applyFittedText -- su tamaño de
+// fuente es un valor FIJO por CSS segun la variante de renglon (ver
+// overlay.css), y su contenido (marquesina opcional) lo arma
+// "renderScorers" mas abajo reemplazando hijos internos -- por eso el
+// ajuste se aplica aparte, sobre el contenedor mismo (mismo mecanismo que
+// "applyPlainTextAdjust" en text-fit.js, sin poder reutilizarlo tal cual
+// porque ese pisa "el.textContent" y aca hay que conservar los hijos que ya
+// arma renderScorers).
+function applyScorersAdjust(el, adjust = {}) {
+  const { dx = 0, dy = 0, dSize = 0 } = adjust;
+  el.style.translate = `${dx}px ${dy}px`;
+  if (dSize) {
+    if (!el.dataset.baseFontSize) {
+      el.dataset.baseFontSize = parseFloat(getComputedStyle(el).fontSize) || 0;
+    }
+    const base = parseFloat(el.dataset.baseFontSize) || 0;
+    el.style.fontSize = `${Math.max(1, base + dSize)}px`;
+  } else if (el.style.fontSize) {
+    el.style.removeProperty('font-size');
   }
 }
 
@@ -79,6 +129,7 @@ export default function renderVs(contentEl, data, justTaken, onOneShotEnded, all
         <div class="ov-vs-scorersB"></div>
         <div class="ov-vs-teamB"></div>
         <img class="ov-vs-crestB" />
+        <img class="ov-vs-sponsor" />
       </div>
     `;
     contentEl._alphaVideo = createAlphaVideo(contentEl.querySelector('.av-target'), src);
@@ -100,12 +151,8 @@ export default function renderVs(contentEl, data, justTaken, onOneShotEnded, all
   setCrest(contentEl.querySelector('.ov-vs-crestA'), sb.teamA);
   setCrest(contentEl.querySelector('.ov-vs-crestB'), sb.teamB);
 
-  applyFittedText(contentEl.querySelector('.ov-vs-teamA'), teamName(sb.teamA), {
-    maxFont: TEAM_MAX_FONT, minFont: TEAM_MIN_FONT, maxWidth: TEAM_MAX_WIDTH, weight: 800,
-  });
-  applyFittedText(contentEl.querySelector('.ov-vs-teamB'), teamName(sb.teamB), {
-    maxFont: TEAM_MAX_FONT, minFont: TEAM_MIN_FONT, maxWidth: TEAM_MAX_WIDTH, weight: 800,
-  });
+  applyTeamName(contentEl.querySelector('.ov-vs-teamA'), teamName(sb.teamA), readTextAdjust(data.textAdjust, 'nameA'));
+  applyTeamName(contentEl.querySelector('.ov-vs-teamB'), teamName(sb.teamB), readTextAdjust(data.textAdjust, 'nameB'));
 
   // Gol de cada equipo en su propio recuadro amarillo lateral (independiente
   // uno del otro, ninguno invade el bloque central del estado).
@@ -114,8 +161,8 @@ export default function renderVs(contentEl, data, justTaken, onOneShotEnded, all
   goalAEl.style.display = showGoalA ? 'flex' : 'none';
   if (showGoalA) {
     applyFittedText(goalAEl, String(scoreA), {
-      maxFont: GOAL_MAX_FONT, minFont: GOAL_MIN_FONT, maxWidth: GOAL_MAX_WIDTH, weight: 900,
-    });
+      maxFont: GOAL_MAX_FONT, minFont: GOAL_MIN_FONT, maxWidth: GOAL_MAX_WIDTH, weight: 700,
+    }, readTextAdjust(data.textAdjust, 'goalA'));
   }
 
   const goalBEl = contentEl.querySelector('.ov-vs-goalB');
@@ -123,17 +170,46 @@ export default function renderVs(contentEl, data, justTaken, onOneShotEnded, all
   goalBEl.style.display = showGoalB ? 'flex' : 'none';
   if (showGoalB) {
     applyFittedText(goalBEl, String(scoreB), {
-      maxFont: GOAL_MAX_FONT, minFont: GOAL_MIN_FONT, maxWidth: GOAL_MAX_WIDTH, weight: 900,
-    });
+      maxFont: GOAL_MAX_FONT, minFont: GOAL_MIN_FONT, maxWidth: GOAL_MAX_WIDTH, weight: 700,
+    }, readTextAdjust(data.textAdjust, 'goalB'));
   }
 
   // Bloque central: unicamente el estado del partido, nunca el resultado.
   const statusEl = contentEl.querySelector('.ov-vs-status');
-  statusEl.style.display = statusLabel ? 'flex' : 'none';
-  if (statusLabel) {
+  const showStatus = !!statusLabel;
+  statusEl.style.display = showStatus ? 'flex' : 'none';
+  if (showStatus) {
     applyFittedText(statusEl, statusLabel, {
       maxFont: STATUS_MAX_FONT, minFont: STATUS_MIN_FONT, maxWidth: STATUS_MAX_WIDTH, weight: 800, letterSpacing: 1,
-    });
+    }, readTextAdjust(data.textAdjust, 'statusTexto'));
+  }
+
+  // Sponsor
+  const sponsorEl = contentEl.querySelector('.ov-vs-sponsor');
+  const file = sponsorFile('vs_compact', data.sponsor);
+  if (file) {
+    const currentSrc = sponsorEl.getAttribute('src');
+    if (!currentSrc) {
+      sponsorEl.src = file;
+      void sponsorEl.offsetWidth;
+      sponsorEl.classList.add('is-visible');
+    } else if (currentSrc !== file && currentSrc !== window.location.origin + file) {
+      sponsorEl.classList.remove('is-visible');
+      setTimeout(() => {
+        sponsorEl.src = file;
+        void sponsorEl.offsetWidth;
+        sponsorEl.classList.add('is-visible');
+      }, 320);
+    } else {
+      sponsorEl.classList.add('is-visible');
+    }
+  } else {
+    sponsorEl.classList.remove('is-visible');
+    setTimeout(() => {
+      if (!sponsorEl.classList.contains('is-visible')) {
+        sponsorEl.removeAttribute('src');
+      }
+    }, 320);
   }
 
   // Goleadores: una lista por equipo, alineada con su propio resultado
@@ -141,8 +217,12 @@ export default function renderVs(contentEl, data, justTaken, onOneShotEnded, all
   // variantes de renglon mas altas (ver overlay.css) — en "normal" la
   // caja mide 0 de alto (display:none) y "applyFittedLines" simplemente
   // no dibuja nada, sin necesidad de repetir esa condicion aca.
-  renderScorers(contentEl.querySelector('.ov-vs-scorersA'), data.goleadoresLocal, 'local');
-  renderScorers(contentEl.querySelector('.ov-vs-scorersB'), data.goleadoresVisitante, 'visitor');
+  const scorersAEl = contentEl.querySelector('.ov-vs-scorersA');
+  const scorersBEl = contentEl.querySelector('.ov-vs-scorersB');
+  renderScorers(scorersAEl, data.goleadoresLocal, 'local');
+  renderScorers(scorersBEl, data.goleadoresVisitante, 'visitor');
+  applyScorersAdjust(scorersAEl, readTextAdjust(data.textAdjust, 'scorersLocal'));
+  applyScorersAdjust(scorersBEl, readTextAdjust(data.textAdjust, 'scorersVisitante'));
 }
 
 function renderScorers(el, rawText, side) {
@@ -167,7 +247,14 @@ function renderScorers(el, rawText, side) {
   staticText.className = 'ov-vs-scorers-static';
   staticText.textContent = text;
   el.appendChild(staticText);
-  if (!text || visibleWidth === 0 || staticText.getBoundingClientRect().width <= visibleWidth) return;
+  // "offsetWidth" (no "getBoundingClientRect().width"): con el stage
+  // completo escalado via transform (ver program/js/stage-scale.js),
+  // getBoundingClientRect ya devuelve el tamaño PINTADO en pantalla
+  // (afectado por ese scale), mientras que "visibleWidth" (el.clientWidth,
+  // arriba) es el tamaño logico del contenedor -- comparar uno escalado
+  // contra el otro sin escalar rompia la decision de activar el scroll en
+  // cualquier PC con scale != 1. offsetWidth es logico igual que clientWidth.
+  if (!text || visibleWidth === 0 || staticText.offsetWidth <= visibleWidth) return;
 
   const track = document.createElement('div');
   track.className = 'ov-vs-scorers-track';

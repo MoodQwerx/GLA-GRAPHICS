@@ -2,6 +2,18 @@ import { MODULES, MODULE_IDS } from '../../shared/modules.js';
 import { WS_MSG, MODULE_STATUS } from '../../shared/constants.js';
 import { connect } from '../../shared/ws-client.js';
 import { renderers } from './renderers/index.js';
+import { updateLocalTeamCatalog } from '../../shared/teams.js';
+import { initStageScale } from './stage-scale.js';
+import { waitForProgramFonts } from './program-fonts.js';
+
+initStageScale(document.getElementById('stage'));
+await waitForProgramFonts();
+
+if (new URLSearchParams(window.location.search).get('debug') === '1') {
+  import('./debug-diagnostics.js')
+    .then(({ initProgramDiagnostics }) => initProgramDiagnostics(document.getElementById('stage')))
+    .catch((error) => console.error('[GLA DEBUG] No se pudo iniciar el diagnostico:', error));
+}
 
 const els = {};
 const tickers = {};
@@ -28,6 +40,11 @@ function teardownContent(content) {
   if (content._clockInterval) {
     clearInterval(content._clockInterval);
     delete content._clockInterval;
+  }
+
+  if (content._sponsorRotationInterval) {
+    clearInterval(content._sponsorRotationInterval);
+    delete content._sponsorRotationInterval;
   }
 
   if (content._alphaVideo) {
@@ -80,6 +97,43 @@ const contentDelayMs = {};
 
 function isSequenced(id) {
   return !!MODULES[id].sequencedReveal;
+}
+
+// "AJUSTE DE COMPOSICIÓN" (2026-08-14, pedido explicito del usuario):
+// posicion X/Y + escala de TODO un modulo como una unidad rigida, capa
+// ADICIONAL sobre el diseño base ("posicion final = base + offset",
+// "escala final = base × ajuste") -- ver shared/modules.js
+// (compositionOffsetX/Y/Scale, mezclados en cloneDefaults() para
+// cualquier modulo) y master-control/js/composition-control.js (UI).
+//
+// Se aplica sobre ".content" (NO sobre "#mod-<id>"), a proposito: varios
+// modulos ya tienen su PROPIO "transform" declarado en CSS sobre
+// "#mod-<id>" para su posicion de diseño (ej. "#mod-marcadorZocalo",
+// "#mod-shortDouble") -- pisarlo con estilo inline desde aca borraria esa
+// posicion base. ".content" es el nodo que cada renderer llena via
+// "contentEl.innerHTML" (ver program/js/renderers/*.js): ningun renderer
+// toca jamas "contentEl.style" directamente (verificado, ver
+// CHANGELOG/historial), asi que este es el UNICO punto de la cadena que
+// puede reclamar esa propiedad sin colisionar con nada existente. El
+// transform de "#mod-<id>" (base) y el de ".content" (operador) se
+// componen naturalmente por anidamiento CSS normal, sin reemplazarse.
+//
+// No recalcula fitted text: fitFontSize/verticalCorrection (text-fit.js)
+// miden con canvas.measureText, nunca con getBoundingClientRect sobre el
+// DOM real -- son completamente ajenos a cualquier transform CSS de un
+// ancestro. La composicion entera (ya armada a su tamaño/posicion
+// "logico" normal) se escala/traslada DESPUES, como una foto, sin que
+// ningun renderer necesite saber que esto existe.
+//
+// transform-origin fijo en el centro del stage logico (960,540, ver
+// ".content" en overlay.css) para los 25+ modulos por igual: un punto de
+// anclaje unico y predecible en vez de uno distinto por modulo (que
+// obligaria a un caso especial por cada uno).
+function applyComposition(target, data) {
+  const dx = data.compositionOffsetX || 0;
+  const dy = data.compositionOffsetY || 0;
+  const scale = data.compositionScale || 1;
+  target.content.style.transform = `translate(${dx}px, ${dy}px) scale(${scale})`;
 }
 
 function cancelContentReveal(id) {
@@ -144,6 +198,10 @@ function scheduleExitCleanup(id) {
 
 for (const id of MODULE_IDS) {
   const root = document.getElementById(`mod-${id}`);
+  if (!root) {
+    console.warn(`[GLA] Contenedor DOM para el módulo no encontrado en index.html: mod-${id}. Ignorado.`);
+    continue;
+  }
   const content = root.querySelector('.content');
   els[id] = { root, content };
 
@@ -198,6 +256,7 @@ function applyModuleState(id, moduleState) {
   if (!target || !moduleState) return;
 
   latestData[id] = moduleState.data;
+  applyComposition(target, moduleState.data);
   const sequenced = isSequenced(id);
 
   if (moduleState.status === MODULE_STATUS.ON) {
@@ -268,10 +327,23 @@ function applyModuleState(id, moduleState) {
 
 ws = connect({
   onMessage(msg) {
-    if (msg.type === WS_MSG.STATE_SNAPSHOT) {
+    if (msg.type === 'TEAM_CATALOG_UPDATE') {
+      updateLocalTeamCatalog(msg.catalog);
+      for (const id of MODULE_IDS) {
+        if (lastStatus[id] === MODULE_STATUS.ON && els[id]) {
+          renderers[id](els[id].content, latestData[id] || {}, false, () => handleOneShotEnded(id), latestData);
+        }
+      }
+    } else if (msg.type === WS_MSG.STATE_SNAPSHOT) {
       for (const id of MODULE_IDS) applyModuleState(id, msg.state[id]);
     } else if (msg.type === WS_MSG.MODULE_UPDATE) {
-      applyModuleState(msg.moduleId, msg.moduleState);
+      const isOn = msg.moduleState && msg.moduleState.status === MODULE_STATUS.ON;
+      if (isOn && msg.isAutoSave && !msg.isExplicitUpdate) {
+        // Ignorar tipeo en directo en Master Control mientras la gráfica está al aire
+        latestData[msg.moduleId] = msg.moduleState.data;
+        return;
+      }
+      applyModuleState(msg.moduleId, msg.moduleState, msg.isExplicitUpdate);
     }
   },
 });

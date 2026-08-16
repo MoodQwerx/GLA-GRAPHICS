@@ -1,5 +1,7 @@
 import { createAlphaVideo } from '../alpha-video.js';
+import { PROGRAM_FONT_FAMILY } from '../program-fonts.js';
 import { crestFile } from '../../../shared/teams.js';
+import { readTextAdjust } from '../text-fit.js';
 
 const VIDEO_BY_TIPO = {
   amarilla: '/assets/eventos/tarjeta-amarilla-alpha.mp4',
@@ -25,9 +27,11 @@ const NAME_BOX_WIDTH = 292; // ancho real de .ov-tarjeta-jugador
 const NAME_SAFETY_MARGIN = 6;
 const NAME_MAX_WIDTH = NAME_BOX_WIDTH - NAME_SAFETY_MARGIN;
 
+const FONT_FAMILY = PROGRAM_FONT_FAMILY;
+
 let measureCtx = null;
 function measureWidth(text, fontSize) {
-  measureCtx.font = `700 ${fontSize}px Anton`;
+  measureCtx.font = `700 ${fontSize}px ${FONT_FAMILY}`;
   return measureCtx.measureText(text).width;
 }
 
@@ -38,7 +42,7 @@ function measureWidth(text, fontSize) {
 // un tamaño fijo chico).
 async function fitNameFontSize(text) {
   if (!measureCtx) measureCtx = document.createElement('canvas').getContext('2d');
-  await document.fonts.load(`700 ${NAME_MAX_FONT}px Anton`);
+  await document.fonts.load(`700 ${NAME_MAX_FONT}px ${FONT_FAMILY}`);
   const widthAtMax = measureWidth(text, NAME_MAX_FONT);
   if (widthAtMax <= NAME_MAX_WIDTH) return NAME_MAX_FONT;
   let size = Math.floor(NAME_MAX_FONT * (NAME_MAX_WIDTH / widthAtMax));
@@ -61,7 +65,7 @@ async function fitNameFontSize(text) {
 // garantia, por eso se mide en vivo (mismo canvas 2D que ya se usa para
 // el ancho) y se aplica como una correccion vertical explicita.
 function measureVerticalCorrection(text, fontSize) {
-  measureCtx.font = `700 ${fontSize}px Anton`;
+  measureCtx.font = `700 ${fontSize}px ${FONT_FAMILY}`;
   const m = measureCtx.measureText(text);
   const lineBoxAscent = m.fontBoundingBoxAscent;
   const lineBoxDescent = m.fontBoundingBoxDescent;
@@ -114,10 +118,14 @@ export default function renderTarjeta(contentEl, data, justTaken, onOneShotEnded
 
   const jugadorEl = contentEl.querySelector('.ov-tarjeta-jugador');
   const jugadorText = data.jugador || '';
+  const adjust = readTextAdjust(data.textAdjust, 'jugador');
   jugadorEl.textContent = jugadorText;
+  jugadorEl.style.translate = `${adjust.dx || 0}px ${adjust.dy || 0}px`;
   fitNameFontSize(jugadorText).then((size) => {
-    jugadorEl.style.fontSize = `${size}px`;
-    const correction = measureVerticalCorrection(jugadorText, size);
+    if (jugadorEl.textContent !== jugadorText) return;
+    const finalSize = Math.max(1, size + (adjust.dSize || 0));
+    jugadorEl.style.fontSize = `${finalSize}px`;
+    const correction = measureVerticalCorrection(jugadorText, finalSize);
     jugadorEl.style.transform = `translateY(${correction}px)`;
   });
 }

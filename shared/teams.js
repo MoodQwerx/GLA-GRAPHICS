@@ -43,6 +43,17 @@ export const TEAM_OPTIONS = [
   ...teams.map((t) => ({ id: t.id, label: t.name })),
 ];
 
+export function updateLocalTeamCatalog(newCatalog) {
+  if (!Array.isArray(newCatalog)) return;
+  teams.length = 0;
+  teams.push(...newCatalog);
+  TEAM_OPTIONS.length = 0;
+  TEAM_OPTIONS.push({ id: '', label: 'Sin equipo' });
+  for (const t of teams) {
+    TEAM_OPTIONS.push({ id: t.id, label: t.name });
+  }
+}
+
 function findTeam(id) {
   return teams.find((t) => t.id === id);
 }
@@ -61,3 +72,4 @@ export function teamAbbr(id) {
 export function teamName(id) {
   return findTeam(id)?.name || '';
 }
+

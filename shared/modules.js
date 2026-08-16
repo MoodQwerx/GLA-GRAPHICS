@@ -27,10 +27,25 @@
 import { FIELD_TYPES, PENALTY_KICK_STATUS } from './constants.js';
 import { TEAM_COLORS } from './team-colors.js';
 import { TEAM_OPTIONS } from './teams.js';
+import { SPONSOR_OPTIONS } from './sponsors.js';
 import { emptyClock } from './clock.js';
 
 function penaltyKicksDefault(count) {
   return Array.from({ length: count }, () => ({ status: PENALTY_KICK_STATUS.PENDING }));
+}
+
+// "textAdjust" (2026-08-14, pedido explicito del usuario: herramienta de
+// edicion manual de posicion X/Y y tamaño por CADA campo de texto de los
+// zocalos, sin tocar codigo). Cada clave de este objeto es el mismo "key"
+// del campo (o una ruta "grupo.campo" para datos anidados, ver
+// "shortDouble" mas abajo) y guarda { dx, dy, dSize } en pixeles logicos
+// -- se persiste junto con el resto de "data" del modulo (mismo mecanismo
+// que ya existia, server/state.js no necesito ningun cambio) y Program lo
+// aplica como una capa ADICIONAL sobre la posicion/tamaño de diseño (ver
+// applyFittedText en program/js/text-fit.js), nunca reemplazandola --
+// resetear un campo es simplemente volver su entrada a {dx:0,dy:0,dSize:0}.
+function textAdjustDefaults(...keys) {
+  return Object.fromEntries(keys.map((key) => [key, { dx: 0, dy: 0, dSize: 0 }]));
 }
 
 const TEAM_COLOR_OPTIONS = TEAM_COLORS.map((c) => ({ id: c.id, label: c.label }));
@@ -65,15 +80,38 @@ export const MODULES = {
       { key: 'teamAColor', label: 'Color de camiseta - local', type: FIELD_TYPES.SELECT, options: TEAM_COLOR_OPTIONS },
       { key: 'teamB', label: 'Equipo visitante', type: FIELD_TYPES.SELECT, options: TEAM_OPTIONS },
       { key: 'teamBColor', label: 'Color de camiseta - visitante', type: FIELD_TYPES.SELECT, options: TEAM_COLOR_OPTIONS },
-      { key: 'scoreA', label: 'Goles local', type: FIELD_TYPES.TEXT },
-      { key: 'scoreB', label: 'Goles visitante', type: FIELD_TYPES.TEXT },
-      { key: 'period', label: 'Tiempo (ej. 1T, 2T)', type: FIELD_TYPES.TEXT },
+      { key: 'scoreA', label: 'Goles local', type: FIELD_TYPES.TEXT, adjustable: true },
+      { key: 'scoreB', label: 'Goles visitante', type: FIELD_TYPES.TEXT, adjustable: true },
+      { key: 'sponsor', label: 'Sponsor Marcador', type: FIELD_TYPES.SELECT, options: SPONSOR_OPTIONS.scoreboard },
+      // "nameA"/"nameB"/"clock" (2026-08-15, auditoria completa): no se
+      // tipean aca (la abreviatura sale del equipo elegido arriba, el reloj
+      // corre solo) pero igual son texto visible en Program -> ADJUST_ONLY,
+      // mismo mecanismo que un campo TEXT adjustable, sin input de texto.
+      { key: 'nameA', label: 'Abreviatura equipo local (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+      { key: 'nameB', label: 'Abreviatura equipo visitante (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+      { key: 'clock', label: 'Reloj (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+      // "period" (2026-08-15, pedido explicito del usuario: botones 1T/2T/
+      // ET/PERSONALIZADO en vez de un input de texto suelto) -- el TEXTO
+      // libre se tipea ahora desde el panel a medida
+      // (master-control/js/scoreboard-clock-panel.js), pero el AJUSTE de
+      // posicion/tamaño sigue siendo generico -> ADJUST_ONLY, mismo criterio
+      // que "clock" arriba.
+      { key: 'period', label: 'Período / tiempo (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
     ],
-    // El reloj (clock) se controla con un panel a medida en Master Control
-    // (ver master-control/js/scoreboard-clock-panel.js), no con "fields".
+    // El reloj (clock, arranque/pausa) y el periodo (botones 1T/2T/ET/
+    // personalizado) se controlan con un panel a medida en Master Control
+    // (ver master-control/js/scoreboard-clock-panel.js), no con "fields" --
+    // el AJUSTE de posicion/tamaño de sus textos si se resuelve con los
+    // campos ADJUST_ONLY de arriba, generico.
     defaults: {
       teamA: '', teamB: '', teamAColor: 'gris', teamBColor: 'gris', scoreA: '0', scoreB: '0', period: '',
       clock: emptyClock(),
+      // "clockEndText" (2026-08-15, pedido explicito del usuario: "FIN DEL
+      // CONTADOR" configurable, default 15:00) -- ver shared/clock.js
+      // (parseClockLimit) y program/js/renderers/scoreboard.js.
+      clockEndText: '15:00',
+      sponsor: '',
+      textAdjust: textAdjustDefaults('scoreA', 'scoreB', 'period', 'nameA', 'nameB', 'clock'),
     },
   },
 
@@ -85,10 +123,12 @@ export const MODULES = {
     live: true,
     autoRunClock: 'clock',
     fields: [
-      { key: 'addedMinutes', label: 'Minutos agregados (ej. 5)', type: FIELD_TYPES.TEXT },
+      { key: 'addedMinutes', label: 'Minutos agregados (ej. 5)', type: FIELD_TYPES.TEXT, adjustable: true },
+      { key: 'clock', label: 'Reloj (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
     ],
     defaults: {
       addedMinutes: '5', clock: emptyClock(),
+      textAdjust: textAdjustDefaults('addedMinutes', 'clock'),
     },
   },
 
@@ -107,8 +147,18 @@ export const MODULES = {
     // que tocar este modulo.
     live: true,
     sequencedReveal: true,
-    fields: [],
-    defaults: {},
+    // "nameA"/"nameB"/"scoreA"/"scoreB" (2026-08-15, auditoria completa):
+    // los 4 textos visibles se derivan en vivo de "scoreboard" (arriba) sin
+    // campo propio -- ADJUST_ONLY les da el editor de posicion/tamaño
+    // igual que a cualquier otro texto, sin agregar un input que duplicaria
+    // la carga de datos.
+    fields: [
+      { key: 'nameA', label: 'Abreviatura equipo local (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+      { key: 'nameB', label: 'Abreviatura equipo visitante (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+      { key: 'scoreA', label: 'Gol local (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+      { key: 'scoreB', label: 'Gol visitante (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+    ],
+    defaults: { textAdjust: textAdjustDefaults('nameA', 'nameB', 'scoreA', 'scoreB') },
   },
 
   marcadorPenales: {
@@ -123,13 +173,26 @@ export const MODULES = {
     live: true,
     sequencedReveal: true,
     fields: [
-      { key: 'titulo', label: 'Título', type: FIELD_TYPES.TEXT },
+      { key: 'titulo', label: 'Título', type: FIELD_TYPES.TEXT, adjustable: true },
       { key: 'kicksA', label: 'Tandas equipo A', type: FIELD_TYPES.PENALTY_SERIES, count: 3 },
       { key: 'kicksB', label: 'Tandas equipo B', type: FIELD_TYPES.PENALTY_SERIES, count: 3 },
+      { key: 'nameA', label: 'Abreviatura equipo local (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+      { key: 'nameB', label: 'Abreviatura equipo visitante (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+      { key: 'scoreA', label: 'Resultado final local (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+      { key: 'scoreB', label: 'Resultado final visitante (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
     ],
     defaults: {
       titulo: 'PENALES',
       kicksA: penaltyKicksDefault(3), kicksB: penaltyKicksDefault(3),
+      // "suddenDeath" (2026-08-15, pedido explicito del usuario: indicar
+      // MUERTE SUBITA sin inventar un asset nuevo) -- toggle desde un panel
+      // a medida (ver master-control/js/penales-panel.js). Cuando esta en
+      // true, el renderer (program/js/renderers/marcadorPenales.js) le
+      // agrega " — MUERTE SÚBITA" al mismo titulo de siempre, reusando la
+      // zona/auto-ajuste de fuente que ya existe para ese texto -- no es un
+      // campo de texto propio, no se persiste por separado del titulo.
+      suddenDeath: false,
+      textAdjust: textAdjustDefaults('titulo', 'nameA', 'nameB', 'scoreA', 'scoreB'),
     },
   },
 
@@ -149,10 +212,17 @@ export const MODULES = {
     live: true,
     autoRunClock: 'clock',
     fields: [
-      { key: 'titulo', label: 'TÍTULO', type: FIELD_TYPES.TEXT },
+      { key: 'titulo', label: 'TÍTULO', type: FIELD_TYPES.TEXT, adjustable: true },
+      { key: 'clock', label: 'Reloj (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
     ],
     defaults: {
       titulo: '', clock: emptyClock(),
+      // "clockEndText" (2026-08-15, pedido explicito del usuario: "FIN DEL
+      // CONTADOR" configurable, default 06:00 para Marcador Zocalo) -- ver
+      // shared/clock.js (parseClockLimit) y
+      // master-control/js/live-clock-display.js.
+      clockEndText: '06:00',
+      textAdjust: textAdjustDefaults('titulo', 'clock'),
     },
   },
 
@@ -166,19 +236,32 @@ export const MODULES = {
     layer: 'fullscreen',
     live: true,
     sequencedReveal: true,
-    fields: [
-      {
-        key: 'teamSide',
-        label: 'EQUIPO A MOSTRAR',
-        type: FIELD_TYPES.SELECT,
-        options: [
-          { id: 'local', label: 'LOCAL' },
-          { id: 'visitor', label: 'VISITANTE' },
-        ],
-      },
-    ],
+    // Sin "teamSide" generico aca: el selector LOCAL/VISITANTE vive en el
+    // panel dedicado (master-control/js/formation-list-panel.js), que
+    // ademas de mostrar el toggle tiene que disparar la secuencia
+    // OUT->cargar preset->TAKE cuando el modulo esta al aire (ver ese
+    // archivo y master-control/js/main.js) -- el editor generico de
+    // campos (field-editors.js) no tiene forma de engancharse a eso.
+    fields: [],
     defaults: {
-      teamSide: 'local', starters: [], substitutes: [],
+      teamSide: 'local',
+      // "starters"/"substitutes" son SIEMPRE el contenido activo (lo que
+      // lee program/js/renderers/formacionEquipos.js) -- el panel los
+      // mantiene sincronizados con "presets[teamSide]" en cada edicion.
+      // "presets" guarda titulares+suplentes de cada equipo por separado
+      // (2026-08-05, pedido explicito del usuario: preparar ambas
+      // formaciones con anticipacion sin que se mezclen entre si).
+      starters: [], substitutes: [],
+      presets: {
+        local: { starters: [], substitutes: [] },
+        visitor: { starters: [], substitutes: [] },
+      },
+      // "playerName"/"playerNumber" (2026-08-15, auditoria completa): un
+      // unico ajuste compartido por las 6 posiciones de titulares (misma
+      // clase visual en el asset, ver program/js/renderers/
+      // formacionEquipos.js) -- "subsTitle" es el rotulo fijo "SUPLENTES",
+      // "subsList" es el bloque completo de la lista de suplentes.
+      textAdjust: textAdjustDefaults('playerName', 'playerNumber', 'subsTitle', 'subsList'),
     },
   },
 
@@ -189,8 +272,16 @@ export const MODULES = {
     layer: 'fullscreen',
     live: true,
     sequencedReveal: true,
-    fields: [],
-    defaults: {},
+    fields: [
+      { key: 'titulo', label: 'TÍTULO', type: FIELD_TYPES.TEXT, adjustable: true },
+      { key: 'nameA', label: 'Nombre equipo local (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+      { key: 'nameB', label: 'Nombre equipo visitante (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+    ],
+    defaults: {
+      titulo: 'PRÓXIMO PARTIDO',
+      titlePresets: [],
+      textAdjust: textAdjustDefaults('titulo', 'nameA', 'nameB'),
+    },
   },
 
   vsResultado: {
@@ -200,8 +291,18 @@ export const MODULES = {
     layer: 'fullscreen',
     live: true,
     sequencedReveal: true,
-    fields: [],
-    defaults: {},
+    fields: [
+      { key: 'titulo', label: 'TÍTULO', type: FIELD_TYPES.TEXT, adjustable: true },
+      { key: 'nameA', label: 'Nombre equipo local (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+      { key: 'nameB', label: 'Nombre equipo visitante (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+      { key: 'scoreA', label: 'Gol local (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+      { key: 'scoreB', label: 'Gol visitante (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+    ],
+    defaults: {
+      titulo: 'RESULTADO',
+      titlePresets: [],
+      textAdjust: textAdjustDefaults('titulo', 'nameA', 'nameB', 'scoreA', 'scoreB'),
+    },
   },
 
   // ---------------------------------------------------------------------
@@ -240,9 +341,9 @@ export const MODULES = {
           { id: 'azul', label: 'Azul' },
         ],
       },
-      { key: 'jugador', label: 'Nombre del jugador', type: FIELD_TYPES.TEXT },
+      { key: 'jugador', label: 'Nombre del jugador', type: FIELD_TYPES.TEXT, adjustable: true },
     ],
-    defaults: { equipo: 'local', tipo: 'amarilla', jugador: '' },
+    defaults: { equipo: 'local', tipo: 'amarilla', jugador: '', textAdjust: textAdjustDefaults('jugador') },
   },
 
   // El asset tiene un unico casillero de escudo (una sustitucion es
@@ -266,11 +367,14 @@ export const MODULES = {
           { id: 'visitante', label: 'Visitante' },
         ],
       },
-      { key: 'entra', label: 'Entra', type: FIELD_TYPES.TEXT },
-      { key: 'sale', label: 'Sale', type: FIELD_TYPES.TEXT },
-      { key: 'titulo', label: 'Título', type: FIELD_TYPES.TEXT },
+      { key: 'entra', label: 'Entra', type: FIELD_TYPES.TEXT, adjustable: true },
+      { key: 'sale', label: 'Sale', type: FIELD_TYPES.TEXT, adjustable: true },
+      { key: 'titulo', label: 'Título', type: FIELD_TYPES.TEXT, adjustable: true },
     ],
-    defaults: { equipo: 'local', entra: '', sale: '', titulo: 'CAMBIO' },
+    defaults: {
+      equipo: 'local', entra: '', sale: '', titulo: 'CAMBIO',
+      textAdjust: textAdjustDefaults('entra', 'sale', 'titulo'),
+    },
   },
 
   gol: {
@@ -292,8 +396,34 @@ export const MODULES = {
     category: 'VAR / Replay',
     layer: 'bottom-left-secondary',
     sequencedReveal: true,
-    fields: [],
-    defaults: {},
+    fields: [
+      { key: 'sponsor', label: 'Sponsor VAR', type: FIELD_TYPES.SELECT, options: SPONSOR_OPTIONS.var },
+      // "motivoPreset" (2026-08-15, pedido explicito del usuario): selector
+      // con 3 textos predefinidos + PERSONALIZADO. Elegir un preset
+      // autocompleta "motivo" (logica en master-control/js/main.js, mismo
+      // patron que el auto-completado de LOCAL/VISITANTE en Tarjetas/
+      // Cambios) -- "motivo" sigue siendo el mismo campo TEXT de siempre,
+      // con su editor de posicion/tamaño intacto (adjustable:true), asset
+      // cortito, animaciones y logica TAKE/UPDATE/OUT sin cambios.
+      {
+        key: 'motivoPreset',
+        label: 'Motivo',
+        type: FIELD_TYPES.SELECT,
+        options: [
+          { id: 'posible_penal', label: 'POSIBLE PENAL' },
+          { id: 'gol_no_valido', label: 'GOL NO VÁLIDO' },
+          { id: 'posible_roja', label: 'POSIBLE ROJA' },
+          { id: 'personalizado', label: 'PERSONALIZADO' },
+        ],
+      },
+      { key: 'motivo', label: 'Texto Motivo', type: FIELD_TYPES.TEXT, adjustable: true },
+    ],
+    defaults: {
+      sponsor: '', motivoPreset: 'posible_penal', motivo: 'POSIBLE PENAL',
+      compositionOffsetX: 0, compositionOffsetY: 0, compositionScale: 1,
+      motivoOffsetX: 0, motivoOffsetY: 0, motivoScale: 1,
+      textAdjust: textAdjustDefaults('motivo')
+    },
   },
 
   replay: {
@@ -303,7 +433,7 @@ export const MODULES = {
     layer: 'bottom-left-secondary',
     sequencedReveal: true,
     fields: [
-      { key: 'sponsor', label: 'Sponsor (opcional)', type: FIELD_TYPES.TEXT },
+      { key: 'sponsor', label: 'Sponsor REPLAY', type: FIELD_TYPES.SELECT, options: SPONSOR_OPTIONS.var },
     ],
     defaults: { sponsor: '' },
   },
@@ -321,8 +451,16 @@ export const MODULES = {
     category: 'Mosca',
     layer: 'top-right',
     sequencedReveal: true,
-    fields: [],
-    defaults: {},
+    // "clock" (2026-08-15, auditoria completa): unico texto dinamico real
+    // de este modulo (hora del sistema, sin campo tipeable) -> ADJUST_ONLY.
+    // ".ov-mosca-vivo" ("VIVO") NO se incluye a proposito: esta oculto por
+    // CSS (display:none, ver overlay.css) porque el "VIVO" real ya viene
+    // horneado en el video (ver program/js/renderers/bug.js) -- no es texto
+    // visible en Program, agregarle un editor no tendria ningun efecto.
+    fields: [
+      { key: 'clock', label: 'Hora (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+    ],
+    defaults: { textAdjust: textAdjustDefaults('clock') },
   },
 
   // ---------------------------------------------------------------------
@@ -358,10 +496,10 @@ export const MODULES = {
     layer: 'bottom-wide',
     sequencedReveal: true,
     fields: [
-      { key: 'line1', label: 'Titulo principal', type: FIELD_TYPES.TEXT },
-      { key: 'line2', label: 'Subtitulo / bajada', type: FIELD_TYPES.TEXT },
+      { key: 'line1', label: 'Titulo principal', type: FIELD_TYPES.TEXT, adjustable: true },
+      { key: 'line2', label: 'Subtitulo / bajada', type: FIELD_TYPES.TEXT, adjustable: true },
     ],
-    defaults: { line1: '', line2: '' },
+    defaults: { line1: '', line2: '', textPresets: [], textAdjust: textAdjustDefaults('line1', 'line2') },
   },
 
   shortSimple: {
@@ -371,27 +509,45 @@ export const MODULES = {
     layer: 'bottom-left',
     sequencedReveal: true,
     fields: [
-      { key: 'text', label: 'Texto', type: FIELD_TYPES.TEXT },
+      { key: 'text', label: 'Texto', type: FIELD_TYPES.TEXT, adjustable: true },
     ],
-    defaults: { text: '' },
+    defaults: { text: '', textPresets: [], textAdjust: textAdjustDefaults('text') },
   },
 
+  // "airMode" (2026-08-06, pedido explicito del usuario: poder mostrar uno
+  // o dos zocalos cortos dobles a la vez, ej. dos relatores juntos):
+  // 'single' reusa exactamente la logica/posicion de siempre ("name"/
+  // "role"); 'double' muestra dos instancias independientes del mismo
+  // renderer/asset lado a lado ("double1"/"double2"), ver
+  // program/js/renderers/shortDouble.js. Sin "fields" generico: el panel
+  // dedicado (master-control/js/short-double-panel.js) tiene que mostrar
+  // las tres secciones (individual + doble 1 + doble 2) y los controles de
+  // aire propios -- mismo criterio que Formacion (fields: []).
   shortDouble: {
     id: 'shortDouble',
     label: 'Zocalo corto doble',
     category: 'Zocalos',
     layer: 'bottom-left',
     sequencedReveal: true,
-    fields: [
-      { key: 'name', label: 'Nombre', type: FIELD_TYPES.TEXT },
-      { key: 'role', label: 'Talento / Rol / Cargo', type: FIELD_TYPES.TEXT },
-    ],
-    defaults: { name: '', role: '' },
+    fields: [],
+    defaults: {
+      name: '', role: '',
+      airMode: 'single',
+      double1: { name: '', role: '' },
+      double2: { name: '', role: '' },
+      textPresets: [],
+      // Claves con ruta "grupo.campo" para los textos de los pares del
+      // modo doble -- distinguen el ajuste de "double1.name" del de
+      // "double2.name" aunque compartan las mismas clases CSS (ver
+      // program/js/renderers/shortDouble.js), porque son campos de datos
+      // independientes, no un unico elemento reutilizado.
+      textAdjust: textAdjustDefaults('name', 'role', 'double1.name', 'double1.role', 'double2.name', 'double2.role'),
+    },
   },
 
   // Sin campos de equipo propios: equipo A/B (nombre, abreviatura y
   // escudo) se leen en vivo de "scoreboard" (`live: true`, mismo patron
-  // que marcadorPenales/marcadorEntretiempo/tarjeta/cambios) — el VS
+  // que "vs" mas arriba) — el VS
   // siempre anuncia el mismo partido cargado en el marcador principal, no
   // hace falta volver a elegir los equipos aca.
   vs: {
@@ -418,6 +574,7 @@ export const MODULES = {
         key: 'statusTexto',
         label: 'Texto libre del renglon central (opcional, reemplaza al Estado de arriba si se completa)',
         type: FIELD_TYPES.TEXT,
+        adjustable: true,
       },
       {
         key: 'goleadoresLocal',
@@ -429,9 +586,103 @@ export const MODULES = {
         label: 'Goleadores Visitante (mismo formato y limite que Local)',
         type: FIELD_TYPES.TEXTAREA,
       },
+      {
+        key: 'contentType',
+        label: 'Contenido central',
+        type: FIELD_TYPES.SELECT,
+        options: [
+          { id: 'match_info', label: 'Resultado / Estado' },
+          { id: 'sponsor', label: 'Sponsor' },
+        ],
+      },
+      {
+        key: 'sponsor',
+        label: 'Sponsor Zocalo Medio',
+        type: FIELD_TYPES.SELECT,
+        options: SPONSOR_OPTIONS.vs_compact,
+      },
+      // "nameA"/"nameB"/"goalA"/"goalB"/"scorersLocal"/"scorersVisitante"
+      // (2026-08-15, auditoria completa): los 6 quedaban fuera de la
+      // primera pasada de este modulo -- nombre y gol de cada equipo se
+      // derivan en vivo de "scoreboard" (sin campo propio) y los bloques de
+      // goleadores, aunque se tipean en las 2 TEXTAREA de arriba, se
+      // renderizan como lista/marquesina (no un unico punto de texto) por
+      // lo que su ajuste es de BLOQUE (posicion + tamaño de fuente de toda
+      // la lista), no por linea individual -- ver applyScorersAdjust en
+      // program/js/renderers/vs.js.
+      { key: 'nameA', label: 'Nombre equipo local (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+      { key: 'nameB', label: 'Nombre equipo visitante (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+      { key: 'goalA', label: 'Gol local (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+      { key: 'goalB', label: 'Gol visitante (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+      { key: 'scorersLocal', label: 'Bloque goleadores local (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+      { key: 'scorersVisitante', label: 'Bloque goleadores visitante (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
     ],
     defaults: {
       renglon: 'normal', status: '', statusTexto: '', goleadoresLocal: '', goleadoresVisitante: '',
+      contentType: 'match_info', sponsor: '',
+      textAdjust: textAdjustDefaults('statusTexto', 'nameA', 'nameB', 'goalA', 'goalB', 'scorersLocal', 'scorersVisitante'),
+    },
+  },
+
+  // Sin campo de equipo propio: escudo local/visitante se leen en vivo de
+  // "scoreboard" (`live: true`, mismo patron que "vs" mas arriba) — el
+  // separador ya horneado en el asset divide ambos escudos, no hace falta
+  // volver a elegir equipo aca. "texto1"/"texto2" son independientes, cada
+  // uno controla su propio zocalo central (mismo patron que "line1"/
+  // "line2" de longDouble). El sector derecho del asset queda sin usar a
+  // proposito (pedido explicito del usuario, preparado para el futuro).
+  zocaloFinalDiv: {
+    id: 'zocaloFinalDiv',
+    label: 'Zocalo Compuesto con Equipos',
+    category: 'Zocalos',
+    layer: 'bottom-wide',
+    live: true,
+    sequencedReveal: true,
+    fields: [
+      { key: 'texto1', label: 'TEXTO 1', type: FIELD_TYPES.TEXT, adjustable: true },
+      { key: 'texto2', label: 'TEXTO 2', type: FIELD_TYPES.TEXT, adjustable: true },
+    ],
+    defaults: {
+      texto1: '', texto2: '', sponsorsRotation: [],
+      escudosFuente: 'MARCADOR', customTeamA: '', customTeamB: '',
+      shieldPresets: [], textPresets: [],
+      textAdjust: textAdjustDefaults('texto1', 'texto2')
+    },
+  },
+
+  // Misma logica que "zocaloFinalDiv" de arriba, base tomada de ese modulo
+  // (mismo asset central/derecho, mismo comportamiento de texto1/texto2 y
+  // animaciones) -- unica diferencia real: el sector izquierdo no tiene
+  // escudos ni separador, en su lugar va un unico logo GLA estatico (sin
+  // datos del Marcador, no hay "live" por esa parte -- solo se mantiene
+  // por si en el futuro se agrega algo que dependa de scoreboard, hoy no
+  // se usa). Sin campo de logo en el panel: el logo es fijo, no elegible.
+  zocaloFinal: {
+    id: 'zocaloFinal',
+    label: 'Zocalo Compuesto Logo GLA',
+    category: 'Zocalos',
+    layer: 'bottom-wide',
+    sequencedReveal: true,
+    fields: [
+      { key: 'texto1', label: 'TEXTO 1', type: FIELD_TYPES.TEXT, adjustable: true },
+      { key: 'texto2', label: 'TEXTO 2', type: FIELD_TYPES.TEXT, adjustable: true },
+    ],
+    defaults: { texto1: '', texto2: '', sponsorsRotation: [], textPresets: [], textAdjust: textAdjustDefaults('texto1', 'texto2') },
+  },
+
+  placaLInfo: {
+    id: 'placaLInfo',
+    label: 'Placa L Info',
+    category: 'Zocalos',
+    layer: 'fullscreen',
+    sequencedReveal: true,
+    fields: [],
+    defaults: {
+      completePresets: [],
+      zocalo1: { text: 'CÁMARA 1', active: true, offsetX: -1256, offsetY: 408, scale: 1, textAdjust: { dx: 0, dy: 0, dSize: 0 }, presets: [] },
+      zocalo2: { text: 'CÁMARA 2', active: true, offsetX: -296, offsetY: 408, scale: 1, textAdjust: { dx: 0, dy: 0, dSize: 0 }, presets: [] },
+      zocalo3: { text: 'CÁMARA 3', active: true, offsetX: -1256, offsetY: 948, scale: 1, textAdjust: { dx: 0, dy: 0, dSize: 0 }, presets: [] },
+      zocalo4: { text: 'CÁMARA 4', active: true, offsetX: -296, offsetY: 948, scale: 1, textAdjust: { dx: 0, dy: 0, dSize: 0 }, presets: [] },
     },
   },
 
@@ -476,6 +727,10 @@ export const MODULES = {
       variante: 'grupo1',
       grupo1: { filas: [{ teamId: '', puntos: '' }, { teamId: '', puntos: '' }, { teamId: '', puntos: '' }] },
       grupo2: { filas: [{ teamId: '', puntos: '' }, { teamId: '', puntos: '' }, { teamId: '', puntos: '' }] },
+      ultimaActualizacionWeb: '',
+      // Ajuste column-level compartido entre Grupo 1 y Grupo 2 (2026-08-15,
+      // auditoria completa) -- ver master-control/js/grupos-panel.js.
+      textAdjust: textAdjustDefaults('nombre', 'puntos'),
     },
   },
 
@@ -484,56 +739,210 @@ export const MODULES = {
   // ---------------------------------------------------------------------
   sideTable: {
     id: 'sideTable',
-    label: 'Tabla lateral derecha',
-    category: 'Tablas',
-    layer: 'right',
-    fields: [
-      { key: 'title', label: 'Titulo tabla', type: FIELD_TYPES.TEXT },
-      {
-        key: 'items',
-        label: 'Resultados',
-        type: FIELD_TYPES.LIST,
-        itemLabel: 'Resultado',
-        itemFields: [
-          { key: 'teamA', label: 'Equipo A', type: FIELD_TYPES.TEXT },
-          { key: 'scoreA', label: 'Goles A', type: FIELD_TYPES.TEXT },
-          { key: 'teamB', label: 'Equipo B', type: FIELD_TYPES.TEXT },
-          { key: 'scoreB', label: 'Goles B', type: FIELD_TYPES.TEXT },
-        ],
-      },
-    ],
+    label: 'Resultados',
+    category: 'Brackets',
+    layer: 'fullscreen',
+    fields: [],
     defaults: {
-      title: 'RESULTADOS', items: [],
+      titulo: 'RESULTADOS',
+      posicion: 'placaL',
+      // Maximo 6 brackets visibles a la vez en Program; con mas de 6
+      // encuentros cargados, "tanda" elige que ventana de 6 se muestra
+      // ('tanda1' = partidos 1-6, 'tanda2' = partidos 4 en adelante) --
+      // ver program/js/renderers/sideTable.js.
+      tanda: 'tanda1',
+      encuentros: [
+        {
+          teamA: '',
+          teamB: '',
+          scoreA: '0',
+          scoreB: '0',
+          status: 'final',
+          hora: '',
+          // Titulo individual por encuentro (2026-08-15, pedido explicito
+          // del usuario: "CUARTOS 1", "SEMIS 1", "GRAN FINAL", etc.) --
+          // texto propio de CADA encuentro (a diferencia de golLocal/
+          // estado/etc., que son campos por-encuentro pero de tipo fijo),
+          // ver program/js/renderers/sideTable.js.
+          titulo: ''
+        }
+      ],
+      faseWeb: 'grupos',
+      snapshotsWeb: {},
+      ultimaActualizacionWeb: '',
+      // Ajuste column-level (2026-08-15, auditoria completa): ver
+      // master-control/js/resultados-panel.js. "tituloBracket" es el
+      // ajuste de posicion/tamaño del titulo individual por encuentro
+      // (arriba del estado/hora); se llama distinto de "titulo" porque ese
+      // key ya lo usa el titulo GENERAL de todo el modulo (arriba de la
+      // tabla, ej. "RESULTADOS").
+      textAdjust: textAdjustDefaults('titulo', 'golLocal', 'golVisitante', 'estado', 'estadoFullscreen', 'tituloBracket'),
     },
   },
 
-  upcoming: {
-    id: 'upcoming',
-    label: 'Proximos encuentros',
-    category: 'Tablas',
-    layer: 'bottom-left-vertical',
-    fields: [
-      { key: 'title', label: 'Titulo', type: FIELD_TYPES.TEXT },
-      {
-        key: 'items',
-        label: 'Partidos',
-        type: FIELD_TYPES.LIST,
-        itemLabel: 'Partido',
-        itemFields: [
-          { key: 'teamA', label: 'Equipo A', type: FIELD_TYPES.TEXT },
-          { key: 'teamB', label: 'Equipo B', type: FIELD_TYPES.TEXT },
-          { key: 'info', label: 'Fecha / hora / competicion', type: FIELD_TYPES.TEXT },
-        ],
-      },
-    ],
+  estrellas: {
+    id: 'estrellas',
+    label: 'Estrellas',
+    category: 'Placas',
+    layer: 'fullscreen',
+    sequencedReveal: true,
+    fields: [],
     defaults: {
-      title: 'PROXIMOS ENCUENTROS', items: [],
+      titulo: 'LOS MEJORES DE CADA EQUIPO',
+      fuente: 'liga',
+      snapshots: {},
+      formatoJugador: 'numero_apodo',
+      localJugador: null,
+      localNombre: '',
+      localG: 0,
+      localA: 0,
+      localPJ: 0,
+      visitanteJugador: null,
+      visitanteNombre: '',
+      visitanteG: 0,
+      visitanteA: 0,
+      visitantePJ: 0,
+      ultimaActualizacionWeb: '',
+      // 9 ajustes individuales (2026-08-15, auditoria completa): estructura
+      // fija (2 jugadores), cada texto se ajusta por separado -- ver
+      // master-control/js/estrellas-panel.js.
+      textAdjust: textAdjustDefaults(
+        'titulo',
+        'localNombre', 'localG', 'localA', 'localPJ',
+        'visitanteNombre', 'visitanteG', 'visitanteA', 'visitantePJ',
+      ),
+    },
+  },
+
+  // Tabla de posiciones: la liga tiene 11 equipos, "filas" guarda los 11
+  // (posicion real 1-11, nunca renumerada) aunque el asset solo tenga
+  // casilleros para una pagina a la vez. "pagina" ('pagina1' = posiciones
+  // 1-6 con posiciones-alpha.mp4, 'pagina2' = posiciones 7-11 con
+  // posiciones-5-alpha.mp4, ver program/js/renderers/posiciones.js) decide
+  // que subset de "filas" se compone en Program -- una unica sincronizacion
+  // web (o carga manual) llena las 11, el selector solo elige que ventana
+  // mostrar, no dispara una segunda consulta. Columnas numericas reales
+  // impresas en el grafico -- PTS, PJ, G, GXP, PXP, P, GF, GC, DG -- sin
+  // inventar ni recortar siglas. "equipo" guarda solo el ID del catalogo
+  // global (shared/teams.js); escudo y nombre completo se derivan siempre
+  // de ahi, nunca se cargan a mano. El orden de "filas" es el oficial tal
+  // como llega (de la web o cargado a mano): Program ya no recalcula un
+  // ranking propio por PTS/DG, solo filtra por rango de posicion y ordena
+  // por el campo "posicion" (ver renderer).
+  posiciones: {
+    id: 'posiciones',
+    label: 'Tabla Global',
+    category: 'Brackets',
+    layer: 'fullscreen',
+    sequencedReveal: true,
+    fields: [],
+    defaults: {
+      titulo: 'POSICIONES',
+      pagina: 'pagina1',
+      filas: [
+        { posicion: 1, teamId: '', puntos: 0, pj: 0, g: 0, gxp: 0, pxp: 0, p: 0, gf: 0, gc: 0, dg: 0 },
+        { posicion: 2, teamId: '', puntos: 0, pj: 0, g: 0, gxp: 0, pxp: 0, p: 0, gf: 0, gc: 0, dg: 0 },
+        { posicion: 3, teamId: '', puntos: 0, pj: 0, g: 0, gxp: 0, pxp: 0, p: 0, gf: 0, gc: 0, dg: 0 },
+        { posicion: 4, teamId: '', puntos: 0, pj: 0, g: 0, gxp: 0, pxp: 0, p: 0, gf: 0, gc: 0, dg: 0 },
+        { posicion: 5, teamId: '', puntos: 0, pj: 0, g: 0, gxp: 0, pxp: 0, p: 0, gf: 0, gc: 0, dg: 0 },
+        { posicion: 6, teamId: '', puntos: 0, pj: 0, g: 0, gxp: 0, pxp: 0, p: 0, gf: 0, gc: 0, dg: 0 },
+        { posicion: 7, teamId: '', puntos: 0, pj: 0, g: 0, gxp: 0, pxp: 0, p: 0, gf: 0, gc: 0, dg: 0 },
+        { posicion: 8, teamId: '', puntos: 0, pj: 0, g: 0, gxp: 0, pxp: 0, p: 0, gf: 0, gc: 0, dg: 0 },
+        { posicion: 9, teamId: '', puntos: 0, pj: 0, g: 0, gxp: 0, pxp: 0, p: 0, gf: 0, gc: 0, dg: 0 },
+        { posicion: 10, teamId: '', puntos: 0, pj: 0, g: 0, gxp: 0, pxp: 0, p: 0, gf: 0, gc: 0, dg: 0 },
+        { posicion: 11, teamId: '', puntos: 0, pj: 0, g: 0, gxp: 0, pxp: 0, p: 0, gf: 0, gc: 0, dg: 0 },
+      ],
+      // Ajuste column-level (2026-08-15, auditoria completa): un unico
+      // control por columna se aplica a todas las filas visibles -- ver
+      // master-control/js/posiciones-panel.js.
+      textAdjust: textAdjustDefaults('titulo', 'numero', 'equipo', 'pts', 'pj', 'g', 'gxp', 'pxp', 'p', 'gf', 'gc', 'dg'),
+    },
+  },
+
+  posicionesTorneo: {
+    id: 'posicionesTorneo',
+    label: 'Posiciones Torneo',
+    category: 'Brackets',
+    layer: 'fullscreen',
+    sequencedReveal: true,
+    fields: [],
+    defaults: {
+      titulo: 'POSICIONES TORNEO',
+      pagina: 'pagina1',
+      filas: Array.from({ length: 6 }, (_, index) => ({
+        posicion: index + 1, teamId: '', puntos: 0, pj: 0, g: 0, gxp: 0,
+        pxp: 0, p: 0, gf: 0, gc: 0, dg: 0,
+      })),
+      ultimaActualizacionWeb: '',
+      textAdjust: textAdjustDefaults('titulo', 'numero', 'equipo', 'pts', 'pj', 'g', 'gxp', 'pxp', 'p', 'gf', 'gc', 'dg'),
+    },
+  },
+
+  // Tablas de rendimiento: comparten panel y renderer, pero cada modulo
+  // conserva sus propios jugadores y posicion. El orden no se guarda como
+  // una segunda fuente de datos: se deriva de estas estadisticas con sort
+  // estable cada vez que Program renderiza. El estado visual sigue fuera
+  // de defaults, por lo que un reinicio siempre las deja OUT.
+  goleadores: {
+    id: 'goleadores',
+    label: 'Goleadores',
+    category: 'Tablas',
+    layer: 'fullscreen',
+    fields: [],
+    defaults: {
+      posicion: 'placaL', fuente: 'liga', jugadores: [], snapshots: {}, ultimaActualizacionWeb: '',
+      textAdjust: textAdjustDefaults('position', 'name', 'primaryStat'),
+    },
+  },
+
+  asistidores: {
+    id: 'asistidores',
+    label: 'Asistidores',
+    category: 'Tablas',
+    layer: 'fullscreen',
+    fields: [],
+    defaults: {
+      posicion: 'placaL', fuente: 'liga', jugadores: [], snapshots: {}, ultimaActualizacionWeb: '',
+      textAdjust: textAdjustDefaults('position', 'name', 'primaryStat'),
+    },
+  },
+
+  jugadores: {
+    id: 'jugadores',
+    label: 'Jugadores',
+    category: 'Tablas',
+    layer: 'fullscreen',
+    fields: [],
+    defaults: {
+      posicion: 'placaL', fuente: 'liga', jugadores: [], snapshots: {}, ultimaActualizacionWeb: '',
+      textAdjust: textAdjustDefaults('name', 'stat0', 'stat1', 'stat2'),
     },
   },
 };
 
 export const MODULE_IDS = Object.keys(MODULES);
 
+// "AJUSTE DE COMPOSICIÓN" (2026-08-14, pedido explicito del usuario):
+// posicion X/Y + escala de TODO un modulo, aplicados como una capa
+// adicional sobre el diseño base ("posicion final = base + offset",
+// "escala final = base × ajuste") -- ver program/js/main.js
+// (applyModuleState) para donde se aplica el transform en Program, y
+// master-control/js/composition-control.js para el control de UI.
+// Mezclados aca, en el UNICO lugar por el que pasa CUALQUIER modulo al
+// inicializar su estado (server/state.js y master-control/js/main.js
+// llaman los dos a esta funcion), en vez de agregar estas 3 claves a mano
+// en los ~25 "defaults" de arriba -- asi un modulo nuevo que se registre
+// en el futuro hereda esta capa automaticamente, sin tocar este archivo
+// de nuevo ni el panel de Master Control.
+const COMPOSITION_DEFAULTS = {
+  compositionOffsetX: 0,
+  compositionOffsetY: 0,
+  compositionScale: 1,
+};
+
 export function cloneDefaults(moduleId) {
-  return JSON.parse(JSON.stringify(MODULES[moduleId].defaults));
+  return {
+    ...COMPOSITION_DEFAULTS,
+    ...JSON.parse(JSON.stringify(MODULES[moduleId].defaults)),
+  };
 }

@@ -1,11 +1,10 @@
 import { createAlphaVideo } from '../alpha-video.js';
-import { applyFittedText } from '../text-fit.js';
+import { applyFittedText, updateFittedTextWithTransition, readTextAdjust } from '../text-fit.js';
+import { resolveTeamTokens } from '../../../shared/text-tokens.js';
 
 const VIDEO_SRC = '/assets/zocalos/zocalo-corto-simple-alpha.mp4';
 
-// Ancho real de ".ov-short-simple-text" (ver overlay.css) — mismo
-// criterio de auto-ajuste que Tarjeta/Cambios.
-const TEXT_MAX_FONT = 36;
+const TEXT_MAX_FONT = 40;
 const TEXT_MIN_FONT = 18;
 const TEXT_BOX_WIDTH = 690;
 const TEXT_SAFETY_MARGIN = 16;
@@ -21,14 +20,21 @@ function buildStructure(el) {
   el._alphaVideo = createAlphaVideo(el.querySelector('.av-target'), VIDEO_SRC);
 }
 
-export default function renderShortSimple(contentEl, data, justTaken) {
+export default function renderShortSimple(contentEl, data, justTaken, onOneShotEnded, allData) {
   if (!contentEl._alphaVideo) {
     buildStructure(contentEl);
   }
   if (justTaken) {
     contentEl._alphaVideo.playFromStart();
   }
-  applyFittedText(contentEl.querySelector('.ov-short-simple-text'), data.text || '', {
+  const textEl = contentEl.querySelector('.ov-short-simple-text');
+  const sb = allData && allData.scoreboard;
+  const newText = resolveTeamTokens(data.text || '', sb);
+  const oldText = contentEl._prevText;
+
+  updateFittedTextWithTransition(textEl, newText, oldText, {
     maxFont: TEXT_MAX_FONT, minFont: TEXT_MIN_FONT, maxWidth: TEXT_MAX_WIDTH, weight: 800,
-  });
+  }, readTextAdjust(data.textAdjust, 'text'), !justTaken);
+
+  contentEl._prevText = newText;
 }

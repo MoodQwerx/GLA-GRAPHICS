@@ -2,6 +2,289 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [Unreleased] - 2026-08-16 (71)
+
+### Corregido — Arranque compatible con Render
+
+`server/index.js` ahora prioriza `process.env.PORT`, conserva `GLA_PORT` y `4400` como fallbacks locales, y escucha explícitamente en `0.0.0.0`. No se modificaron rutas, módulos, estado, persistencia, WebSocket ni lógica visual.
+
+### Verificado
+
+- Arranque real con `PORT=4413` y `GLA_PORT=9999`: el servidor usó `4413`, dejó `9999` libre y `netstat` confirmó escucha en `0.0.0.0:4413`.
+- `/master`, `/master-control/`, `/program/`, `/api/teams`, Anton local, PNG y MP4 respondieron HTTP 200; WebSocket entregó `STATE_SNAPSHOT` con 29 módulos.
+- Master Control mostró `CONECTADO`; Program cargó 29 nodos, dejó el stage visible y resolvió `GLA Anton` desde `/assets/fonts/Anton-Regular.ttf`; ambas consolas quedaron sin errores ni warnings.
+- `npm install --dry-run --ignore-scripts` no requirió cambios y los 72 archivos JavaScript revisados pasaron `node --check`.
+
+## [Unreleased] - 2026-08-16 (70)
+
+### Corregido — Placa L Info: "Ajuste fino de Texto" NO se aplicaba en Program (bug real)
+
+Reporte del usuario tras la entrada (69): "no anda en el program el ajuste de texto fino". Corrección a lo dicho en (69): esa entrada afirmó haber confirmado con `getComputedStyle` que el ajuste se veía bien en Program, pero esa verificación se hizo mal — en realidad sólo se había revisado el mini preview del panel, nunca `getComputedStyle` sobre el DOM real de `/program`. Al revisar Program de verdad apareció un bug real y anterior a esta sesión, no relacionado con el preview.
+
+**Causa**: `program/js/renderers/placaLInfo.js` llamaba `readTextAdjust(zData.textAdjust, 'text')` antes de aplicar el ajuste al texto. `readTextAdjust(dict, key)` (`program/js/text-fit.js`) busca `dict[key]` — está pensado para módulos donde `textAdjust` es un diccionario con una entrada por campo (ej. Resultados: `{golLocal: {...}, estado: {...}}`). Pero en Placa L Info cada zócalo tiene un solo texto, así que su `textAdjust` ya es directamente el objeto plano `{dx, dy, dSize}` — no tiene una key `'text'` adentro. `zData.textAdjust['text']` daba `undefined`, `readTextAdjust` devolvía `{}`, y el texto se pintaba siempre con `dx:0 dy:0 dSize:0` sin importar lo guardado. Confirmado con `getComputedStyle` real sobre `.pli-text-1..4` en `/program`: los 4 mostraban `matrix(1,0,0,1,0,5)` y `font-size:40px` (el ajuste base, ignorando por completo lo guardado — incluso con valores tan grandes como `dy:-32`, `dSize:-10`).
+
+**Fix**: se pasa `zData.textAdjust` directo (ya es el objeto de ajuste, no un diccionario), sin pasar por `readTextAdjust`. Se sacó el import ahora sin uso de `readTextAdjust` en ese archivo.
+
+### Verificado
+
+- Con los valores reales que estaban guardados en ese momento (zocalo1 `dy:-20 dSize:-10`, zocalo2 `dx:20 dy:-8`, zocalo3 `dy:-32`, zocalo4 `dx:12 dy:-24`), `getComputedStyle` sobre `/program` real después del fix: `matrix(1,0,0,1,0,-16)` fontSize 30px; `matrix(1,0,0,1,20,-3)` fontSize 40px; `matrix(1,0,0,1,0,-27)` fontSize 40px; `matrix(1,0,0,1,12,-19)` fontSize 40px — los cuatro coinciden exactamente con dx/dy/dSize guardados (la corrección vertical base de `verticalCorrection()` explica el +5 de diferencia entre `dy` y la Y final, igual que en el resto de los módulos).
+- No se tocó `text-adjust-control.js`, el panel de Master Control ni ningún otro renderer — el bug era exclusivo de `placaLInfo.js`.
+
+## [Unreleased] - 2026-08-16 (69)
+
+### Corregido — Placa L Info: "Ajuste fino de Texto" no se veía en el mini preview
+
+Reporte del usuario: "no anda ningún Ajuste fino de Texto de placa info L". Verificado con clicks reales (sintéticos y vía CDP con `computer`/`ref`, no solo revisión de código): el dato SÍ se actualizaba y persistía correctamente (`data/master-control-state.json`) y SÍ se aplicaba en Program (confirmado con `getComputedStyle` sobre `.pli-text-N`, `transform: translate()` reflejando el `dx/dy` exacto). La causa real: el mini preview arrastrable agregado en la entrada (68) sólo redibujaba la posición/escala de la composición (asset) al mover las flechas de "AJUSTE GLOBAL" — nunca aplicaba el `dx/dy/dSize` de "Ajuste fino de Texto" sobre el recuadro de texto del preview, así que al tocar esas flechas el dato cambiaba (y se veía bien en Program) pero el preview se quedaba completamente quieto, dando la sensación de que no hacía nada.
+
+**Fix** (`master-control/js/placa-l-info-panel.js`): nueva función `applyPreviewTextAdjust(key)` que aplica `translate(dx, dy)` + `fontSize: 36 + dSize` al recuadro de texto del preview (mismo criterio que `applyFittedText` en `program/js/text-fit.js`), llamada al montar cada zócalo y en cada click de "Ajuste fino de Texto" (antes usaba el `onDirty` plano; ahora usa un wrapper que también refresca el preview). No se tocó `text-adjust-control.js` ni el renderer de Program — ambos ya funcionaban correctamente.
+
+### Verificado
+
+- Click real (mousedown/mouseup vía CDP sobre el `ref` del botón, no `element.click()`) sobre "Subir" de Zócalo 1: el preview ahora mueve el recuadro de texto en el mismo frame, sin esperar a UPDATE ni a refrescar Program.
+- `document.elementFromPoint()` sobre las coordenadas reales de los botones de "Ajuste fino de Texto" confirma que no hay ningún elemento superpuesto interceptando el click (descartado bug de z-index/overlap del preview nuevo).
+- `Cache-Control: no-store` ya está aplicado globalmente en `server/index.js` a todas las rutas (incluye `/master-control`), así que un refresh normal siempre trae el JS actualizado.
+
+## [Unreleased] - 2026-08-15 (68)
+
+### Agregado — Placa L Info: preview arrastrable / Resultados: título individual por encuentro
+
+Alcance explícito del usuario: únicamente Placa L Info (edición directa arrastrando sobre preview) y Resultados (título por encuentro, solo la parte visual/panel — no la integración web, que está a cargo de otro agente). No se tocó `alpha-video.js` ni ningún otro módulo.
+
+**Placa L Info — mini preview 16:9 arrastrable** (`master-control/js/placa-l-info-panel.js`): nuevo bloque arriba de las 4 tarjetas, con el asset real (`/assets/var/zocalo-cortito-brackets.png`) y el texto actual de cada zócalo, ubicados a escala exacta según su `offsetX/offsetY/scale` vigente. Cada zócalo tiene su propio recuadro de texto (color distinto + número de badge) que se puede arrastrar con el mouse; el drag se convierte a píxeles lógicos dividiendo el delta de pantalla por la escala real del preview (`anchoRenderizado / 1920`, sin `devicePixelRatio`) y escribe directo en `data.zocaloN.offsetX/offsetY` — el mismo campo que ya leían las flechas y el renderer de Program, así que arrastrar y después usar flechas/RESET continúan desde la misma posición sin pisarse. `onDirty()` se dispara en cada frame de arrastre (throttle/debounce ya resuelto por el `scheduleAutoSave` de 350 ms existente), y al soltar el mouse se refresca el control de flechas de esa tarjeta para que su lectura `X/Y/Escala` quede al día. Bug encontrado y corregido en la misma pasada: la escala del preview se calculaba con `getBoundingClientRect()` sobre un nodo que todavía no estaba conectado al documento (se llamaba antes de `container.appendChild(root)`), dando ancho 0 y dejando el preview sin transformar en el primer render — se movió el cálculo inicial a después de conectar el DOM.
+
+**Resultados — título individual por encuentro** (`shared/modules.js`, `master-control/js/resultados-panel.js`, `program/js/renderers/sideTable.js`, `program/css/overlay.css`): cada encuentro suma un campo de texto propio `titulo` (ej. "SEMIS 1", "GRAN FINAL") con textbox dedicado en su tarjeta, además del selector de estado/hora existente. Su posición/tamaño se ajusta por columna (`textAdjust.tituloBracket`), mismo criterio ya usado para golLocal/estado/estadoFullscreen (Resultados es una tabla dinámica de hasta 9 filas — un ajuste por columna aplica a todos los encuentros visibles). En Program aparece arriba del estado/hora, dentro de la columna central (78px en modo compacto con goles, 168px/ancho completo en modo fullscreen sin goles), con `applyFittedText` para que quede en una sola línea sin importar el largo. Si `titulo` está vacío no se renderiza nada y `.ov-resultados-estado`/`-fullscreen` conservan exactamente su alto/posición de siempre (clase `.has-titulo` sólo se agrega cuando hay texto) — el diseño base aprobado no cambió un píxel. No se tocó la lógica de 9 partidos/tandas/animación vertical. Se confirmó que el campo `titulo` coincide exactamente con el que ya emite `server/glaFutbolSync.js` (`buildPlayoffEncounters`) para Playoffs (CUARTOS 1/2, SEMIS 1/2, GLA FEM FECHA 1, GRAN FINAL) — el renderer nuevo queda compatible con esa sincronización sin cambios adicionales; no se tocó ni se disparó esa sincronización web.
+
+### Verificado (contra el servidor corriendo, WebSocket + `getComputedStyle`/`getBoundingClientRect` en Program, y `data/master-control-state.json`)
+
+- Drag independiente de los 4 zócalos de Placa L Info (mover uno no mueve los otros tres), conversión preview→lógico exacta (delta de pantalla / escala, comprobado con matemática: ej. delta pantalla (90,30) a escala 0.3333 → offset +270,+90 exacto), flechas continuando desde la posición arrastrada, RESET volviendo al valor base (`DEFAULTS_ZOCALO`), reflejo en Program confirmado por `matrix()` real coincidiendo con el offset guardado, persistencia en disco tras el debounce y TOMAR AL AIRE + UPDATE en vivo con el módulo al aire.
+- Resultados: título en modo compacto (estado FINAL) y modo fullscreen (PRÓXIMO/HORA) verificados por separado en Program, título largo confirmado en una sola línea (fitted text bajó a `minFont`, sin overflow horizontal), encuentro sin título confirmado bit a bit igual al diseño base (mismo `top`/`height` que antes de este cambio), ajuste de columna (`tituloBracket`) aplicado a ambos elementos (compacto y fullscreen) a la vez, con RESET independiente del resto de las columnas.
+- Todos los valores de prueba (incluyendo datos reales preexistentes de la fixture: encuentros con equipos/hora ya cargados en Resultados y offsets ya ajustados en Placa L Info) se restauraron a su estado original al terminar; ambos módulos quedaron `FUERA DE AIRE` como al empezar.
+- `node --check` sobre cada `.js` del proyecto: sin errores de sintaxis.
+
+## [Unreleased] - 2026-08-15 (67)
+
+### Corregido — PJ por equipo en Estrellas y Playoffs completo
+
+- Estrellas incorpora fuente persistente `LIGA | TORNEO` y snapshots independientes. G/A continúan saliendo del ranking de jugadores de la fuente elegida, pero PJ ahora se toma exclusivamente del equipo: `leagueStandings.played` en Liga y `tournamentStandings.played` en Relámpago #2. No se consulta ni estima la aparición individual.
+- Playoffs devuelve siempre seis encuentros con IDs estables y campo `titulo`: CUARTOS 1/2, SEMIS 1/2, GLA FEM FECHA 1 y GRAN FINAL. El payload actual sólo trae dos `quarterfinal`, que se conservan con equipos/estado/hora oficiales; los otros cuatro slots se crean vacíos a las 13:00, 14:00, 15:00 y 16:00. Una futura respuesta con `semifinal`, partido femenino o `final` reemplaza el slot correspondiente sin agregar filas.
+- La sincronización sigue reemplazando el snapshot de Playoffs sólo después de una respuesta válida; un error no llama a `applyUpdate`. No se modificaron la UI/render/asset/transición de Resultados, Placa L Info ni `program/js/alpha-video.js`.
+
+### Verificado
+
+- Liga: Actores FC 5 PJ → Tomás “Cofla” Lorenzon 5; Gambeta 5 → Facundo Aguirre 5; DOU FC 3 → Ezequiel “Zurdo” Sosa 3; Los Displicentes 7 → Federico “MDT” Wilkinson 7. Torneo: DOU FC 3 → Zurdo Sosa 3; NS Team 3 → Facundo “Facu” Romero Gamarra 3.
+- Dos sincronizaciones reales consecutivas de Playoffs devolvieron exactamente seis IDs únicos en el mismo orden. Fuente actual: dos cuartos oficiales; cuatro placeholders exactos. Una prueba con payload futuro simulado llenó semis, femenino y final conservando los mismos seis IDs y sin duplicados.
+
+## [Unreleased] - 2026-08-15 (66)
+
+### Corregido — Auditoría real de AJUSTE DE COMPOSICIÓN y AJUSTE DE TEXTO (27 módulos probados en vivo)
+
+Pedido explicito del usuario: "no me sirve que revises el helper y asumas que todo funciona, tenés que probar uno por uno". Alcance: sistema global de edición de posición/tamaño. Excluido de modificación: VAR, Zócalos, Placa L Info, Estrellas (salvo bug del helper compartido).
+
+**Bug crítico encontrado y corregido — `master-control/js/placa-l-info-panel.js`**: la función `renderPlacaLInfoPanel` terminaba con código corrupto (`}ppendChild(root);` seguido de un `return () => {};` fuera de cualquier función — evidencia de un merge/edit mal aplicado por otro agente). Esto era un **`SyntaxError: Illegal return statement`**, no un bug de comportamiento: al ser un error de sintaxis en un archivo importado por `master-control/js/main.js`, ES modules rechaza el import COMPLETO — `main.js` nunca llegaba a ejecutar una sola línea, dejando **todo el panel de Master Control en blanco** (título `-`, cero tabs, `CONECTANDO...` para siempre) para los 27 módulos, no solo Placa L Info. Confirmado el diagnóstico con `node --check` (ahora corre sobre cada `.js` del proyecto, cero errores) y con `import()` dinámico desde el navegador antes/después del fix. Esto explica el síntoma reportado ("la mayoría de los botones no están funcionando"): no es que los controles individuales fallaran, es que el panel completo no llegaba a renderizarse. Fix mínimo: se restauró el `return () => {};` como cierre real de la función (mismo patrón que usan el resto de los paneles a medida), sin tocar diseño ni lógica de Placa L Info.
+
+**Verificación real, no asumida** (contra el servidor corriendo, vía WebSocket + lectura de `getBoundingClientRect`/`getComputedStyle` en Program, y de los `readout` en Master Control):
+- **Composición global**: TAKE simultáneo de los 27 módulos con `compositionOffsetX:37, compositionOffsetY:-19, compositionScale:1.15` — confirmado `matrix(1.15,0,0,1.15,37,-19)` en `.content` de los 27. Verificación matemática adicional sobre `scoreboard` (posición real de `.ov-score-a` antes/después, cotejada contra el cálculo analítico de `translate+scale` con origen en (960,540)): coincide al centésimo de píxel. RESET COMPOSICIÓN confirmado que no toca `textAdjust` (probado con un campo con offset previo).
+- **Ajuste individual de texto**: 61 campos probados uno por uno en 15 módulos de mi alcance (scoreboard, marcadorTiempoAdicional, marcadorEntretiempo, marcadorPenales, marcadorZocalo, formacionEquipos, vsPrepartido, vsResultado, tarjeta, cambios, bug, grupos, sideTable, posiciones/posicionesTorneo, goleadores/asistidores/jugadores) — dx/dy exactos vía `el.style.translate` (campos "planos") o componente X de `el.style.transform` (campos con auto-ajuste de fuente); dSize confirmado aditivo exacto (`base 22px, +8→30px, -8→14px`). Los 61 dieron resultado correcto sin excepción.
+- **Persistencia**: confirmado en `data/master-control-state.json` que los offsets/textAdjust quedan escritos en disco, y que Master Control (una vez arreglado el bug de arriba) hidrata correctamente sus controles al cargar — el `readout` de un campo mostró `X:0 Y:0 T:-8`, el mismo valor persistido por WS minutos antes.
+
+**Reportado pero NO corregido (fuera de alcance, no es el helper compartido)**: `program/js/renderers/varCheck.js` lee `data.compositionOffsetX/Y/Scale` directamente y los aplica una SEGUNDA vez sobre `.ov-var-group1` (además de la aplicación universal ya hecha sobre `.content`) — el ajuste de composición estándar mueve/escala ese grupo al doble del valor pedido. Además usa un segundo par de campos sin UI (`motivoOffsetX/Y/Scale`) que nunca se puede setear desde ningún panel — código muerto. `placa-l-info-panel.js` (ya reparado el bug de sintaxis) también llama a `renderCompositionControl(...)` con un 4to argumento de opciones (`keys`/`defaultX/Y/Scale`/`title`/`note`) que el helper actual no soporta (`composition-control.js` solo acepta 3 parámetros) — esas opciones se ignoran en silencio, así que cada zócalo de Placa L Info comparte los mismos `compositionOffsetX/Y/Scale` del módulo entero en vez de tener uno propio por zócalo como el código sugiere.
+
+## [Unreleased] - 2026-08-15 (65)
+
+### Corregido — Estrellas: PJ oficial y formato de jugador
+
+- `LOS MEJORES DE CADA EQUIPO` ya no convierte una ausencia en `leagueStats.appearances` en `PJ=0`. Goles, asistencias y PJ se consolidan por `playerId` dentro del mismo `product.leagueStats`; sólo se rankean candidatos con PJ publicado. Si uno de los equipos no tiene un candidato completo, la actualización falla antes de `applyUpdate` y conserva íntegro el estado anterior.
+- La selección automática conserva id, dorsal, nombre, apellido, apodo, nombre completo, equipo, G, A, PJ y promedio. Master Control incorpora `FORMATO DEL JUGADOR`: `NÚMERO + APODO` (fallback a inicial/apellido) o `NÚMERO + INICIAL + APELLIDO`; cambiarlo actualiza sólo el texto visible, mantiene jugador/estadísticas y sigue pasando por el UPDATE existente cuando el módulo está al aire.
+- Se mantuvieron la edición manual, el título fijo, TAKE/UPDATE/OUT, los editores de texto/composición y el renderer existente. No se modificaron VAR, Zócalos, Placa L Info ni `program/js/alpha-video.js`.
+
+### Verificado
+
+- Payload real de `https://gla.futbol/`: Actores FC eligió a Tomás “Cofla” Lorenzon (`26`, G=11, A=0, PJ=5); Gambeta a Facundo Nahuel Aguirre (`5`, G=8, A=4, PJ=5); Los Displicentes a Federico “MDT” Wilkinson (`69`, G=6, A=3, PJ=4). Se cubrieron apodo/sin apodo, dorsales de uno/dos dígitos y PJ distintos.
+- Formatos verificados: `26. COFLA` ↔ `26. T. LORENZON`, `5. F. AGUIRRE` en ambos modos y `69. MDT` ↔ `69. F. WILKINSON`, sin cambio de ids ni estadísticas. DOU FC, sin entrada de PJ de Liga para sus candidatos en el payload actual, produjo error explícito en vez de un cero inventado.
+- Validación sintáctica de los JavaScript modificados aprobada. La carga integral de Master Control quedó bloqueada por un `Illegal return statement` preexistente en `master-control/js/placa-l-info-panel.js`, archivo fuera del alcance y no modificado.
+
+## [Unreleased] - 2026-08-15 (64)
+
+### Agregado/Reorganizado — MARCADOR unificado, contador configurable, GOL automático, Muerte Súbita, VAR con presets
+
+Tarea de agente asignada exclusivamente a: Mosca (solo orden), Marcador, Entretiempo, Tiempo Adicional, Marcador Zócalo, Zócalo VS Compacto, Penales, Gol, VAR. No se tocó `program/js/alpha-video.js` ni la lógica/diseño de ningún módulo fuera de este alcance.
+
+**Navegación** (`master-control/js/main.js`): `CATEGORY_ORDER` pasa a `['Mosca', 'Marcador', ...]` — Mosca arriba de todo, Marcador debajo. `scoreboard`/`marcadorTiempoAdicional`/`marcadorEntretiempo`/`marcadorZocalo`/`vs` se agrupan bajo una única tab **MARCADOR** (`MARCADOR_SUBSECTIONS`/`MARCADOR_SUBSECTION_IDS`) con un sub-nav de pastillas dentro del panel (`#marcador-subnav`, nuevo en `master-control/index.html`) — cada subsección sigue siendo el mismo módulo independiente del servidor (su propio TAKE/UPDATE/OUT/`live`/`autoRunClock`/`sequencedReveal`, sin tocar `shared/modules.js` en su lógica de datos, solo su presentación en la nav). `vs` conserva `category:'Zocalos'` en el schema pero se excluye de esa lista y se agrega como sexta subsección ("VS Compacto cerca de MARCADOR"). `marcadorPenales` (no agrupado) queda como próxima tab, justo debajo de MARCADOR. `gol` se excluye de la navegación por completo (`HIDDEN_FROM_NAV_IDS`) pero sigue siendo un módulo real del servidor.
+
+**Contador configurable** (`shared/clock.js`): `elapsedMs(clock, limitMs)` gana un segundo parámetro opcional — sin él, comportamiento idéntico a siempre (ningún otro consumidor se ve afectado); con él, el valor devuelto nunca supera `limitMs`. Nuevo `parseClockLimit(text, fallback)` parsea "MM:SS". Input "FIN DEL CONTADOR" agregado a `scoreboard-clock-panel.js` (default 15:00, dato `clockEndText`) y a `live-clock-display.js` vía un 4to parámetro opcional `{limitKey, defaultLimitText, onDirty}` (solo `marcadorZocalo` lo usa, default 06:00 — `marcadorTiempoAdicional` sigue llamando la función sin ese parámetro, sin cambios). Aplicado también en `program/js/renderers/scoreboard.js` y `marcadorZocalo.js` para que Program muestre el mismo valor trabado.
+
+**Período** (`scoreboard-clock-panel.js`): botones 1T/2T/ET/PERSONALIZADO reemplazan el dropdown; PERSONALIZADO habilita un textbox libre. El campo `period` en `shared/modules.js` pasa de `FIELD_TYPES.TEXT` a `ADJUST_ONLY` (mismo dato, el editor de posición/tamaño se conserva intacto).
+
+**Marcador ↔ Entretiempo** (`switchMarcadorEntretiempo` en `main.js`): botón contextual en el sub-nav ("→ PASAR A ENTRETIEMPO" / "→ VOLVER A MARCADOR") que hace OUT del origen, espera 750ms (mismo criterio que la transición de Formación, ya usada en el proyecto) y recién ahí hace TAKE del destino — nunca ambos ON a la vez (verificado).
+
+**Penales** (`program/css/overlay.css`): `.ov-pen-kick` de 38px→40px (remedido el hueco real por lectura de alfa: bbox 37×37, centro (265,962), prácticamente igual al circulo anterior — el aumento de 2px asegura cobertura completa sin inventar un tamaño mayor a ojo), `left`/`top` corridos -1px para mantener el mismo centro. **Muerte Súbita**: toggle nuevo (`master-control/js/penales-panel.js`, dato `suddenDeath` en `shared/modules.js`) que le agrega " — MUERTE SÚBITA" al mismo título/zócalo de siempre en `program/js/renderers/marcadorPenales.js` — sin asset nuevo.
+
+**GOL automático** (`main.js`): botones "GOL LOCAL +1"/"-1 local" y "GOL VISITANTE +1"/"-1 visitante" en `scoreboard-clock-panel.js` (callbacks `onGoalPlus`/`onGoalMinus`). +1 incrementa el score (UPDATE inmediato, nunca se pierde) y encola un TAKE de `gol`; una cola (`golQueue`) evita animaciones simultáneas — el siguiente gol encolado recién se dispara cuando el servidor confirma que `gol` volvió a OUT (fin real de la animación, vía el mismo mecanismo `oneShot` existente). Debounce de 600ms por botón contra doble-click accidental. `-1` nunca dispara la animación. `gol` ya no aparece como tab operable.
+
+**VAR** (`shared/modules.js`): nuevo campo `motivoPreset` (SELECT: POSIBLE PENAL / GOL NO VÁLIDO / POSIBLE ROJA / PERSONALIZADO) antes de `motivo`. Elegir un preset autocompleta `motivo` (lógica en `main.js`, mismo patrón que el auto-completado de equipo en Tarjetas/Cambios); PERSONALIZADO no toca el texto. Asset, editor de posición/tamaño, animaciones, sponsor y TAKE/UPDATE/OUT sin cambios.
+
+### Verificado
+
+Contra el servidor real (reiniciado una vez para cargar el schema nuevo): reloj hasta 15:00 con datos reales dejados de una sesión anterior (900503ms acumulados, clamped a exactamente "15:00" tanto en Master Control como en Program); fin personalizado a 20:00 probado en vivo (cruza el viejo límite de 15:00 y se traba en el nuevo); 1T/2T/ET/PERSONALIZADO reflejados en Program; gol local y visitante +1/-1 (incluyendo dos goles consecutivos: score llega a 2, sin animaciones superpuestas, ninguno perdido); -1 confirmado sin animación; Entretiempo↔Marcador confirmado sin superposición (`anyOverlap:false` en 12 muestras); Marcador Zócalo con "06:00" default (verificado con datos reales de sesión anterior, también clamped); VS Compacto operable sin cambios; círculo de Penales a 40px confirmado vía `getComputedStyle`; Muerte Súbita confirmada en Program (título con sufijo) y en Master Control (toggle real); VAR con los 4 motivos + UPDATE al aire confirmado en Program. STOP ALL verificado post-reorganización (saca tanto un módulo agrupado como uno suelto). Estado de prueba limpiado al finalizar.
+
+
+
+### Agregado — integracion GLA Liga/Torneo, planteles y Posiciones Torneo
+
+- `server/glaFutbolClient.js` extrae el JSON estructurado del payload RSC de `https://gla.futbol/`; `server/glaFutbolSync.js` suma torneo Relampago #2, Grupos A/B, resultados de fase/playoffs, estrellas y posiciones de torneo. No se scrapean tablas HTML ni se importan logos web.
+- Nuevo servicio `server/glaFutbolRosters.js`: normaliza id, dorsal, nombre, apellido, apodo, nombre TV, equipo y original, y conserva snapshots atomicos en `data/gla-futbol-rosters.json`. Tarjetas, Cambios y Formacion consumen el plantel LOCAL/VISITANTE y mantienen sus entradas manuales.
+- Goleadores, Asistidores y Mejores Jugadores incorporan selector persistente `LIGA | TORNEO` y snapshots separados. La formula `(G+A)/PJ` se conserva porque la web no publica promedio oficial; `stats.appearances` de Torneo existe pero actualmente llega vacio, por lo que PJ se mantiene en 0 sin estimarlo.
+- Resultados incorpora botones independientes para fase de grupos y playoffs sin cambiar el limite de 9, vistas 1-6/4-9 ni animacion vertical. Grupos respeta posicion oficial. Estrellas toma el mejor ranking disponible por cada equipo seleccionado y permite edicion posterior.
+- Nuevo modulo `posicionesTorneo`, una pagina 1-6 basada en la composicion existente de Posiciones. `posiciones` pasa a rotularse `Tabla Global` y conserva paginas 1-6/7-11 y su fuente Liga.
+- El resolver central de equipos acepta equivalencias unicas de articulo inicial/sufijo FC, ademas de nombre, abreviatura e ID normalizados. Esto corrige `LA GAMBETA` (web) frente a `Gambeta` (catalogo local) y preserva el escudo `/assets/crests/gambeta.png`.
+
+### Verificado
+
+- `node --check` aprobo todos los JavaScript modificados. Parser real: torneo `6a73a391f5c10432af94421b`, 6 posiciones, Grupo A/B, 9 partidos de fase y 2 playoffs; Liga devolvio 11 posiciones sin equipos sin mapear y GAMBETA resolvio a `teamId=gambeta`.
+- Planteles reales: GAMBETA 12, DOU FC 11, NS TEAM 13, Los Displicentes 16 y BRARG 12. Casos TV confirmados `3. PITU` y `1. I. LORENZO`; un equipo inexistente produjo error y mantuvo el snapshot valido anterior.
+- Master Control real: botones Liga/Torneo, nombres LOCAL/VISITANTE, dropdowns Tarjetas (16 jugadores), Cambios (12 entra/12 sale), Formacion (plantel + personalizado), sincronizacion Grupos, dos botones Resultados, Tabla Global y Posiciones Torneo visibles sin errores de consola.
+- Program 1920x1080: `posicionesTorneo` completo TAKE, UPDATE y OUT; renderizo titulo, 6 filas y assets locales, termino `is-hidden` y no registro errores de consola. La verificacion de datos web se hizo contra funciones del servidor; no se probo visualmente cada combinacion de fuente ni se modificaron Marcador, Gol, Penales, VAR, Zocalos o `program/js/alpha-video.js`.
+
+## [Unreleased] - 2026-08-13 (62)
+
+### Corregido — RESULTADOS visible y navegación de hasta 9 encuentros
+
+- Se corrigió la regresión que dejaba todos los encuentros fuera del viewport: el recorte de 386px estaba en X=0 mientras cada bracket conservaba `left:1517px`. El viewport ahora ocupa la columna real y los brackets usan coordenada local X=0, sin cambiar escala, asset ni posiciones aprobadas.
+- RESULTADOS persiste hasta 9 encuentros y muestra como máximo 6. `PARTIDOS 1–6` usa offset 0; `PARTIDOS 4–9` mueve la misma tira `-408px`, de modo que 1–3 salen por arriba, 4–6 suben y 7–9 entran desde abajo. Con 7 u 8 datos, la segunda vista muestra exactamente 4 o 5 brackets, sin filas vacías.
+- Cambiar tanda, goles, estado, hora, equipos, título o posición actualiza los nodos existentes cuando la cantidad no cambia. TAKE, UPDATE y OUT conservan el contrato WebSocket y los 9 datos; reiniciar continúa forzando el estado visual a OUT.
+
+### Verificado
+
+- Cantidades 1, 2, 3, 4, 5 y 6: cantidad DOM, altura del viewport y cantidad visible coincidentes; TAKE con 1, UPDATE a 3 y 6, y OUT completaron el ciclo.
+- Con 7, 8 y 9 encuentros: vistas 1–6 y 4–N correctas (`4–7`, `4–8`, `4–9`), transición intermedia medida entre matrices Y=0 y Y=-408, y animación inversa hasta Y=0.
+- En segunda tanda se actualizaron un gol y un estado sin cambiar el offset ni la cantidad de nodos. OUT seguido de TAKE recuperó los 9 encuentros y la tanda seleccionada.
+- Servidor aislado en puerto 4401: snapshot de 9 encuentros y `tanda2` persistido, con status inicial `OUT`. Dos clientes WebSocket recibieron el mismo `MODULE_UPDATE`. Asset confirmado 1920×1080 ARGB y Program/Master sin errores de consola.
+
+## [Unreleased] - 2026-08-13 (61)
+
+### Corregido — peso de textos blancos en Grupos y zócalos compuestos
+
+- Los nombres blancos de `GRUPOS` y la segunda línea blanca de `Zocalo Compuesto con Equipos` y `Zocalo Compuesto Logo GLA` pasan de peso sintetizado `800` a la cara regular local `400`, para evitar el engrosado artificial de Anton.
+- `applyFittedText` mide esos textos con el mismo peso `400` con que se pintan. Se preservaron fuente, tamaños, cajas, posiciones, espaciado, texto principal negro, puntos dorados, assets y animaciones.
+
+## [Unreleased] - 2026-08-13 (60)
+
+### Corregido — abreviatura de LA ESQUINA y aire del texto inferior compuesto
+
+- El catálogo central asigna exclusivamente a `LA ESQUINA` la abreviatura oficial `ESC`; Marcador, Entretiempo, Penales y cualquier integración que consume `team.abbr` la reciben automáticamente sin overrides por módulo.
+- El texto inferior blanco de `Zocalo Compuesto con Equipos` y `Zocalo Compuesto Logo GLA` usa `letter-spacing:0.5px`. La misma separación se entrega a `applyFittedText`, por lo que los textos largos se miden con el espaciado real antes de elegir tamaño y permanecen contenidos y centrados verticalmente.
+- Se preservaron fuente, tamaños máximo/mínimo, peso, cajas, coordenadas, texto principal, assets, animaciones y los demás equipos.
+
+## [Unreleased] - 2026-08-13 (59)
+
+### Corregido — render determinista de PROGRAM entre PCs/vMix
+
+- PROGRAM deja de depender de `Akzidenz-Grotesk BQ Condensed` instalada en Windows. Todo texto broadcast y todas las mediciones canvas/fitted text usan la familia interna `GLA Anton`, cargada exclusivamente desde `assets/fonts/Anton-Regular.ttf`; no hay fallback de sistema.
+- El stage permanece oculto hasta completar `document.fonts.load(...)` para los pesos usados y `await document.fonts.ready`. Si el archivo local no carga, PROGRAM no revela texto con otra fuente.
+- Se conserva la superficie lógica fija 1920×1080 y el único escalado integral existente. `devicePixelRatio` no participa en el cálculo; el diagnóstico `?debug=1` continúa fuera del flujo y ahora informa también `GLA Anton`.
+- Se preservaron coordenadas, tamaños declarados, assets, animaciones, estado, WebSocket y `alpha-video.js`.
+
+### Verificado
+
+- Mismo viewport 1920×1080 probado con DPR 1.25 y DPR 1: snapshot completo idéntico salvo el propio valor DPR; stage 1920×1080, origen 0,0 y escala 1 en ambos.
+- Viewports 1920×1080, 1366×768 y 1280×720: dimensiones lógicas, fuentes, `font-size`, `line-height`, fitted text y assets idénticos; escalas únicas 1, 0.711111 y 0.666667 respectivamente.
+- Marcador, VAR, VS, Posiciones, Resultados y VS con resultado montados con datos reales; sus estados y datos previos se restauraron exactamente al finalizar. `document.fonts.check('32px "GLA Anton"')` devolvió `true`, la cara local figuró `loaded` y no hubo errores de consola.
+- Validación sintáctica de los JavaScript modificados y `git diff --check` aprobadas.
+
+## [Unreleased] - 2026-08-06 (58)
+
+### Corregido — centrado vertical en Zócalo VS Compacto
+
+- Los nombres local y visitante conservan el autoajuste compartido de tamaño, pero dejaron de recibir una corrección vertical distinta según los glifos del texto. La causa era `applyFittedText`: con cajas CSS idénticas, aplicaba por ejemplo `translateY(-2px)` a `Brarg` y `translateY(+0.5px)` a `Dou FC`.
+- Ambos nombres usan ahora el mismo ajuste fijo `translateY(+0.5px)`. La longitud sólo puede modificar `font-size` entre los límites existentes; no cambia `line-height`, centro vertical ni posición.
+- Verificado en Program con composición 1920×1080 para `ACTORES FC`, `LOS CALAMBRES`, `LOS DISPLICENTES`, nombres cortos y combinaciones corta/larga: ambos lados mantuvieron centro Y=`977.5px`, `line-height:normal` y el mismo transform. TAKE → UPDATE → OUT → TAKE terminó correctamente en `is-in`, `is-in`, `is-hidden`, `is-in`.
+- Se preservaron goles, sponsor, texto central, escudos, escala, posición global, animaciones y datos. El estado operativo previo fue restaurado al finalizar.
+
+## [Unreleased] - 2026-08-06 (57)
+
+### Cambiado — Goleadores/Asistidores juntos en PLACA L y contador de Marcador Zócalo
+
+- **PLACA L:** TAKE, UPDATE y OUT desde Goleadores o Asistidores operan los dos estados existentes como una única composición; no se agregó un módulo contenedor, estado duplicado ni animación paralela nueva. Goleadores ocupa el slot superior y Asistidores el inferior, cada una con sus datos independientes. Los modos fullscreen continúan enviando comandos únicamente al módulo activo.
+- **Referencia GRUPOS medida:** bbox de placa `347×416px`, centro X `1694.5px` después de `translateX(-33.5px)`, primer slot `y=50–466`, segundo `y=490–906`, separación visible `24px` y paso vertical `440px`.
+- **Transform final de las tablas en PLACA L:** los PNG tienen bbox útil `360×492px`; se aplica escala uniforme `416/492 = 0.845528` para preservar proporción. Goleadores usa `translate(230.91px, 9.41px) scale(0.845528)` y Asistidores `translate(230.91px, 449.41px) scale(0.845528)`, ambas centradas en X=`1694.5px`. Sus bboxes finales quedan aproximadamente en `x=1542.4–1846.7`, con `y=50–466` y `y=490–906`; comparten exactamente los slots verticales y la separación de GRUPOS.
+- **Nombres:** Goleadores y Asistidores pasan a alineación izquierda (`justify-content:flex-start`, `text-align:left`) con 10px de margen interno, centrado vertical preservado y ajuste moderado de 23px a 11px para nombres largos.
+- **Goles/Asistencias:** fuente máxima interna de 25px a 30px sólo en PLACA L; después de la escala su tamaño visual efectivo es `25.37px`, compensando la reducción de la placa. Fullscreen derecha/izquierda conservan 25px y sus transforms previos sin cambios.
+- **Marcador Zócalo:** el contador replicó los valores computados reales del Marcador Principal: de `var(--font-display)` (Akzidenz-Grotesk BQ Condensed) a `Anton, "Arial Narrow", Arial, sans-serif`; tamaño `20px`, peso `800`, `line-height:normal` y letter-spacing `0.5px`. Posición, caja, formato, reloj, asset y título no cambiaron.
+
+### Verificado
+
+- TAKE real desde Master Control en PLACA L encendió Goleadores y Asistidores simultáneamente; ambas pestañas reflejaron EN AIRE. UPDATE desde Goleadores actualizó y reordenó las dos tablas. OUT ocultó ambas y un segundo TAKE reconstruyó las dos con tres filas.
+- Nombres cortos y largos, escudos y valores de uno/dos dígitos verificados visualmente en la composición completa 1920×1080. Ambas tablas conservaron centro X, slots verticales y separación medidos de GRUPOS.
+- Fullscreen abajo derecha: sólo Goleadores entró con el transform previo `translate(-31px, 500px)`. Fullscreen abajo izquierda: sólo Asistidores entró con `translate(-1511px, 500px)`. El módulo compañero permaneció OUT en ambos casos.
+- Comparación computada al aire: `.ov-clock` y `.ov-zocalo-clock` coincidieron en familia Anton, tamaño 20px, peso 800, line-height normal y letter-spacing 0.5px.
+- Datos y estados previos restaurados al finalizar. GRUPOS, Marcador Principal, Tiempo Adicional, `alpha-video.js` y los demás módulos no fueron modificados.
+
+## [Unreleased] - 2026-08-06 (56)
+
+### Corregido — Carga exacta de Marcador Zócalo y filas simplificadas de Goleadores/Asistidores
+
+- **Marcador Zócalo:** la comparación del PNG servido contra el elemento real de Program confirmó que la cadena de render vigente no altera su apariencia: imagen y ancestros quedan en `opacity:1`, `filter:none`, `mask:none` y `mix-blend-mode:normal`, a escala nativa 1920×1080. La discrepancia persistía en sesiones que habían conservado decodificada la revisión anterior —con alfa parcial— bajo la misma URL. El renderer ahora identifica el binario vigente con `?v=35dc2afe`; es la misma ruta y el mismo PNG, sin filtros, máscaras, overlays gráficos ni recreación CSS. El transform de alineación existente se conserva porque sólo desplaza la composición y no modifica sus píxeles.
+- **Goleadores:** cada fila muestra únicamente posición automática, escudo, nombre y goles. Se retiraron PJ, PROM y sus encabezados; el orden es descendente por goles y los empates mantienen el orden de carga.
+- **Asistidores:** cada fila muestra únicamente posición automática, escudo, nombre y asistencias. Se retiraron PJ, PROM y sus encabezados; el orden es descendente por asistencias y los empates mantienen el orden de carga.
+- La geometría de ambos módulos se recalibró sobre las guías ya impresas en los PNG: posición en la celda angosta, escudo entre la división completa y la marca dorada corta, nombre en el área central y único valor al extremo derecho. No se agregaron fondos ni divisores y no se modificaron los assets de las tablas.
+
+### Verificado
+
+- Composición completa de Program 1920×1080: Marcador Zócalo cargó la URL versionada, imagen natural 1920×1080 y cuerpo negro opaco; textos dinámicos permanecieron por encima.
+- Goleadores y Asistidores: TAKE, UPDATE, OUT y segundo TAKE reales. UPDATE reordenó posición/nombre/valor sin reconstruir columnas eliminadas; OUT terminó en `is-hidden`; el segundo TAKE volvió a mostrar las tres filas.
+- Empates verificados en ambos módulos: conservaron el orden estable de carga. Nombres largos, escudos y valores de uno y dos dígitos quedaron contenidos y centrados.
+- Master Control mostró un único input numérico `GOLES` o `ASISTS`, sin PJ ni PROM. Los datos y estados previos de los tres módulos se restauraron al finalizar.
+- `JUGADORES`, los demás módulos y `alpha-video.js` no fueron modificados por esta entrega.
+
+## [Unreleased] - 2026-08-06 (55)
+
+### Corregido — Marcador Zócalo, Estrellas y TAKE de Tablas
+
+- **Marcador Zócalo:** la transparencia restante no provenía de CSS ni del renderer: el cuerpo negro del PNG tenía alfa `156` en 15.438 píxeles y otros 58 píxeles útiles también conservaban alfa parcial alto. Se normalizó únicamente el alfa de los 15.496 píxeles útiles (`alpha >= 100`) a opaco, preservando sin cambios todos los valores RGB, el lienzo 1920×1080, el exterior transparente y el antialiasing de borde. Program carga directamente `assets/marcador/marcador-zocalo.png`, sin query de versión, filtros, máscaras, overlays visuales ni recreación CSS; los textos dinámicos continúan en la capa existente por encima.
+- **Estrellas:** el título dejó de ser configurable y de usar ajuste dinámico. El renderer usa siempre `LOS MEJORES DE CADA EQUIPO`, con tamaño fijo de 28px, una sola línea y caja desplazada de `top:821px` a `top:822px`. Master Control ya no presenta un campo de título que pueda contradecir este contrato.
+- **Goleadores, Asistidores y Jugadores:** la ausencia total al hacer TAKE se debía a que el proceso Node activo había sido iniciado antes de incorporar estos IDs y conservaba en memoria el registro anterior de `MODULE_IDS`; Master Control construía un fallback local, pero el servidor rechazaba los mensajes de esos módulos. Se reinició el servidor vigente para cargar el registro ya implementado. No se agregó un bypass ni se cambió renderer, WebSocket, posiciones, capas o lógica de las tablas.
+
+### Verificado
+
+- Marcador Zócalo tomado al aire en Program: `is-in`, imagen completa 1920×1080 desde la ruta exacta, `filter:none`, `mask:none`, `opacity:1` y composición negra opaca observada; OUT restaurado al finalizar.
+- Estrellas tomado al aire con el texto exacto: 28px, `top:822px`, `line-height:28px`, `transform:none` y centro vertical constante en Y=844px; OUT restaurado al finalizar.
+- TAKE y OUT reales en Goleadores, Asistidores y Jugadores sobre el servidor de puerto 4400 reiniciado: los tres pasaron a `is-in`, cargaron sus PNG 1920×1080, renderizaron filas/estadísticas y volvieron a `is-hidden`. También se confirmó `PJ=0 -> PROM 0` en Asistidores durante esta prueba.
+- Los datos previos de los cinco módulos se preservaron y los cinco quedaron OUT al terminar. Validación sintáctica de los JavaScript modificados y revisión final de diff realizadas.
+- No se modificaron otros módulos ni `alpha-video.js` en esta entrega.
+
+## [Unreleased] - 2026-08-06 (54)
+
+### Agregado — Tablas de rendimiento: Goleadores, Asistidores y Jugadores
+
+Se agregaron tres modulos independientes dentro de la categoria `Tablas`, reutilizando el catalogo global de equipos, el estado WebSocket/persistencia existente y el criterio de posiciones de GRUPOS. Los PNG originales se copiaron sin reescalar ni modificar a `assets/tablas/tabla-goleadores.png`, `assets/tablas/tabla-asistidores.png` y `assets/tablas/mejores-jugadores.png`.
+
+Los tres modulos comparten un unico panel (`master-control/js/performance-table-panel.js`) y un unico renderer configurable (`program/js/renderers/performanceTable.js`). Cada uno permite agregar/eliminar hasta seis jugadores, elegir equipo (escudo automatico), editar nombre y estadisticas, y seleccionar `placaL`, `fullscreenDerecha` o `fullscreenIzquierda`. Los encabezados `G | PJ | PROM` y `A | PJ | PROM` se superponen dinamicamente sobre sus assets, sin agregar fondos, divisores ni modificar el arte base.
+
+- **Goleadores:** `PROM = G / PJ`; orden descendente por G, luego PROM y finalmente orden estable de carga.
+- **Asistidores:** `PROM = A / PJ`; orden descendente por A, luego PROM y finalmente orden estable de carga.
+- **Jugadores:** orden por `(G + A) / PJ`; la puntuacion no se muestra y los empates conservan el orden de carga.
+- En las tres formulas, `PJ = 0` produce `0`, sin `NaN` ni divisiones invalidas. El orden visual se deriva en Program y no se persiste como una segunda fuente de verdad.
+
+### Cambiado — Zocalo Corto Simple, Mosca y titulo de Posiciones
+
+- **Zocalo Corto Simple:** fuente maxima del texto principal de 36px a 40px. Se conserva la misma fuente, color, caja, posicion, animacion y reduccion automatica (verificada en 35px para un texto largo de prueba).
+- **Mosca:** `--dur-content-delay` de 300ms a 700ms: 400ms adicionales exactos solo para la hora. El asset entra sin retraso y, al salir, el reloj sigue ocultandose antes que el asset mediante la secuencia compartida vigente.
+- **Posiciones:** el titulo dejo de usar la transformacion vertical variable de `applyFittedText`. Conserva `fitFontSize`, pero el centrado vertical queda exclusivamente a cargo de una caja flex fija de 67px, `line-height:1` y una sola linea; todos los largos comparten centro Y=230.5px sin estilos `transform` inline.
+
+### Verificado
+
+- Goleadores: nombres largos, cuatro escudos distintos, valores de uno y dos digitos, `PJ=0`, empate total estable y desempate por PROM. Orden observado: 10/5/2, 10/5/2, 10/10/1, 8/0/0.
+- Asistidores: encabezados dinamicos correctos y orden observado 9/3/3, 9/3/3, 9/9/1, 4/0/0, preservando el empate de carga.
+- Jugadores: empate de puntuacion `(G+A)/PJ` preservado, `PJ=0` enviado al final con puntuacion 0, sin mostrar una columna adicional.
+- Alta, eliminacion y nueva alta verificadas desde Master Control; el nombre extremo `ALEJANDRO MAXIMILIANO FERNANDEZ` quedo contenido (`scrollWidth = clientWidth`) mediante reduccion automatica.
+- Las tres posiciones se probaron en los tres modulos. Las cajas alfa finales quedan con margen de 40px en los modos inferiores y alineadas con el area derecha en Placa L, sin reescalar los PNG.
+- Ciclo `IN -> UPDATE -> OUT -> IN` aprobado en los tres modulos: OUT vacio el DOM y el IN siguiente reconstruyo asset, escudos, textos y estadisticas.
+- Refresco de Master Control con datos/posicion persistidos y reinicio real de un servidor aislado en puerto 4401: datos recuperados; los tres estados volvieron en `OUT`. Los datos de prueba se limpiaron al finalizar.
+- Mosca: hora oculta a 300ms y 650ms, visible a 750ms con delay configurado en 700ms; al OUT la hora se oculto inmediatamente antes de comenzar la salida del asset.
+- Posiciones: `POSICIONES`, `TABLA DE POSICIONES` y `POSICIONES DE LA LIGA` mantuvieron top=197px, height=67px, centro Y=230.5px, `white-space:nowrap` y `transform:none`.
+- Consolas nuevas de Master Control y Program sin errores ni advertencias; validacion sintactica de los JS modificados aprobada. `git diff --check` solo informa espacios finales preexistentes en `replay.js` y `sideTable.js`, fuera del alcance y no modificados para esta tarea.
+- `alpha-video.js`, GRUPOS, Entretiempo, Estrellas, VAR, Replay y Zocalo VS Compacto no fueron modificados por esta entrega.
+
 ## [Unreleased] - 2026-07-31 (53)
 
 ### Agregado — GRUPOS: orden automático por puntos y modos de posición (Placa L / Fullscreen)

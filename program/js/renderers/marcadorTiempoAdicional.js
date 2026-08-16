@@ -1,5 +1,5 @@
 import { elapsedMs, formatClock } from '../../../shared/clock.js';
-import { applyFittedText } from '../text-fit.js';
+import { applyFittedText, applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
 
 // Asset nuevo: imagen estatica (reemplazo del .mp4 con alfa compuesto que
 // usaba antes) — ver program/css/overlay.css para las coordenadas medidas
@@ -31,6 +31,6 @@ export default function renderMarcadorTiempoAdicional(contentEl, data) {
   const labelText = rawAdded ? (rawAdded.startsWith('+') ? rawAdded : `+${rawAdded}`) : '';
   applyFittedText(contentEl.querySelector('.ov-added-label'), labelText, {
     maxFont: LABEL_MAX_FONT, minFont: LABEL_MIN_FONT, maxWidth: LABEL_MAX_WIDTH, weight: 800,
-  });
-  contentEl.querySelector('.ov-added-clock').textContent = formatClock(elapsedMs(data.clock));
+  }, readTextAdjust(data.textAdjust, 'addedMinutes'));
+  applyPlainTextAdjust(contentEl.querySelector('.ov-added-clock'), formatClock(elapsedMs(data.clock)), readTextAdjust(data.textAdjust, 'clock'));
 }

@@ -1,0 +1,1124 @@
+diff --git a/program/css/overlay.css b/program/css/overlay.css
+index 1872f3c..2024ebe 100644
+--- a/program/css/overlay.css
++++ b/program/css/overlay.css
+@@ -192,7 +192,11 @@
+      codigo de 3 letras nunca se llega a usar (ver medicion arriba). */
+   flex: 0 1 auto;
+   max-width: 60px;
+-  font-family: var(--font-display);
++  /* Vuelve a Anton (2026-08-06, pedido explicito del usuario) — Marcador y
++     Entretiempo (unicos que usan esta clase compartida) quedan afuera del
++     cambio global de tipografia a Akzidenz-Grotesk BQ Condensed; el resto
++     del proyecto sigue en Akzidenz via var(--font-display), sin tocar. */
++  font-family: 'Anton', 'Arial Narrow', Arial, sans-serif;
+   font-size: 20px;
+   font-weight: 700;
+   letter-spacing: 0.5px;
+@@ -211,7 +215,9 @@
+   display: flex;
+   align-items: center;
+   justify-content: center;
+-  font-family: var(--font-display);
++  /* Vuelve a Anton (2026-08-06, pedido explicito del usuario) — ver
++     ".ov-name" mas arriba, mismo criterio y mismo motivo. */
++  font-family: 'Anton', 'Arial Narrow', Arial, sans-serif;
+   font-size: 17px;
+   font-weight: 900;
+   color: var(--black);
+@@ -228,7 +234,9 @@
+   display: flex;
+   align-items: center;
+   justify-content: center;
+-  font-family: var(--font-display);
++  /* Vuelve a Anton (2026-08-06, pedido explicito del usuario) — ver
++     ".ov-name" mas arriba, mismo criterio y mismo motivo. */
++  font-family: 'Anton', 'Arial Narrow', Arial, sans-serif;
+   font-size: 20px;
+   font-weight: 800;
+   color: var(--black);
+@@ -246,12 +254,23 @@
+   display: flex;
+   align-items: center;
+   justify-content: center;
+-  font-family: var(--font-display);
++  /* Vuelve a Anton (2026-08-06, pedido explicito del usuario) — ver
++     ".ov-name" mas arriba, mismo criterio y mismo motivo. */
++  font-family: 'Anton', 'Arial Narrow', Arial, sans-serif;
+   font-size: 20px;
+   font-weight: 800;
+   letter-spacing: 0.5px;
+   color: var(--black);
+ }
++.ov-scoreboard-sponsor {
++  position: absolute;
++  left: 160px;
++  width: 76px;
++  top: 83px;
++  height: 24px;
++  object-fit: contain;
++  display: none;
++}
+ 
+ /* ============================================================
+    MARCADOR - ENTRETIEMPO
+@@ -301,7 +320,9 @@
+   display: flex;
+   align-items: center;
+   justify-content: center;
+-  font-family: var(--font-display);
++  /* Vuelve a Anton (2026-08-06, pedido explicito del usuario) — ver
++     ".ov-name" mas arriba, mismo criterio y mismo motivo. */
++  font-family: 'Anton', 'Arial Narrow', Arial, sans-serif;
+   font-size: 19px;
+   font-weight: 900;
+   color: var(--black);
+@@ -355,7 +376,9 @@
+   display: flex;
+   align-items: center;
+   justify-content: center;
+-  font-family: var(--font-display);
++  /* Vuelve a Anton (2026-08-06, pedido explicito del usuario) — ver
++     ".ov-name" mas arriba, mismo criterio y mismo motivo. */
++  font-family: 'Anton', 'Arial Narrow', Arial, sans-serif;
+   font-weight: 800;
+   color: var(--black);
+ }
+@@ -368,7 +391,9 @@
+   display: flex;
+   align-items: center;
+   justify-content: center;
+-  font-family: var(--font-display);
++  /* Vuelve a Anton (2026-08-06, pedido explicito del usuario) — ver
++     ".ov-name" mas arriba, mismo criterio y mismo motivo. */
++  font-family: 'Anton', 'Arial Narrow', Arial, sans-serif;
+   font-size: 20px;
+   font-weight: 800;
+   letter-spacing: 0.5px;
+@@ -553,7 +578,10 @@
+   position: absolute;
+   left: 38px;
+   width: 356px;
+-  top: 900px;
++  /* "top" bajado 3px (2026-08-06, pedido explicito del usuario: "bajar
++     levemente para que quede perfectamente centrado") — solo ajuste fino
++     de Y, sin tocar ancho, alto ni el resto de la caja. */
++  top: 903px;
+   height: 27px;
+   display: flex;
+   align-items: center;
+@@ -692,17 +720,61 @@
+    PLACAS (fullscreen / mid-full)
+    ============================================================ */
+ 
+-/* Formación: el PNG entregado contiene las seis camisetas ya posicionadas
+-   sobre un lienzo 1920x1080. Se usa completo, sin recortar ni recrear sus
+-   piezas con CSS. Los slots siguen el orden visual medido en el PSD:
+-   arquero, campo derecha, campo izquierda, centro, ataque derecha, ataque
+-   izquierda. */
++/* Formación: el PNG base (formacion-camisetas.png) contiene las seis
++   camisetas ya posicionadas sobre un lienzo 1920x1080, junto con los
++   zocalos negros/bordes dorados de numero+nombre. Se usa completo, sin
++   recortar ni recrear esas piezas con CSS. Los slots siguen el orden
++   visual medido en el PSD: arquero, campo derecha, campo izquierda,
++   centro, ataque derecha, ataque izquierda.
++
++   Camisetas tintables (2026-08-04, pedido explicito del usuario): se
++   agrega ENCIMA de ese PNG base un segundo PNG (formacion-camisetas-
++   blancas.png, mismas 6 camisetas en blanco, medido en vivo con
++   getBoundingClientRect/alfa que coincide pixel a pixel con la posicion
++   de las camisetas del PNG base, sin necesidad de ningun ajuste de
++   posicion) que tapa exactamente la camiseta de color fijo del PNG base
++   y deja ver debajo unicamente los zocalos/bordes dorados (que el PNG
++   blanco no incluye). Sobre esa camiseta blanca se aplica el color real
++   del equipo (Marcador, shared/team-colors.js) con una capa
++   "mix-blend-mode:multiply" recortada por el propio canal alfa del PNG
++   blanco (mask-image) dentro de un contenedor con "isolation:isolate"
++   (para que el multiply mezcle solo contra la camiseta blanca, no contra
++   el video ni el PNG base debajo). Multiply conserva sombras/luces/
++   pliegues porque el resultado es proporcional a cada pixel del blanco
++   (blanco puro -> color pleno; gris de sombra -> version mas oscura del
++   mismo color), a diferencia de un relleno plano. */
+ .ov-formacion-shirts {
+   position: absolute;
+   inset: 0;
+   width: 1920px;
+   height: 1080px;
+ }
++.ov-formacion-shirts-wrap {
++  position: absolute;
++  inset: 0;
++  width: 1920px;
++  height: 1080px;
++  isolation: isolate;
++}
++.ov-formacion-shirts-white {
++  position: absolute;
++  inset: 0;
++  width: 1920px;
++  height: 1080px;
++}
++.ov-formacion-shirts-tint {
++  position: absolute;
++  inset: 0;
++  width: 1920px;
++  height: 1080px;
++  mix-blend-mode: multiply;
++  -webkit-mask-image: url('/assets/placas/formacion-camisetas-blancas.png');
++  mask-image: url('/assets/placas/formacion-camisetas-blancas.png');
++  -webkit-mask-size: 1920px 1080px;
++  mask-size: 1920px 1080px;
++  -webkit-mask-repeat: no-repeat;
++  mask-repeat: no-repeat;
++}
+ .ov-formacion-slot {
+   position: absolute;
+   width: 228px;
+@@ -755,15 +827,17 @@
+   width: 170px;
+   height: 205px;
+   object-fit: contain;
++  transform: translateY(-3px);
+ }
+ .ov-formacion-subs-title {
+   position: absolute;
+   left: 1380px;
+-  top: 438px;
++  top: 399px;
+   width: 274px;
+   font-family: var(--font-display);
+-  font-size: 31px;
++  font-size: 58px;
+   font-weight: 800;
++  line-height: 1.15;
+   color: var(--white);
+   text-transform: uppercase;
+   text-align: center;
+@@ -771,9 +845,9 @@
+ .ov-formacion-subs-viewport {
+   position: absolute;
+   left: 1380px;
+-  top: 504px;
++  top: 490px;
+   width: 274px;
+-  height: 299px;
++  height: 342px;
+   overflow: hidden;
+   font-family: var(--font-display);
+   font-weight: 700;
+@@ -784,7 +858,9 @@
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+-  gap: 6px;
++  justify-content: center;
++  height: 100%;
++  gap: 14px;
+   line-height: 1.24;
+ }
+ .ov-formacion-sub {
+@@ -807,35 +883,74 @@
+   animation-play-state: paused;
+ }
+ 
+-/* VS Prepartido / VS Resultado */
++/* VS Prepartido / VS Resultado. Geometria real medida por lectura de
++   alfa/color sobre ambos .mp4 (2026-08-03, no a ojo) -- ambos assets
++   comparten el mismo zocalo superior y la misma zona negra de escudo
++   (misma plantilla base); solo difiere la banda inferior (749-871): en
++   Prepartido son 2 recuadros blancos de nombre; en Resultado son 2
++   recuadros blancos de nombre MAS ANGOSTOS mas un recuadro negro central
++   de resultado con una linea dorada horizontal separadora.
++
++   Zocalo superior (titulo, compartido): bbox x501-1434,y180-255.
++   Zona negra de escudo (compartida): izq x501-965,y263-738 (centro
++   733,500.5); der x969-1433,y263-738 (centro 1201,500.5).
++   Recuadro blanco de nombre:
++     Prepartido: izq x510-872 (362px), der x1057-1423 (366px), y749-871.
++     Resultado:  izq x510-792 (282px), der x1137-1423 (286px), y749-871.
++   Recuadro negro central de resultado: x794-1136 (342px), y749-871,
++   con linea dorada horizontal en y803-811 (centrada en x965) que separa
++   la mitad superior (749-802, 53px) de la inferior (812-871, 59px). */
++.ov-vsfull-titulo {
++  position: absolute;
++  left: 515px;
++  top: 186px;
++  width: 905px;
++  height: 64px;
++  display: flex;
++  align-items: center;
++  justify-content: center;
++  font-family: var(--font-display);
++  font-weight: 800;
++  letter-spacing: 1px;
++  text-transform: uppercase;
++  color: var(--white);
++  text-align: center;
++}
+ .ov-vsfull-teamA, .ov-vsfull-teamB {
+   position: absolute;
+-  top: 400px;
+-  width: 400px;
++  top: 335.5px;
++  width: 330px;
++  height: 330px;
+   display: flex;
+-  flex-direction: column;
+   align-items: center;
+-  gap: 16px;
++  justify-content: center;
+ }
+-.ov-vsfull-teamA { left: 520px; }
+-.ov-vsfull-teamB { left: 1000px; }
++.ov-vsfull-teamA { left: 568px; }
++.ov-vsfull-teamB { left: 1036px; }
+ .ov-vsfull-crest {
+-  width: 150px;
+-  height: 170px;
++  width: 100%;
++  height: 100%;
+   object-fit: contain;
+ }
+ .ov-vsfull-name {
++  position: absolute;
++  top: 749px;
++  height: 123px;
++  display: flex;
++  align-items: center;
++  justify-content: center;
+   font-family: var(--font-display);
+-  font-size: 34px;
+   font-weight: 800;
+   text-transform: uppercase;
+-  color: var(--white);
++  /* Negro (2026-08-03, pedido explicito del usuario): el recuadro de
++     nombre es blanco -- texto blanco sobre blanco no tenia contraste. */
++  color: var(--black);
+   text-align: center;
+-  max-width: 400px;
+-  white-space: nowrap;
+-  overflow: hidden;
+-  text-overflow: ellipsis;
+ }
++#mod-vsPrepartido .ov-vsfull-nameA { left: 510px; width: 362px; }
++#mod-vsPrepartido .ov-vsfull-nameB { left: 1057px; width: 366px; }
++#mod-vsResultado .ov-vsfull-nameA { left: 510px; width: 282px; }
++#mod-vsResultado .ov-vsfull-nameB { left: 1137px; width: 286px; }
+ .ov-vsfull-separator {
+   position: absolute;
+   left: 910px;
+@@ -850,21 +965,34 @@
+   font-weight: 900;
+   color: var(--white);
+ }
++/* Resultado: cada gol en su propio recuadro, sin separador agregado
++   (2026-08-03, pedido explicito del usuario: "NO quiero numeros dentro
++   de un solo recuadro", "no agregues ningun guion... la separacion ya la
++   hace el diseno del asset"). Remedido con precision: el acento dorado
++   real NO es una linea que cruza todo el ancho -- es una marca corta,
++   solo entre x939-990 aprox., centrada en x965 (mismo centro que el
++   recuadro), y unicamente en las filas y803-811. Fuera de ese rango
++   angosto, el recuadro central (x794-1136,y749-871) es negro solido en
++   toda su altura real. Por eso cada gol puede usar la ALTURA COMPLETA
++   de la caja (749-871) mientras se mantenga fuera del rango horizontal
++   del acento, con margen de seguridad (930-1000 excluido):
++     gol local:      x794-930  (136px)
++     [acento dorado real del asset, sin tocar: x~939-990, y803-811]
++     gol visitante:  x1000-1136 (136px) */
+ .ov-vsfull-score {
+   position: absolute;
+-  top: 760px;
+-  width: 150px;
+-  height: 90px;
++  top: 749px;
++  height: 123px;
+   display: flex;
+   align-items: center;
+   justify-content: center;
++  overflow: hidden;
+   font-family: var(--font-display);
+-  font-size: 50px;
+   font-weight: 900;
+-  color: var(--black);
++  color: var(--white);
+ }
+-.ov-vsfull-scoreA { left: 690px; }
+-.ov-vsfull-scoreB { left: 1080px; }
++.ov-vsfull-scoreA { left: 794px; width: 136px; }
++.ov-vsfull-scoreB { left: 1000px; width: 136px; }
+ 
+ /* ============================================================
+    EVENTOS
+@@ -1024,7 +1152,9 @@
+   position: absolute;
+   left: 53px;
+   width: 376px;
+-  top: 866px;
++  /* "top" bajado 3px (2026-08-06, pedido explicito del usuario: "bajar
++     levemente para centrarlo") — solo ajuste fino de Y. */
++  top: 869px;
+   height: 30px;
+   display: flex;
+   align-items: center;
+@@ -1104,20 +1234,15 @@
+    (950+1048)/2=999 (antes top:985,height:56 -> centro 1013, 14px mas
+    abajo del centro real). Tamaño de fuente responsivo (ver
+    program/js/renderers/replay.js) en vez de un valor fijo (16px). */
+-.ov-replay-sponsor {
++.ov-var-replay-sponsor {
+   position: absolute;
+   left: 445px;
+   top: 971px;
+   height: 56px;
++  width: auto;
++  max-width: 200px;
++  object-fit: contain;
+   display: none;
+-  align-items: center;
+-  padding: 0 18px;
+-  background: var(--black-glass);
+-  border: 1px solid var(--gold-dim);
+-  border-radius: 10px;
+-  font-family: var(--font-display);
+-  font-weight: 700;
+-  color: var(--gold-bright);
+ }
+ 
+ /* ============================================================
+@@ -1172,7 +1297,11 @@
+   justify-content: center;
+   text-align: center;
+   font-family: var(--font-display);
+-  font-size: 22px;
++  /* font-size subido de 22 a 25px (2026-08-03, pedido explicito del
++     usuario: "aumentá levemente" el reloj) — "HH:MM" a 25px sigue
++     entrando comodo en el ancho real (97px) sin tocar box/posicion/
++     formato/logica. */
++  font-size: 25px;
+   font-weight: 800;
+   letter-spacing: 0.5px;
+   color: var(--black);
+@@ -1313,6 +1442,15 @@
+   color: var(--white);
+   text-align: center;
+ }
++/* "top" vuelto a 894px (2026-08-03, pedido explicito del usuario): el
++   ajuste anterior (894->890, +4px hacia arriba) sobrecorrigio -- el
++   usuario reporto que el texto quedo "demasiado arriba". El centro
++   geometrico medido contra la fila real del asset (894+35=929) ya era
++   exacto de entrada (confirmado en vivo con getBoundingClientRect: con
++   este valor el centro renderizado coincide con el centro medido de la
++   fila real, sin desface) -- se revierte por completo al valor medido en
++   vez de dejar un termino medio sin base de medicion, sin tocar
++   ancho/alto/tipografia/color/left ni la fila 2. */
+ .ov-long-double-line2 {
+   position: absolute;
+   left: 610px;
+@@ -1328,13 +1466,24 @@
+   text-align: center;
+ }
+ 
+-/* Zocalo corto simple: bbox real x589-1374,y879-978. Zona de texto
+-   (columna x700): y887-971 (centro 929). Box: top:904,height:50 (centro
+-   929, coincide exacto). */
++/* Zocalo corto simple: bbox real x590-1374,y880-978 (centro real 982,929
++   — remedido en vivo 2026-07-31, no a ojo). El box de texto anterior
++   (left:615,width:690, centro 960) daba por sentado que el texto debia
++   centrarse en el centro DE PANTALLA (960) en vez del centro REAL del
++   asset (982) — un desface de ~22px, la misma magnitud que el tx de
++   -21.5px que ya lleva "#mod-shortSimple" para recentrar el ASSET en
++   pantalla (bbox nativo no simetrico respecto de 960). Al aplicarse ese
++   mismo transform de modulo tambien al texto, un box "centrado en 960"
++   terminaba corrido del area real del asset. Corregido centrando el box
++   en el centro real (982): left 615->637 (mismo ancho, 690). En Y se
++   confirmo por alfa que el area util real esta centrada en 929 (interior
++   del borde dorado ~y888-970) — coincide con el valor anterior; se aplico
++   ademas un ajuste fino de 4px hacia arriba pedido explicitamente por el
++   usuario (top 904->900), sin volver a tocar el resto de la geometria. */
+ .ov-short-simple-text {
+   position: absolute;
+-  left: 615px;
+-  top: 904px;
++  left: 637px;
++  top: 900px;
+   width: 690px;
+   height: 50px;
+   display: flex;
+@@ -1450,11 +1599,18 @@
+ .ov-vs-crestA { left: 506px; }
+ .ov-vs-crestB { left: 1332px; }
+ 
++/* "top"/"height" ajustados (2026-08-03, pedido explicito del usuario:
++   nombres "levemente" mas grandes + corregir centrado vertical): antes
++   943/38 (centro 962) quedaba 0.5px del centro real del bbox (962.5, el
++   mismo que escudo/gol) y con poco margen vertical para el font-size
++   mas grande (30 en vez de 26). Se sube a 44px de alto centrado exacto
++   en 962.5 (top 940.5) — mismo criterio de "no acercarse a escudo/gol"
++   porque el ancho/left no se tocan, solo la altura del box. */
+ .ov-vs-teamA, .ov-vs-teamB {
+   position: absolute;
+-  top: 943px;
++  top: 940.5px;
+   width: 250px;
+-  height: 38px;
++  height: 44px;
+   display: flex;
+   align-items: center;
+   font-family: var(--font-display);
+@@ -1496,6 +1652,15 @@
+   letter-spacing: 1px;
+   color: var(--black);
+ }
++.ov-vs-sponsor {
++  position: absolute;
++  left: 828px;
++  width: 229px;
++  top: 937.5px;
++  height: 50px;
++  object-fit: contain;
++  display: none;
++}
+ 
+ /* Listas de goleadores (local/visitante): usan el espacio real que le
+    sobra al asset por ENCIMA de la fila fija (escudo/nombre/gol/estado,
+@@ -1590,6 +1755,130 @@
+   height: 28px;
+ }
+ 
++/* ============================================================
++   ZOCALO COMPUESTO EQUIPOS (zocaloFinalDiv) -- geometria real medida por
++   lectura de alfa/color sobre el asset (2026-08-05, no a ojo). Bbox
++   opaco completo: x0-1919,y934-1079 (barra ancha que toca el borde
++   inferior por diseno, igual criterio que longSimple). Estructura:
++     - sector izquierdo (x0-310): separador horneado en x142 (linea
++       dorada fina, y962-1055) que divide escudo local (x0-142) de
++       escudo visitante (x142-310).
++     - bloque central (x310-1469, mismo ancho para ambos): zocalo texto 1
++       en franja dorada (y934-1027, 94px) y zocalo texto 2 en franja
++       negra debajo (y1028-1079, 52px, toca el borde inferior).
++     - sector derecho (x1469-1920): vacio a proposito (pedido explicito
++       del usuario), sin overlay.
++   Los escudos usan el mismo tamaño en ambos lados (90x90, object-fit
++   contain) centrados en el sector izquierdo mas angosto (142px) para
++   que ambos lados respeten el mismo criterio visual pese a que el
++   sector visitante tiene mas espacio disponible. */
++#mod-zocaloFinalDiv {
++  width: 1920px;
++  height: 1080px;
++  left: 0;
++  top: 0;
++  --dur-content-delay: 1900ms;
++}
++.ov-zfd-crest {
++  position: absolute;
++  top: 961.5px;
++  width: 90px;
++  height: 90px;
++  object-fit: contain;
++}
++.ov-zfd-crest-local { left: 24px; }
++.ov-zfd-crest-visitante { left: 166px; }
++/* Alineacion a la izquierda (2026-08-06, pedido explicito del usuario):
++   antes centrado, ahora arranca pegado al borde izquierdo real de la caja
++   (x334, ya con 24px de margen contra el borde del bloque central en
++   x310 y ~78px libres contra el ultimo escudo en x256 -- "margen comodo
++   respecto de los escudos" sin necesidad de mover la caja). Solo cambia
++   el anclaje horizontal (justify-content/text-align); el centrado
++   vertical (align-items:center) y el ancho de la caja (aprovecha el
++   espacio hacia la derecha) quedan igual que antes. */
++.ov-zfd-texto {
++  position: absolute;
++  left: 334px;
++  width: 1111px;
++  display: flex;
++  align-items: center;
++  justify-content: flex-start;
++  font-family: var(--font-display);
++  font-weight: 800;
++  text-transform: uppercase;
++  text-align: left;
++}
++.ov-zfd-texto1 {
++  top: 940px;
++  height: 82px;
++  color: var(--black);
++}
++.ov-zfd-texto2 {
++  top: 1030px;
++  height: 46px;
++  color: var(--white);
++}
++
++/* ============================================================
++   ZOCALO COMPUESTO LOGO GLA (zocaloFinal) -- mismo asset base que
++   zocaloFinalDiv de arriba (bloque central/derecho identico, confirmado
++   por lectura de alfa/color, 2026-08-06). Unica diferencia real: el
++   sector izquierdo (x0-310,y934-1079) no tiene escudos ni separador
++   horneado en este asset -- va un logo GLA fijo, sin datos de Marcador.
++   Logo centrado en ese sector (centro x155,y1006.5): 110x110px dentro de
++   una caja de 145px de alto deja ~17.5px de margen vertical, y dentro de
++   310px de ancho deja 100px de margen a cada lado (borde izquierdo del
++   asset y borde del bloque central en x310) -- no toca bordes. Bloque de
++   texto 1/2: identico a zocaloFinalDiv (misma caja, mismo alineado a la
++   izquierda, mismos tamaños) -- pedido explicito del usuario de reusar
++   exactamente esa logica. */
++#mod-zocaloFinal {
++  width: 1920px;
++  height: 1080px;
++  left: 0;
++  top: 0;
++  --dur-content-delay: 1900ms;
++}
++.ov-zf-logo {
++  position: absolute;
++  left: 100px;
++  top: 951.5px;
++  width: 110px;
++  height: 110px;
++  object-fit: contain;
++}
++.ov-zf-texto {
++  position: absolute;
++  left: 334px;
++  width: 1111px;
++  display: flex;
++  align-items: center;
++  justify-content: flex-start;
++  font-family: var(--font-display);
++  font-weight: 800;
++  text-transform: uppercase;
++  text-align: left;
++}
++.ov-zf-texto1 {
++  top: 940px;
++  height: 82px;
++  color: var(--black);
++}
++.ov-zf-texto2 {
++  top: 1030px;
++  height: 46px;
++  color: var(--white);
++}
++.ov-zfd-sponsor, .ov-zf-sponsor {
++  position: absolute;
++  left: 1475px;
++  width: 420px;
++  top: 940px;
++  height: 130px;
++  display: none;
++  object-fit: contain;
++}
++
+ /* ============================================================
+    GRUPOS — PNG estatico (sin video, entregado ya preparado y escalado a
+    1920x1080 por el usuario; no se reescala ni se reposiciona). Grupo 1 y
+@@ -1611,12 +1900,18 @@
+    coordenadas de fila de siempre, sin cambios) — reposicionar un modo
+    es solo aplicarle un transform a este contenedor, nunca a las filas
+    individuales:
+-     - Placa L (posicion aprobada original, sin cambios): top = sin
+-       transform. bottom (Grupo 2 apilado debajo de Grupo 1 en el mismo
+-       modo) = translateY(440px) = altura real de la placa (416px,
+-       y50-466) + 24px de separacion visual -> el segundo cuadro cae en
+-       y490-906, dentro del frame (1080) con 174px de aire debajo, sin
+-       tocar al primero (24px de hueco real entre y466 y y490).
++     - Placa L: centrado horizontal (2026-08-04, pedido explicito del
++       usuario) contra el recuadro negro derecho del Zocalo Compuesto
++       (bbox real medido x1469-1920, centro x1694.5), en vez del borde
++       derecho de la pantalla. Bbox real de la placa (PNG completo,
++       medido por alfa): x1555-1901 (347px, centro x1728) — se agrega
++       translateX(-33.5px) para que ese centro caiga en 1728-33.5=1694.5,
++       exacto contra el centro del recuadro. Y sin cambios: top = solo
++       translateX (Grupo 1). bottom (Grupo 2 apilado debajo de Grupo 1 en
++       el mismo modo) = translateY(440px) = altura real de la placa
++       (416px, y50-466) + 24px de separacion visual -> el segundo cuadro
++       cae en y490-906, dentro del frame (1080) con 174px de aire debajo,
++       sin tocar al primero (24px de hueco real entre y466 y y490).
+      - Fullscreen abajo derecha: mismo ancho/alto nativo (344x416), sin
+        reescalar. Margen de seguridad elegido: 40px contra el borde
+        derecho y 40px contra el inferior -> borde derecho final en
+@@ -1642,8 +1937,8 @@
+   width: 1920px;
+   height: 1080px;
+ }
+-.ov-grupos-card--placaL-top { transform: translate(0, 0); }
+-.ov-grupos-card--placaL-bottom { transform: translate(0, 440px); }
++.ov-grupos-card--placaL-top { transform: translate(-33.5px, 0); }
++.ov-grupos-card--placaL-bottom { transform: translate(-33.5px, 440px); }
+ .ov-grupos-card--fs-derecha { transform: translate(-20px, 574px); }
+ .ov-grupos-card--fs-izquierda { transform: translate(-1516px, 574px); }
+ .ov-grupos-crest {
+@@ -1696,84 +1991,422 @@
+ .ov-grupos-puntos[data-row="2"] { top: 352px; }
+ 
+ /* ============================================================
+-   TABLA LATERAL DERECHA (sin asset nuevo todavia)
++   RESULTADOS / ENCUENTROS (reformulación de Tablas)
+    ============================================================ */
+ #mod-sideTable {
+-  right: 40px;
+-  top: 220px;
+-  width: 420px;
+-  transform: translateX(40px);
++  width: 1920px;
++  height: 1080px;
++  left: 0;
++  top: 30px;
++}
++
++.ov-resultados-wrapper {
++  position: absolute;
++  left: 0;
++  width: 1920px;
++  height: auto;
++  display: flex;
++  flex-direction: column;
++  gap: 12px;
++  pointer-events: none;
++  transition: transform var(--dur-in) var(--ease-in), top var(--dur-in) var(--ease-in), bottom var(--dur-in) var(--ease-in);
++}
++
++/* Centrado horizontal (2026-08-04, pedido explicito del usuario): antes
++   translateX(0) dejaba la columna pegada al recuadro negro derecho del
++   Zocalo Compuesto sin centrarse en el (bbox real medido x1469-1920,
++   centro x1694.5). El bloque real renderizado (con el scale(0.93) ya
++   existente de .ov-resultados-titulo-row/.ov-resultados-encuentro,
++   anclado a la derecha) mide x1544.02-1903 (358.98px, centro x1723.51) —
++   se corrige solo la posicion X del wrapper (-29px) para que ese centro
++   coincida con el centro real del recuadro (1723.51-29=1694.51, dentro
++   de 0.01px del objetivo). No se toco escala, alto, texto, logica ni los
++   otros dos modos (fullscreen). */
++.ov-resultados-wrapper--placaL {
++  top: 0;
++  bottom: auto;
++  transform: translate(-29px, 0);
++}
++
++.ov-resultados-wrapper--fs-derecha {
++  bottom: 120px;
++  top: auto;
++  transform: translateX(-22px);
++}
++
++.ov-resultados-wrapper--fs-izquierda {
++  bottom: 120px;
++  top: auto;
++  transform: translateX(-1477px);
+ }
+-#mod-sideTable.is-in { transform: translateX(0); }
+ 
+-.side-table {
+-  background: var(--black-glass);
+-  border-left: 3px solid var(--gold);
+-  border-radius: 2px;
++.ov-resultados-titulo-row {
++  position: relative;
++  left: 1517px;
++  width: 386px;
++  height: 67px;
+   overflow: hidden;
++  transform: scale(0.93);
++  transform-origin: right center;
++}
++
++.ov-resultados-titulo-row .ov-resultados-bg {
++  top: -29px;
+ }
+-.side-table-header {
+-  padding: 14px 20px;
++
++.ov-resultados-encuentro {
++  position: relative;
++  left: 1517px;
++  width: 386px;
++  height: 124px;
++  overflow: hidden;
++  transform: scale(0.93);
++  transform-origin: right center;
++}
++
++.ov-resultados-encuentro .ov-resultados-bg {
++  top: -113px;
++}
++
++.ov-resultados-bg {
++  position: absolute;
++  left: -1517px;
++  width: 1920px;
++  height: 1080px;
++  background-image: url('/assets/tablas/resultados.png');
++  background-repeat: no-repeat;
++  pointer-events: none;
++}
++
++.ov-resultados-titulo-wrap {
++  position: absolute;
++  left: 5px;
++  top: -1px;
++  width: 376px;
++  height: 67px;
++  display: flex;
++  align-items: center;
++  justify-content: center;
++}
++
++.ov-resultados-titulo {
+   font-family: var(--font-display);
+-  font-size: 22px;
+   font-weight: 800;
+-  letter-spacing: 1px;
+   text-transform: uppercase;
+-  color: var(--black);
++  color: #ffffff;
++  text-align: center;
++}
++
++.ov-resultados-cuerpo {
++  position: absolute;
++  left: 0;
++  top: 0;
++  width: 386px;
++  height: 124px;
+ }
+-.side-table-row {
++
++.ov-resultados-escudo {
++  position: absolute;
+   display: flex;
+   align-items: center;
+-  justify-content: space-between;
+-  padding: 10px 20px;
+-  font-size: 18px;
+-  border-top: 1px solid rgba(255, 255, 255, 0.08);
++  justify-content: center;
++  height: 100%;
++}
++
++.ov-resultados-escudo.local {
++  left: 1px;
++  width: 108px;
++}
++
++.ov-resultados-escudo.visitante {
++  left: 277px;
++  width: 108px;
++}
++
++.ov-resultados-crest {
++  height: 85px;
++  width: 85px;
++  object-fit: contain;
++  flex-shrink: 0;
++}
++
++.ov-resultados-bloque-central {
++  position: absolute;
++  left: 109px;
++  width: 168px;
++  height: 100%;
++}
++
++.ov-resultados-gol-local,
++.ov-resultados-gol-visitante {
++  position: absolute;
++  width: 45px;
++  height: 100%;
++  display: flex;
++  align-items: center;
++  justify-content: center;
++  font-family: var(--font-display);
++  font-size: 36px;
++  font-weight: 900;
++  color: var(--black);
++  z-index: 2;
++}
++
++.ov-resultados-gol-local {
++  left: 8px;
+ }
+-.side-table-row .team { flex: 1; text-transform: uppercase; }
+-.side-table-row .team.away { text-align: right; }
+-.side-table-row .score {
+-  min-width: 54px;
++
++.ov-resultados-gol-visitante {
++  right: 8px;
++}
++
++.ov-resultados-estado {
++  position: absolute;
++  left: 45px;
++  width: 78px;
++  height: 100%;
++  display: flex;
++  align-items: center;
++  justify-content: center;
++  font-family: var(--font-display);
++  font-size: 15px;
++  font-weight: 900;
+   text-align: center;
+-  color: var(--gold-bright);
+-  font-weight: 800;
++  color: var(--black);
++  z-index: 2;
++}
++
++.ov-resultados-estado-fullscreen {
++  position: absolute;
++  left: 0;
++  width: 100%;
++  height: 100%;
++  display: flex;
++  align-items: center;
++  justify-content: center;
+   font-family: var(--font-display);
++  font-size: 32px;
++  font-weight: 900;
++  text-align: center;
++  color: var(--black);
++  z-index: 2;
+ }
+ 
+ /* ============================================================
+-   PROXIMOS ENCUENTROS (sin asset nuevo todavia)
++   ESTRELLAS (Placa doble jugador inferior izquierda)
+    ============================================================ */
+-#mod-upcoming {
+-  left: 80px;
+-  bottom: 360px;
+-  width: 460px;
+-  transform: translateX(-30px);
++#mod-estrellas {
++  width: 1920px;
++  height: 1080px;
++  left: 0;
++  top: 0;
++  --dur-content-delay: 1500ms;
+ }
+-#mod-upcoming.is-in { transform: translateX(0); }
+ 
+-.upcoming-box {
+-  background: var(--black-glass);
+-  border-left: 3px solid var(--gold);
++.ov-estrellas-row {
++  position: absolute;
++  left: 40px;
++  width: 687px;
++  display: flex;
++  align-items: center;
++  pointer-events: none;
+ }
+-.upcoming-header {
+-  padding: 10px 18px;
+-  color: var(--black);
++
++.ov-estrellas-row--local {
++  top: 866px;
++  height: 78px;
++}
++
++.ov-estrellas-row--visitante {
++  top: 950px;
++  height: 80px;
++}
++
++.ov-estrellas-escudo {
++  position: absolute;
++  left: 6px;
++  width: 80px;
++  height: 100%;
++  display: flex;
++  align-items: center;
++  justify-content: center;
++}
++
++.ov-estrellas-crest {
++  width: 60px;
++  height: 60px;
++  object-fit: contain;
++  flex-shrink: 0;
++}
++
++.ov-estrellas-name {
++  position: absolute;
++  left: 96px;
++  width: 384px;
++  height: 100%;
++  display: flex;
++  align-items: center;
++  justify-content: center;
+   font-family: var(--font-display);
+   font-weight: 800;
+-  font-size: 18px;
+-  letter-spacing: 1px;
+   text-transform: uppercase;
++  color: var(--white);
++  text-align: center;
+ }
+-.upcoming-row {
+-  padding: 8px 18px;
+-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+-  font-size: 15px;
++
++.ov-estrellas-stat {
++  position: absolute;
++  height: 100%;
++  display: flex;
++  align-items: center;
++  justify-content: center;
++  font-family: var(--font-display);
++  font-size: 32px;
++  font-weight: 900;
++  color: var(--white);
+ }
+-.upcoming-row .match {
+-  font-weight: 700;
++
++.ov-estrellas-stat--g {
++  left: 494px;
++  width: 60px;
++}
++
++.ov-estrellas-stat--a {
++  left: 558px;
++  width: 59px;
++}
++
++.ov-estrellas-stat--pj {
++  left: 621px;
++  width: 59px;
++}
++
++.ov-estrellas-titulo {
++  position: absolute;
++  left: 40px;
++  top: 825px;
++  width: 490px;
++  height: 44px;
++  display: flex;
++  align-items: center;
++  justify-content: center;
++  font-family: var(--font-display);
++  font-weight: 800;
+   text-transform: uppercase;
++  color: var(--black);
++  text-align: center;
+ }
+-.upcoming-row .info {
+-  color: var(--gold-bright);
+-  font-size: 13px;
+-  margin-top: 2px;
++
++/* ============================================================
++   POSICIONES (tabla de 6 filas, ver ai-gfx/placas-mid-full/posiciones)
++   ============================================================ */
++/* Geometria real medida por lectura de alfa/color sobre el asset
++   (2026-08-04, no a ojo): bbox total x256-1674,y183-845. Zocalo superior
++   (y183-269) sin contenido dinamico -- no se pidio texto ahi. Fila de
++   encabezados (labels # / EQUIPO / PTS / PJ / G / GXP / PXP / P / GF /
++   GC / DG, todas horneadas en el asset, no se repiten con CSS/JS):
++   y274-340. 6 filas de datos, alturas reales (no uniformes, se respeta
++   cada una tal cual mide el asset):
++     fila0: y343-415 (72px)   fila1: y419-494 (75px)
++     fila2: y497-572 (75px)   fila3: y575-649 (74px)
++     fila4: y653-730 (77px)   fila5: y733-810 (77px)
++   Columnas (limites via las lineas doradas divisoras reales, identicas
++   en las 6 filas), medidas desde el borde izquierdo real de la tabla
++   (x256 = left del contenedor .ov-pos-row):
++     #      0-77.5px    escudo 77.5-147.5px   equipo 147.5-607.5px
++     PTS    607.5-696.5px (celda con relleno dorado propio del asset)
++     PJ 696.5-785.5  G 785.5-874.5  GXP 874.5-966.5  PXP 966.5-1055.5
++     P 1055.5-1145.5  GF 1145.5-1234.5  GC 1234.5-1323.5  DG 1323.5-1418 */
++#mod-posiciones {
++  width: 1920px;
++  height: 1080px;
++  left: 0;
++  top: 0;
++  /* Asentamiento medido cuadro a cuadro sobre el .mov real (tamaño de
++     PNG por frame como proxy de contenido dibujado, mismo criterio que
++     el resto del proyecto): la estructura de la tabla termina de
++     dibujarse en t~1.5s, +250ms de margen fijo, redondeado a los 100ms
++     mas cercanos hacia arriba. */
++  --dur-content-delay: 1800ms;
++}
++
++.ov-pos-row {
++  position: absolute;
++  left: 256px;
++  width: 1418px;
++}
++.ov-pos-row[data-row="0"] { top: 343px; height: 72px; }
++.ov-pos-row[data-row="1"] { top: 419px; height: 75px; }
++.ov-pos-row[data-row="2"] { top: 497px; height: 75px; }
++.ov-pos-row[data-row="3"] { top: 575px; height: 74px; }
++.ov-pos-row[data-row="4"] { top: 653px; height: 77px; }
++.ov-pos-row[data-row="5"] { top: 733px; height: 77px; }
++
++.ov-pos-cell {
++  position: absolute;
++  top: 0;
++  height: 100%;
++  display: flex;
++  align-items: center;
++  justify-content: center;
++  font-family: var(--font-display);
++  font-weight: 900;
++  color: var(--white);
++  text-align: center;
++}
++
++.ov-pos-num {
++  left: 0;
++  width: 77.5px;
++}
++
++.ov-pos-escudo {
++  left: 77.5px;
++  width: 70px;
++}
++.ov-pos-crest {
++  width: 54px;
++  height: 54px;
++  object-fit: contain;
++}
++
++.ov-pos-equipo {
++  left: 147.5px;
++  width: 460px;
++  font-weight: 800;
++  text-transform: uppercase;
++}
++
++.ov-pos-stat[data-col="pts"] { left: 607.5px; width: 89px; color: var(--black); }
++.ov-pos-stat[data-col="pj"]  { left: 696.5px; width: 89px; }
++.ov-pos-stat[data-col="g"]   { left: 785.5px; width: 89px; }
++.ov-pos-stat[data-col="gxp"] { left: 874.5px; width: 92px; }
++.ov-pos-stat[data-col="pxp"] { left: 966.5px; width: 89px; }
++.ov-pos-stat[data-col="p"]   { left: 1055.5px; width: 90px; }
++.ov-pos-stat[data-col="gf"]  { left: 1145.5px; width: 89px; }
++.ov-pos-stat[data-col="gc"]  { left: 1234.5px; width: 89px; }
++.ov-pos-stat[data-col="dg"]  { left: 1323.5px; width: 94.5px; }
++
++/* Zocalo superior (titulo): interior real medido por lectura de alfa/color
++   sobre el asset (2026-08-05, no a ojo) -- x264-1665,y193-268 (el marco
++   dorado en si ocupa x256-263/1666-1674 y y183-191/270-273, por fuera de
++   estos numeros). El box de abajo va INSET respecto de ese interior real
++   (20px horizontal, 4px vertical) para no tocar el marco. Fondo del
++   zocalo es negro solido -> texto blanco (el valor anterior, negro sobre
++   negro, era invisible). */
++.ov-posiciones-titulo {
++  position: absolute;
++  left: 284px;
++  top: 197px;
++  width: 1361px;
++  height: 67px;
++  display: flex;
++  align-items: center;
++  justify-content: center;
++  font-family: var(--font-display);
++  font-weight: 800;
++  letter-spacing: 1px;
++  text-transform: uppercase;
++  color: var(--white);
++  text-align: center;
+ }

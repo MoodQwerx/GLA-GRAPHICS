@@ -1,6 +1,7 @@
 import { createAlphaVideo } from '../alpha-video.js';
 import { colorHex } from '../../../shared/team-colors.js';
 import { crestFile, teamAbbr } from '../../../shared/teams.js';
+import { applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
 
 const VIDEO_SRC = '/assets/marcador/marcador-entretiempo-alpha.mp4';
 
@@ -13,7 +14,7 @@ function buildStructure(el) {
         <span class="ov-dot"></span>
         <span class="ov-name"></span>
       </div>
-      <div class="ov-ent-score"></div>
+      <div class="ov-ent-score"><span class="ov-ent-score-a"></span><span class="ov-ent-score-sep"> - </span><span class="ov-ent-score-b"></span></div>
       <div class="ov-ent-team-b">
         <span class="ov-name"></span>
         <span class="ov-dot"></span>
@@ -47,16 +48,21 @@ export default function renderMarcadorEntretiempo(contentEl, data, justTaken, on
   }
 
   const sb = (allData && allData.scoreboard) || {};
+  const ta = data.textAdjust;
 
   const teamAEl = contentEl.querySelector('.ov-ent-team-a');
-  teamAEl.querySelector('.ov-name').textContent = teamAbbr(sb.teamA);
+  applyPlainTextAdjust(teamAEl.querySelector('.ov-name'), teamAbbr(sb.teamA), readTextAdjust(ta, 'nameA'));
   teamAEl.querySelector('.ov-dot').style.background = colorHex(sb.teamAColor);
   setCrest(teamAEl.querySelector('.ov-crest'), sb.teamA);
 
   const teamBEl = contentEl.querySelector('.ov-ent-team-b');
-  teamBEl.querySelector('.ov-name').textContent = teamAbbr(sb.teamB);
+  applyPlainTextAdjust(teamBEl.querySelector('.ov-name'), teamAbbr(sb.teamB), readTextAdjust(ta, 'nameB'));
   teamBEl.querySelector('.ov-dot').style.background = colorHex(sb.teamBColor);
   setCrest(teamBEl.querySelector('.ov-crest'), sb.teamB);
 
-  contentEl.querySelector('.ov-ent-score').textContent = `${sb.scoreA ?? 0} - ${sb.scoreB ?? 0}`;
+  // "scoreA"/"scoreB" divididos en dos spans (2026-08-15, auditoria
+  // completa) -- mismo criterio que el Marcador principal, ver
+  // program/js/renderers/scoreboard.js.
+  applyPlainTextAdjust(contentEl.querySelector('.ov-ent-score-a'), String(sb.scoreA ?? 0), readTextAdjust(ta, 'scoreA'));
+  applyPlainTextAdjust(contentEl.querySelector('.ov-ent-score-b'), String(sb.scoreB ?? 0), readTextAdjust(ta, 'scoreB'));
 }

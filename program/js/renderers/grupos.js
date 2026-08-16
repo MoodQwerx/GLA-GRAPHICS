@@ -1,5 +1,5 @@
 import { crestFile, teamName } from '../../../shared/teams.js';
-import { applyFittedText } from '../text-fit.js';
+import { applyFittedText, applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
 
 // PNG estaticos (sin video, ya preparados y escalados a 1920x1080 por el
 // usuario) — mismo criterio que marcadorZocalo.js/marcadorTiempoAdicional.js:
@@ -33,6 +33,9 @@ function sortedFilas(filas) {
   return filas
     .map((fila, index) => ({ fila, index }))
     .sort((a, b) => {
+      if (a.fila.ordenOficial || b.fila.ordenOficial) {
+        return (Number(a.fila.posicion) || a.index + 1) - (Number(b.fila.posicion) || b.index + 1);
+      }
       const diff = (parseFloat(b.fila.puntos) || 0) - (parseFloat(a.fila.puntos) || 0);
       return diff !== 0 ? diff : a.index - b.index;
     })
@@ -68,18 +71,22 @@ function setCrest(imgEl, teamId) {
 // equipo (mismo catalogo global que Marcador principal, ver
 // shared/teams.js) — escudo y nombre completo se derivan siempre de ese
 // ID, nunca se cargan ni se escriben a mano.
-function paintCard(cardEl, grupoKey, filas) {
+function paintCard(cardEl, grupoKey, filas, textAdjust) {
   cardEl.querySelector('[data-card-bg]').src = IMG_SRC[grupoKey];
   const ordered = sortedFilas(filas || []);
+  const nombreAdjust = readTextAdjust(textAdjust, 'nombre');
+  const puntosAdjust = readTextAdjust(textAdjust, 'puntos');
   for (let i = 0; i < ROW_COUNT; i++) {
     const fila = ordered[i] || { teamId: '', puntos: '' };
     setCrest(cardEl.querySelector(`.ov-grupos-crest[data-row="${i}"]`), fila.teamId);
     applyFittedText(
       cardEl.querySelector(`.ov-grupos-name[data-row="${i}"]`),
       fila.teamId ? teamName(fila.teamId) : '',
-      { maxFont: 28, minFont: 14, maxWidth: 145, weight: 800 },
+      // Agrandado levemente de 28/14 (2026-08-06, pedido explicito del usuario).
+      { maxFont: 31, minFont: 16, maxWidth: 145, weight: 400 },
+      nombreAdjust,
     );
-    cardEl.querySelector(`.ov-grupos-puntos[data-row="${i}"]`).textContent = fila.puntos ?? '';
+    applyPlainTextAdjust(cardEl.querySelector(`.ov-grupos-puntos[data-row="${i}"]`), String(fila.puntos ?? ''), puntosAdjust);
   }
 }
 
@@ -107,10 +114,10 @@ export default function renderGrupos(contentEl, data) {
   }
 
   if (posicion === 'placaL') {
-    paintCard(contentEl.querySelector('[data-slot="grupo1"]'), 'grupo1', data.grupo1?.filas);
-    paintCard(contentEl.querySelector('[data-slot="grupo2"]'), 'grupo2', data.grupo2?.filas);
+    paintCard(contentEl.querySelector('[data-slot="grupo1"]'), 'grupo1', data.grupo1?.filas, data.textAdjust);
+    paintCard(contentEl.querySelector('[data-slot="grupo2"]'), 'grupo2', data.grupo2?.filas, data.textAdjust);
   } else {
     const card = contentEl.querySelector(`[data-slot="${grupoVisible}"]`);
-    paintCard(card, grupoVisible, data[grupoVisible]?.filas);
+    paintCard(card, grupoVisible, data[grupoVisible]?.filas, data.textAdjust);
   }
 }

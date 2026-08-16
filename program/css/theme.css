@@ -1,14 +1,14 @@
 /* Identidad visual GLA — dorado/negro, estilo broadcast premium. */
 
-/* Tipografia oficial de todo AI GFX: Anton Regular, cargada localmente desde
-   assets/fonts/ (sin depender de Google Fonts ni de ninguna conexion
-   externa — critico para no fallar en vivo si se corta internet). */
+/* Tipografia determinista de PROGRAM. El nombre interno "GLA Anton" evita
+   que Chromium/vMix resuelva por accidente una fuente instalada en Windows:
+   esta familia solo puede provenir del archivo local del proyecto. */
 @font-face {
-  font-family: 'Anton';
+  font-family: 'GLA Anton';
   src: url('/assets/fonts/Anton-Regular.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 
 :root {
@@ -22,8 +22,8 @@
   --grey: #B9B9B5;
   --grey-dim: #6b6b68;
 
-  --font-display: 'Anton', 'Arial Narrow', Arial, sans-serif;
-  --font-body: 'Anton', 'Arial Narrow', Arial, sans-serif;
+  --font-display: 'GLA Anton';
+  --font-body: 'GLA Anton';
 
   --dur-in: 0.5s;
   --dur-out: 0.35s;
@@ -56,15 +56,38 @@
   box-sizing: border-box;
 }
 
+/* html/body ocupan el viewport REAL (no un tamaño fijo en px): la
+   composicion logica fija de 1920x1080 vive entera en "#stage" (ver
+   "#stage" en overlay.css), que se escala como unidad via
+   program/js/stage-scale.js. Antes html/body tambien estaban fijados a
+   1920x1080px, lo cual asumia que la ventana del navegador media
+   fisicamente 1920x1080 -- cierto en la PC principal (Browser Source de
+   OBS/vMix configurado a ese tamaño exacto) pero falso en cualquier otra
+   PC con una ventana/resolucion distinta. Ahi "document.documentElement"
+   (el viewport real, ej. 1365x945 con escalado de Windows) y
+   "document.body" (forzado a 1920x1080 por este CSS) quedaban
+   desincronizados: el stage se dibujaba a su tamaño logico completo pero
+   el viewport real, mas chico, lo recortaba en vez de escalarlo (2026-08-13,
+   causa raiz reportada por el usuario). */
 html, body {
   margin: 0;
   padding: 0;
   background: transparent;
   overflow: hidden;
-  width: 1920px;
-  height: 1080px;
+  width: 100vw;
+  height: 100vh;
   font-family: var(--font-body);
   color: var(--white);
+}
+
+/* main.js habilita el stage unicamente despues de que la cara local haya
+   cargado. Asi ningun frame al aire puede dibujarse primero con fallback. */
+#stage {
+  visibility: hidden;
+}
+
+html.program-fonts-ready #stage {
+  visibility: visible;
 }
 
 .gold-accent {
