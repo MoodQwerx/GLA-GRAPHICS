@@ -796,6 +796,18 @@ body[data-theme='argentinaStreamers'] #mod-scoreboard .ov-dot {
      oculta juntas. */
   --dur-content-delay: 300ms;
 }
+/* ARGENTINA STREAMERS usa un asset PROPIO y distinto para Penales (2026-09-01,
+   pedido explicito del usuario: "el contenido dinamico aparece demasiado
+   pronto respecto de la animacion del asset") -- los 300ms de arriba se
+   midieron sobre el asset de GLA, no sobre este; se sube a un valor
+   conservador mientras no haya una medicion cuadro a cuadro del asset nuevo
+   (no se cambio el mecanismo, que ya es 100% generico via "sequencedReveal"
+   -- ver program/js/main.js/CHANGELOG.md -- solo este valor puntual). Pedir
+   una revision visual real (Tomar al aire y mirar el asentamiento) si hace
+   falta afinarlo mas. */
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales {
+  --dur-content-delay: 600ms;
+}
 
 /* Las 3 casillas de penal se posicionan una por una con blob-detection
    sobre el frame real (canal blanco de los 3 numeros), no con flex/gaps
@@ -1151,11 +1163,24 @@ body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-sponsor {
   left: 890px;
   top: 1020px;
 }
-body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksA [data-kick="0"] { left: 646px; top: 960px; }
+/* Correcciones finas puntuales pedidas por el usuario (2026-09-01,
+   "ajustes de círculos" — LOCAL 1 un poco a la derecha, LOCAL 4/5 un poco
+   a la izquierda, VISITANTE 2 un poco a la izquierda; el resto de los
+   círculos, escudos, resultado, título y asset quedan intactos). Nudge
+   sutil de 5px sobre el valor medido original -- no reemplaza la medicion
+   por blob-detection de base, solo la corrige puntualmente donde el
+   usuario la vio corrida.
+   SEGUNDA RONDA (2026-09-01, mismo día, corrección sobre la primera
+   ronda -- pedido explícito: "eje X únicamente, no tocar Y/escala/
+   escudos/score/asset/título/sponsor/otros círculos"): LOCAL 1 más a la
+   izquierda (-10px sobre el valor ya nudgeado), LOCAL 3 un poco a la
+   izquierda (-5px, primer ajuste sobre este círculo), VISITANTE 2 un
+   poco más a la derecha (+5px sobre el valor ya nudgeado). */
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksA [data-kick="0"] { left: 641px; top: 960px; }
 body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksA [data-kick="1"] { left: 695px; top: 960px; }
-body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksA [data-kick="2"] { left: 741px; top: 960px; }
-body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksA [data-kick="3"] { left: 790px; top: 960px; }
-body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksA [data-kick="4"] { left: 840px; top: 960px; }
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksA [data-kick="2"] { left: 736px; top: 960px; }
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksA [data-kick="3"] { left: 785px; top: 960px; }
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksA [data-kick="4"] { left: 835px; top: 960px; }
 body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksB [data-kick="0"] { left: 1063px; top: 960px; }
 body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksB [data-kick="1"] { left: 1112px; top: 960px; }
 body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksB [data-kick="2"] { left: 1156px; top: 960px; }
@@ -1677,10 +1702,10 @@ body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksB [data-
    plantilla) — por eso el escudo usa el mismo centro horizontal ya
    validado ahi: (43+135)/2 = 89.
    Estructura vertical (medida con lectura de alfa, no a ojo):
-     y861-901: zocalo semi-transparente superior (mismo criterio y misma
-       logica que el titulo de Penales, ver ".ov-pen-title" y
-       "fitTitleFontSize" en marcadorPenales.js) — ver ".ov-cambio-title"
-       mas abajo.
+     y861-901: zocalo semi-transparente superior (2026-09-01: ya no tiene
+       texto propio -- el TÍTULO de este módulo se eliminó por completo,
+       pedido explícito del usuario; el zócalo queda como parte visual del
+       asset, sin overlay encima).
      y902-908: linea dorada divisoria entre el zocalo y la fila "entra".
      y909-970: fila "entra" (flecha verde, ingreso).
      y971-973: linea dorada divisoria entre las dos filas.
@@ -1690,32 +1715,6 @@ body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksB [data-
    siempre del mismo equipo): x49-132, y903-1035 (envuelve las dos
    filas). Se centra ahi con el mismo tamaño que en Tarjeta (72px de
    alto, criterio de "presencia" consistente entre ambos modulos). */
-/* Titulo editable del zocalo superior — misma logica que
-   ".ov-pen-title" (Marcador de Penales): banda semi-transparente real
-   del asset en y862-901, separada del cuerpo por una linea dorada en
-   y902-908. Caja con 5px de colchon contra esa linea (bottom:896,
-   height:30, top:866) y 10px de margen horizontal contra el bbox del
-   asset (x43-439 -> left:53, width:376). El tamaño de fuente se ajusta
-   en JS (fitTitleFontSize, ver renderer) en vez de un valor fijo. */
-.ov-cambio-title {
-  position: absolute;
-  left: 53px;
-  width: 376px;
-  /* "top" bajado 3px (2026-08-06, pedido explicito del usuario: "bajar
-     levemente para centrarlo") — solo ajuste fino de Y. */
-  top: 869px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-display);
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  color: var(--white);
-  white-space: nowrap;
-  overflow: hidden;
-}
 .ov-cambio-team {
   position: absolute;
   left: 43px;

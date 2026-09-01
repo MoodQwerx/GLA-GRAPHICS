@@ -228,13 +228,39 @@ let wsConnected = false;
 function isWsConnected() {
   return wsConnected;
 }
+
+// GUARDAR POSICIÓN -> LAYOUT BASE VERSIONADO (2026-09-01, pedido explicito
+// del usuario: "no quiero mas persistencia que dependa de la maquina...
+// quiero que esa posicion aprobada viaje con el codigo"). Antes, "GUARDAR
+// POSICIÓN" solo llamaba a "flushModuleNow" -- un guardado inmediato del
+// draft en el estado runtime (data/master-control-state.json), que
+// ".gitignore" excluye por completo (nunca viaja con git clone/push/pull).
+// Ahora: primero fuerza ese mismo flush (para que el servidor tenga el
+// valor absoluto mas reciente de ESTE modulo antes de leerlo), y recien
+// despues manda COMMIT_POSITION -- el servidor consolida el valor absoluto
+// actual del elemento indicado por "elementSpec" dentro de
+// shared/theme-layouts/<themeId>.json (ver server/theme-layouts.js), un
+// archivo DENTRO del arbol versionado por Git. El dato que ya usa Program
+// ("draft[moduleId]") no se toca en ningun momento -- ver la decision
+// confirmada explicitamente por el usuario ("solo visual en Master
+// Control") y composition-control.js/text-adjust-control.js (baseline).
+function commitElementPosition(moduleId, elementSpec) {
+  flushModuleNow(moduleId);
+  ws.send({ type: WS_MSG.COMMIT_POSITION, moduleId, elementSpec });
+}
+
 // Atajo para armar el { onSave, isPendingSave, isConnected } que ya reciben
 // renderCompositionControl/renderTextAdjustControl (2026-08-31, auditoria
 // completa): evita repetir las mismas 3 lineas en cada panel dedicado que
 // necesita agregar GUARDAR POSICIÓN a sus controles ya existentes.
+// "onSave" ahora recibe "elementSpec" (2026-09-01, layout base versionado)
+// -- lo arma cada control (composition-control.js/text-adjust-control.js,
+// via field-editors.js "mountAdjustControl" o directo en los paneles
+// dedicados que llaman a renderTextAdjustControl/renderCompositionControl
+// a mano), esta funcion solo necesita reenviarlo con el moduleId correcto.
 function buildSaveOptions(moduleId) {
   return {
-    onSave: () => flushModuleNow(moduleId),
+    onSave: (elementSpec) => commitElementPosition(moduleId, elementSpec),
     isPendingSave: () => isPendingSave(moduleId),
     isConnected: isWsConnected,
   };
@@ -518,11 +544,7 @@ function selectModule(id) {
 function renderModuleAdjustAccordion(container, moduleId, data) {
   container.innerHTML = '';
   const onDirty = () => scheduleAutoSave(moduleId);
-  const saveOptions = {
-    onSave: () => flushModuleNow(moduleId),
-    isPendingSave: () => isPendingSave(moduleId),
-    isConnected: isWsConnected,
-  };
+  const saveOptions = buildSaveOptions(moduleId);
 
   function section(title, build) {
     const details = document.createElement('details');
@@ -546,6 +568,7 @@ function renderModuleAdjustAccordion(container, moduleId, data) {
       title: '', note: 'Mueve y escala TODO el módulo como una sola unidad.',
       keys: { xKey: 'compositionOffsetX', yKey: 'compositionOffsetY', scaleKey: 'compositionScale' },
       ...saveOptions,
+      elementSpec: { kind: 'composition', dataPath: [], xKey: 'compositionOffsetX', yKey: 'compositionOffsetY', scaleKey: 'compositionScale' },
     });
   });
 
@@ -557,14 +580,85 @@ function renderModuleAdjustAccordion(container, moduleId, data) {
       });
     } else if (entry.kind === 'composition') {
       section(entry.label, (body) => {
-        renderCompositionControl(body, data, onDirty, {
-          title: '', note: '',
-          keys: { xKey: entry.xKey, yKey: entry.yKey, scaleKey: entry.scaleKey },
-          ...saveOptions,
-        });
+        const crestTarget = entry.crestTeam ? resolveCrestTeamTarget(entry, data) : null;
+        if (crestTarget) {
+          renderCompositionControl(body, crestTarget.data, onDirty, {
+            title: '', note: `Posición propia de ${crestTarget.label} en este slot -- independiente de los demás equipos.`,
+            keys: { xKey: entry.xKey, yKey: entry.yKey, scaleKey: entry.scaleKey },
+            ...saveOptions,
+            elementSpec: { kind: 'composition', dataPath: crestTarget.dataPath, xKey: entry.xKey, yKey: entry.yKey, scaleKey: entry.scaleKey },
+          });
+        } else {
+          renderCompositionControl(body, data, onDirty, {
+            title: '', note: '',
+            keys: { xKey: entry.xKey, yKey: entry.yKey, scaleKey: entry.scaleKey },
+            ...saveOptions,
+            elementSpec: { kind: 'composition', dataPath: [], xKey: entry.xKey, yKey: entry.yKey, scaleKey: entry.scaleKey },
+          });
+        }
       });
     }
   }
+}
+
+// POSICIÓN DE ESCUDO POR EQUIPO (2026-09-01, pedido explicito del
+// usuario -- ver "crestTeam" en shared/adjust-registry.js). Solo tiene
+// efecto en Argentina Streamers: para cualquier otro theme (GLA)
+// devuelve null a proposito y el caller usa el camino de siempre (una
+// unica posicion por slot) -- "GRAN LIGA RELÁMPAGO debe quedar
+// exactamente como está" es un requisito explicito de esta misma tarea.
+//
+// Resuelve el teamId SIEMPRE contra el Marcador (draft.scoreboard.teamA/
+// teamB) -- confirmado leyendo los 10 renderers que muestran escudos de
+// equipo (scoreboard/marcadorEntretiempo/marcadorPenales/vsPrepartido/
+// vsResultado/vs/zocaloCompuesto/estrellas heredan sb.teamA/teamB en
+// vivo; tarjeta/cambios heredan el mismo par pero eligen uno segun
+// "data.equipo") -- ninguno tiene un campo de equipo propio distinto.
+//
+// Sin equipo seleccionado todavia en ese slot: devuelve null (mismo
+// comportamiento de siempre, el operador ajusta el generico) -- "no
+// quiero errores si aparece un equipo nuevo sin configuracion" ya queda
+// cubierto porque CUALQUIER teamId nuevo simplemente no tiene entrada
+// en "crestByTeam" todavia, y se inicializa aca mismo desde el valor
+// generico actual (fallback), nunca desde 0/0/1.
+function resolveCrestTeamTarget(entry, data) {
+  if (activeThemeId !== ARGENTINA_STREAMERS_THEME_ID) return null;
+
+  let slot;
+  let teamId;
+  if (entry.crestTeam === 'dynamic') {
+    const isVisitante = data.equipo === 'visitante';
+    slot = isVisitante ? 'away' : 'local';
+    teamId = isVisitante ? draft.scoreboard?.teamB : draft.scoreboard?.teamA;
+  } else if (entry.crestTeam === 'B') {
+    slot = 'away';
+    teamId = draft.scoreboard?.teamB;
+  } else {
+    slot = 'local';
+    teamId = draft.scoreboard?.teamA;
+  }
+  if (!teamId) return null;
+
+  if (typeof data.crestByTeam !== 'object' || data.crestByTeam === null) data.crestByTeam = {};
+  if (typeof data.crestByTeam[slot] !== 'object' || data.crestByTeam[slot] === null) data.crestByTeam[slot] = {};
+  if (typeof data.crestByTeam[slot][teamId] !== 'object' || data.crestByTeam[slot][teamId] === null) {
+    // Primera vez que se toca este equipo en este slot: arranca desde el
+    // valor GENÉRICO actual del slot (fallback), nunca desde 0/0/1 --
+    // "preservar los defaults/layouts actuales como fallback" (pedido
+    // explicito). A partir de aca es un objeto independiente: modificarlo
+    // no vuelve a tocar la version generica de "data".
+    data.crestByTeam[slot][teamId] = {
+      [entry.xKey]: data[entry.xKey] ?? 0,
+      [entry.yKey]: data[entry.yKey] ?? 0,
+      [entry.scaleKey]: data[entry.scaleKey] ?? 1,
+    };
+  }
+
+  return {
+    data: data.crestByTeam[slot][teamId],
+    dataPath: ['crestByTeam', slot, teamId],
+    label: teamName(teamId) || teamId,
+  };
 }
 
 function renderPanel() {
@@ -720,11 +814,7 @@ function renderPanel() {
       transitioning: formationTransitioning,
       pendingSide: formationPendingSide,
       onSelectSide: handleFormationSideChange,
-      saveOptions: {
-        onSave: () => flushModuleNow(activeId),
-        isPendingSave: () => isPendingSave(activeId),
-        isConnected: isWsConnected,
-      },
+      saveOptions: buildSaveOptions(activeId),
     });
   } else if (activeId === 'shortSimple') {
     renderTextCorrection(extraContainer, {
@@ -906,11 +996,7 @@ function renderPanel() {
       hasSub: false,
       onDirty: () => scheduleAutoSave('placaLInfo'),
     });
-    panelCleanup = renderPlacaLInfoPanel(placaEditorHost, draft[activeId], () => scheduleAutoSave(idForThisRender), {
-      onSave: () => flushModuleNow(activeId),
-      isPendingSave: () => isPendingSave(activeId),
-      isConnected: isWsConnected,
-    });
+    panelCleanup = renderPlacaLInfoPanel(placaEditorHost, draft[activeId], () => scheduleAutoSave(idForThisRender), buildSaveOptions(activeId));
   } else if (activeId === 'marcadorPenales') {
     renderPenalesPanel(extraContainer, draft[activeId], () => scheduleAutoSave(idForThisRender));
   } else if (activeId === 'grupos') {

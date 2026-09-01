@@ -11,6 +11,21 @@
   font-display: block;
 }
 
+/* Fuente propia de Argentina Streamers (2026-09-01, pedido explicito del
+   usuario: familia interna clara, servida desde assets del proyecto, sin
+   depender de que Windows tenga Segoe instalada). Mismo criterio que "GLA
+   Anton" arriba: un unico archivo real (Bold) declarado una sola vez, sin
+   compartir nada con GLA -- program/js/program-fonts.js resuelve, segun
+   el theme activo, cual de las dos familias usar en cada medicion/pintado
+   de texto (ver getProgramFontFamily). */
+@font-face {
+  font-family: 'LIVE Segoe Bold';
+  src: url('/assets/themes/argentina-streamers/fonts/Segoe-UI-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+
 :root {
   --gold: #E3B23C;
   --gold-bright: #FFD873;
@@ -50,6 +65,17 @@
      evidencia de que necesite variar por modulo. */
   --dur-content-delay: 1s;
   --dur-content: 0.2s;
+}
+
+/* Argentina Streamers usa su propia fuente (LIVE Segoe Bold) en TODO su
+   texto de Program -- mismo mecanismo de cascada por CSS var que ya
+   resuelve el resto de las reglas de overlay.css (todas usan
+   "font-family: var(--font-display)", ninguna tiene la familia
+   hardcodeada), asi que esta unica regla alcanza sin tocar overlay.css.
+   GLA sigue leyendo el valor de ":root" (GLA Anton) sin cambios. */
+body[data-theme='argentinaStreamers'] {
+  --font-display: 'LIVE Segoe Bold';
+  --font-body: 'LIVE Segoe Bold';
 }
 
 * {

@@ -9,9 +9,7 @@
 // renderer nuevo — no reemplaza la ya existente en tarjeta.js/cambios.js
 // (que sigue funcionando igual, sin tocar).
 
-import { PROGRAM_FONT_FAMILY } from './program-fonts.js';
-
-const FONT_FAMILY = PROGRAM_FONT_FAMILY;
+import { getProgramFontFamily } from './program-fonts.js';
 
 // "TODO texto en Program debe ir en MAYÚSCULA" (2026-08-16, pedido
 // explicito del usuario): transformacion en la CAPA DE RENDER unicamente
@@ -36,7 +34,7 @@ function getCtx() {
 
 function setFont(fontPx, weight, letterSpacing) {
   const ctx = getCtx();
-  ctx.font = `${weight} ${fontPx}px ${FONT_FAMILY}`;
+  ctx.font = `${weight} ${fontPx}px ${getProgramFontFamily()}`;
   ctx.letterSpacing = `${letterSpacing || 0}px`;
   return ctx;
 }
@@ -49,7 +47,7 @@ export function measureTextWidth(text, fontPx, { weight = 700, letterSpacing = 0
 // maxFont/minFont/maxWidth en px; weight/letterSpacing deben coincidir con
 // el CSS real del elemento o la medicion queda mal.
 export async function fitFontSize(text, { maxFont, minFont, maxWidth, weight = 700, letterSpacing = 0 }) {
-  await document.fonts.load(`${weight} ${maxFont}px ${FONT_FAMILY}`);
+  await document.fonts.load(`${weight} ${maxFont}px ${getProgramFontFamily()}`);
   const widthAtMax = measureTextWidth(text, maxFont, { weight, letterSpacing });
   if (widthAtMax <= maxWidth) return maxFont;
   let size = Math.floor(maxFont * (maxWidth / widthAtMax));
@@ -228,7 +226,7 @@ export function applyElementAdjust(el, adjust = {}) {
 export async function fitLinesFontSize(lines, {
   maxFont, minFont, maxWidth, maxHeight, weight = 600, letterSpacing = 0, lineGapRatio = 0.25,
 }) {
-  await document.fonts.load(`${weight} ${maxFont}px ${FONT_FAMILY}`);
+  await document.fonts.load(`${weight} ${maxFont}px ${getProgramFontFamily()}`);
 
   function widestAt(fontPx) {
     let widest = 0;

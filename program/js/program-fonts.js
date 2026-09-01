@@ -1,16 +1,51 @@
-export const PROGRAM_FONT_FAMILY = '"GLA Anton"';
+import { getActiveThemeId } from './theme-client.js';
 
 const FONT_PROBE = 'GLA AaBb 0123456789 ÁÉÍÓÚÑ';
-const REQUIRED_WEIGHTS = [400, 600, 700, 800, 900];
 
+// Una entrada por theme: "family" es el nombre interno que declara el
+// @font-face correspondiente en program/css/theme.css (nunca depende de
+// que esa fuente este instalada en el sistema operativo). "weights" son
+// los pesos que el resto del codigo pide via ctx.font/document.fonts.load
+// -- igual que ya pasaba con GLA Anton (un unico archivo real, pedido a
+// varios pesos), el navegador resuelve todos ellos a la unica cara
+// declarada sin sintetizar un trazo mas grueso.
+const THEME_FONTS = {
+  gla: { family: '"GLA Anton"', weights: [400, 600, 700, 800, 900] },
+  argentinaStreamers: { family: '"LIVE Segoe Bold"', weights: [400, 600, 700, 800, 900] },
+};
+
+const DEFAULT_FONT = THEME_FONTS.gla;
+
+// Reemplaza al viejo export estatico "PROGRAM_FONT_FAMILY" (2026-09-01,
+// integracion de fuente propia para Argentina Streamers): Program puede
+// cambiar de theme en caliente (WS THEME_UPDATE/STATE_SNAPSHOT, sin
+// recargar la pagina -- ver program/js/main.js), asi que la familia de
+// fuente para medir/pintar texto tiene que leerse en el momento de cada
+// uso, no fijarse una sola vez al cargar el modulo.
+export function getProgramFontFamily() {
+  const themeId = getActiveThemeId();
+  return (THEME_FONTS[themeId] || DEFAULT_FONT).family;
+}
+
+// Precarga TODAS las fuentes de TODOS los themes (no solo la del theme
+// activo): esta funcion corre en program/js/main.js antes de que el WS
+// entregue el theme activo real (ver comentario ahi), y ademas el theme
+// puede cambiar despues sin recargar -- precargar todo de entrada es la
+// unica forma de garantizar que un cambio de theme en caliente nunca
+// muestre un flash con fuente de reemplazo.
 export async function waitForProgramFonts() {
-  const loadedFaces = await Promise.all(REQUIRED_WEIGHTS.map((weight) =>
-    document.fonts.load(`${weight} 32px ${PROGRAM_FONT_FAMILY}`, FONT_PROBE)
-  ));
+  const specs = Object.entries(THEME_FONTS).flatMap(([themeId, { family, weights }]) =>
+    weights.map((weight) => ({ themeId, family, weight }))
+  );
+  const loadedFaces = await Promise.all(
+    specs.map(({ family, weight }) => document.fonts.load(`${weight} 32px ${family}`, FONT_PROBE))
+  );
   await document.fonts.ready;
 
-  if (loadedFaces.some((faces) => faces.length === 0 || faces.some((face) => face.status !== 'loaded'))) {
-    throw new Error('No se pudo cargar /assets/fonts/Anton-Regular.ttf para PROGRAM.');
+  const failed = specs.filter((_, i) => loadedFaces[i].length === 0 || loadedFaces[i].some((face) => face.status !== 'loaded'));
+  if (failed.length > 0) {
+    const names = [...new Set(failed.map((f) => `${f.family} (theme ${f.themeId})`))].join(', ');
+    throw new Error(`No se pudieron cargar las fuentes locales de PROGRAM: ${names}.`);
   }
 
   document.documentElement.classList.add('program-fonts-ready');

@@ -7,7 +7,7 @@ import { WebSocketServer } from 'ws';
 import { MODULE_IDS } from '../shared/modules.js';
 import { WS_MSG, WS_PATH } from '../shared/constants.js';
 import { formatPlayerName, PLAYER_NAME_FORMAT } from '../shared/player-name-format.js';
-import { getSnapshot, getModuleState, applyTake, applyOut, applyUpdate } from './state.js';
+import { getSnapshot, getModuleState, applyTake, applyOut, applyUpdate, applyPositionCommit } from './state.js';
 import { getTeamCatalog, updateTeamAbbreviation, resetTeamAbbreviation } from './teams.js';
 import { getSponsorsCatalog } from './sponsors.js';
 import {
@@ -308,7 +308,7 @@ wss.on('connection', (socket) => {
   socket.send(JSON.stringify({ type: WS_MSG.STATE_SNAPSHOT, state: getSnapshot(), theme: getActiveThemeId() }));
   socket.send(JSON.stringify({ type: 'TEAM_CATALOG_UPDATE', catalog: getTeamCatalog(getActiveThemeId()) }));
 
-  socket.on('message', (raw) => {
+  socket.on('message', async (raw) => {
     let msg;
     try {
       msg = JSON.parse(raw.toString());
@@ -342,6 +342,26 @@ wss.on('connection', (socket) => {
         broadcast({ type: 'TEAM_CATALOG_UPDATE', catalog: getTeamCatalog(themeId) });
       } catch (err) {
         console.error('[GLA] Error cambiando theme:', err.message);
+      }
+      return;
+    }
+
+    // GUARDAR POSICIÓN (2026-09-01, layout base versionado): resuelto
+    // ANTES del chequeo generico de abajo porque necesita "await" (escribe
+    // a disco, ver server/theme-layouts.js) -- las demas ramas
+    // (TAKE/OUT/UPDATE) son sincronicas y no lo necesitan, se dejan tal
+    // cual estaban.
+    if (msg.type === WS_MSG.COMMIT_POSITION) {
+      const { moduleId, elementSpec } = msg;
+      if (!MODULE_IDS.includes(moduleId) || !elementSpec) return;
+      try {
+        const moduleState = await applyPositionCommit(moduleId, elementSpec);
+        broadcast({
+          type: WS_MSG.MODULE_UPDATE, moduleId, moduleState,
+          isAutoSave: false, isExplicitUpdate: true, isPositionCommit: true, elementSpec,
+        });
+      } catch (err) {
+        console.error('[GLA] Error confirmando posición:', err.message);
       }
       return;
     }

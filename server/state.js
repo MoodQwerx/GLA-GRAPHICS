@@ -3,6 +3,8 @@ import { MODULE_STATUS } from '../shared/constants.js';
 import { DEFAULT_THEME_ID, listThemes } from '../shared/themes.js';
 import { loadPersistentValue, schedulePersistentWrite } from './persistence.js';
 import { getActiveThemeId } from './theme.js';
+import { loadAllThemeLayouts, commitElementBase } from './theme-layouts.js';
+import { getAtPath } from '../shared/adjust-path.js';
 
 // Estado autoritativo. El "status" (ON/OFF) SIEMPRE arranca en OUT al
 // iniciar el server — el Program siempre arranca vacio, eso no cambia, y
@@ -25,6 +27,12 @@ const persisted = await loadPersistentValue(
   {},
 );
 
+// LAYOUT BASE VERSIONADO (2026-09-01): cargado UNA vez al arrancar, antes
+// de construir "state" -- es la fuente de verdad de posicion/escala que
+// viaja con Git (ver server/theme-layouts.js). "cloneDefaults" lo aplica
+// como una capa encima de los defaults estructurales de siempre.
+const themeLayouts = await loadAllThemeLayouts();
+
 const THEME_IDS = listThemes().map((t) => t.id);
 
 function isThemedFormat(value) {
@@ -35,7 +43,7 @@ const state = {};
 
 for (const id of MODULE_IDS) {
   const byTheme = {};
-  for (const themeId of THEME_IDS) byTheme[themeId] = cloneDefaults(id, themeId);
+  for (const themeId of THEME_IDS) byTheme[themeId] = cloneDefaults(id, themeId, themeLayouts[themeId]?.[id]);
 
   const savedForModule = persisted[id];
   if (isThemedFormat(savedForModule)) {
@@ -75,7 +83,7 @@ function assertModule(moduleId) {
 // se crea perezosamente acá, nunca pisa un theme que ya tenía datos.
 function ensureThemeData(moduleId, themeId) {
   if (!state[moduleId].byTheme[themeId]) {
-    state[moduleId].byTheme[themeId] = cloneDefaults(moduleId, themeId);
+    state[moduleId].byTheme[themeId] = cloneDefaults(moduleId, themeId, themeLayouts[themeId]?.[moduleId]);
   }
   return state[moduleId].byTheme[themeId];
 }
@@ -123,4 +131,31 @@ export function applyOut(moduleId) {
   assertModule(moduleId);
   state[moduleId].status = MODULE_STATUS.OUT;
   return effectiveModuleState(moduleId, getActiveThemeId());
+}
+
+// GUARDAR POSICIÓN (2026-09-01, layout base versionado -- pedido explicito
+// del usuario). Consolida el valor ABSOLUTO actual de un elemento (el
+// mismo numero que ya usa Program para dibujarlo) dentro del archivo
+// versionado del theme activo -- ver server/theme-layouts.js. A proposito
+// NO muta "themeData": el valor que Program lee no cambia ni un pixel (el
+// operador ve el ajuste "volver a 0" solo en el panel de Master Control,
+// contra la nueva base recien guardada -- ver save-position-control.js).
+// Guardar dos veces seguidas sin mover nada es un no-op idempotente.
+export async function applyPositionCommit(moduleId, elementSpec) {
+  assertModule(moduleId);
+  const themeId = getActiveThemeId();
+  const themeData = ensureThemeData(moduleId, themeId);
+  const dataPath = elementSpec.dataPath || [];
+  let liveValue;
+  if (elementSpec.kind === 'composition') {
+    liveValue = {
+      [elementSpec.xKey]: getAtPath(themeData, [...dataPath, elementSpec.xKey]) ?? 0,
+      [elementSpec.yKey]: getAtPath(themeData, [...dataPath, elementSpec.yKey]) ?? 0,
+      [elementSpec.scaleKey]: getAtPath(themeData, [...dataPath, elementSpec.scaleKey]) ?? 1,
+    };
+  } else {
+    liveValue = getAtPath(themeData, dataPath) || { dx: 0, dy: 0, dSize: 0 };
+  }
+  await commitElementBase(themeId, moduleId, elementSpec, liveValue);
+  return effectiveModuleState(moduleId, themeId);
 }

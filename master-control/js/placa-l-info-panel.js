@@ -489,6 +489,11 @@ export function renderPlacaLInfoPanel(container, data, onDirty, saveOptions = {}
 
     // Control de Composición (X, Y, Escala con botones ← ↑ ↓ → − +)
     const compWrap = document.createElement('div');
+    // "elementSpec" (2026-09-01, layout base versionado): "dataPath:[key]"
+    // porque "zData" (el objeto que se le pasa a renderCompositionControl
+    // mas abajo) es "data[key]" (ej. "data.zocalo1"), no el modulo entero
+    // -- el commit tiene que apuntar a esa misma ruta anidada dentro de
+    // shared/theme-layouts/<themeId>.json.
     const compOptions = {
       title: `POSICIÓN Y ESCALA — ZÓCALO ${i}`,
       note: 'Mueve y escala el asset gráfico y el texto de este zócalo juntos. También podés arrastrarlo directo en el preview de arriba.',
@@ -499,6 +504,7 @@ export function renderPlacaLInfoPanel(container, data, onDirty, saveOptions = {}
       onSave: saveOptions.onSave,
       isPendingSave: saveOptions.isPendingSave,
       isConnected: saveOptions.isConnected,
+      elementSpec: { kind: 'composition', dataPath: [key], xKey: 'offsetX', yKey: 'offsetY', scaleKey: 'scale' },
     };
     const compOnDirty = () => {
       applyPreviewTransform(key);
@@ -522,6 +528,10 @@ export function renderPlacaLInfoPanel(container, data, onDirty, saveOptions = {}
       onSave: saveOptions.onSave,
       isPendingSave: saveOptions.isPendingSave,
       isConnected: saveOptions.isConnected,
+      // "zData.textAdjust" es UN triple {dx,dy,dSize} directo (no un
+      // diccionario por key, a diferencia de mountAdjustControl) -- el
+      // dataPath apunta directo a ese objeto anidado.
+      elementSpec: { kind: 'text', dataPath: [key, 'textAdjust'] },
     });
     card.appendChild(adjustWrap);
 

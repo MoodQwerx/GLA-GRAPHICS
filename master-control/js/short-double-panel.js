@@ -46,7 +46,10 @@ export function renderShortDoublePanel(container, data, onDirty, air, saveOption
     input.addEventListener('input', () => onInput(input.value));
     wrap.appendChild(input);
     if (adjustKey) {
-      renderTextAdjustControl(wrap, ensureTextAdjust(data, adjustKey), onDirty, saveOptions);
+      renderTextAdjustControl(wrap, ensureTextAdjust(data, adjustKey), onDirty, {
+        ...saveOptions,
+        elementSpec: { kind: 'text', dataPath: ['textAdjust', adjustKey] },
+      });
     }
     return wrap;
   }

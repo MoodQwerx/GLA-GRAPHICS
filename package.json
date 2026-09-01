@@ -7,7 +7,9 @@
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
-    "test:persistence": "node scripts/test-persistence.mjs"
+    "test:persistence": "node scripts/test-persistence.mjs",
+    "migrate:theme-layouts": "node scripts/migrate-theme-layouts.mjs",
+    "migrate:theme-layouts:apply": "node scripts/migrate-theme-layouts.mjs --apply"
   },
   "engines": {
     "node": ">=18"

@@ -1,5 +1,5 @@
 import { mountThemedAlphaVideo } from '../theme-assets.js';
-import { PROGRAM_FONT_FAMILY } from '../program-fonts.js';
+import { getProgramFontFamily } from '../program-fonts.js';
 import { crestFile, teamAbbr } from '../../../shared/teams.js';
 import { sponsorFile } from '../../../shared/sponsors.js';
 import { PENALTY_KICK_STATUS } from '../../../shared/constants.js';
@@ -13,11 +13,9 @@ const TITLE_BOX_WIDTH = 356; // ancho real de .ov-pen-title
 const TITLE_SAFETY_MARGIN = 6; // colchon para que nunca quede pegado al borde del zocalo
 const TITLE_MAX_WIDTH = TITLE_BOX_WIDTH - TITLE_SAFETY_MARGIN;
 
-const FONT_FAMILY = PROGRAM_FONT_FAMILY;
-
 let measureCtx = null;
 function measureWidth(text, fontSize) {
-  measureCtx.font = `800 ${fontSize}px ${FONT_FAMILY}`;
+  measureCtx.font = `800 ${fontSize}px ${getProgramFontFamily()}`;
   // El CSS de .ov-pen-title tiene letter-spacing:0.5px — measureText no lo
   // aplica solo, hay que igualarlo en el contexto o el ancho medido queda
   // sistematicamente mas angosto que el texto realmente renderizado (con
@@ -38,7 +36,7 @@ function measureWidth(text, fontSize) {
 // aunque el texto renderizado despues si use Anton (mas ancha).
 async function fitTitleFontSize(text) {
   if (!measureCtx) measureCtx = document.createElement('canvas').getContext('2d');
-  await document.fonts.load(`800 ${TITLE_MAX_FONT}px ${FONT_FAMILY}`);
+  await document.fonts.load(`800 ${TITLE_MAX_FONT}px ${getProgramFontFamily()}`);
   const widthAtMax = measureWidth(text, TITLE_MAX_FONT);
   if (widthAtMax <= TITLE_MAX_WIDTH) return TITLE_MAX_FONT;
   let size = Math.floor(TITLE_MAX_FONT * (TITLE_MAX_WIDTH / widthAtMax));

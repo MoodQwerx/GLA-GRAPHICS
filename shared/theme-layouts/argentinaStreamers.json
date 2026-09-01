@@ -1,0 +1,914 @@
+{
+  "scoreboard": {
+    "compositionOffsetX": -8,
+    "compositionOffsetY": -18,
+    "compositionScale": 1,
+    "textAdjust": {
+      "scoreA": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "scoreB": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "period": {
+        "dx": 88,
+        "dy": 4,
+        "dSize": 0
+      },
+      "nameA": {
+        "dx": -4,
+        "dy": 4,
+        "dSize": 0
+      },
+      "nameB": {
+        "dx": 16,
+        "dy": 4,
+        "dSize": 0
+      },
+      "clock": {
+        "dx": -20,
+        "dy": 4,
+        "dSize": 0
+      }
+    },
+    "localCrestOffsetX": -8,
+    "localCrestOffsetY": 4,
+    "localCrestScale": 1.03,
+    "awayCrestOffsetX": 16,
+    "awayCrestOffsetY": 4,
+    "awayCrestScale": 1.07,
+    "separatorOffsetX": 0,
+    "separatorOffsetY": -2,
+    "separatorScale": 1,
+    "sponsorOffsetX": 0,
+    "sponsorOffsetY": 8,
+    "sponsorScale": 1
+  },
+  "marcadorTiempoAdicional": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "textAdjust": {
+      "addedMinutes": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "clock": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    }
+  },
+  "marcadorEntretiempo": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "textAdjust": {
+      "nameA": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "nameB": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "scoreA": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "scoreB": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    },
+    "localCrestOffsetX": 0,
+    "localCrestOffsetY": 0,
+    "localCrestScale": 1,
+    "awayCrestOffsetX": 0,
+    "awayCrestOffsetY": 0,
+    "awayCrestScale": 1
+  },
+  "marcadorPenales": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "textAdjust": {
+      "titulo": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "nameA": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "nameB": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "scoreA": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "scoreB": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    },
+    "localCrestOffsetX": 0,
+    "localCrestOffsetY": 0,
+    "localCrestScale": 1,
+    "awayCrestOffsetX": 0,
+    "awayCrestOffsetY": 0,
+    "awayCrestScale": 1,
+    "kicksLocalOffsetX": 0,
+    "kicksLocalOffsetY": 0,
+    "kicksLocalScale": 1,
+    "kicksVisitanteOffsetX": 0,
+    "kicksVisitanteOffsetY": 0,
+    "kicksVisitanteScale": 1,
+    "separatorOffsetX": 0,
+    "separatorOffsetY": 0,
+    "separatorScale": 1,
+    "sponsorOffsetX": 0,
+    "sponsorOffsetY": 0,
+    "sponsorScale": 1
+  },
+  "marcadorZocalo": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "textAdjust": {
+      "titulo": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "clock": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    }
+  },
+  "formacionEquipos": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "textAdjust": {
+      "playerName": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "playerNumber": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "subsTitle": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "subsList": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    },
+    "crestOffsetX": 0,
+    "crestOffsetY": 0,
+    "crestScale": 1
+  },
+  "vsPrepartido": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "textAdjust": {
+      "titulo": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "nameA": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "nameB": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    },
+    "localCrestOffsetX": 0,
+    "localCrestOffsetY": 0,
+    "localCrestScale": 1,
+    "awayCrestOffsetX": 0,
+    "awayCrestOffsetY": 0,
+    "awayCrestScale": 1
+  },
+  "vsResultado": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "textAdjust": {
+      "titulo": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "nameA": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "nameB": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "scoreA": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "scoreB": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    },
+    "localCrestOffsetX": 0,
+    "localCrestOffsetY": 0,
+    "localCrestScale": 1,
+    "awayCrestOffsetX": 0,
+    "awayCrestOffsetY": 0,
+    "awayCrestScale": 1
+  },
+  "tarjeta": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": -2,
+    "compositionScale": 1,
+    "textAdjust": {
+      "jugador": {
+        "dx": 0,
+        "dy": -26,
+        "dSize": 0
+      }
+    },
+    "crestOffsetX": -6,
+    "crestOffsetY": -6,
+    "crestScale": 1.21
+  },
+  "cambios": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "textAdjust": {
+      "entra": {
+        "dx": 42,
+        "dy": -20,
+        "dSize": 0
+      },
+      "sale": {
+        "dx": 42,
+        "dy": -6,
+        "dSize": 0
+      }
+    },
+    "crestOffsetX": 22,
+    "crestOffsetY": -8,
+    "crestScale": 1.66
+  },
+  "gol": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1
+  },
+  "varCheck": {
+    "compositionOffsetX": 8,
+    "compositionOffsetY": 210,
+    "compositionScale": 1,
+    "motivoOffsetX": 0,
+    "motivoOffsetY": -238,
+    "motivoScale": 1,
+    "textAdjust": {
+      "motivo": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    },
+    "sponsorOffsetX": 0,
+    "sponsorOffsetY": 0,
+    "sponsorScale": 1,
+    "varGroupOffsetX": 0,
+    "varGroupOffsetY": 0,
+    "varGroupScale": 1
+  },
+  "replay": {
+    "compositionOffsetX": 6,
+    "compositionOffsetY": 210,
+    "compositionScale": 1,
+    "sponsorOffsetX": 0,
+    "sponsorOffsetY": 0,
+    "sponsorScale": 1
+  },
+  "bug": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "textAdjust": {
+      "clock": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    }
+  },
+  "longDouble": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "textAdjust": {
+      "line1": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "line2": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    }
+  },
+  "shortSimple": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": -36,
+    "compositionScale": 1,
+    "textAdjust": {
+      "text": {
+        "dx": 0,
+        "dy": 30,
+        "dSize": 0
+      }
+    }
+  },
+  "shortDouble": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "textAdjust": {
+      "name": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "role": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "double1.name": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "double1.role": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "double2.name": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "double2.role": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    }
+  },
+  "vs": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "textAdjust": {
+      "statusTexto": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "nameA": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "nameB": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "goalA": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "goalB": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "scorersLocal": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "scorersVisitante": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    },
+    "localCrestOffsetX": 0,
+    "localCrestOffsetY": 0,
+    "localCrestScale": 1,
+    "awayCrestOffsetX": 0,
+    "awayCrestOffsetY": 0,
+    "awayCrestScale": 1,
+    "sponsorOffsetX": 0,
+    "sponsorOffsetY": 0,
+    "sponsorScale": 1
+  },
+  "zocaloFinalDiv": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "textAdjust": {
+      "texto1": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "texto2": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    }
+  },
+  "zocaloFinal": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "textAdjust": {
+      "texto1": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "texto2": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    }
+  },
+  "zocaloCompuesto": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "textAdjust": {
+      "texto1": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "texto2": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    },
+    "localCrestOffsetX": 0,
+    "localCrestOffsetY": 0,
+    "localCrestScale": 1,
+    "awayCrestOffsetX": 0,
+    "awayCrestOffsetY": 0,
+    "awayCrestScale": 1,
+    "logoOffsetX": 0,
+    "logoOffsetY": 0,
+    "logoScale": 1,
+    "sponsor1OffsetX": 0,
+    "sponsor1OffsetY": 0,
+    "sponsor1Scale": 1,
+    "sponsor2OffsetX": 0,
+    "sponsor2OffsetY": 0,
+    "sponsor2Scale": 1
+  },
+  "placaLInfo": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "zocalo1": {
+      "offsetX": -1256,
+      "offsetY": 408,
+      "scale": 1,
+      "textAdjust": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    },
+    "zocalo2": {
+      "offsetX": -296,
+      "offsetY": 408,
+      "scale": 1,
+      "textAdjust": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    },
+    "zocalo3": {
+      "offsetX": -1256,
+      "offsetY": 948,
+      "scale": 1,
+      "textAdjust": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    },
+    "zocalo4": {
+      "offsetX": -296,
+      "offsetY": 948,
+      "scale": 1,
+      "textAdjust": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    }
+  },
+  "grupos": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "textAdjust": {
+      "nombre": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "puntos": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    },
+    "crestOffsetX": 0,
+    "crestOffsetY": 0,
+    "crestScale": 1
+  },
+  "sideTable": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "textAdjust": {
+      "titulo": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "golLocal": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "golVisitante": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "estado": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "estadoFullscreen": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "tituloBracket": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    },
+    "crestLocalOffsetX": 0,
+    "crestLocalOffsetY": 0,
+    "crestLocalScale": 1,
+    "crestVisitanteOffsetX": 0,
+    "crestVisitanteOffsetY": 0,
+    "crestVisitanteScale": 1
+  },
+  "estrellas": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "textAdjust": {
+      "titulo": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "localNombre": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "localG": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "localA": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "localPJ": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "visitanteNombre": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "visitanteG": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "visitanteA": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "visitantePJ": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    },
+    "localCrestOffsetX": 0,
+    "localCrestOffsetY": 0,
+    "localCrestScale": 1,
+    "visitanteCrestOffsetX": 0,
+    "visitanteCrestOffsetY": 0,
+    "visitanteCrestScale": 1
+  },
+  "posiciones": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "textAdjust": {
+      "titulo": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "numero": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "equipo": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "pts": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "pj": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "g": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "gxp": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "pxp": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "p": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "gf": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "gc": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "dg": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    },
+    "crestOffsetX": 0,
+    "crestOffsetY": 0,
+    "crestScale": 1
+  },
+  "posicionesTorneo": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "textAdjust": {
+      "titulo": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "numero": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "equipo": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "pts": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "pj": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "g": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "gxp": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "pxp": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "p": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "gf": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "gc": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "dg": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    },
+    "crestOffsetX": 0,
+    "crestOffsetY": 0,
+    "crestScale": 1
+  },
+  "goleadores": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "textAdjust": {
+      "position": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "name": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "primaryStat": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    },
+    "crestOffsetX": 0,
+    "crestOffsetY": 0,
+    "crestScale": 1
+  },
+  "asistidores": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "textAdjust": {
+      "position": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "name": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "primaryStat": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    },
+    "crestOffsetX": 0,
+    "crestOffsetY": 0,
+    "crestScale": 1
+  },
+  "jugadores": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "textAdjust": {
+      "name": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "stat0": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "stat1": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "stat2": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    },
+    "crestOffsetX": 0,
+    "crestOffsetY": 0,
+    "crestScale": 1
+  }
+}

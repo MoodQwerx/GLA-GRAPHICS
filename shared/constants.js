@@ -15,6 +15,12 @@ export const WS_MSG = {
   OUT: 'OUT',
   UPDATE: 'UPDATE',
   SET_THEME: 'SET_THEME',
+  // GUARDAR POSICIÓN (2026-09-01, layout base versionado, pedido explicito
+  // del usuario): consolida el valor absoluto actual de UN elemento
+  // (moduleId + elementSpec, ver server/theme-layouts.js) dentro del
+  // archivo versionado del theme activo. No toca el estado runtime -- ver
+  // applyPositionCommit en server/state.js.
+  COMMIT_POSITION: 'COMMIT_POSITION',
 };
 
 export const MODULE_STATUS = {

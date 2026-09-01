@@ -64,6 +64,15 @@ export function renderCompositionControl(container, data, onDirty, options = {})
     onSave,
     isPendingSave,
     isConnected,
+    // "elementSpec" (2026-09-01, layout base versionado -- pedido explicito
+    // del usuario): identifica ESTE elemento puntual para que GUARDAR
+    // POSICIÓN sepa donde consolidar el valor absoluto actual dentro de
+    // shared/theme-layouts/<themeId>.json (ver server/theme-layouts.js).
+    // Quien llama a este componente ya conoce "dataPath"/"xKey"/"yKey"/
+    // "scaleKey" (son los mismos "keys" de arriba) -- sin "elementSpec" no
+    // hay boton de GUARDAR POSICIÓN (mismo comportamiento que hoy si no se
+    // pasa "onSave").
+    elementSpec,
   } = options;
 
   const xKey = keys.xKey || 'compositionOffsetX';
@@ -72,6 +81,17 @@ export function renderCompositionControl(container, data, onDirty, options = {})
 
   ensureShape(data, xKey, yKey, scaleKey, defaultX, defaultY, defaultScale);
   container.innerHTML = '';
+
+  // "baseline" (2026-09-01, layout base versionado): referencia LOCAL de
+  // "posición ya confirmada" -- arranca en el default de diseño de
+  // siempre, y se actualiza al valor absoluto actual cada vez que se
+  // confirma un GUARDAR POSICIÓN (ver saveBtn mas abajo). El dato real
+  // ("data[xKey]" etc, lo que YA lee Program) NUNCA se toca aca -- el
+  // readout/RESET pasan a leer relativo a esta referencia, para que el
+  // operador vea "X:0 Y:0 Escala:1.00" despues de guardar sin que el
+  // elemento se mueva ni un pixel (decision confirmada explicitamente por
+  // el usuario: "solo visual en Master Control").
+  const baseline = { x: defaultX, y: defaultY, scale: defaultScale };
 
   const root = document.createElement('section');
   root.className = 'composition-adjust';
@@ -92,9 +112,11 @@ export function renderCompositionControl(container, data, onDirty, options = {})
   const readout = document.createElement('span');
   readout.className = 'text-adjust-readout';
   function refreshReadout() {
-    readout.textContent = `X:${data[xKey]} Y:${data[yKey]} Escala:${data[scaleKey].toFixed(2)}`;
-    const isZero = data[xKey] === defaultX && data[yKey] === defaultY && data[scaleKey] === defaultScale;
-    readout.classList.toggle('is-zero', isZero);
+    const relX = data[xKey] - baseline.x;
+    const relY = data[yKey] - baseline.y;
+    const relScale = Math.round((data[scaleKey] - baseline.scale) * 100) / 100;
+    readout.textContent = `X:${relX} Y:${relY} Escala:${relScale >= 0 ? '+' : ''}${relScale.toFixed(2)}`;
+    readout.classList.toggle('is-zero', relX === 0 && relY === 0 && relScale === 0);
   }
   refreshReadout();
 
@@ -127,11 +149,16 @@ export function renderCompositionControl(container, data, onDirty, options = {})
   resetBtn.type = 'button';
   resetBtn.className = 'text-adjust-reset';
   resetBtn.textContent = 'RESET';
-  resetBtn.title = 'Volver a los valores por defecto';
+  resetBtn.title = 'Volver a la última posición guardada (o al diseño original si nunca se guardó)';
   resetBtn.addEventListener('click', () => {
-    data[xKey] = defaultX;
-    data[yKey] = defaultY;
-    data[scaleKey] = defaultScale;
+    // "baseline" (no "defaultX/Y/Scale" directo): una vez que GUARDAR
+    // POSICIÓN consolido una base nueva, RESET tiene que volver A ESA base
+    // (la posicion aprobada actual), no al diseño original de antes de esa
+    // consolidacion -- si nunca se guardo nada, "baseline" sigue siendo el
+    // default de siempre, mismo comportamiento que antes.
+    data[xKey] = baseline.x;
+    data[yKey] = baseline.y;
+    data[scaleKey] = baseline.scale;
     refreshReadout();
     onDirty();
     saveControl?.markDirty();
@@ -146,7 +173,23 @@ export function renderCompositionControl(container, data, onDirty, options = {})
   // desborda ningún caller existente.
   const saveRow = document.createElement('div');
   saveRow.className = 'text-adjust-save-row';
-  saveControl = renderSavePositionControl(saveRow, { onSave, isPendingSave, isConnected });
+  // "elementSpec" identifica el elemento -- sin el (o sin "onSave") no hay
+  // boton, mismo criterio que antes. Al confirmar: dispara "onSave"
+  // (consolida el valor absoluto actual en shared/theme-layouts/, ver
+  // server/theme-layouts.js) y ACTUALIZA "baseline" al toque (optimista,
+  // sin esperar la vuelta del servidor -- mismo criterio que el resto de
+  // esta funcion, que ya no espera confirmacion para nada) para que el
+  // readout pase a mostrar 0/0/+0.00 sin mover el dato real ni un pixel.
+  const wrappedOnSave = (onSave && elementSpec)
+    ? () => {
+      onSave(elementSpec);
+      baseline.x = data[xKey];
+      baseline.y = data[yKey];
+      baseline.scale = data[scaleKey];
+      refreshReadout();
+    }
+    : undefined;
+  saveControl = renderSavePositionControl(saveRow, { onSave: wrappedOnSave, isPendingSave, isConnected });
   if (saveControl) root.appendChild(saveRow);
 
   container.appendChild(root);

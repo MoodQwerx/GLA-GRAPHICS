@@ -176,6 +176,33 @@ function applyComposition(target, data) {
 // dentro del propio renderer via readTextAdjust/applyPlainTextAdjust, el
 // registro solo las declara para que Master Control arme su seccion del
 // acordeon (ver master-control/js/main.js "renderModuleAdjustAccordion").
+// Resuelve, para un elemento "crestTeam" (ver shared/adjust-registry.js),
+// el override POR EQUIPO guardado en "data.crestByTeam" -- null si no hay
+// equipo resuelto o si ese equipo todavia no tiene una posicion propia
+// guardada (en cuyo caso el caller sigue usando el valor generico del
+// slot, exactamente como si "crestTeam" no existiera). El teamId sale
+// SIEMPRE del Marcador (latestData.scoreboard.teamA/teamB) -- mismo
+// criterio que ya usan estos renderers para el escudo en si (ver
+// "sb.teamA"/"sb.teamB" en program/js/renderers/*.js).
+function resolveCrestTeamOverride(entry, data) {
+  const sb = latestData.scoreboard;
+  if (!sb) return null;
+  let slot;
+  let teamId;
+  if (entry.crestTeam === 'dynamic') {
+    const isVisitante = data.equipo === 'visitante';
+    slot = isVisitante ? 'away' : 'local';
+    teamId = isVisitante ? sb.teamB : sb.teamA;
+  } else if (entry.crestTeam === 'B') {
+    slot = 'away';
+    teamId = sb.teamB;
+  } else {
+    slot = 'local';
+    teamId = sb.teamA;
+  }
+  return (teamId && data.crestByTeam?.[slot]?.[teamId]) || null;
+}
+
 function applyElementAdjustRegistry(id, target, data) {
   const entries = ADJUST_REGISTRY[id]?.elements;
   if (!entries || !entries.length) return;
@@ -190,10 +217,17 @@ function applyElementAdjustRegistry(id, target, data) {
     // pedido explicito del usuario para tablas).
     const els = target.content.querySelectorAll(`[data-adjust="${entry.id}"]`);
     if (!els.length) continue;
+    // "crestTeam" (2026-09-01, pedido explicito del usuario: posicion de
+    // escudo guardada POR equipo, no solo por slot). GLA nunca puebla
+    // "crestByTeam" en su propio arbol de datos, asi que esto siempre
+    // resuelve a null ahi y cae directo al valor generico de siempre --
+    // cero cambio de comportamiento para GLA.
+    const override = entry.crestTeam ? resolveCrestTeamOverride(entry, data) : null;
+    const source = override || data;
     const adjustValue = {
-      offsetX: data[entry.xKey],
-      offsetY: data[entry.yKey],
-      scale: data[entry.scaleKey],
+      offsetX: source[entry.xKey],
+      offsetY: source[entry.yKey],
+      scale: source[entry.scaleKey],
     };
     els.forEach((el) => applyElementAdjust(el, adjustValue));
   }

@@ -1,4 +1,4 @@
-import { mountThemedAlphaVideo } from '../theme-assets.js';
+import { mountThemedAlphaVideo, resolveImageSrc } from '../theme-assets.js';
 import { colorHex } from '../../../shared/team-colors.js';
 import { crestFile, teamAbbr } from '../../../shared/teams.js';
 import { applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
@@ -6,7 +6,15 @@ import { applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
 const VIDEO_SRC = '/assets/marcador/marcador-entretiempo-alpha.mp4';
 
 function buildStructure(el) {
+  // Argentina Streamers entrego este asset como imagen estatica (PNG), no
+  // como .mov -- "mountThemedAlphaVideo" solo resuelve "asset.video", asi
+  // que sin este fondo condicional el manifest quedaba sin efecto (el
+  // ".av-target" se mostraba vacio). Mismo patron ya usado por
+  // marcadorTiempoAdicional.js/".gfx-bg-image" (ver overlay.css) -- GLA
+  // sigue exactamente igual, su propio VIDEO_SRC via mountThemedAlphaVideo.
+  const imgSrc = resolveImageSrc('marcadorEntretiempo');
   el.innerHTML = `
+    ${imgSrc ? `<img class="gfx-bg-image" src="${imgSrc}" />` : ''}
     <div class="av-target"></div>
     <div class="gfx-overlay">
       <div class="ov-ent-team-a">

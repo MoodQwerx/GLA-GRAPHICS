@@ -104,7 +104,14 @@ export function renderResultadosPanel(container, data, onDirty, saveOptions) {
   }
   function refreshCompositionWidget() {
     const compositionContainer = document.getElementById('composition-container');
-    if (compositionContainer) renderCompositionControl(compositionContainer, data, onDirty);
+    if (compositionContainer) {
+      renderCompositionControl(compositionContainer, data, onDirty, {
+        onSave: saveOptions?.onSave,
+        isPendingSave: saveOptions?.isPendingSave,
+        isConnected: saveOptions?.isConnected,
+        elementSpec: { kind: 'composition', dataPath: [], xKey: 'compositionOffsetX', yKey: 'compositionOffsetY', scaleKey: 'compositionScale' },
+      });
+    }
   }
 
   async function syncFromWeb(fase) {

@@ -30,19 +30,41 @@
 // ya es universal para los 30 modulos via COMPOSITION_DEFAULTS
 // (shared/modules.js) y se agrega siempre, automaticamente, al
 // principio del acordeon -- ver renderModuleAdjustAccordion.
+//
+// "crestTeam" (2026-09-01, pedido explicito del usuario: "la posicion de
+// un escudo tiene que guardarse POR equipo, no solo por slot" -- los 4
+// equipos de Argentina Streamers tienen proporciones/pesos visuales muy
+// distintos). Marca, en una entrada "kind:'composition'" que es
+// especificamente un ESCUDO de equipo (nunca un logo/sponsor/guion), de
+// que lado sale el teamId que la identifica en runtime:
+//   'A'       -> siempre el equipo LOCAL del Marcador (scoreboard.teamA).
+//   'B'       -> siempre el equipo VISITANTE del Marcador (scoreboard.teamB).
+//   'dynamic' -> un unico slot que puede ser A o B segun otro campo del
+//                propio modulo (ej. tarjeta/cambios: data.equipo).
+// Master Control (renderModuleAdjustAccordion) y Program
+// (applyElementAdjustRegistry) son los DOS unicos lugares que leen este
+// campo -- ninguno de los renderers individuales necesita saber nada de
+// esto. Sin "crestTeam" (sponsors, logos, guiones, y los "crest" de
+// columna en tablas -- grupos/sideTable/posiciones/goleadores/etc., que
+// a proposito NO lo declaran) el elemento se comporta EXACTAMENTE igual
+// que siempre: una unica posicion/escala por slot, sin distincion de
+// equipo. Solo tiene efecto real cuando el theme activo es
+// argentinaStreamers -- GLA nunca puebla "crestByTeam" en su propio
+// arbol de datos, asi que esta logica cae siempre al camino de fallback
+// sin cambiar nada de su comportamiento.
 export const ADJUST_REGISTRY = {
   // MARCADOR (2026-08-31): migrado desde la funcion hecha a medida
   // "renderScoreboardAdjustAccordion" -- mismo orden, mismas labels,
   // mismo comportamiento, ahora descripto de forma declarativa.
   scoreboard: {
     elements: [
-      { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale' },
+      { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale', crestTeam: 'A' },
       { id: 'nameA', label: 'NOMBRE / ABREVIATURA LOCAL', kind: 'text', textKey: 'nameA' },
       { id: 'scoreA', label: 'GOL LOCAL', kind: 'text', textKey: 'scoreA' },
       { id: 'separator', label: 'GUIÓN', kind: 'composition', xKey: 'separatorOffsetX', yKey: 'separatorOffsetY', scaleKey: 'separatorScale' },
       { id: 'scoreB', label: 'GOL VISITANTE', kind: 'text', textKey: 'scoreB' },
       { id: 'nameB', label: 'NOMBRE / ABREVIATURA VISITANTE', kind: 'text', textKey: 'nameB' },
-      { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale' },
+      { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale', crestTeam: 'B' },
       { id: 'clock', label: 'CONTADOR / RELOJ', kind: 'text', textKey: 'clock' },
       { id: 'period', label: 'PERÍODO', kind: 'text', textKey: 'period' },
       { id: 'sponsor', label: 'SPONSOR', kind: 'composition', xKey: 'sponsorOffsetX', yKey: 'sponsorOffsetY', scaleKey: 'sponsorScale' },
@@ -51,14 +73,15 @@ export const ADJUST_REGISTRY = {
   // --- Tanda 1 ---
   tarjeta: {
     elements: [
-      { id: 'crest', label: 'ESCUDO', kind: 'composition', xKey: 'crestOffsetX', yKey: 'crestOffsetY', scaleKey: 'crestScale' },
+      { id: 'crest', label: 'ESCUDO', kind: 'composition', xKey: 'crestOffsetX', yKey: 'crestOffsetY', scaleKey: 'crestScale', crestTeam: 'dynamic' },
       { id: 'jugador', label: 'JUGADOR', kind: 'text', textKey: 'jugador' },
     ],
   },
   cambios: {
+    // "titulo" ELIMINADO (2026-09-01, pedido explicito del usuario) -- ver
+    // shared/modules.js y program/js/renderers/cambios.js.
     elements: [
-      { id: 'crest', label: 'ESCUDO', kind: 'composition', xKey: 'crestOffsetX', yKey: 'crestOffsetY', scaleKey: 'crestScale' },
-      { id: 'titulo', label: 'TÍTULO', kind: 'text', textKey: 'titulo' },
+      { id: 'crest', label: 'ESCUDO', kind: 'composition', xKey: 'crestOffsetX', yKey: 'crestOffsetY', scaleKey: 'crestScale', crestTeam: 'dynamic' },
       { id: 'entra', label: 'JUGADOR ENTRA', kind: 'text', textKey: 'entra' },
       { id: 'sale', label: 'JUGADOR SALE', kind: 'text', textKey: 'sale' },
     ],
@@ -116,12 +139,12 @@ export const ADJUST_REGISTRY = {
   },
   marcadorEntretiempo: {
     elements: [
-      { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale' },
+      { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale', crestTeam: 'A' },
       { id: 'nameA', label: 'ABREVIATURA LOCAL', kind: 'text', textKey: 'nameA' },
       { id: 'scoreA', label: 'GOL LOCAL', kind: 'text', textKey: 'scoreA' },
       { id: 'scoreB', label: 'GOL VISITANTE', kind: 'text', textKey: 'scoreB' },
       { id: 'nameB', label: 'ABREVIATURA VISITANTE', kind: 'text', textKey: 'nameB' },
-      { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale' },
+      { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale', crestTeam: 'B' },
     ],
   },
   // Orden pedido explicitamente por el usuario (2026-08-31, corrección
@@ -136,13 +159,13 @@ export const ADJUST_REGISTRY = {
   // universal, sin efecto visual donde el elemento esta oculto).
   marcadorPenales: {
     elements: [
-      { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale' },
+      { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale', crestTeam: 'A' },
       { id: 'kicksLocal', label: 'FILA DE PENALES LOCAL', kind: 'composition', xKey: 'kicksLocalOffsetX', yKey: 'kicksLocalOffsetY', scaleKey: 'kicksLocalScale' },
       { id: 'scoreA', label: 'RESULTADO LOCAL', kind: 'text', textKey: 'scoreA' },
       { id: 'separator', label: 'GUIÓN DEL RESULTADO', kind: 'composition', xKey: 'separatorOffsetX', yKey: 'separatorOffsetY', scaleKey: 'separatorScale' },
       { id: 'scoreB', label: 'RESULTADO VISITANTE', kind: 'text', textKey: 'scoreB' },
       { id: 'kicksVisitante', label: 'FILA DE PENALES VISITANTE', kind: 'composition', xKey: 'kicksVisitanteOffsetX', yKey: 'kicksVisitanteOffsetY', scaleKey: 'kicksVisitanteScale' },
-      { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale' },
+      { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale', crestTeam: 'B' },
       { id: 'titulo', label: 'TÍTULO "PENALES"', kind: 'text', textKey: 'titulo' },
       { id: 'sponsor', label: 'SPONSOR', kind: 'composition', xKey: 'sponsorOffsetX', yKey: 'sponsorOffsetY', scaleKey: 'sponsorScale' },
       { id: 'nameA', label: 'ABREVIATURA LOCAL (solo GLA)', kind: 'text', textKey: 'nameA' },
@@ -171,21 +194,21 @@ export const ADJUST_REGISTRY = {
   vsPrepartido: {
     elements: [
       { id: 'titulo', label: 'TÍTULO', kind: 'text', textKey: 'titulo' },
-      { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale' },
+      { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale', crestTeam: 'A' },
       { id: 'nameA', label: 'NOMBRE EQUIPO LOCAL', kind: 'text', textKey: 'nameA' },
       { id: 'nameB', label: 'NOMBRE EQUIPO VISITANTE', kind: 'text', textKey: 'nameB' },
-      { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale' },
+      { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale', crestTeam: 'B' },
     ],
   },
   vsResultado: {
     elements: [
       { id: 'titulo', label: 'TÍTULO', kind: 'text', textKey: 'titulo' },
-      { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale' },
+      { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale', crestTeam: 'A' },
       { id: 'nameA', label: 'NOMBRE EQUIPO LOCAL', kind: 'text', textKey: 'nameA' },
       { id: 'scoreA', label: 'GOL LOCAL', kind: 'text', textKey: 'scoreA' },
       { id: 'scoreB', label: 'GOL VISITANTE', kind: 'text', textKey: 'scoreB' },
       { id: 'nameB', label: 'NOMBRE EQUIPO VISITANTE', kind: 'text', textKey: 'nameB' },
-      { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale' },
+      { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale', crestTeam: 'B' },
     ],
   },
   // "estrellas": solo "crest" (composition) via el acordeon generico --
@@ -195,8 +218,8 @@ export const ADJUST_REGISTRY = {
   // tambien aca duplicaria el control.
   estrellas: {
     elements: [
-      { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale' },
-      { id: 'visitanteCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'visitanteCrestOffsetX', yKey: 'visitanteCrestOffsetY', scaleKey: 'visitanteCrestScale' },
+      { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale', crestTeam: 'A' },
+      { id: 'visitanteCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'visitanteCrestOffsetX', yKey: 'visitanteCrestOffsetY', scaleKey: 'visitanteCrestScale', crestTeam: 'B' },
     ],
   },
 
@@ -222,7 +245,7 @@ export const ADJUST_REGISTRY = {
   },
   vs: {
     elements: [
-      { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale' },
+      { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale', crestTeam: 'A' },
       { id: 'nameA', label: 'NOMBRE EQUIPO LOCAL', kind: 'text', textKey: 'nameA' },
       { id: 'goalA', label: 'GOL LOCAL', kind: 'text', textKey: 'goalA' },
       { id: 'scorersLocal', label: 'BLOQUE GOLEADORES LOCAL', kind: 'text', textKey: 'scorersLocal' },
@@ -230,14 +253,14 @@ export const ADJUST_REGISTRY = {
       { id: 'scorersVisitante', label: 'BLOQUE GOLEADORES VISITANTE', kind: 'text', textKey: 'scorersVisitante' },
       { id: 'goalB', label: 'GOL VISITANTE', kind: 'text', textKey: 'goalB' },
       { id: 'nameB', label: 'NOMBRE EQUIPO VISITANTE', kind: 'text', textKey: 'nameB' },
-      { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale' },
+      { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale', crestTeam: 'B' },
       { id: 'sponsor', label: 'SPONSOR', kind: 'composition', xKey: 'sponsorOffsetX', yKey: 'sponsorOffsetY', scaleKey: 'sponsorScale' },
     ],
   },
   zocaloCompuesto: {
     elements: [
-      { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale' },
-      { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale' },
+      { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale', crestTeam: 'A' },
+      { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale', crestTeam: 'B' },
       { id: 'logo', label: 'LOGO GLA', kind: 'composition', xKey: 'logoOffsetX', yKey: 'logoOffsetY', scaleKey: 'logoScale' },
       { id: 'texto1', label: 'TEXTO 1', kind: 'text', textKey: 'texto1' },
       { id: 'texto2', label: 'TEXTO 2', kind: 'text', textKey: 'texto2' },

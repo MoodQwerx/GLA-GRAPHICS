@@ -30,6 +30,7 @@ import { TEAM_OPTIONS } from './teams.js';
 import { SPONSOR_OPTIONS } from './sponsors.js';
 import { emptyClock } from './clock.js';
 import { ARGENTINA_STREAMERS_THEME_ID } from './themes.js';
+import { deepMergeAdjustFields } from './adjust-path.js';
 
 function penaltyKicksDefault(count) {
   return Array.from({ length: count }, () => ({ status: PENALTY_KICK_STATUS.PENDING }));
@@ -448,11 +449,15 @@ export const MODULES = {
       },
       { key: 'entra', label: 'Entra', type: FIELD_TYPES.TEXT, adjustable: true },
       { key: 'sale', label: 'Sale', type: FIELD_TYPES.TEXT, adjustable: true },
-      { key: 'titulo', label: 'Título', type: FIELD_TYPES.TEXT, adjustable: true },
     ],
+    // "titulo" ELIMINADO (2026-09-01, pedido explicito del usuario: "NO
+    // QUIERO TÍTULO... eliminar completamente de la lógica operativa y del
+    // panel"). Sin campo, sin default, sin textAdjust -- el modulo queda
+    // enfocado en equipo/escudo/entra/sale, ver program/js/renderers/
+    // cambios.js (ya no tiene ningun rastro de titulo tampoco).
     defaults: {
-      equipo: 'local', entra: '', sale: '', titulo: 'CAMBIO',
-      textAdjust: textAdjustDefaults('entra', 'sale', 'titulo'),
+      equipo: 'local', entra: '', sale: '',
+      textAdjust: textAdjustDefaults('entra', 'sale'),
       // "crestOffsetX/Y/Scale" (2026-08-31, pedido explicito del usuario):
       // mismo criterio que "tarjeta" -- el escudo nunca tuvo ajuste propio.
       crestOffsetX: 0, crestOffsetY: 0, crestScale: 1,
@@ -1140,7 +1145,21 @@ const COMPOSITION_DEFAULTS = {
   compositionScale: 1,
 };
 
-export function cloneDefaults(moduleId, themeId) {
+// "layoutOverride" (2026-09-01, LAYOUT BASE VERSIONADO -- pedido explicito
+// del usuario: "GUARDAR POSICIÓN" tiene que producir un cambio que viaje
+// con Git, no solo con el estado runtime gitignorado). Opcional a
+// proposito: server/state.js es el UNICO caller que lo pasa (carga
+// shared/theme-layouts/<themeId>.json al arrancar, ver ese archivo) --
+// cualquier otro caller (ej. el placeholder que arma master-control/js/
+// main.js antes de recibir el snapshot real del servidor) sigue sin
+// pasarlo y obtiene exactamente el comportamiento de siempre (0/0/1
+// estructural). Es un subconjunto disperso del mismo arbol de "defaults"
+// (solo las claves de offset/escala/textAdjust que alguna vez se
+// confirmaron con GUARDAR POSICIÓN) -- "deepMergeAdjustFields" lo aplica
+// ENCIMA de los defaults estructurales, nunca al reves, para que un modulo
+// nuevo o un campo nuevo sin base guardada todavia siga cayendo en su
+// default de diseño de siempre.
+export function cloneDefaults(moduleId, themeId, layoutOverride) {
   const cloned = {
     ...COMPOSITION_DEFAULTS,
     ...JSON.parse(JSON.stringify(MODULES[moduleId].defaults)),
@@ -1154,5 +1173,6 @@ export function cloneDefaults(moduleId, themeId) {
     cloned.kicksA = penaltyKicksDefault(5);
     cloned.kicksB = penaltyKicksDefault(5);
   }
+  if (layoutOverride) deepMergeAdjustFields(cloned, layoutOverride);
   return cloned;
 }

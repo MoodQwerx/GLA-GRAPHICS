@@ -79,11 +79,18 @@ function repeatButton(label, title, onFire) {
 // "onDirty" se llama en cada cambio (guardado/UPDATE); "onReset" es
 // opcional y, si se pasa, se llama ADEMAS de limpiar "adjust" (por si el
 // caller necesita re-pintar algo propio, ver short-double-panel.js).
-export function renderTextAdjustControl(container, adjust, onDirty, { label, onReset, onSave, isPendingSave, isConnected } = {}) {
+export function renderTextAdjustControl(container, adjust, onDirty, { label, onReset, onSave, isPendingSave, isConnected, elementSpec } = {}) {
   ensureShape(adjust);
 
   const root = document.createElement('div');
   root.className = 'text-adjust';
+
+  // "baseline" (2026-09-01, layout base versionado, mismo criterio que
+  // composition-control.js): referencia LOCAL de "ya confirmado" -- arranca
+  // en {0,0,0} (el default de diseño de siempre para un ajuste de texto) y
+  // se actualiza al valor absoluto actual cada GUARDAR POSICIÓN exitoso. El
+  // dato real ("adjust.dx/dy/dSize", lo que YA lee Program) nunca se toca.
+  const baseline = { dx: 0, dy: 0, dSize: 0 };
 
   if (label) {
     const labelEl = document.createElement('span');
@@ -100,8 +107,11 @@ export function renderTextAdjustControl(container, adjust, onDirty, { label, onR
   const readout = document.createElement('span');
   readout.className = 'text-adjust-readout';
   function refreshReadout() {
-    readout.textContent = `X:${adjust.dx} Y:${adjust.dy} T:${adjust.dSize >= 0 ? '+' : ''}${adjust.dSize}`;
-    readout.classList.toggle('is-zero', adjust.dx === 0 && adjust.dy === 0 && adjust.dSize === 0);
+    const relDx = adjust.dx - baseline.dx;
+    const relDy = adjust.dy - baseline.dy;
+    const relDSize = adjust.dSize - baseline.dSize;
+    readout.textContent = `X:${relDx} Y:${relDy} T:${relDSize >= 0 ? '+' : ''}${relDSize}`;
+    readout.classList.toggle('is-zero', relDx === 0 && relDy === 0 && relDSize === 0);
   }
   refreshReadout();
 
@@ -129,9 +139,12 @@ export function renderTextAdjustControl(container, adjust, onDirty, { label, onR
   resetBtn.textContent = 'RESET';
   resetBtn.title = 'Volver este texto a la posición/tamaño de diseño original';
   resetBtn.addEventListener('click', () => {
-    adjust.dx = 0;
-    adjust.dy = 0;
-    adjust.dSize = 0;
+    // "baseline" (no {0,0,0} directo): mismo criterio que
+    // composition-control.js -- una vez confirmada una base nueva, RESET
+    // vuelve A ESA base, no al diseño original de antes de confirmarla.
+    adjust.dx = baseline.dx;
+    adjust.dy = baseline.dy;
+    adjust.dSize = baseline.dSize;
     refreshReadout();
     onDirty();
     onReset?.();
@@ -147,7 +160,19 @@ export function renderTextAdjustControl(container, adjust, onDirty, { label, onR
   // desborda ningún caller existente.
   const saveRow = document.createElement('div');
   saveRow.className = 'text-adjust-save-row';
-  saveControl = renderSavePositionControl(saveRow, { onSave, isPendingSave, isConnected });
+  // "elementSpec" (2026-09-01, layout base versionado): igual criterio que
+  // composition-control.js -- consolida el valor absoluto actual y
+  // actualiza "baseline" al toque, sin esperar confirmacion del servidor.
+  const wrappedOnSave = (onSave && elementSpec)
+    ? () => {
+      onSave(elementSpec);
+      baseline.dx = adjust.dx;
+      baseline.dy = adjust.dy;
+      baseline.dSize = adjust.dSize;
+      refreshReadout();
+    }
+    : undefined;
+  saveControl = renderSavePositionControl(saveRow, { onSave: wrappedOnSave, isPendingSave, isConnected });
   if (saveControl) root.appendChild(saveRow);
 
   container.appendChild(root);

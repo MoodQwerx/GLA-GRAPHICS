@@ -13,7 +13,16 @@ export function mountAdjustControl(wrap, data, key, onDirty, options) {
   if (!data.textAdjust[key] || typeof data.textAdjust[key] !== 'object') {
     data.textAdjust[key] = { dx: 0, dy: 0, dSize: 0 };
   }
-  renderTextAdjustControl(wrap, data.textAdjust[key], onDirty, options);
+  // "elementSpec" (2026-09-01, layout base versionado): "key" ya identifica
+  // sin ambiguedad donde vive este ajuste dentro de "textAdjust" (incluidas
+  // las rutas planas tipo "double1.name") -- se arma UNA sola vez aca, el
+  // unico lugar por el que pasa CUALQUIER campo de texto ajustable de todo
+  // el sistema, asi ningun caller (field-editors genericos, paneles
+  // dedicados) tiene que saber nada de esto.
+  renderTextAdjustControl(wrap, data.textAdjust[key], onDirty, {
+    ...options,
+    elementSpec: { kind: 'text', dataPath: ['textAdjust', key] },
+  });
 }
 
 // Genera el panel de edicion completo a partir del schema de un modulo.

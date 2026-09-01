@@ -175,14 +175,16 @@ export const THEMES = {
     teams: [
       { id: 'argentina-streamers', name: 'Argentina Streamers', abbr: 'ARG', file: '/assets/themes/argentina-streamers/escudos/argentina-streamers.png' },
       { id: 'peru-creadores', name: 'Perú Creadores', abbr: 'PER', file: '/assets/themes/argentina-streamers/escudos/peru-creadores.png' },
-      // "argentina-streamers-fem" y "oxen": 2 escudos mas entregados el
-      // mismo dia (ARG_FEM.png, OXEN.png) pero TODAVIA NO agregados como
-      // equipo seleccionable -- nombre completo y abreviatura no son
-      // evidentes del archivo/escudo (ver CHANGELOG.md y el mensaje de
-      // cierre de esta tarea para el detalle exacto de que falta definir).
-      // Los PNG ya estan organizados en
-      // assets/themes/argentina-streamers/escudos/ (no sueltos en la raiz)
-      // esperando esa confirmacion antes de registrarlos aca.
+      // "oxen" y "argentina-streamers-fem": 2 equipos mas (pedido
+      // explicito, 2026-09-01) con sus escudos reales ya en
+      // assets/themes/argentina-streamers/escudos/. "ARF" (no "ARG") para
+      // que no choque con el abbr del equipo masculino de arriba -- misma
+      // convencion de 3 letras que server/teams.js, con override manual
+      // (igual que los "overrides puntuales" que ya usa ese archivo para
+      // los equipos de GLA) porque la derivacion automatica de las 2
+      // primeras palabras de "Argentina Streamers FEM" tambien da "ARG".
+      { id: 'oxen', name: 'OXEN', abbr: 'OXE', file: '/assets/themes/argentina-streamers/escudos/oxen.png' },
+      { id: 'argentina-streamers-fem', name: 'Argentina Streamers FEM', abbr: 'ARF', file: '/assets/themes/argentina-streamers/escudos/argentina-streamers-fem.png' },
     ],
     // Un objeto por cada módulo de THEME_ASSET_MODULES, generado acá mismo
     // (no a mano) para garantizar que NINGUNO quede afuera -- "video"/
@@ -201,6 +203,11 @@ export const THEMES = {
       scoreboard: { video: '/assets/themes/argentina-streamers/marcador/scoreboard-alpha.mp4' },
       marcadorPenales: { video: '/assets/themes/argentina-streamers/marcador/marcador-penales-alpha.mp4' },
       marcadorTiempoAdicional: { image: '/assets/themes/argentina-streamers/marcador/marcador-tiempo-adicional.png' },
+      // Nuevo (2026-09-01): asset real de Entretiempo entregado en la
+      // segunda tanda ("ASSET ENTRETIEMPO") -- toda la logica/datos
+      // heredados que ya usaba este modulo en Marcador siguen sin tocarse,
+      // solo cambia que ahora monta esta imagen en vez de quedar sin asset.
+      marcadorEntretiempo: { image: '/assets/themes/argentina-streamers/marcador/marcador-entretiempo.png' },
       gol: { video: '/assets/themes/argentina-streamers/incidencias/gol-alpha.mp4' },
       cambios: { video: '/assets/themes/argentina-streamers/incidencias/cambios-alpha.mp4' },
       tarjeta: {
@@ -215,9 +222,61 @@ export const THEMES = {
       replay: { video: '/assets/themes/argentina-streamers/var-replay/replay-sponsor-alpha.mp4' },
       bug: { video: '/assets/themes/argentina-streamers/mosca/mosca-localstrike-alpha.mp4' },
       shortSimple: { video: '/assets/themes/argentina-streamers/zocalos/zocalo-corto-simple-alpha.mp4' },
-      shortDouble: { video: '/assets/themes/argentina-streamers/zocalos/zocalo-corto-doble-alpha.mp4' },
+      // "shortDouble" (Zocalo Corto Doble) queda SIN asset a proposito
+      // (pedido explicito, 2026-09-01): el archivo que tenia estaba mal
+      // asignado y paso a Zocalo Largo Doble (ver "longDouble" abajo); no
+      // se inventa ni se copia un reemplazo -- cae al default
+      // {video:null,image:null,status:'pending'} del spread de arriba, el
+      // contenido dinamico sigue funcionando sobre transparencia.
       longDouble: { video: '/assets/themes/argentina-streamers/zocalos/zocalo-largo-doble-alpha.mp4' },
-      vsPrepartido: { video: '/assets/themes/argentina-streamers/prepartido/vs-prepartido-alpha.mp4' },
+      // Zocalo Compuesto: UN solo modulo con 2 variantes por "tipo" (ver
+      // data.tipo en program/js/renderers/zocaloCompuesto.js, logica ya
+      // existente sin cambios) -- "logo" deja el area de logo vacia por
+      // ahora (llega despues), "equipos" hereda escudos LOCAL/VISITANTE en
+      // vivo del Marcador (mismo patron que tarjeta/cambios).
+      // CORRECCION (2026-09-01, mismo dia -- el usuario aviso que la
+      // primera entrega/asignacion estaba mal por una confusion suya): los
+      // assets REALES son "ZOCALO_LARGO.mov" (sin division, para "logo")
+      // y "ZOCALO_LARGO_linea.mov" (con la linea divisoria del lado
+      // izquierdo, para "equipos") -- confirmado por INSPECCION VISUAL
+      // real de un frame de cada uno (ffmpeg), no por nombre de archivo:
+      // "_linea" es, literamente, el unico de los dos con una linea
+      // blanca vertical separando la zona de escudos del resto del
+      // zocalo. Los .mov de la entrega anterior (derivados de
+      // ZOCALO_VS/ZOCALO_VS_V2) quedaron archivados en
+      // ai-gfx/argentina-streamers/unused/ -- ya NO son el asset activo.
+      // NOTA (2026-09-01): los .mov entregados eran ProRes 4444 (canal alfa
+      // real, "yuva444p12le") -- ningun navegador/Chromium (ni el Program
+      // real dentro de vMix) puede decodificar ese codec (confirmado en
+      // vivo: video.error.message = "DEMUXER_ERROR_NO_SUPPORTED_STREAMS").
+      // Transcodificados UNA vez a .mp4 H.264 apilado color+alfa (mismo
+      // formato que usa el resto del proyecto -- ver el comentario de
+      // cabecera de program/js/alpha-video.js, que documenta este mismo
+      // pipeline como el estandar ya usado en todo el proyecto). Mismo
+      // contenido visual, sin recortes ni ediciones -- solo cambia el
+      // contenedor/codec para que sea reproducible. Los .mov originales NO
+      // se borraron: quedan archivados en
+      // ai-gfx/argentina-streamers/prores-originals/ (fuera de git, ver
+      // .gitignore) por si hace falta re-transcodificar con otros ajustes.
+      zocaloCompuesto: {
+        variants: {
+          logo: '/assets/themes/argentina-streamers/zocalos/zocalo-compuesto-logo-alpha.mp4',
+          equipos: '/assets/themes/argentina-streamers/zocalos/zocalo-compuesto-equipos-alpha.mp4',
+        },
+      },
+      // VS Prepartido/Resultado (2026-09-01): los 2 assets estaban
+      // CRUZADOS -- el que hoy vivia acá como "vsPrepartido" en realidad
+      // tenia el recuadro verde de resultado (confirmado por inspeccion
+      // real de frames con ffmpeg, no por nombre de archivo). Corregido:
+      // "vs-prepartido-alpha.mov" (sin recuadro verde, del ZIP) es el
+      // Prepartido real; el .mp4 que estaba mal puesto aca se movio a
+      // "vsResultado" (recuadro verde, contenido correcto para ese modulo).
+      vsPrepartido: { video: '/assets/themes/argentina-streamers/vs/vs-prepartido-alpha.mp4' },
+      vsResultado: { video: '/assets/themes/argentina-streamers/vs/vs-resultado-alpha.mp4' },
+      // Estrellas (2026-09-01): asset real ("ASSET ESTRELLAS" del ZIP) --
+      // solo el asset visual, la logica de datos (jugadores/escudos/
+      // stats/PJ/editores/posiciones) sigue exactamente igual, sin tocar.
+      estrellas: { video: '/assets/themes/argentina-streamers/estrellas/estrellas-alpha.mp4' },
     },
   },
 };
