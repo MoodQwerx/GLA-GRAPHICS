@@ -1,4 +1,4 @@
-import { createAlphaVideo } from '../alpha-video.js';
+import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { applyFittedText, updateFittedTextWithTransition, readTextAdjust } from '../text-fit.js';
 import { resolveTeamTokens } from '../../../shared/text-tokens.js';
 
@@ -17,15 +17,16 @@ function buildStructure(el) {
       <div class="ov-short-simple-text"></div>
     </div>
   `;
-  el._alphaVideo = createAlphaVideo(el.querySelector('.av-target'), VIDEO_SRC);
+  el._alphaVideo = mountThemedAlphaVideo(el.querySelector('.av-target'), 'shortSimple', VIDEO_SRC);
+  el._gfxBuilt = true;
 }
 
 export default function renderShortSimple(contentEl, data, justTaken, onOneShotEnded, allData) {
-  if (!contentEl._alphaVideo) {
+  if (!contentEl._gfxBuilt) {
     buildStructure(contentEl);
   }
   if (justTaken) {
-    contentEl._alphaVideo.playFromStart();
+    contentEl._alphaVideo?.playFromStart();
   }
   const textEl = contentEl.querySelector('.ov-short-simple-text');
   const sb = allData && allData.scoreboard;

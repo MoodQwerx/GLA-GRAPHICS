@@ -1,0 +1,313 @@
+// Registro declarativo de elementos editables por modulo (2026-08-31,
+// pedido explicito del usuario: "que agregar un nuevo elemento editable
+// sea conceptualmente tan simple como definir id/label/xKey/yKey/
+// scaleKey/target"). Fuente UNICA de verdad, importada tanto por
+// Master Control (arma el acordeon "AJUSTE DE COMPOSICION" -> ver
+// master-control/js/main.js "renderModuleAdjustAccordion") como por
+// Program (aplica los offsets -> ver program/js/main.js
+// "applyElementAdjustRegistry") -- evita mantener la misma lista de
+// ids/keys duplicada en dos lados.
+//
+// Cada entrada de "elements" es uno de dos tipos:
+//   - kind:'composition' -- para elementos NO textuales (escudos, logos,
+//     sponsors, guiones, iconos) o cualquier bloque que deba moverse/
+//     escalarse como unidad. Requiere:
+//       1. el renderer del modulo marca el nodo con data-adjust="<id>"
+//          (sin logica nueva, solo el atributo en el template);
+//       2. shared/modules.js define <xKey>/<yKey>/<scaleKey> en los
+//          defaults del modulo (default 0/0/1, no-op);
+//       3. Program aplica el offset SOLO -- ver "applyElementAdjustRegistry"
+//          en program/js/main.js, corre junto a "applyComposition" para
+//          cualquier modulo con entradas de este tipo, sin codigo nuevo
+//          por elemento.
+//   - kind:'text' -- para texto que YA pasa por "textAdjust" (el mismo
+//     mecanismo de siempre, dx/dy/dSize, ver program/js/text-fit.js).
+//     No requiere nada nuevo en Program: el renderer ya llama
+//     readTextAdjust/applyPlainTextAdjust para ese campo. Solo declara
+//     que existe, para que el acordeon de Master Control lo muestre.
+//
+// "COMPOSICION COMPLETA" (compositionOffsetX/Y/Scale) NO se declara aca:
+// ya es universal para los 30 modulos via COMPOSITION_DEFAULTS
+// (shared/modules.js) y se agrega siempre, automaticamente, al
+// principio del acordeon -- ver renderModuleAdjustAccordion.
+export const ADJUST_REGISTRY = {
+  // MARCADOR (2026-08-31): migrado desde la funcion hecha a medida
+  // "renderScoreboardAdjustAccordion" -- mismo orden, mismas labels,
+  // mismo comportamiento, ahora descripto de forma declarativa.
+  scoreboard: {
+    elements: [
+      { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale' },
+      { id: 'nameA', label: 'NOMBRE / ABREVIATURA LOCAL', kind: 'text', textKey: 'nameA' },
+      { id: 'scoreA', label: 'GOL LOCAL', kind: 'text', textKey: 'scoreA' },
+      { id: 'separator', label: 'GUIÓN', kind: 'composition', xKey: 'separatorOffsetX', yKey: 'separatorOffsetY', scaleKey: 'separatorScale' },
+      { id: 'scoreB', label: 'GOL VISITANTE', kind: 'text', textKey: 'scoreB' },
+      { id: 'nameB', label: 'NOMBRE / ABREVIATURA VISITANTE', kind: 'text', textKey: 'nameB' },
+      { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale' },
+      { id: 'clock', label: 'CONTADOR / RELOJ', kind: 'text', textKey: 'clock' },
+      { id: 'period', label: 'PERÍODO', kind: 'text', textKey: 'period' },
+      { id: 'sponsor', label: 'SPONSOR', kind: 'composition', xKey: 'sponsorOffsetX', yKey: 'sponsorOffsetY', scaleKey: 'sponsorScale' },
+    ],
+  },
+  // --- Tanda 1 ---
+  tarjeta: {
+    elements: [
+      { id: 'crest', label: 'ESCUDO', kind: 'composition', xKey: 'crestOffsetX', yKey: 'crestOffsetY', scaleKey: 'crestScale' },
+      { id: 'jugador', label: 'JUGADOR', kind: 'text', textKey: 'jugador' },
+    ],
+  },
+  cambios: {
+    elements: [
+      { id: 'crest', label: 'ESCUDO', kind: 'composition', xKey: 'crestOffsetX', yKey: 'crestOffsetY', scaleKey: 'crestScale' },
+      { id: 'titulo', label: 'TÍTULO', kind: 'text', textKey: 'titulo' },
+      { id: 'entra', label: 'JUGADOR ENTRA', kind: 'text', textKey: 'entra' },
+      { id: 'sale', label: 'JUGADOR SALE', kind: 'text', textKey: 'sale' },
+    ],
+  },
+  varCheck: {
+    elements: [
+      // "varGroup" (2026-08-31): bug pre-existente encontrado al probar
+      // esta tanda -- ".ov-var-group1" leia directamente
+      // compositionOffsetX/Y/Scale (las mismas keys de "COMPOSICIÓN
+      // COMPLETA"), y al ser hijo de ".content" el offset quedaba
+      // compuesto DOS VECES solo para este grupo. Se separo en
+      // varGroupOffsetX/Y/Scale (ver shared/modules.js) -- ahora es un
+      // control legitimo e independiente (mueve SOLO el clip VAR +
+      // sponsor dentro del modulo), no redundante con "COMPOSICIÓN
+      // COMPLETA".
+      { id: 'varGroup', label: 'GRUPO VAR (CLIP + SPONSOR)', kind: 'composition', xKey: 'varGroupOffsetX', yKey: 'varGroupOffsetY', scaleKey: 'varGroupScale' },
+      { id: 'sponsor', label: 'SPONSOR', kind: 'composition', xKey: 'sponsorOffsetX', yKey: 'sponsorOffsetY', scaleKey: 'sponsorScale' },
+      // "motivoGroup" ya existe de antes (pre-fecha este registro, ver
+      // varCheck.js): el renderer YA lee motivoOffsetX/Y/Scale y mueve
+      // ".ov-var-motivo-group" el solo en cada pasada -- no necesita
+      // data-adjust ni pasar por applyElementAdjustRegistry, se declara
+      // aca solo para que el acordeon de Master Control muestre su control.
+      { id: 'motivoGroup', label: 'MOTIVO COMPLETO', kind: 'composition', xKey: 'motivoOffsetX', yKey: 'motivoOffsetY', scaleKey: 'motivoScale' },
+      { id: 'motivo', label: 'TEXTO MOTIVO', kind: 'text', textKey: 'motivo' },
+    ],
+  },
+  replay: {
+    elements: [
+      { id: 'sponsor', label: 'SPONSOR', kind: 'composition', xKey: 'sponsorOffsetX', yKey: 'sponsorOffsetY', scaleKey: 'sponsorScale' },
+    ],
+  },
+  bug: {
+    elements: [
+      { id: 'clock', label: 'RELOJ', kind: 'text', textKey: 'clock' },
+    ],
+  },
+  gol: {
+    // Sin panel propio en Master Control (HIDDEN_FROM_NAV_IDS, ver
+    // master-control/js/main.js): modulo oneShot disparado automaticamente
+    // por scoreGoal() al anotar un gol en el Marcador, sin datos propios
+    // que editar (fields: [] en shared/modules.js). Hereda
+    // compositionOffsetX/Y/Scale via COMPOSITION_DEFAULTS igual que
+    // cualquier otro modulo, pero no hay panel donde mostrar "COMPOSICIÓN
+    // COMPLETA" -- excepcion documentada en el informe final, no una falta
+    // de cobertura.
+    elements: [],
+  },
+
+  // --- Resto de MARCADOR (2026-08-31) ---
+  marcadorTiempoAdicional: {
+    elements: [
+      { id: 'addedMinutes', label: 'MINUTOS AGREGADOS', kind: 'text', textKey: 'addedMinutes' },
+      { id: 'clock', label: 'RELOJ', kind: 'text', textKey: 'clock' },
+    ],
+  },
+  marcadorEntretiempo: {
+    elements: [
+      { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale' },
+      { id: 'nameA', label: 'ABREVIATURA LOCAL', kind: 'text', textKey: 'nameA' },
+      { id: 'scoreA', label: 'GOL LOCAL', kind: 'text', textKey: 'scoreA' },
+      { id: 'scoreB', label: 'GOL VISITANTE', kind: 'text', textKey: 'scoreB' },
+      { id: 'nameB', label: 'ABREVIATURA VISITANTE', kind: 'text', textKey: 'nameB' },
+      { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale' },
+    ],
+  },
+  // Orden pedido explicitamente por el usuario (2026-08-31, corrección
+  // Marcador de Penales): COMPOSICIÓN COMPLETA (universal, siempre
+  // primera) -> escudo local -> fila de penales local -> resultado local
+  // -> guión -> resultado visitante -> fila de penales visitante ->
+  // escudo visitante -> título -> sponsor. "nameA"/"nameB" (abreviatura)
+  // se mantienen al final: siguen existiendo para GLA (fila propia, sin
+  // relacion con el "ARG PER" que se retiró del centro de Argentina
+  // Streamers -- ver overlay.css), no pedidos en la lista nueva pero
+  // tampoco a remover, mismo criterio que "VIVO" en bug.js (control
+  // universal, sin efecto visual donde el elemento esta oculto).
+  marcadorPenales: {
+    elements: [
+      { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale' },
+      { id: 'kicksLocal', label: 'FILA DE PENALES LOCAL', kind: 'composition', xKey: 'kicksLocalOffsetX', yKey: 'kicksLocalOffsetY', scaleKey: 'kicksLocalScale' },
+      { id: 'scoreA', label: 'RESULTADO LOCAL', kind: 'text', textKey: 'scoreA' },
+      { id: 'separator', label: 'GUIÓN DEL RESULTADO', kind: 'composition', xKey: 'separatorOffsetX', yKey: 'separatorOffsetY', scaleKey: 'separatorScale' },
+      { id: 'scoreB', label: 'RESULTADO VISITANTE', kind: 'text', textKey: 'scoreB' },
+      { id: 'kicksVisitante', label: 'FILA DE PENALES VISITANTE', kind: 'composition', xKey: 'kicksVisitanteOffsetX', yKey: 'kicksVisitanteOffsetY', scaleKey: 'kicksVisitanteScale' },
+      { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale' },
+      { id: 'titulo', label: 'TÍTULO "PENALES"', kind: 'text', textKey: 'titulo' },
+      { id: 'sponsor', label: 'SPONSOR', kind: 'composition', xKey: 'sponsorOffsetX', yKey: 'sponsorOffsetY', scaleKey: 'sponsorScale' },
+      { id: 'nameA', label: 'ABREVIATURA LOCAL (solo GLA)', kind: 'text', textKey: 'nameA' },
+      { id: 'nameB', label: 'ABREVIATURA VISITANTE (solo GLA)', kind: 'text', textKey: 'nameB' },
+    ],
+  },
+  marcadorZocalo: {
+    elements: [
+      { id: 'titulo', label: 'TÍTULO', kind: 'text', textKey: 'titulo' },
+      { id: 'clock', label: 'RELOJ', kind: 'text', textKey: 'clock' },
+    ],
+  },
+
+  // --- PLACAS ---
+  formacionEquipos: {
+    // "playerName"/"playerNumber"/"subsTitle"/"subsList" NO se declaran
+    // aca: ya tienen su propio control (con GUARDAR POSICIÓN) dentro de la
+    // seccion "AJUSTE DE TEXTOS" del panel dedicado (2026-08-31, ver
+    // master-control/js/formation-list-panel.js) -- agregarlos aca
+    // duplicaria el control. Solo "crest" es genuinamente nuevo (escudo,
+    // nunca tuvo ajuste propio), se resuelve via el acordeon generico.
+    elements: [
+      { id: 'crest', label: 'ESCUDO EQUIPO ACTIVO', kind: 'composition', xKey: 'crestOffsetX', yKey: 'crestOffsetY', scaleKey: 'crestScale' },
+    ],
+  },
+  vsPrepartido: {
+    elements: [
+      { id: 'titulo', label: 'TÍTULO', kind: 'text', textKey: 'titulo' },
+      { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale' },
+      { id: 'nameA', label: 'NOMBRE EQUIPO LOCAL', kind: 'text', textKey: 'nameA' },
+      { id: 'nameB', label: 'NOMBRE EQUIPO VISITANTE', kind: 'text', textKey: 'nameB' },
+      { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale' },
+    ],
+  },
+  vsResultado: {
+    elements: [
+      { id: 'titulo', label: 'TÍTULO', kind: 'text', textKey: 'titulo' },
+      { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale' },
+      { id: 'nameA', label: 'NOMBRE EQUIPO LOCAL', kind: 'text', textKey: 'nameA' },
+      { id: 'scoreA', label: 'GOL LOCAL', kind: 'text', textKey: 'scoreA' },
+      { id: 'scoreB', label: 'GOL VISITANTE', kind: 'text', textKey: 'scoreB' },
+      { id: 'nameB', label: 'NOMBRE EQUIPO VISITANTE', kind: 'text', textKey: 'nameB' },
+      { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale' },
+    ],
+  },
+  // "estrellas": solo "crest" (composition) via el acordeon generico --
+  // "titulo"/"localNombre"/"localG"/etc. YA tienen su propio control (con
+  // GUARDAR POSICIÓN) en la seccion "AJUSTE DE TEXTOS" del panel dedicado
+  // (2026-08-31, ver master-control/js/estrellas-panel.js) -- declararlos
+  // tambien aca duplicaria el control.
+  estrellas: {
+    elements: [
+      { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale' },
+      { id: 'visitanteCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'visitanteCrestOffsetX', yKey: 'visitanteCrestOffsetY', scaleKey: 'visitanteCrestScale' },
+    ],
+  },
+
+  // --- EVENTOS / ZOCALOS ---
+  longDouble: {
+    elements: [
+      { id: 'line1', label: 'TÍTULO PRINCIPAL', kind: 'text', textKey: 'line1' },
+      { id: 'line2', label: 'SUBTÍTULO / BAJADA', kind: 'text', textKey: 'line2' },
+    ],
+  },
+  shortSimple: {
+    elements: [
+      { id: 'text', label: 'TEXTO', kind: 'text', textKey: 'text' },
+    ],
+  },
+  // "shortDouble": sin entradas -- "name"/"role"/"double1.name"/etc. YA
+  // tienen su propio control (con GUARDAR POSICIÓN) en el panel dedicado
+  // (2026-08-31, ver master-control/js/short-double-panel.js), y el
+  // modulo no tiene ningun escudo/logo/sponsor sin ajuste. Solo
+  // "COMPOSICIÓN COMPLETA" (universal) aplica aca.
+  shortDouble: {
+    elements: [],
+  },
+  vs: {
+    elements: [
+      { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale' },
+      { id: 'nameA', label: 'NOMBRE EQUIPO LOCAL', kind: 'text', textKey: 'nameA' },
+      { id: 'goalA', label: 'GOL LOCAL', kind: 'text', textKey: 'goalA' },
+      { id: 'scorersLocal', label: 'BLOQUE GOLEADORES LOCAL', kind: 'text', textKey: 'scorersLocal' },
+      { id: 'statusTexto', label: 'TEXTO LIBRE RENGLÓN CENTRAL', kind: 'text', textKey: 'statusTexto' },
+      { id: 'scorersVisitante', label: 'BLOQUE GOLEADORES VISITANTE', kind: 'text', textKey: 'scorersVisitante' },
+      { id: 'goalB', label: 'GOL VISITANTE', kind: 'text', textKey: 'goalB' },
+      { id: 'nameB', label: 'NOMBRE EQUIPO VISITANTE', kind: 'text', textKey: 'nameB' },
+      { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale' },
+      { id: 'sponsor', label: 'SPONSOR', kind: 'composition', xKey: 'sponsorOffsetX', yKey: 'sponsorOffsetY', scaleKey: 'sponsorScale' },
+    ],
+  },
+  zocaloCompuesto: {
+    elements: [
+      { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale' },
+      { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale' },
+      { id: 'logo', label: 'LOGO GLA', kind: 'composition', xKey: 'logoOffsetX', yKey: 'logoOffsetY', scaleKey: 'logoScale' },
+      { id: 'texto1', label: 'TEXTO 1', kind: 'text', textKey: 'texto1' },
+      { id: 'texto2', label: 'TEXTO 2', kind: 'text', textKey: 'texto2' },
+      { id: 'sponsor1', label: 'SPONSOR 1', kind: 'composition', xKey: 'sponsor1OffsetX', yKey: 'sponsor1OffsetY', scaleKey: 'sponsor1Scale' },
+      { id: 'sponsor2', label: 'SPONSOR 2', kind: 'composition', xKey: 'sponsor2OffsetX', yKey: 'sponsor2OffsetY', scaleKey: 'sponsor2Scale' },
+    ],
+  },
+  // "zocaloFinal"/"zocaloFinalDiv" (2026-08-31): sin entrada de registro.
+  // HIDDEN_FROM_NAV_IDS (ver master-control/js/main.js) -- reemplazados
+  // por "zocaloCompuesto" (2026-08-16), sin panel propio en Master Control
+  // donde mostrar ningun acordeon. Excepcion documentada en el informe
+  // final, no una falta de cobertura.
+
+  // --- GRUPOS / BRACKETS / TABLAS ---
+  // Las 6 entradas de abajo (grupos/sideTable/posiciones/posicionesTorneo/
+  // goleadores/asistidores/jugadores) declaran SOLO "crest" (composition):
+  // todos los demas campos (titulo/nombre/puntos/numero/equipo/pts/pj/g/
+  // gxp/pxp/p/gf/gc/dg/golLocal/golVisitante/estado/estadoFullscreen/
+  // tituloBracket/position/name/primaryStat/stat0/stat1/stat2) YA tienen
+  // su propio control por columna (con GUARDAR POSICIÓN) dentro de la
+  // seccion "AJUSTE DE TEXTOS"/"AJUSTE DE COMPOSICIÓN" de cada panel
+  // dedicado (2026-08-31, ver grupos-panel.js, resultados-panel.js,
+  // posiciones-panel.js, performance-table-panel.js) -- declararlos aca
+  // tambien duplicaria el control. "crest" es el unico elemento
+  // genuinamente nuevo (escudo por fila/columna, nunca tuvo ajuste propio).
+  grupos: {
+    elements: [
+      { id: 'crest', label: 'ESCUDO (COLUMNA)', kind: 'composition', xKey: 'crestOffsetX', yKey: 'crestOffsetY', scaleKey: 'crestScale' },
+    ],
+  },
+  sideTable: {
+    elements: [
+      { id: 'crestLocal', label: 'ESCUDO LOCAL (COLUMNA)', kind: 'composition', xKey: 'crestLocalOffsetX', yKey: 'crestLocalOffsetY', scaleKey: 'crestLocalScale' },
+      { id: 'crestVisitante', label: 'ESCUDO VISITANTE (COLUMNA)', kind: 'composition', xKey: 'crestVisitanteOffsetX', yKey: 'crestVisitanteOffsetY', scaleKey: 'crestVisitanteScale' },
+    ],
+  },
+  posiciones: {
+    elements: [
+      { id: 'crest', label: 'ESCUDO (COLUMNA)', kind: 'composition', xKey: 'crestOffsetX', yKey: 'crestOffsetY', scaleKey: 'crestScale' },
+    ],
+  },
+  posicionesTorneo: {
+    elements: [
+      { id: 'crest', label: 'ESCUDO (COLUMNA)', kind: 'composition', xKey: 'crestOffsetX', yKey: 'crestOffsetY', scaleKey: 'crestScale' },
+    ],
+  },
+  goleadores: {
+    elements: [
+      { id: 'crest', label: 'ESCUDO (COLUMNA)', kind: 'composition', xKey: 'crestOffsetX', yKey: 'crestOffsetY', scaleKey: 'crestScale' },
+    ],
+  },
+  asistidores: {
+    elements: [
+      { id: 'crest', label: 'ESCUDO (COLUMNA)', kind: 'composition', xKey: 'crestOffsetX', yKey: 'crestOffsetY', scaleKey: 'crestScale' },
+    ],
+  },
+  jugadores: {
+    elements: [
+      { id: 'crest', label: 'ESCUDO (COLUMNA)', kind: 'composition', xKey: 'crestOffsetX', yKey: 'crestOffsetY', scaleKey: 'crestScale' },
+    ],
+  },
+
+  // "placaLInfo" (2026-08-31): sin entrada de registro aca a proposito --
+  // ya tiene un panel dedicado propio (master-control/js/placa-l-info-panel.js)
+  // con 4 zocalos independientes, cada uno con su propia composicion
+  // (offsetX/Y/scale) y ajuste de texto (textAdjust), montados directo
+  // sobre el sub-objeto de cada zocalo (no sobre el "data" del modulo
+  // completo, que es lo unico que ADJUST_REGISTRY/renderModuleAdjustAccordion
+  // saben resolver) -- agregar una entrada aca duplicaria controles ya
+  // existentes y funcionando. "COMPOSICIÓN COMPLETA" (mueve los 4 zocalos
+  // juntos) se sigue mostrando igual, es universal y no depende del
+  // registro.
+};

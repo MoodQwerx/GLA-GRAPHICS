@@ -2,6 +2,488 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [Unreleased] - 2026-08-28 (89)
+
+### Encuadre visual — ARGENTINA STREAMERS (los 14 módulos con asset real)
+
+Pedido explícito: "los elementos dinámicos heredaron posiciones pensadas para los assets de GLA... quiero que reacomodes automáticamente todos los elementos dinámicos para que queden correctamente encuadrados". Cero cambios de código — únicamente valores de `textAdjust`/composición guardados vía los editores manuales ya existentes (← → ↑ ↓ + −), que ya vivían aislados por theme desde la entrega (86) (`server/state.js` → `byTheme`). `alpha-video.js` no se tocó.
+
+**Metodología real (no offsets a ojo)**: para cada módulo, TAKE real → lectura de píxeles del propio canvas compuesto (alfa + color, vía `getImageData` sobre una copia 2D del canvas WebGL) para encontrar el cuadro/franja real donde cada dato va → conversión de coordenadas de viewport a coordenadas locales del asset (1920×1080) usando el propio `canvas`/`.gfx-bg-image` como referencia — necesario porque varios módulos (`marcadorPenales` 0.8×, `bug` 0.85×, `marcadorTiempoAdicional`, `cambios`, `tarjeta`, `varCheck`, `replay`, etc.) tienen su **propio transform CSS de asentamiento** en `#mod-<id>` (compartido con GLA, sin tocar) que hay que despejar antes de calcular cualquier delta → aplicación de los deltas exactos vía los botones reales del editor (mismo mecanismo que usaría el operador) → verificación visual final con screenshot zoomeado sobre el `#stage`.
+
+**Hallazgo real de diseño, no bug**: en varios assets nuevos la franja MÁS ANGOSTA es para el dato MÁS CORTO y viceversa — ej. Marcador: el período ("2T", 2 caracteres) va en la pestaña celeste angosta (33px) y el reloj ("00:00", 5 caracteres) va en la franja gris ancha (76px), inverso a la posición heredada de GLA. Confirmado visualmente antes de aplicar.
+
+**Reposicionados**: Marcador (nombres, goles, período↔reloj intercambiados), Marcador Penales (título + resultado final ambos equipos — offset grande porque el módulo entero vive escalado 0.8× vía CSS), Tiempo Adicional (+minutos y reloj intercambiados, mismo criterio que Marcador), Cambios (título, entra, sale), Tarjeta (nombre del jugador — mismo fix para las 3 variantes amarilla/roja/azul, comparten estructura), Zócalo corto simple (texto), Zócalo corto doble (nombre+rol, en modo simple Y en modo doble — 2 pares independientes), Zócalo largo doble (título+subtítulo), VS Prepartido (título, nombre equipo local, nombre equipo visitante).
+
+**Sin cambios (ya encuadrados o sin elemento que mover)**: Gol (el video es el 100% del contenido, sin `.gfx-overlay` propio). Mosca (el reloj del sistema ya caía exacto en la franja verde, offset por defecto 0/0 correcto).
+
+**Limitación real encontrada, no resuelta a propósito**: varios elementos no tienen NINGÚN control de posición en el sistema actual — escudos (`.ov-team-a/b .ov-crest`, `.ov-pen-crest`, `.ov-cambio-crest`, `.ov-vsfull-crest`), el "dot" de color de camiseta del Marcador, y los sponsors (`.ov-scoreboard-sponsor`, `.ov-var-replay-sponsor`) se posicionan 100% por CSS fijo, sin `readTextAdjust()` en el renderer correspondiente. Se dejaron en su posición CSS heredada de GLA — agregarles control de ajuste es un cambio de código real (nuevo campo `adjustable`), fuera del alcance de esta tarea ("no cambiar la lógica funcional de los módulos"). VAR y Replay: el badge/título vienen 100% horneados en el asset (sin campo de texto propio en el renderer), así que no había nada que reencuadrar ahí — solo su sponsor, con la misma limitación de arriba.
+
+### Verificado (servidor real, Master Control + Program, viewport 1920×1080 nativo)
+
+- Los 14 módulos, TAKE real con datos representativos (equipos reales, textos largos y cortos donde aplica): posición final confirmada por lectura de píxeles (no solo visual) + screenshot zoomeado de cada uno.
+- Aislamiento por theme confirmado en ambas direcciones: GLA (Marcador) conserva exactamente sus valores propios (`X:-8`, `X:6`, `X:0 Y:-2`, etc., sin relación con los de Argentina); Argentina conserva los suyos (`X:-28`, `X:86`, etc.) después de ir y volver de GLA sin refresh.
+- Cero errores nuevos de consola (el único 404 visto, `/api/planteles/argentina-streamers`, es preexistente y ya documentado como inofensivo).
+- `alpha-video.js`: sin diff. Ningún renderer: sin diff — todo el trabajo quedó en datos (`master-control-state.json`, dentro de `byTheme.argentinaStreamers`).
+- Sin commit ni push.
+
+## [Unreleased] - 2026-08-28 (88)
+
+### Agregado — Primeros assets reales de ARGENTINA STREAMERS
+
+Pedido explícito: "Te di acceso a una carpeta... ahí están los assets que tengo disponibles hasta el momento". Carpeta local `Documents/Argentina Streamers/Argentina Streamers vs Peru Creadores 5-9/` (30 archivos: 27 `.mov` ProRes 4444 con alfa real, 2 `.mp4` H.264 sin alfa, 1 `.png`), revisada completa antes de tocar nada — cada archivo se identificó por inspección técnica (`ffprobe`: códec/resolución/duración) y visual (frames extraídos y compuestos sobre un fondo de referencia, ver metodología completa en el reporte de esta entrega) antes de asignarlo a un módulo.
+
+**14 assets confirmados y transcodificados** al formato que ya usa el proyecto (H.264, color arriba + máscara de alfa en escala de grises abajo, 1920x2160 → compuesto por `alpha-video.js` sin ningún cambio ahí) con `ffmpeg` (`format=yuva444p,split,alphaextract,vstack`), verificado bit a bit contra el compositor real antes del batch completo. Copiados a `assets/themes/argentina-streamers/{marcador,incidencias,var-replay,mosca,zocalos,prepartido}/` y asignados en `shared/themes.js` → `THEMES.argentinaStreamers.assets`: `scoreboard`, `marcadorPenales`, `marcadorTiempoAdicional` (imagen, único asset sin canal alfa — PNG estático), `gol`, `cambios`, `tarjeta` (3 variantes: amarilla/roja/azul), `varCheck`, `replay`, `bug`, `shortSimple`, `shortDouble`, `longDouble`, `vsPrepartido`.
+
+**Sin tocar**: ningún renderer, ningún código de composición, ninguna lógica dinámica (textos/escudos/goles/reloj/sponsors/TAKE-UPDATE-OUT/ajustes/presets) — el mecanismo "asset-opcional" de la entrega (86) ya sabía consumir el manifest, así que activar estos 14 módulos fue estrictamente: transcodificar + copiar archivo + una línea de manifest por módulo, tal como estaba diseñado.
+
+**No integrado, reportado como dudoso o fuera de alcance** (16 archivos restantes): `CUADRO_equipos.mov` (posible `formacionEquipos`, sin evidencia suficiente — no se adivinó), `ZOCALO_LARGO_linea.mov` (variante alternativa de `longDouble`, mismo diseño con una línea divisoria extra, no hay un segundo módulo activo para asignarla), 6 archivos `MARCO_*` (marcos/bordes de pantalla completa, sin módulo LIVE GRAPHICS correspondiente), `FONDO_AZUL.mp4`/`Fondo_verde.mp4`/`NEGRO.png`/`ROJO.png`/`VERDE.png` (fondos/mattes sólidos, sin módulo asociado), `YACOMENZAMOS.mp4` (splash de apertura full-screen con el escudo real de Argentina Streamers — valioso como referencia, pero no se recortó un escudo transparente de ahí por decisión explícita: eso sería generar/derivar un asset nuevo, no usar el entregado tal cual), `BETANO_TRANS.mov`/`MOSTAZA_TRANS.mov`/`SHELL_TRANS.mov` (bugs de sponsor animados con transición — el sistema de sponsors actual espera PNG estáticos rotando, no video con alfa, formato incompatible con el módulo existente sin cambiar esa lógica).
+
+### Verificado (servidor reiniciado, navegador real, Master Control + Program simultáneos)
+
+- Los 14 módulos, TAKE real bajo el theme ARGENTINA STREAMERS: cada uno confirmado sirviendo su `.mp4`/`.png` real desde `/assets/themes/argentina-streamers/...` (`video.currentSrc` verificado explícitamente por módulo), incluida la composición visual real del Marcador (escudo + "ARG 2-1 PER 2T" sobre el video celeste, capturado por screenshot).
+- Badge "ASSET: PENDIENTE" en Master Control: confirmado que desaparece para los 14 módulos recién completados y sigue apareciendo para los que continúan pendientes (ej. Grupos).
+- Módulos todavía pendientes (ej. Grupos): re-confirmado que el renderizado asset-opcional sigue intacto (`hasVideo:false`, contenido dinámico visible) — la integración no rompió el mecanismo para los que faltan.
+- Regresión GLA: Marcador GLA (TAKE real) después de todos los cambios → sigue usando `/assets/marcador/marcador-principal-alpha.mp4` (ruta propia, sin tocar).
+- `node --check` sin errores en `shared/themes.js`. Atributo `filter=lfs` confirmado sobre los `.mp4` nuevos (mismo patrón `assets/**/*.mp4` de `.gitattributes`, sin necesidad de tocarlo). Cero 404 nuevos en consola (el único 404 visto, `/api/planteles/argentina-streamers`, es preexistente y ya documentado como inofensivo).
+- Sin commit ni push.
+
+## [Unreleased] - 2026-08-25 (87)
+
+### Orden y limpieza de estructura del proyecto
+
+Pedido explícito: "ordenar completamente la estructura de archivos del proyecto... NO ALTERAR ABSOLUTAMENTE NADA DEL FUNCIONAMIENTO". Cada archivo movido/eliminado se auditó primero por hash SHA/MD5 contra su posible original en runtime o en `ai-gfx/`, y por búsqueda de referencias en todo el código — nada se tocó por sospecha. Basado en el inventario ya hecho en `docs/AUDIT-2026-08-18.md` (sesión anterior), ahora ejecutado.
+
+**Decisión explícita, confirmada con el usuario antes de tocar nada**: los ~58 assets actuales de GRAN LIGA RELÁMPAGO (`assets/{marcador,eventos,var,zocalos,placas,tablas,crests,images,mosca,replay,fonts}/`) y sus ~30 rutas hardcodeadas en los renderers **no se movieron** —és la misma decisión de la etapa 1 del sistema multi-theme ("no mover 200 archivos de golpe"), reafirmada acá porque migrarlos a `assets/themes/gran-liga-relampago/` no traía ningún beneficio funcional a cambio de reescribir ~30 constantes en código productivo. `assets/README.md` (nuevo) documenta esta decisión para que no se re-litigue sin contexto.
+
+**Raíz limpiada**: eliminados 5 PNG sueltos (`GRUPO1.png`, `GRUPO2.png`, `LA ESQUINA.png`, `RESULTADOS_sin_VS.png`, `ZOCALO-CORTITO-BRACKETS.png` — bit a bit idénticos a su copia ya en `assets/`), 1 captura de pantalla temporal (`UsersCONTROLÑ...png`, sin referencias), y 3 archivos de diseño sin trackear (`RESULTADOS.psd`, `PENALES_2.mov`, `POSICIONES_5.mov` — bit a bit idénticos a copias que ya vivían en `ai-gfx/`). Eliminadas las 7 PNG duplicadas de `ESCUDOS-EQUIPOS/` y las 3 de `TABLA _ GOLEADORES - ASISTIDORES - JUGADORES/` (idénticas a `assets/crests/` y `assets/tablas/`); sus 5 PSD únicos (no duplicados, sin equivalente en runtime) se archivaron en `ai-gfx/escudos/` y `ai-gfx/tablas/source/`, seguido de las carpetas contenedoras (ya vacías). `REMERAS BASE_FORMACION.png` (sin referencias, no es duplicado byte a byte de ningún asset activo) se archivó en `ai-gfx/placas-mid-full/formacion/`.
+
+**`Sponsors/` → `assets/shared/sponsors/`**: la carpeta de sponsors (compartida entre themes, sin branding propio) vivía suelta en la raíz con mayúscula inconsistente. Movida a `assets/shared/` — nueva categoría para lo genuinamente compartido entre GLA y Argentina Streamers, section 3/9 del pedido multi-theme. Rutas HTTP (`/assets/sponsors/...`) sin cambios — solo se actualizó `SPONSORS_DIR` en `server/sponsors.js` y el mount estático en `server/index.js`.
+
+**Diagnóstico consolidado en `scripts/`**: `capture_program_results.js`, `debug_program_results.js` y toda la carpeta `scratch/` (6 archivos, sin referencias desde runtime) se movieron a `scripts/` — ya no sueltos en la raíz.
+
+**Documentación actualizada**: `README.md` (árbol de estructura del proyecto), `docs/THEMES.md` (referencia a `Sponsors/` corregida a `assets/shared/sponsors/`), `assets/README.md` (nuevo — explica por qué GLA queda flat, qué es `shared/`, qué es `themes/`).
+
+### Verificado (servidor reiniciado, navegador real, Master Control + Program simultáneos)
+
+- `GET /master` → 302, `GET /program` → 301 (redirects normales), `GET /api/sponsors`, `GET /api/teams`, `GET /api/themes` → 200.
+- Sponsor real vía la ruta nueva (`/assets/sponsors/SPONSOR MARCADOR/BETANO.png`) → 200. Fuente (`Anton-Regular.ttf`) → 200. Escudo (`brarg.png`) → 200.
+- 13 módulos GLA representativos, TAKE real, sin refresh: Mosca, Marcador (con escudos), Tarjetas, Cambios, VAR (con sponsor), Replay (con sponsor), Zócalo largo doble, Formación (con `formacion-camisetas-blancas.png`, activo, no confundido con el `REMERAS BASE_FORMACION.png` archivado), VS con resultado, Estrellas, Grupos (con `grupo-1.png`/`grupo-2.png`), Goleadores (con `tabla-goleadores.png`), Resultados (con `resultados-sin-vs.png`), Posiciones Torneo — todos `isVisible:true`, video/imagen cargado, cero errores de consola, cero 404 en el log de red completo de la sesión (verificado explícitamente, request por request).
+- Cambio GLA → Argentina Streamers → GLA sin refresh: re-confirmado post-reorganización (paleta celeste, Posiciones Torneo sin asset con `hasVideo:false`/`gfxBuilt:true` correcto, reversión exacta de vuelta a GLA).
+- `git status`: 16 archivos eliminados (todos duplicados confirmados por hash), 73 renombrados (git preservó el historial), ningún `.mp4`/`.mov` tocado, atributo `filter=lfs` intacto en los `.mp4` de `assets/`. `data/` sin tocar. Sin commit ni push.
+
+## [Unreleased] - 2026-08-25 (86)
+
+### Agregado — Sistema multi-theme, etapa 2: ARGENTINA STREAMERS operativo
+
+Pedido explícito: "no quiero solamente un placeholder... quiero ARGENTINA STREAMERS OPERATIVO AHORA, solamente sin sus assets gráficos definitivos". Escala directamente sobre la entrega (85) — mismo manifest, mismo selector, pero ahora los 27 renderers activos de Program, los datos de Master Control y el catálogo de equipos son realmente theme-aware. Sin commit ni push. Detalle completo en [docs/THEMES.md](docs/THEMES.md) (reescrito).
+
+**Renderizado "asset-opcional" (`program/js/theme-assets.js`, nuevo)**: `mountThemedAlphaVideo()`/`resolveImageSrc()`/`resolveVideoSrc()` — para GLA siempre usan la constante hardcodeada del propio renderer (nunca el manifest, cero riesgo); para cualquier otro theme consultan `shared/themes.js` y devuelven `null` si el asset todavía no existe, con soporte de `variant` para módulos multi-asset (tarjeta, vs, posiciones, zocaloCompuesto). Los **27 renderers activos** de `program/js/renderers/*.js` (todos excepto `longSimple.js`, ya desactivado) fueron migrados a este patrón — cuando no hay asset, el módulo monta SOLO su `.gfx-overlay` (texto/escudos/números/reloj) sobre transparencia, nunca un placeholder ni una gráfica de GLA reutilizada. Nuevo marcador `_gfxBuilt` (reemplaza el chequeo `!_alphaVideo`, que dejó de ser válido ahora que puede ser `null` legítimamente) — limpiado explícitamente en `teardownContent()` (`program/js/main.js`) junto con `dataset` completo.
+
+**Datos por módulo, aislados por theme** (`server/state.js`, reescrito): `state[moduleId] = { status, byTheme: { gla: {...}, argentinaStreamers: {...} } }` — `status` es global, `data` 100% aislado por theme (ajustes de posición/escala y presets de Argentina Streamers nunca tocan los de GLA, ni viceversa). Persistido en el mismo `master-control-state.json`, con migración automática de una sola vez desde el formato plano anterior (`__themed: true` como marca).
+
+**Catálogo de equipos por theme** (`server/teams.js`): GLA sigue escaneando `assets/crests/*.png` sin cambios; cualquier otro theme usa `theme.teams` del manifest (`Argentina Streamers` / `Perú Creadores`, `file: null` — sin escudo real todavía, ocultado con gracia por el `setCrest()` que ya existía). `GET /api/teams` ahora es theme-aware.
+
+**Master Control celeste + blanco, en vivo** (`master-control/css/master.css`, `master-control/js/main.js`): variables CSS (`--gold/-bright/-dim`, `--white`, `--grey/-dim`, `--black`, y nuevas `--surface-1/panel/input/select`, `--hover-bg`, `--border-1/2/3`) usadas en toda la hoja de estilos, pisadas por un bloque `body[data-theme='argentinaStreamers']` con la paleta pedida (`#6ECBF5` celeste, `#209DDB` azul, `#FFFFFF` blanco, fondos azul oscuro `#0A1420`/`#0D1A24`) — botones, bordes, estados activos, selector de módulo, inputs seleccionados, indicadores ON-AIR, hover y divisores se re-tematizan solos. Activado por `applyThemeUI()` vía `document.body.dataset.theme`, sin refresh, confirmado en ambas direcciones. GLA no cambia un solo píxel (valores por defecto idénticos a los hex que reemplazaron).
+
+**Indicador "ASSET: PENDIENTE"** (`master-control/js/main.js`, `updateAssetBadge()`): badge discreto junto al título del panel cuando `getModuleAssetStatus()` devuelve `pending` para el theme activo — nunca deshabilita TAKE ni ningún control. Oculto siempre para GLA.
+
+**Estructura de carpetas**: `assets/themes/argentina-streamers/{marcador,incidencias,var-replay,zocalos,prepartido,formaciones,estadisticas,resultados,posiciones,grupos,mosca,sponsors,escudos,fonts}/` creadas con `.gitkeep`, listas para recibir los archivos del diseñador — cargar un asset real es copiar el archivo + completar una línea en `shared/themes.js`, cero reprogramación.
+
+### Corregido
+
+**Catálogo de equipos GLA en la primera conexión de cada cliente** (`server/index.js`): el handler `wss.on('connection', ...)` mandaba el `TEAM_CATALOG_UPDATE` inicial con `getTeamCatalog()` sin pasar el theme activo, así que **toda** conexión nueva (recarga de página, pestaña nueva) recibía el catálogo de GLA aunque el theme activo fuera Argentina Streamers — pisando en silencio el catálogo correcto que la misma página ya había cargado un instante antes por `GET /api/teams`. Encontrado durante la verificación en vivo de esta entrega (el selector de equipo del Marcador mostraba equipos de GLA con "ARGENTINA STREAMERS" ya seleccionado arriba). Fix: `getTeamCatalog(getActiveThemeId())`.
+
+### Verificado (navegador real, Master Control + Program simultáneos, WS real, servidor reiniciado)
+
+- Flagship Marcador: LOCAL=Argentina Streamers, VISITANTE=Perú Creadores, 2-1, 2T, TAKE real → Program: `hasVideo:false`, texto "ARG · 2 - 1 · PER · 2T · 00:00", escudos ocultos con gracia (sin ícono roto).
+- TAKE sin asset, sobre WS real, confirmado además en: Tarjeta, Cambios, VAR Chequeo, Zócalo Compuesto (variante EQUIPOS, con el fix del logo condicional), Resultados, Posiciones Torneo, Grupos, Formación, Estrellas — los 9 módulos del checklist pedido, todos `isVisible:true`, `hasVideo:false`, `gfxBuilt:true`, contenido dinámico correcto.
+- Cambio GLA → Argentina Streamers → GLA sin refresh: confirmado en ambas direcciones (CSS, selector de equipos, draft de Master Control, badge de asset).
+- Regresión GLA: Marcador GLA (CF vs Brarg) TAKE real después de todos los cambios → `hasVideo:true`, `videoSrc` apunta al `.mp4` real de siempre, datos correctos.
+- `node --check` sin errores en todos los archivos JS tocados (renderers, `theme-assets.js`, `main.js` de Master Control y Program, `server/index.js`, `server/state.js`, `server/teams.js`). CSS verificado por balance de llaves/comentarios (bug real encontrado y corregido: un comentario con `--gold*/--white` cerraba el bloque de comentario CSS antes de tiempo por el `*/` accidental, dejando afuera toda la regla de re-theming).
+- `git status`: sin eliminaciones de assets/presets de GLA; sin commit ni push.
+
+## [Unreleased] - 2026-08-20 (85)
+
+### Agregado — Sistema multi-theme, primera etapa (LIVE GRAPHICS)
+
+Pedido explícito: "transformar el proyecto actual para que deje de estar atado exclusivamente a GLA y pueda utilizarse para distintas transmisiones". Sin commit ni push (pedido explícito). Detalle completo, arquitectura y plan de migración de renderers en [docs/THEMES.md](docs/THEMES.md).
+
+**Software renombrado a LIVE GRAPHICS**: título/header de Master Control (`master-control/index.html`), título de Program (`program/index.html`), título de `README.md`. GLA sigue existiendo intacto como *theme* (Gran Liga Relámpago) — `gla.futbol`, módulos de datos GLA, escudos, sponsors, identificadores internos (`teamId`, `moduleId`, etc.) no se tocaron.
+
+**Manifest central** (`shared/themes.js`, nuevo): `THEMES.gla` (name, `ready:true`, `dataSource:'gla-futbol'`, `assets` — espejo fiel de las 25+ rutas ya hardcodeadas en los renderers, relevadas por grep, sin mover ningún archivo físico) y `THEMES.argentinaStreamers` (`ready:false`, `dataSource:'manual'`, `assets:{}` deliberadamente vacío — no se inventó ni copió ningún asset). `getThemeAsset(themeId, moduleId, kind)`, `isThemeReady()`, `listThemes()`.
+
+**Theme activo, global, por WS** (`server/theme.js` nuevo + `server/index.js`): persistido en su propia clave (`data/active-theme.json`, nunca toca `master-control-state.json` — cero riesgo para datos GLA ya guardados). Mensaje `SET_THEME` (cliente→servidor) y `THEME_UPDATE` (servidor→todos los clientes, mismo `broadcast()` que ya usan TAKE/UPDATE/OUT); el theme activo viaja también en el `STATE_SNAPSHOT` inicial. `GET /api/themes` para debug/curl.
+
+**Master Control**: selector `THEME:` en el header, arriba de todo, visible en cualquier módulo (`master-control/index.html`, `master-control/css/master.css`, `master-control/js/main.js`). Banner "THEME EN PREPARACIÓN / ASSETS PENDIENTES" cuando el theme activo no está `ready`.
+
+**Program**: recibe `THEME_UPDATE`/`theme` del snapshot y lo guarda (`program/js/main.js`) — ningún renderer lo consume todavía (ver "alcance" abajo), así que esto no cambia nada de lo que se ve hoy.
+
+**Data source por theme**: las 9 rutas `*/sync-web` de `server/index.js` (goleadores/asistidores/jugadores/posiciones/posiciones-torneo/planteles/grupos/resultados/estrellas) ahora pasan por `requireGlaTheme()` — responden `409` con error claro si se llaman con un theme activo distinto de `gla`, en vez de pegarle a `gla.futbol` sin sentido.
+
+**Alcance explícito de esta entrega (pedido: "no mover todo a ciegas")**: los 25 renderers de `program/js/renderers/*.js` siguen usando su constante `VIDEO_SRC`/`IMG_SRC` hardcodeada de siempre — no se conectaron a `getThemeAsset()` todavía, y por lo tanto ningún asset físico se movió. La persistencia de AJUSTES VISUALES *por theme* (sección 9 del pedido) quedó diseñada en `docs/THEMES.md` (patrón `themeOverrides[themeId][moduleId]` como capa opcional sobre la data compartida) pero no implementada — requeriría además un draft de Master Control por theme, que sin un módulo real de Argentina Streamers para probarlo era trabajo especulativo con riesgo de regresión para GLA a cambio de cero beneficio inmediato.
+
+### Verificado (navegador real, Master Control + Program simultáneos, WS real, servidor reiniciado)
+
+- Servidor arranca sin errores; `GET /api/themes` devuelve los 2 themes + activo.
+- Master Control: título "LIVE GRAPHICS — Master Control", selector visible arriba de todo con GRAN LIGA RELÁMPAGO seleccionado, banner oculto (theme `ready`).
+- Con GLA activo: Marcador, VAR Chequeo (TAKE real → `.is-in` en Program → SACAR), Zócalo Largo Doble con sus 3 presets de texto y CORRECCIÓN DE TEXTOS intactos, ajustes de posición (X:0 Y:-4) preservados, sync real a `gla.futbol` (`POST /api/posiciones/sync-web` → `ok:true`, 11 filas).
+- Cambio a ARGENTINA STREAMERS (selector real): banner "THEME EN PREPARACIÓN / ASSETS PENDIENTES" aparece; `POST /api/posiciones/sync-web` → `409` bloqueado; Program (pestaña ya abierta, sin recargar) recibió el cambio en vivo (confirmado con una variable de depuración temporal expuesta y retirada después de verificar) y no se rompió.
+- Vuelta a GRAN LIGA RELÁMPAGO: banner desaparece, selector sincronizado, Program vuelve en vivo sin recargar, datos/config de GLA (equipos del Marcador, presets) intactos.
+- Persistencia del theme activo confirmada tras reinicio completo del servidor (`gla` sobrevivió).
+- `node --check` sin errores en los 8 archivos nuevos/tocados. `git status`: sin eliminaciones, todo aditivo; sin commit ni push.
+
+## [Unreleased] - 2026-08-20 (84)
+
+### Corregido — CORRECCIÓN DE TEXTOS: causa real de "no corrige"
+
+Reporte: "el botón CORREGIR existe pero NO corrige". Auditoría completa del flujo (click → handler → payload → endpoint → respuesta → inputs) en `master-control/js/text-correction-panel.js` y `server/textCorrection.js`.
+
+**Causa exacta**: el mecanismo (botón → fetch → `POST /api/correct-text` → respuesta JSON → inputs) funcionaba correctamente de punta a punta — confirmado con logging temporal `{mainBefore, subBefore, requestPayload, responseStatus, responseBody, mainAfter, subAfter}` agregado en `text-correction-panel.js` y corrido desde el botón real (no simulado): request 200, `content-type: application/json`, body `{ok:true, main, sub}` correcto, inputs actualizados. El problema NO era el flujo — era el **diccionario de corrección, demasiado angosto** ("lista de reemplazos mínima", exactamente lo que pediste sacar): el test obligatorio 3 ("MIERCOLES" → "MIÉRCOLES") fallaba porque "miércoles" simplemente no estaba en la lista de palabras de la entrega anterior, y esa clase de hueco se repetía con cualquier palabra común no anticipada a mano (ej. "informacion", "situacion", "generacion" tampoco corregían).
+
+**Fix real (no un parche puntual)**: `server/textCorrection.js` reescrito con dos capas:
+1. Diccionario ampliado (días de la semana con miércoles, familia próximo/último/único, vocabulario técnico/adjetivos comunes con tilde fija).
+2. **Reglas de sufijo regulares**, nuevas: cualquier palabra que termine en "cion"/"sion" sin tilde la necesita SIEMPRE en español (a diferencia de esta/está, mas/más, que si son ambiguas y siguen excluidas a propósito) — esto cubre de una sola vez decenas de palabras reales del dominio (posición, definición, información, situación, clasificación, generación, selección, producción, dirección, atención, televisión, decisión, revisión, expresión, extensión, tensión, ocasión...) sin necesidad de listarlas todas a mano. Se agregó también "logia"→"logía" y "grafia"→"grafía" por el mismo criterio.
+3. `master-control/js/text-correction-panel.js`: guard `if (button.disabled) return;` al inicio del handler de click, para blindar contra doble-disparo por doble-click mientras ya hay un pedido en curso (encontrado durante la auditoría, endurecido preventivamente aunque no era la causa del bug reportado).
+
+Sigue siendo un corrector LOCAL por diccionario (no IA — sin API configurada en el proyecto), pedido explícitamente habilitado si "corrige bien español y acentos"; con las reglas de sufijo la cobertura real sube considerablemente sin dejar de ser 100% determinístico y auditable.
+
+### Verificado (los 5 tests obligatorios, desde el botón CORREGIR real en el navegador, servidor reiniciado)
+
+| Entrada | Resultado |
+|---|---|
+| ESTE SABADO SE JUEGA LA GRAN FINAL | ESTE SÁBADO SE JUEGA LA GRAN FINAL |
+| DOU QUIERE QUEDARCE CON LA PUNTA | DOU QUIERE QUEDARSE CON LA PUNTA |
+| LA PROXIMA FECHA SE JUEGA EL MIERCOLES | LA PRÓXIMA FECHA SE JUEGA EL MIÉRCOLES |
+| BRARG VS NS TEAM | BRARG VS NS TEAM (sin cambios) |
+| GLA / VAR / DOU | GLA / VAR / DOU (sin cambios) |
+
+Probado en longDouble con MAIN+SUB juntos y en shortSimple (un solo campo). Con longDouble AL AIRE: CORREGIR cambió el panel (SÁBADO/QUEDARSE) mientras Program siguió mostrando el texto viejo sin corregir; recién al apretar ACTUALIZAR, Program se actualizó. `node --check` sin errores. Logging temporal de auditoría retirado después de confirmar la causa; el guard contra doble-click se dejó (mejora real, no debug). Estado de producción restaurado (longDouble a sus valores originales y fuera de aire; shortSimple, que nunca estuvo al aire durante la prueba, quedó con su campo de texto vacío).
+
+## [Unreleased] - 2026-08-19 (83)
+
+### Corregido — AJUSTES VISUALES (posición/tamaño) ahora son live en Program, sin ACTUALIZAR
+
+Pedido explícito: "cuando toco flechitas/+/− el cambio tiene que verse EN VIVO INMEDIATO... ACTUALIZAR sigue existiendo para contenido/datos, pero los AJUSTES VISUALES deben ser live. No mezclar ambas cosas." Solo se tocaron `program/js/main.js` y `master-control/js/main.js` (arquitectura centralizada — nunca renderers ni paneles individuales).
+
+**Causa real**: cualquier UPDATE mientras un módulo está al aire y no es un Take/ACTUALIZAR explícito se ignoraba por completo en Program (`if (isOn && msg.isAutoSave && !msg.isExplicitUpdate) return;`) — para no repintar tipeo a medio escribir. Eso bloqueaba TAMBIÉN composición y textAdjust, que dependían del mismo gate.
+
+**Fix**: `program/js/main.js` ahora distingue por NOMBRE de campo (convención ya usada en todo el proyecto: `*OffsetX`/`*OffsetY`/`*Scale`, `textAdjust`) qué es ajuste visual — `mergeVisualFields()` combina el ÚLTIMO contenido confirmado (Take/ACTUALIZAR) con los valores visuales más recientes, y se re-invoca el renderer del módulo con esa mezcla (nunca con contenido sin confirmar). `master-control/js/main.js`: debounce de autoguardado bajado de 350ms a 80ms (igual al ritmo de auto-repetición de los botones) para que el dato llegue rápido — Program sigue sin aplicar contenido hasta Take/ACTUALIZAR.
+
+**Auditado módulo por módulo, live en navegador real** (Master Control + Program simultáneos, WS real, no simulado): **longDouble** (composición + textAdjust título/sub — vía field-editors.js), **varCheck** (dos composiciones independientes, `motivoOffsetX/Y/Scale`), **placaLInfo** (offset/scale por zócalo, drag+flechas), **shortDouble** (textAdjust directo, sin field-editors.js) — 4 mecanismos distintos, todos OK: live inmediato, contenido sin confirmar nunca se filtra, `ACTUALIZAR` aplica limpio sin saltos, persiste tras refresh de página y tras reinicio completo del servidor. El resto de los 29 módulos (scoreboard, tarjeta, cambios, marcadorPenales, formacionEquipos, estrellas, grupos, posiciones, sideTable, performance-table, resultados, etc.) usan estos MISMOS 4 mecanismos sin variantes nuevas (confirmado por grep exhaustivo de cada call site de `renderTextAdjustControl`/`renderCompositionControl`/`mountAdjustControl`) — no se click-probó cada campo individual de cada uno (100+ combinaciones), pero la corrección es estructural (por nombre de campo, no por módulo) y aplica igual a todos.
+
+**Observación (no corregida, fuera de alcance, pre-existente)**: VAR Chequeo aplica `compositionOffsetX/Y/Scale` dos veces (una vez genérico sobre `.content`, otra vez propia sobre `.ov-var-group1` dentro del renderer) — desplazamiento aditivo, no simple. Esto ya pasaba antes de esta entrega en cualquier Take/ACTUALIZAR (mi cambio solo lo hizo visible más rápido, no lo causó). Se deja documentado, no se tocó sin que se pida.
+
+### Eliminado — GENERADOR DE ZÓCALOS (completo)
+
+Pedido explícito: "Quiero sacar completamente la lógica actual... No la quiero más." Eliminado en su totalidad:
+- `master-control/js/lower-third-generator-panel.js` (borrado)
+- `server/lowerThirdGenerator.js` (borrado)
+- `server/lowerThirdContext.js` (borrado — usado únicamente por el generador, confirmado por grep antes de borrar)
+- Rutas `GET /api/lower-thirds/context`, `POST /api/lower-thirds/context/refresh`, `POST /api/lower-thirds/generate` (removidas de `server/index.js`)
+- `lowerThirdGeneratorDefaults()` y sus 5 usos (`lowerThirdGenerator: ...` en shortSimple/shortDouble/longDouble/zocaloCompuesto/placaLInfo) removidos de `shared/modules.js`
+- Los 5 `renderLowerThirdGenerator(...)` en `master-control/js/main.js` reemplazados por `renderTextCorrection(...)` (ver abajo)
+
+El sistema normal de presets (`renderPresetsControl`/`savePresetEntry`, `textPresets`/`presets` por zócalo) no se tocó — sigue exactamente igual.
+
+### Agregado — CORRECCIÓN DE TEXTOS
+
+Reemplaza al generador en los mismos 5 módulos. `server/textCorrection.js`: `correctLowerThirdText({ main, sub })`, función ÚNICA y compartida (no una implementación por zócalo). Corrector LOCAL por diccionario, no un LLM — no hay ninguna API de IA configurada en este proyecto (confirmado en una entrega anterior) y el pedido explícitamente habilita esta vía si corrige bien español y acentos. Deliberadamente conservador: excluye pares ambiguos por rol gramatical (esta/está, mas/más, si/sí — dependen del contexto, un diccionario ciego los rompería a veces) y nunca toca palabras que no están en el diccionario, por lo que nombres de equipos/jugadores/GLA/VAR quedan intactos automáticamente. Nueva ruta `POST /api/correct-text`. Nuevo panel compartido `master-control/js/text-correction-panel.js` (`renderTextCorrection`), montado en shortSimple/shortDouble/longDouble/zocaloCompuesto/placaLInfo (Placa L Info corrige el ZÓCALO 1). El botón CORREGIR solo escribe en los inputs del panel (vía los mismos setters que ya usa "CARGAR" de presets) — nunca manda nada al aire; si el fetch falla, el texto original queda intacto (nunca se vacía un campo).
+
+**Verificado**: los 3 ejemplos pedidos, exactos — "ESTE SABADO SE JUEGA LA GRAN FINAL" → "...SÁBADO..."; "DOU QUIERE QUEDARCE CON LA PUNTA" → "...QUEDARSE..."; "PROXIMA FECHA" → "PRÓXIMA FECHA". MAIN+SUB juntos (longDouble) y de un solo renglón (shortSimple) probados. Probado en navegador real con longDouble AL AIRE: CORREGIR cambió el campo del panel; Program siguió mostrando el texto viejo sin tilde hasta clic en ACTUALIZAR, momento en que se actualizó limpio. `node --check` sin errores en todos los archivos tocados/creados.
+
+## [Unreleased] - 2026-08-19 (82)
+
+### Corregido — ACERCA DE dejaba de mandar cuando usaba "LOCAL"/"VISITANTE" en vez del nombre del equipo
+
+Reporte urgente del usuario: `ACERCA DE = "el local esta ganando 3 a 0 y se va al entretiempo, por ahora queda puntero"` generaba **"NADIE LOGRA ROMPER EL CERO"**, contradiciendo el 3-0 escrito. Solo se tocó `server/lowerThirdGenerator.js` (más una línea de debug temporal en `server/index.js`, agregada, usada para verificar y ya retirada).
+
+**1) De dónde salía "NADIE LOGRA ROMPER EL CERO"**: de `factsDrawCandidates()`, la MISMA función de esta entrega (no había un "generador viejo" corriendo en paralelo — un solo motor, `generateLowerThird()`, siempre estuvo activo). No es una frase suelta compitiendo con ACERCA DE: es la variante de empate para "entretiempo, marcador 0-0", y se disparó porque el propio flujo de `about` armó, por error, un empate 0-0.
+
+**2) Qué lógica vieja eliminé — causa raíz real, no un "if" nuevo encima**: `teamNeedles(team)` (la función que decide qué palabras identifican a cada equipo dentro del texto) solo conocía el **nombre real** del equipo y su abreviatura (ej. "BRARG"/"BRA"). Nunca reconoció los ROLES con los que el operador realmente escribe ("EL LOCAL", "EL VISITANTE", "EQ1", "EQ2") ni verbos en gerundio ("ESTÁ GANANDO", solo tenía "GANA"/"GANÓ"). Como "LOCAL" no matcheaba contra ningún equipo, la detección de ganador fallaba en seco → `winner = null` → el código caía a su rama "ACERCA DE no trae marcador propio, uso el Marcador en vivo" → ese Marcador estaba en 0-0 real → **pisó el 3-0 que el operador acababa de escribir**. Ese fallback (consultar el Marcador en vivo) es legítimo únicamente cuando ACERCA DE de verdad no trae ningún número; el bug es que un fallo de reconocimiento de "LOCAL" hacía que un ACERCA DE **con** marcador cayera igual en esa rama. Reescribí la resolución de equipo desde la raíz, no agregué una excepción:
+
+- `teamNeedles(team, role)` ahora entiende ROL explícito: `role: 'home'` agrega `LOCAL/EQ1/EQ 1` a los needles de ese equipo; `role: 'away'` agrega `VISITANTE/EQ2/EQ 2`. Se pasa siempre explícito (nunca se infiere) para no confundir un equipo real llamado, por ejemplo, "Local FC".
+- Verbos ampliados: `GANA|GANÓ|SE IMPONE|SE LLEVA|MANDA|SE QUEDA CON|ESTÁ GANANDO|VA GANANDO` (antes faltaban las formas en gerundio, que es como escribe la mayoría de los operadores en vivo).
+- **La condición que de verdad cierra el bug**: el Marcador en vivo ahora solo se consulta si ACERCA DE no trae NINGÚN número (`!factsFromText.score`) NI ninguna afirmación de empate (`!factsFromText.isDraw`) — un marcador escrito por el operador, atado o no a un equipo identificable, ya nunca se reemplaza por el marcador real.
+- Dos redes de seguridad nuevas para que ACERCA DE jamás quede sin efecto ni caiga al pool de datos de la web: `factsRawScoreCandidates()` (marcador con número pero sin ganador identificable — caso ya cerrado por los dos puntos de arriba, pero cubierto igual) y `factsQualitativeDrawCandidates()` (empate afirmado solo con palabras, ej. "LO EMPATÓ", sin dígitos — encontrado en la propia verificación de este fix).
+- Nuevo: si el operador afirma que con el resultado "queda puntero"/"líder" (`PUNTERO|PUNTA|LÍDER|LIDERA` en el texto), esa afirmación se redacta literalmente en TODAS las variantes del tramo de momento correspondiente — antes se ignoraba directamente (solo existía un enriquecimiento equivalente basado en la posición REAL en la tabla, que es un dato distinto).
+
+**Sigue habiendo un solo motor de generación.** `generateLowerThird()` es el único punto de entrada; `teamsCandidates()`/`generalCandidates()` (los datos de la web) solo se usan cuando ACERCA DE está vacío o pide una categoría de dato genérica sin nombrar equipo ni hecho propio (`genericFocusOnly`) — nunca compiten con un ACERCA DE que ya afirmó un resultado.
+
+### Verificado (debug temporal agregado y confirmado, después retirado)
+
+Se agregó `console.log({ mode, about, homeTeam, awayTeam })` en `server/index.js` antes de llamar a `generateLowerThird`. Confirmado en el log real del servidor:
+```
+[GLA][DEBUG generateLowerThird input] {"mode":"CURRENT_MATCH","about":"el local esta ganando 3 a 0 y se va al entretiempo, por ahora queda puntero","homeTeam":"Brarg","awayTeam":"NS Team"}
+```
+`about` llegaba exacto, sin recortes ni pérdidas — el problema nunca fue transporte del dato, era la resolución de "LOCAL" dentro del generador. Log retirado tras confirmar.
+
+**Test de aceptación 1** (LOCAL=Brarg, VISITANTE=NS Team, Marcador en vivo deliberadamente en 0-0 para probar que no se filtra): ACERCA DE = "el local esta ganando 3 a 0 y se va al entretiempo, por ahora queda puntero", GENERAR ×5:
+
+| variantIndex | MAIN | SUB |
+|---|---|---|
+| 0 | BRARG SE VA PUNTERO AL DESCANSO | GANA 3-0 A NS TEAM Y QUEDA COMO LÍDER MOMENTÁNEO |
+| 1 | BRARG MANDA AL DESCANSO Y ES PUNTERO | SE IMPONE 3-0 A NS TEAM Y SE SUBE A LA PUNTA |
+| 2 | BRARG SE LLEVA EL PRIMER TIEMPO Y LA PUNTA | GOLEA 3-0 A NS TEAM Y QUEDA PUNTERO POR AHORA |
+| 3 | PUNTERO AL ENTRETIEMPO | BRARG GANA 3-0 A NS TEAM Y SE SUBE A LA PUNTA MOMENTÁNEAMENTE |
+| 4 | NOCHE PERFECTA PARA BRARG | GANA 3-0 A NS TEAM, ES ENTRETIEMPO Y QUEDA COMO LÍDER |
+
+Las 5 conservan: gana BRARG (LOCAL) ✓, 3-0 ✓, entretiempo ✓, puntero/líder ✓. Cero variantes con 0-0, empate, "por comenzar" o tema no pedido.
+
+**Test de aceptación 2**: ACERCA DE = "el visitante acaba de empatar 2 a 2" → las 3 variantes muestran a BRARG (LOCAL) y NS TEAM (VISITANTE) igualados 2-2 al entretiempo — habla del 2-2 del visitante tal como se pidió.
+
+**Regresión** (para no romper lo ya validado en las entradas 79-81): "ENTRETIEMPO VAN 3 A 1 GANA BRARG" (nombre real, sin rol) sigue funcionando igual; narrativa pura con Marcador en vivo ("HABLA DE QUE BRARG ESTÁ HACIENDO UN PARTIDAZO") sigue fusionando con el marcador real; "HABLÁ DE LOS MEJORES DE CADA EQUIPO" y GENERAL "PELEA POR GOLEADORES" siguen yendo a su categoría de dato; ACERCA DE vacío sigue decidiendo una historia. Encontrado además en esta verificación (no pedido, mismo tipo de bug): "EL VISITANTE LO EMPATÓ" con Marcador real 3-1 antes anunciaba un ganador falso — corregido con `factsQualitativeDrawCandidates`. Probado también `"EQ1 GANA 2 A 1"` y `"EL VISITANTE VA GANANDO 1 A 0"` (roles + verbo en gerundio): ambos resuelven al equipo correcto.
+
+`node --check` sin errores. Estado de Marcador de producción (LOCAL=CF TEAM, VISITANTE=Brarg) restaurado exacto al terminar.
+
+## [Unreleased] - 2026-08-19 (81)
+
+### Cambiado — GENERADOR DE ZÓCALOS: rehecho completo, interfaz mínima
+
+Pedido explícito del usuario: "la lógica actual del Generador de Zócalos no sirve. Quiero que la rehagas desde cero, simple y clara... NO quiero más modos raros, estadísticas separadas, prompts secundarios ni comportamientos ambiguos". Reemplazo completo de la interfaz y de la firma pública del backend, con arquitectura simple pedida literalmente:
+
+```js
+generateLowerThird({ mode, about, homeTeam, awayTeam, glaContext })
+```
+
+**Interfaz nueva** (`master-control/js/lower-third-generator-panel.js`, reescrito completo): `ENCUENTRO ACTUAL / GENERAL` → `ACERCA DE` (textarea) → `GENERAR / GENERAR OTRO / GUARDAR COMO PRESET` → propuesta (MAIN/SUB). Se eliminaron: selector de DESTINO, TIPO/EQUIPOS con caja de equipos visible, LIGA/TORNEO, botón ACTUALIZAR DATOS con estado de última actualización, evidencia y advertencias visibles, botón USAR TEXTO. Toda esa lógica de datos sigue viva en el backend cuando hace falta; ya no se expone al operador.
+
+**Backend** (`server/lowerThirdGenerator.js`, reescrito): `mode` pasa a ser literalmente `'CURRENT_MATCH'` o `'GENERAL'` (antes `'teams'`/`'generic'`). `about` (antes `manualContext`) sigue siendo prioridad 1 absoluta — toda la lógica de extracción de hechos en vivo, fusión con el Marcador real y enfoque narrativo de las entradas 79/80 se conserva intacta, solo re-cableada a la nueva firma. Se eliminó `buildLowerThirdPrompt`/`LOWER_THIRD_EDITORIAL_PROMPT` (stub de un adaptador LLM que nunca se usó en ningún lado del repo — confirmado por grep). `server/lowerThirdContext.js` sin cambios (`marcadorEnVivo` de la entrada 80 se sigue usando igual).
+
+**`server/index.js`**: `POST /api/lower-thirds/generate` ahora usa siempre `fuente: 'liga'` (sin selector visible) y hace **un** refresh automático de gla.futbol solo si todavía no hay ningún snapshot cacheado (primer uso), en vez de depender de un botón manual — reutiliza `refreshCurrentGLAContext()` ya existente, sin scraping nuevo.
+
+**GUARDAR COMO PRESET, usando el sistema de presets existente (pedido explícito: "no crear un sistema paralelo")**: se extrajo `savePresetEntry(data, presetKey, fields, type)` de `presets-helper.js` (antes vivía inline dentro del handler del botón "GUARDAR PRESET COMPLETO") — ahora es la ÚNICA función que crea presets en todo el sistema, tanto para los botones de siempre como para el nuevo botón del generador. `master-control/js/main.js`: cada uno de los 5 módulos (shortSimple/shortDouble/longDouble/zocaloCompuesto/placaLInfo) mapea `{main, sub}` a sus propios nombres de campo reales (`text` / `name+role` / `line1+line2` / `texto1+texto2` / `text` en `zocalo1.presets`) y llama `savePresetEntry` — la propuesta aparece de inmediato en la lista normal de presets del módulo, sin aplicar el texto en vivo (el operador la aplica después con el botón CARGAR de siempre, ya existente).
+
+**Simplificación deliberada, declarada** (no pedida punto por punto pero necesaria para que "nada más" funcione de verdad):
+- Placa L Info tiene 4 zócalos independientes con presets propios (no uno solo por módulo); sin selector de DESTINO en la interfaz nueva, GUARDAR COMO PRESET usa siempre el ZÓCALO 1.
+- `fuente` queda fija en `'liga'` (la competencia usada en todos los ejemplos de esta tarea); Torneo sigue disponible en el backend pero sin toggle en la interfaz.
+- Se ensancharon los patrones de intención/momento para cubrir ejemplos nuevos del pedido: "partido" ahora matchea "partidazo"; "fecha" ahora matchea "se viene"/"finde"/"fin de semana"; "previa" ahora matchea "se viene"/"que viene"/"por jugarse" (antes solo "previa"/"antes del partido").
+
+### Corregido (bug real encontrado probando en el navegador real, no en la API)
+
+Un marcador **realmente empatado** en vivo (ej. 0-0 con el partido ya arrancado) ignoraba por completo el enfoque narrativo de ACERCA DE: "HABLA DE QUE BRARG ESTÁ HACIENDO UN PARTIDAZO" con Marcador real CF TEAM 0-0 Brarg devolvía "PARTIDO IGUALADO / CF TEAM Y BRARG VAN 0-0..." — un texto genérico que no reflejaba en nada lo que pidió el operador. Causa: `factsDrawCandidates()` nunca recibió el enfoque narrativo (`detectNarrativeFocus`) que `factsWinnerCandidates()` sí usa desde la entrada 80 — un empate real siempre caía a la redacción genérica sin importar qué tan claro fuera el pedido del operador. Agregadas variantes narrativas al camino de empate ("BRARG HACE TODO MEJOR / DOMINA PERO EL MARCADOR SIGUE 0-0 ANTE CF TEAM", "BRARG SE LO MERECE MÁS / JUEGA UN PARTIDAZO PERO POR AHORA VAN 0-0"), priorizadas primero igual que en el camino de ganador. Encontrado y corregido en el propio navegador real (Master Control, módulo Zócalo Largo Doble, Marcador de producción CF TEAM/Brarg), no con datos simulados.
+
+### Verificado
+
+**API (BRARG vs NS TEAM, sin marcador propio en vivo — todo sale de ACERCA DE, caso exacto del punto 9 del pedido):**
+
+| ACERCA DE | Resultado |
+|---|---|
+| "ENTRETIEMPO VAN 3 A 1 GANA BRARG" (3 variantes) | BRARG SE LLEVA EL PRIMER TIEMPO / MANDA AL DESCANSO / SE VA ARRIBA AL VESTUARIO — las 3 con entretiempo + BRARG + 3-1 + NS TEAM |
+| GENERAR OTRO ×2 más | mismas 3 redacciones repitiendo el ciclo — nunca cambia de tema |
+| "HABLÁ DE LOS MEJORES DE CADA EQUIPO" | LA FIGURA DEL PARTIDO / FACU SE DESTACA EN NS TEAM — cambia de tema correctamente |
+| GENERAL — "PELEA POR GOLEADORES" | EL GOLEADOR DE GLA / ZURDO, ARRIBA DE LA TABLA CON 13 GOLES — usa la tabla correspondiente |
+| GENERAL — "LO QUE SE VIENE ESTE FINDE" | ASÍ ESTÁ HOY LA COMPETENCIA / LIGA GLA: GAMBETA MANDA CON 15 PUNTOS |
+| GENERAL — "HABLÁ DE LA PUNTA DEL CAMPEONATO" | LA PUNTA TIENE DUEÑO / GAMBETA LIDERA CON 15 PUNTOS |
+| CURRENT_MATCH — "HABLÁ DEL PARTIDAZO QUE SE VIENE" (sin marcador en vivo) | SE VIENE UN CRUCE CLAVE / BRARG Y NS TEAM, DOS EQUIPOS QUE VAN POR TODO — no inventa un resultado que no existe |
+| CURRENT_MATCH / GENERAL sin ACERCA DE | decide una historia real con los datos disponibles, sin cambios respecto al comportamiento ya validado en entradas anteriores |
+
+**Navegador real (Master Control, módulo Zócalo Largo Doble, servidor reiniciado, Marcador de producción CF TEAM vs Brarg, 0-0, 1T):** interfaz visible exactamente como se pidió (`ENCUENTRO ACTUAL`/`GENERAL`, `ACERCA DE`, `GENERAR`/`GENERAR OTRO`/`GUARDAR COMO PRESET`, propuesta MAIN/SUB — nada más). ENCUENTRO ACTUAL + "HABLA DE QUE BRARG ESTA HACIENDO UN PARTIDAZO" → GENERAR → "BRARG HACE TODO MEJOR / DOMINA PERO EL MARCADOR SIGUE 0-0 ANTE CF TEAM" (bug de arriba, encontrado y corregido en este mismo paso) → GENERAR OTRO → "BRARG SE LO MERECE MÁS / JUEGA UN PARTIDAZO PERO POR AHORA VAN 0-0" (mismo tema) → GUARDAR COMO PRESET → apareció de inmediato como primer ítem en "PRESETS DE TEXTO (ZÓCALO LARGO DOBLE)", con el mismo formato y controles (CARGAR/RENOMBRAR/ELIMINAR) que los presets ya existentes. El diálogo nativo `prompt()` del navegador de prueba automatizado no está soportado (limitación ya documentada de este entorno, no del código — el mismo `prompt()` lo usan hace tiempo los botones GUARDAR PRESET COMPLETO/MAIN/SUB sin problema en un navegador real); se confirmó el flujo completo interceptando `window.prompt`/`window.confirm` temporalmente solo para la verificación.
+
+Limpieza post-verificación: preset de prueba eliminado, campo ACERCA DE vaciado; el Marcador de producción (LOCAL=CF TEAM, VISITANTE=Brarg) nunca se modificó en esta verificación. `node --check` sin errores en los 5 archivos tocados.
+
+## [Unreleased] - 2026-08-19 (80)
+
+### Cambiado — GENERADOR DE ZÓCALOS: CONTEXTO deja de depender de que el operador retipee estado/resultado
+
+Pedido explícito del usuario tras probar la entrada 79: "el generador solo funciona correctamente cuando completo ESTADO y RESULTADO TEMPORAL. Eso confirma que CONTEXTO no está siendo tratado como una instrucción real". Preguntó también si el generador usa un LLM real o templates/reglas locales — **respuesta directa: usa 100% templates/reglas locales, no hay ningún LLM ni API externa configurada** (confirmado por `.env.example` y por ausencia de cualquier `ANTHROPIC_API_KEY`/`OPENAI_API_KEY` en el repo). Eso es justamente la causa de fondo del problema, ver abajo. Se tocaron `server/lowerThirdContext.js` y `server/lowerThirdGenerator.js`.
+
+**Causa real**: la entrada 79 extraía momento y marcador **solo** por regex sobre el texto libre de CONTEXTO. Frases puramente narrativas como "HABLÁ DEL GRAN PARTIDO DE BRARG" no contienen ningún patrón reconocible (sin verbo GANA/PIERDE, sin número de marcador) — para un sistema de templates/reglas (sin LLM que "entienda" la intención), eso significa cero hechos extraídos, y el generador caía al pool de datos de la web. Pedirle al operador que retipeara el estado y el resultado DENTRO del mismo texto libre para que la regex los encontrara era la única forma de que funcionara — exactamente el síntoma reportado.
+
+**Fix — dejar de pedirle al operador algo que el sistema ya tiene**: el módulo Marcador (`scoreboard`) YA registra el momento real (`period`: 1T/2T/ET) y el resultado real (`scoreA`/`scoreB`, ya atados a LOCAL/VISITANTE sin ambigüedad) cada vez que el operador los actualiza para el zócalo de Marcador. No hay motivo para que el operador los vuelva a escribir en CONTEXTO.
+
+- `server/lowerThirdContext.js`: el snapshot ahora expone `marcadorEnVivo: { period, scoreA, scoreB }`, leído en vivo del estado real del módulo Marcador (mismo patrón ya usado para `equiposSeleccionados`).
+- `server/lowerThirdGenerator.js`:
+  - `derivePeriodMomento(period)`: traduce `1T/2T/ET` (o cualquier texto personalizado del botón PERSONALIZADO) al mismo vocabulario de momento que ya usaba la extracción de CONTEXTO.
+  - `generateLowerThird()` ahora **fusiona** hechos: momento y resultado explícitos en CONTEXTO siguen ganando siempre (CONTEXTO manda); si el operador no los escribió, se completan automáticamente con el Marcador en vivo. Así CONTEXTO puede ser 100% narrativo sin perder el hecho concreto.
+  - Nueva `detectNarrativeFocus()`: detecta qué equipo es el "protagonista" (bien encarado: "partidazo", "domina", "está intratable"...) o el que "sufre" (mal encarado: "no encuentra respuestas", "no puede"...) según cómo lo describe el operador, atribuyendo cada calificativo al equipo correcto aunque ambos se nombren en la misma frase. Ese enfoque narrativo ahora se **redacta explícitamente** en MAIN/SUB (ver ejemplos abajo) — antes se detectaba tono pero nunca se usaba para nada.
+  - El tono "picante" (ya detectado desde la entrada 78, pero inerte) ahora también agrega una variante de redacción más filosa.
+  - Nuevo filtro `genericFocusOnly`: si CONTEXTO no nombra a ningún equipo puntual, no trae marcador/jugador/incidente propio, y matchea una intención de dato genérica (ej. "HABLÁ DE LOS MEJORES JUGADORES DE LOS DOS EQUIPOS") — se respeta como pedido de categoría de dato tal cual (vía 2/3), sin forzar la fusión con el Marcador en vivo, porque ahí el operador realmente quiere cambiar de tema.
+
+### Corregido (bugs reales encontrados en la propia verificación, no en revisión de código)
+
+- `extractManualFacts()` y las funciones `facts*Candidates` referenciaban `textMentionsTeam()`, una función que nunca se había definido — error en tiempo de ejecución (`ReferenceError`) en cualquier request con CONTEXTO no vacío. Agregada.
+- Una variable local `facts` quedó referenciada fuera de su alcance real en `generateLowerThird()` (debía ser `factsFromText`) — mismo tipo de error. Corregido.
+- Ambos encontrados recién al correr las pruebas reales contra el servidor (no en `node --check`, que no detecta referencias indefinidas en rutas no ejecutadas), corregidos y re-verificados.
+
+### Verificado (servidor real reiniciado, Marcador LOCAL=Brarg/VISITANTE=NS Team, ET, 3-1, cargado en el Marcador real — no en CONTEXTO — para simular un partido en vivo; restaurado a producción al terminar)
+
+| CONTEXTO | usedManualFacts | MAIN | SUB |
+|---|---|---|---|
+| "HABLÁ DEL GRAN PARTIDO DE BRARG" | true | BRARG ESTÁ INTRATABLE | HACE UN PARTIDAZO Y GANA 3-1 A NS TEAM |
+| "HABLÁ DE LOS MEJORES JUGADORES DE LOS DOS EQUIPOS" | **false** (va a la categoría de dato "mejores", no al marcador) | LA FIGURA DEL PARTIDO | FACU SE DESTACA EN NS TEAM |
+| "HACÉ ALGO PICANTE SOBRE EL 3-1" | true | BRARG NO TIENE PIEDAD | LE PASA POR ARRIBA A NS TEAM, 3-1 |
+| "HABLÁ DE QUE BRARG ESTÁ HACIENDO UN PARTIDAZO Y QUE NS TEAM NO ENCUENTRA RESPUESTAS" (ejemplo textual del usuario) | true | BRARG HACE UN PARTIDAZO | GANA 3-1 Y NS TEAM NO ENCUENTRA RESPUESTAS |
+
+Las 4 respuestas cambian claramente según CONTEXTO, tal como se pidió. GENERAR OTRA sobre el caso compuesto (variantIndex 0/1/2) devolvió 3 redacciones distintas de LA MISMA historia (BRARG ganando 3-1 con el enfoque narrativo pedido), sin cambiar de tema. Se corrió de nuevo el caso obligatorio de la entrada 79 ("ENTRETIEMPO VAN 3 A 1 GANA BRARG") y el caso sin CONTEXTO: ambos dieron exactamente el mismo resultado que antes (sin regresiones). `node --check` sin errores en ambos archivos.
+
+## [Unreleased] - 2026-08-19 (79)
+
+### Cambiado — GENERADOR DE ZÓCALOS: "EL CONTEXTO MANDA"
+
+Pedido explícito del usuario tras rechazar el replanteo anterior (entrada 78): "el generador no le está dando suficiente prioridad a lo que escribo en CONTEXTO... no quiero que ignore mi contexto para hablar de otra cosa porque encontró una estadística interesante". Se cambió la regla principal: CONTEXTO pasa a ser la instrucción editorial **prioridad 1**, por delante de EQUIPOS/MODO (2), datos de gla.futbol (3) y tono (4). Solo se tocó `server/lowerThirdGenerator.js`.
+
+**Causa real de que CONTEXTO perdiera prioridad**: no era el bug de mayúsculas de la entrada 78 (ese seguía corregido y funcionando). Era arquitectónico — el generador anterior solo usaba CONTEXTO para **reordenar** una lista de candidatos armados 100% con datos de la web (`detectIntents()` mapeaba la frase a una categoría de dato — tabla/goleadores/asistidores/etc. — y esa categoría pasaba primero). Nunca leía **hechos concretos** de la frase (un marcador, quién gana, un jugador). Por eso "ENTRETIEMPO VAN 3 A 1 GANA BRARG" no coincidía con ninguna categoría de dato y el generador caía al candidato por defecto ("SE VIENE UN CRUCE CLAVE"), ignorando por completo lo que el operador escribió.
+
+**Cómo se cambió la construcción**:
+- Nueva `extractManualFacts(manualContext, {home, away})`: interpreta el texto libre como un prompt y extrae — momento (previa/primer_tiempo/entretiempo/segundo_tiempo/en_juego/final), marcador si fue escrito, equipo que gana/pierde (matcheando nombre/abreviatura contra LOCAL/VISITANTE del Marcador), empate, jugador mencionado ("EL 9 DE BRARG" o "EL ARQUERO" — si hay dorsal + equipo, se resuelve contra el plantel real cargado, nunca se inventa un nombre), incidente (expulsado/lesión/debut/remontada/demora), y enfoque/tono pedido (reutiliza `detectIntents()`).
+- Nuevas funciones de candidatos `factsWinnerCandidates`, `factsDrawCandidates`, `factsPlayerCandidates`, `factsEventOnlyCandidates`: arman MAIN+SUB directamente desde esos hechos, con 2-4 variantes de **redacción de la misma historia** cada una (no de temas distintos). Un dato de la web solo se suma si es real y directamente relevante (ej. posición en la tabla del equipo que gana, solo si está en el top 3) — nunca estadística de relleno.
+- `generateLowerThird()` reescrito: si `extractManualFacts()` encuentra algún hecho, el pool de candidatos es **exclusivamente** el de hechos (no se mezcla con la lista de datos de la web) — así "GENERAR OTRA" (que solo cambia `variantIndex % candidates.length`) recorre variantes de la misma historia, nunca cambia de tema. Si CONTEXTO no tiene hechos (vacío, o solo pide un enfoque sin dato concreto — ej. "HABLÁ DE LOS GOLEADORES"), se cae al comportamiento anterior (prioridad 2/3: EQUIPOS/MODO + web, reordenado por intención).
+- La respuesta ahora incluye `usedManualFacts: true/false` para que el panel (si se quisiera en el futuro) pueda distinguir cuándo el titular vino del contexto en vivo vs. de datos de la web.
+- No se inventó ningún apodo de equipo: `shared/teams.js` no tiene campo apodo/nickname/alias (confirmado por grep), así que "BRARG" se nombra con su nombre/abreviatura real del catálogo, no como "El Brasiargentino" (única desviación del wording literal del pedido, ver ejemplos abajo).
+
+### Corregido (bug real encontrado en la propia verificación)
+
+`validNumber(value)` hacía `Number.isFinite(Number(value))` — pero `Number(null)` da `0`, un número "válido". Cuando el CONTEXTO no traía marcador (ej. "HABLA DE QUE EL 9 DE BRARG ESTÁ JUGANDO UN PARTIDAZO"), `scoreHome`/`scoreAway` quedaban en `null`, y el guard de `factsDrawCandidates` los aceptaba como un empate real de "null-null", produciendo `"BRARG Y NS TEAM VAN NULL-NULL..."`. Corregido agregando `value !== null && value !== undefined` explícito antes del chequeo numérico. Encontrado corriendo las pruebas reales contra el servidor (no en revisión de código), corregido y re-verificado.
+
+### Verificado (servidor real reiniciado, datos reales de gla.futbol Liga, Marcador LOCAL=Brarg/VISITANTE=NS Team para la prueba, restaurado a LOCAL=CF TEAM/VISITANTE=Brarg al terminar)
+
+**Caso obligatorio — CONTEXTO="ENTRETIEMPO VAN 3 A 1 GANA BRARG"**, 3 variantes, las 3 mencionan entretiempo + BRARG ganando + 3-1 + NS TEAM:
+
+| variantIndex | MAIN | SUB |
+|---|---|---|
+| 0 | BRARG SE LLEVA EL PRIMER TIEMPO | LE GANA 3-1 A NS TEAM Y MARCA DIFERENCIAS HASTA EL MOMENTO |
+| 1 | BRARG MANDA AL DESCANSO | SE IMPONE 3-1 ANTE NS TEAM AL CIERRE DEL PRIMER TIEMPO |
+| 2 | BRARG SE VA ARRIBA AL VESTUARIO | GANA 3-1 ANTE NS TEAM EN UN PRIMER TIEMPO PARA EL RECUERDO |
+
+**GENERAR OTRA** (variantIndex 3, 4, 5): devuelve exactamente las mismas 3 propuestas en el mismo orden (el pool de candidatos es finito y son variantes de LA MISMA historia) — no cambia de tema, tal como se pidió.
+
+Otros casos probados:
+
+| Contexto | Resultado |
+|---|---|
+| "PARTIDO MUY CERRADO, TERMINÓ 0 A 0 EL PRIMER TIEMPO" | MAIN: NADIE LOGRA ROMPER EL CERO / SUB: BRARG Y NS TEAM SE VAN AL DESCANSO IGUALADOS 0-0 |
+| "HABLA DE QUE EL 9 DE BRARG ESTÁ JUGANDO UN PARTIDAZO" | MAIN: 9. I. GODOY SE HACE SENTIR / SUB: ESTÁ TENIENDO UNA NOCHE PARA EL RECUERDO — dorsal 9 resuelto contra el plantel real de Brarg (Ian Godoy), no inventado |
+| "EXPULSADO EL 10 DE BRARG" | MAIN: SE QUEDÓ CON UNO MENOS / SUB: EXPULSARON A 10. BRAZU — dorsal resuelto igual, dato real |
+| "TERMINÓ EL PARTIDO, GANÓ NS TEAM 2 A 0" | MAIN: NS TEAM SE QUEDÓ CON TODO / SUB: LE GANÓ 2-0 A BRARG Y SE LLEVA LOS TRES PUNTOS — enriquecido con "posición 2 en la tabla" (dato real, NS Team está en el top 3) |
+| "" (vacío) | usedManualFacts: false — cae al comportamiento de la entrada 78 (EQUIPOS + web) sin cambios |
+
+`node --check` sin errores. Servidor reiniciado (Node no recarga módulos ES en caliente) y las pruebas corridas contra la API real vía WebSocket (simulación de LOCAL/VISITANTE) + `fetch` a `/api/lower-thirds/generate`; estado de Marcador restaurado exactamente al valor de producción anterior al terminar.
+
+## [Unreleased] - 2026-08-19 (78)
+
+### Cambiado — Replanteo completo del GENERADOR DE ZÓCALOS
+
+Pedido explícito del usuario: "la lógica actual está mal pensada... quiero simplificarla y hacerla mucho más útil editorialmente". Reescritura completa de `server/lowerThirdGenerator.js` (arquitectura, no solo templates); `server/lowerThirdContext.js`, las rutas de `server/index.js` y el resto del sistema de snapshots no se tocaron (ya estaban bien).
+
+- **Modos**: "GENÉRICO" → **GENERAL** (solo la etiqueta visible; el valor interno sigue siendo `"generic"` a propósito, para no romper el `state.mode` ya persistido en los 5 paneles que usan este generador). EQUIPOS sin cambios de nombre.
+- **CONTEXTO reinterpretado como dirección editorial**, no como estadísticas: `detectIntents()` matchea la frase libre del operador contra un mapa de intenciones (asistidores/goleadores/mejores/tabla/partido/fecha/resultados/forma) + tono (picante/informativo), con sinónimos reales (no una sola palabra clave) y varias intenciones a la vez. La intención detectada prioriza qué categoría de candidatos se ofrece primero, sin descartar el resto.
+- **GENERAL** arma candidatos desde tabla, goleadores, asistidores, mejor jugador de la liga y "actualidad" (fecha real de hoy + estado de la competencia — no hay calendario de próximos partidos publicado por gla.futbol para Liga, así que en vez de inventar una fecha futura se usa lo que sí es real).
+- **EQUIPOS** arma candidatos filtrando TODO por EQ1 (local)/EQ2 (visitante) del Marcador: cruce (partido cargado si existe, si no framing por posición en tabla), posiciones/puntos, **mejor jugador de cada equipo automático** (sin que el operador tenga que decir quién es), goleador y asistidor de cada equipo.
+- **Mejor jugador por equipo, automático**: usa `stats.jugadores` (ya rankeado por (G+A)/PJ, MISMA fórmula que ya usa Estrellas — `combinePlayerStats` en `glaFutbolSync.js`) y, si el equipo no entra en ese top 6 de liga completa, cae a su propio líder de goles o de asistencias — sigue siendo 100% dato real, nunca inventado.
+- **Variedad real**: cada categoría tiene 2-3 pares MAIN/SUB distintos (antes uno fijo); "GENERAR OTRA" recorre categorías × variantes de frase, nunca solo cambia una palabra.
+- **No inventar**: si el CONTEXTO pide forma/racha/historial/debut, se avisa explícitamente en la respuesta en vez de fabricarlo, igual que antes.
+
+### Corregido (bug real encontrado en la propia verificación de esta tarea)
+
+Los patrones de `detectIntents()` estaban en minúscula pero se comparaban contra el texto ya pasado a MAYÚSCULA (`upper()`) — sin la bandera `i`, **nunca matcheaban nada**: el CONTEXTO del operador jamás priorizaba ninguna categoría. Se agregó `/i` a los 10 patrones. Encontrado corriendo las pruebas reales pedidas en la entrega (no en revisión de código), corregido y re-verificado.
+
+### Verificado (contra el servidor real, datos reales de gla.futbol Liga, Marcador local=DOU FC / visitante=GAMBETA)
+
+| Modo | Contexto | Intención detectada | MAIN | SUB |
+|---|---|---|---|---|
+| GENERAL | "HABLÁ DE LA TABLA DE GOLEADORES" | goleadores, tabla | LA PUNTA TIENE DUEÑO | GAMBETA LIDERA CON 15 PUNTOS |
+| GENERAL | "HABLÁ DE LA FECHA QUE SE VIENE" | fecha | ASÍ ESTÁ HOY LA COMPETENCIA | LIGA GLA: GAMBETA MANDA CON 15 PUNTOS |
+| EQUIPOS | "HABLÁ DEL VS QUE SE VIENE" | partido | SE VIENE UN CRUCE CLAVE | DOU FC Y GAMBETA, DOS EQUIPOS QUE VAN POR TODO |
+| EQUIPOS | "HABLÁ DE LOS MEJORES DE CADA EQUIPO" | mejores | EL DUELO DENTRO DEL DUELO | ZURDO (DOU) Y F. AGUIRRE (GAM) |
+| EQUIPOS | "HABLÁ DE LOS GOLEADORES" | goleadores | SE MIDEN LOS GOLEADORES | ZURDO (13) Y F. AGUIRRE (8) |
+| EQUIPOS | "HACÉ ALGO PICANTE PERO SIN INVENTAR" | (tono: picante, sin categoría de datos) | SE VIENE UN CRUCE CLAVE | DOU FC Y GAMBETA, DOS EQUIPOS QUE VAN POR TODO |
+
+Cada propuesta trae su `evidence` con el dato real exacto que la respalda (ej. "ZURDO (DOU FC): 13 goles"). Probado también el caso sin datos suficientes (equipo sin estadísticas cargadas en el snapshot): falla con mensaje claro en vez de inventar. Probado en el panel real del navegador (no solo API): botón GENERAR, MODO EQUIPOS, mismo resultado que por API, sin errores de consola. `node --check` en todo el repo sin errores.
+
+## [Unreleased] - 2026-08-18 (77)
+
+### Corregido — GENERADOR DE ZÓCALOS: "Unexpected token '<'... is not valid JSON" en ACTUALIZAR DATOS
+
+**Causa real** (no era la ruta ni el content-type de la respuesta exitosa, ambos ya estaban bien — ver `POST /api/lower-thirds/context/refresh` en `server/index.js`, entrada 76): dos huecos concretos que dejaban escapar HTML en vez de JSON en escenarios de error:
+
+1. **Backend**: el `catch` de `/api/lower-thirds/context/refresh` llamaba `getCurrentGLAContext(fuente)` como fallback SIN su propio try/catch. Si ese fallback también fallaba (o si cualquier otra ruta tiraba una excepción no capturada, o si se pedía un path `/api/...` inexistente), no había ni un error-handler global ni un 404 JSON para `/api/*` — Express caía a su página de error HTML por defecto, que es exactamente lo que el frontend intentaba parsear como JSON.
+2. **Frontend**: `lower-third-generator-panel.js` llamaba `response.json()` directo, sin mirar `content-type` antes — cualquier respuesta no-JSON (de Express, o de un proxy/edge delante del server, ej. un 502/504 de infraestructura en Render) producía el error críptico tal cual lo reportaste.
+
+**Fix**:
+- `server/index.js`: el fallback dentro del `catch` de `/context/refresh` ahora tiene su propio try/catch (nunca deja el handler sin responder). Se agregó una red de seguridad para **todo** `/api/*`: un 404 en JSON (`{"ok":false,"error":"No existe el endpoint..."}`) para rutas inexistentes, y un error-handler global de Express que responde JSON en `/api/*` y nunca deja pasar el HTML por defecto. `GET /api/lower-thirds/context` también quedó con su propio try/catch.
+- `master-control/js/lower-third-generator-panel.js`: nuevo `parseJsonResponse()` — valida `content-type` antes de `.json()`; si no es JSON arma un mensaje claro (`"El servidor respondió {status} sin JSON (empieza con: "...")"`) en vez de dejar que `.json()` tire el error críptico. Se usa en los 3 fetch del panel (ACTUALIZAR DATOS, GENERAR, poll de estado cacheado).
+- Ningún endpoint usa `localhost` hardcodeado — confirmado (los 3 `fetch()` del panel son rutas relativas `/api/...`; el server ya usaba `process.env.PORT` y `0.0.0.0`, sin cambios ahí).
+
+### Verificado
+
+- `curl` directo: `POST /api/lower-thirds/context/refresh` → `200`, `application/json; charset=utf-8`, datos reales de gla.futbol. `GET /api/lower-thirds/context` → `200 application/json`. `GET /api/no-existe` → **antes** hubiera dado HTML default de Express; **ahora** `404 application/json {"ok":false,"error":"No existe el endpoint GET /api/no-existe"}`.
+- Botón real en el navegador: ACTUALIZAR DATOS → sin errores de consola, estado `ÚLTIMA ACTUALIZACIÓN: HH:MM` (`ltg-ok`); GENERAR después de actualizar → propuesta generada normalmente.
+- Simulado el escenario exacto del bug (mock de `fetch` devolviendo `<!DOCTYPE html>...` con status 502, mismo patrón que un edge/proxy caído): la interfaz **no se rompió**, mostró `"El servidor respondió 502 sin JSON (empieza con: "<!DOCTYPE html>...")— USANDO DATOS GUARDADOS"` en vez del error críptico, sin excepciones en consola, botón se re-habilitó.
+- `node --check` en todo el repo: sin errores.
+- **No verificado en Render** (sin acceso a ese entorno desde acá): el código no tiene nada específico de Render que arreglar (sin `localhost` hardcodeado, `PORT`/`0.0.0.0` ya correctos), así que un deploy con estos cambios debería comportarse igual que local — pero si en Render el botón sigue fallando, lo primero a revisar en el dashboard es que el servicio esté configurado como **Web Service** ejecutando `npm start` (no como *Static Site*), porque un Static Site serviría `master-control/` sin el Express de atrás y cualquier `/api/...` devolvería el HTML/fallback del hosting estático — algo que no se puede confirmar ni arreglar desde el código del repo.
+
+## [Unreleased] - 2026-08-18 (76)
+
+### Agregado — Generador inteligente de zocalos con evidencia GLA
+
+- `longDouble`, `shortSimple`, `shortDouble`, `zocaloCompuesto` y `placaLInfo` incorporan el mismo panel **GENERADOR DE ZOCALOS**, sin modificar sus diseños, assets, presets ni editores. Incluye contexto manual persistente, GENÉRICO/EQUIPOS, LIGA/TORNEO, destinos multiples, GENERAR OTRA y el flujo de aprobacion **USAR TEXTO → ACTUALIZAR**.
+- `server/lowerThirdContext.js` construye un contexto estadistico cacheado con las integraciones RSC existentes de tabla, goleadores, asistidores, jugadores, resultados y grupos; agrega identidad/equipos/planteles locales y nunca importa logos web. `ACTUALIZAR DATOS` descarga una sola vez `https://gla.futbol/`, reemplaza atomica y separadamente los snapshots Liga/Torneo, y conserva el anterior ante cualquier error.
+- `server/lowerThirdGenerator.js` implementa el proveedor deterministico inicial separado de la UI. Cada candidato lleva evidencia de filas reales, rechaza afirmaciones sin respaldo y respeta limites distintos para zocalo largo, corto, compuesto y Placa L. El brief y `buildLowerThirdPrompt()` dejan preparado el reemplazo por un adaptador LLM sin acoplar el panel a una marca o API.
+- Persistencia: el cache usa la clave central `gla_lower_third_context` (`data/gla-lower-third-context.json` en fallback local); modo, fuente, contexto y hora quedan dentro del estado existente de cada modulo.
+
+### Verificado
+
+- Payload real de `https://gla.futbol/`: Liga (11 equipos, 6 goleadores, 6 asistidores) y Torneo Relámpago #2 (6 equipos, 6 goleadores, 6 asistidores, grupos A/B de 3 y 15 resultados combinados) cargados desde el mismo HTML estructurado por refresh.
+- Navegador sobre servidor/datos aislados: el panel aparece en los cinco modulos; destinos `INDIVIDUAL/DOBLE 1/DOBLE 2` y `ZÓCALO 1..4`; GENÉRICO/EQUIPOS y LIGA/TORNEO generan propuestas con respaldo visible. `GENERAR OTRA` cambia de variante sin tocar los campos.
+- Con `longDouble` al aire, **USAR TEXTO** cambio los inputs mientras Program abierto conservo el texto anterior; solo **ACTUALIZAR** publico la propuesta. El refresh sin red informo el error, mantuvo el snapshot y siguio generando. El cache y la configuracion persistieron tras reiniciar el servidor de prueba.
+- Pruebas directas cubrieron contexto vacio/con indicacion, afirmaciones no acreditadas de racha/debut, equipos con y sin evidencia suficiente y los cinco limites de longitud. `node --check` y `git diff --check` aprobados. La automatizacion no pudo completar el dialogo nativo `prompt()` de guardar preset porque el navegador de prueba no lo implementa; los controles y el sistema de presets preexistentes permanecen montados e intactos.
+- No se modificaron `program/js/alpha-video.js`, los renderers/diseños de zocalos, Marcador, VAR ni otros modulos fuera del panel compartido y sus datos.
+
+## [Unreleased] - 2026-08-18 (75)
+
+### Agregado / Corregido — MARCADOR, ZÓCALOS, ESTRELLAS, RESULTADOS, MAYÚSCULAS globales
+
+Alcance explícito del usuario: MARCADOR, Zócalo Corto Doble, Zócalo Compuesto, Estrellas, Resultados, mayúsculas globales en Program. No se tocó `alpha-video.js` ni persistencia cloud/limpieza general (eso es de Codex — ver entrada 74, que confirma haber preservado este trabajo concurrente).
+
+- **Marcador — color por equipo**: `teamColorAssignments` (mapa `{teamId: colorId}`) en `shared/modules.js`. Botones "ASIGNAR COLOR" en `scoreboard-clock-panel.js` graban el color actual para ese equipo; `main.js` autocompleta (o resetea a `gris` si no hay asignación) al reelegir equipo local/visitante — independiente por lado, no hereda entre equipos.
+- **Marcador — RESETEAR GOLES**: botón nuevo junto a GOLES (`scoreboard-clock-panel.js` + `resetGoles()` en `main.js`) — `scoreA/scoreB = '0'` vía UPDATE directo, sin pasar por `scoreGoal`/`undoGoal` (no dispara animación de GOL), sin tocar equipos/reloj/período/colores.
+- **Mayúsculas globales en Program**: `toBroadcastUpper()` nuevo en `program/js/text-fit.js`, aplicado dentro de `applyFittedText`/`applyPlainTextAdjust`/`applyFittedLines` (mide el ancho YA en mayúscula, para que el auto-ajuste de tamaño no desborde) — cubre a casi todos los renderers sin tocarlos. Los ~9 casos con lógica de texto duplicada localmente (`tarjeta.js`, `cambios.js`, `marcadorPenales.js`, `posiciones.js`, `formacionEquipos.js`, `vs.js`) se parchearon a mano con el mismo helper. No toca `shared/teams.js` ni ningún dato guardado — la transformación es solo de salida.
+- **Zócalo Corto Doble — bug de foco/scroll**: causa real en `master-control/js/main.js`: el eco de CADA autosave (una tecla → UPDATE → el propio servidor le devuelve el `MODULE_UPDATE` a este mismo cliente) disparaba `renderPanel()` completo sin condición, reconstruyendo todo el DOM (inputs nuevos, foco/scroll/cursor perdidos) por cada letra. Ahora solo reconstruye si `status` o `airMode` cambiaron de verdad.
+- **Zócalo Compuesto unificado**: módulo nuevo `zocaloCompuesto` (`shared/modules.js`) con campo `tipo` (EQUIPOS/LOGO) + `texto1`/`texto2`/sponsors/presets/ajustes compartidos. `program/js/renderers/zocaloCompuesto.js` swapea el `.mov` y escudos↔logo; cambiar `tipo` al aire destruye el video viejo ANTES de crear el nuevo (nunca dos superpuestos) y relanza la entrada. `zocaloFinal`/`zocaloFinalDiv` quedan registrados intactos (sin tab, mismo patrón que "gol") para no perder datos/presets viejos; se migran una sola vez a `zocaloCompuesto` si este arranca vacío.
+- **Estrellas — nombres a la izquierda**: `.ov-estrellas-name` en `overlay.css`, `justify-content`/`text-align` a `flex-start`/`left` (antes centrado); centrado vertical y estadísticas sin cambios.
+- **Resultados — penales**: `penalesA`/`penalesB` opcionales por encuentro (`shared/modules.js`), inputs en `resultados-panel.js`. `sideTable.js` pinta `NUM(PEN)` en dos spans (`.ov-resultados-gol-num`/`-pen`) — sin penales, exactamente igual que antes (clase `.has-penales` opcional reduce el número principal solo cuando hace falta el paréntesis, para no romper la caja de 45px).
+- **Resultados — preset completo**: `SNAPSHOT_KEYS` (de la entrada 73) ya incluye `encuentros` completo, así que `penalesA/B` quedan cubiertos automáticamente sin tocar el preset.
+
+### Verificado (WebSocket directo + DOM real de `/program` y `/master`, no solo código)
+
+- Color: asignar celeste a un equipo, cambiar a otro (resetea a gris), volver (recupera celeste) — confirmado con lectura fresca del DOM en cada paso.
+- Goles: `scoreA` en 5 → RESETEAR GOLES → `0`/`0` en disco, resto de campos (equipo/color/período/reloj) intactos.
+- Mayúsculas: `"texto de prueba minuscula"` → `"TEXTO DE PRUEBA MINUSCULA"` en el DOM real de Zócalo Compuesto.
+- Foco/scroll: mismo nodo `<input>` siguió `document.contains()===true` y `activeElement===input` 2s después de tipear (pasado el debounce+ronda WS) — antes se perdía.
+- Zócalo Compuesto: TAKE con `tipo:equipos` → escudos visibles/logo oculto/video `zocalo-final-div-alpha.mp4`; UPDATE a `tipo:logo` → escudos ocultos/logo visible/video `zocalo-final-alpha.mp4`, `videoCount:1` (nunca dos superpuestos). Migración desde `zocaloFinalDiv`/`zocaloFinal` confirmada al primer arranque.
+- Estrellas: `getComputedStyle` confirma `justify-content:flex-start`/`text-align:left`.
+- Resultados: `6(3)` / `6(1)` con penales cargados, `2`/`1` sin paréntesis en un encuentro sin penales (mismo card). Preset completo: guardar con penales 4/2 → cambiar a 99 → cargar preset → vuelve a 4/2 exacto.
+- `node --check` en cada `.js` del repo: sin errores. Estado de prueba restaurado (datos reales de producción intactos, todos los módulos tocados vuelven a `FUERA DE AIRE`).
+
+## [Unreleased] - 2026-08-18 (74)
+
+### Cambiado — persistencia cloud extensible y fallback local no bloqueante
+
+- `server/persistence.js` centraliza estado de modulos, abreviaturas y planteles. Usa Supabase REST cuando esta configurado, migra los JSON solo si la clave cloud esta vacia y conserva memoria + JSON local ante fallas sin resetear datos.
+- Las escrituras runtime dejaron de usar filesystem sincrono por cada UPDATE: ahora se agrupan, serializan y reemplazan atomicamente, con un unico backup anterior local y `previous_value` cloud.
+- `server/state.js`, `server/teams.js` y `server/glaFutbolRosters.js` consumen la misma capa; los nuevos campos de operador quedan incluidos sin stores paralelos. `server/index.js` expone estado sanitario sin secretos y vacia escrituras pendientes ante SIGTERM/SIGINT.
+- `docs/PERSISTENCE.md`, `docs/AUDIT-2026-08-18.md`, `docs/supabase-app-state.sql`, `.env.example`, README y arquitectura documentan setup Render, migracion, inventario de escritores, performance y candidatos de limpieza. No se movieron ni borraron assets/artefactos por el trabajo concurrente activo.
+- Se preservaron los cambios concurrentes de Resultados, presets y asignaciones de color; `program/js/alpha-video.js` no fue modificado.
+
+### Verificado
+
+- `npm run test:persistence`: seed JSON local a cloud simulado, restart, segundo contenedor con `data/` vacio, preset de Resultados, posicion, abreviatura, campo futuro extensible y arranque en `OUT`; tambien falla cloud con memoria + fallback local y endpoint 503.
+- Navegador local 1920x1080: Master + Program, escritura de inputs, cambio de modulos y Marcador `TAKE -> UPDATE -> OUT`; Program actualizo 2-1 a 3-1, limpio el modulo y no registro warnings/errores. Reinicio real con datos temporales: titulo/posicion de Resultados sobrevivieron y Program arranco vacio.
+- Muestra del servidor con un modulo al aire durante 2 s: 0,00 s CPU, 57,8 MB de working set y 13 threads. Es una muestra puntual, no un perfil completo del proceso renderer del navegador.
+- `node --check` sobre los JavaScript de servidor y prueba; `git diff --check` sin errores de whitespace.
+- No se probo contra una cuenta Supabase real ni todos los modulos/assets: requieren credenciales del usuario y una pasada visual completa previa a transmision.
+
+## [Unreleased] - 2026-08-16 (73)
+
+### Agregado — urgente pre-transmisión: preset completo de Resultados + backups
+
+- `master-control/js/resultados-panel.js`: "GUARDAR PRESET COMPLETO" — snapshot de encuentros/tanda/posicion/titulo/textAdjust/composicion; CARGAR restaura todo (datos + ajustes visuales) vía UPDATE existente, sin TAKE. Sync web (`ACTUALIZAR PLAYOFFS`) ahora preserva el `titulo` manual por encuentro si el operador lo personalizó (match por `id`); composición/textAdjust del módulo ya no los tocaba, confirmado sin cambios.
+- `master-control/js/presets-helper.js`: fix — el snapshot completo (`__snapshot`) ya no aparecía como "[object Object]" en nombre/detalle del preset.
+- `server/state.js`: backup automático simple en `data/backups/` antes de cada escritura, máximo 1 cada 10 min, rotación a 5 archivos.
+- Bug encontrado y arreglado en el camino: al cargar un preset completo, el readout de "AJUSTE DE COMPOSICIÓN" (montado aparte por `main.js`) no se refrescaba — el dato quedaba bien pero el número en pantalla se veía viejo. Se lo vuelve a montar explícitamente tras aplicar el preset.
+- Verificado en vivo: guardar → cambiar todo → cargar → coincide exacto; refresh; **reinicio real del servidor** (kill + `npm start`) — datos y preset sobrevivieron. Backup confirmado en disco tras el reinicio.
+- No se auditaron en vivo, por tiempo, MARCADOR/VAR/ZÓCALOS/PLACA L INFO/POSICIONES/ESTRELLAS en esta pasada — sí se revisó por código el patrón de bug ya conocido (`readTextAdjust` con shape de dato equivocado) en los ~30 renderers: ninguna otra instancia encontrada.
+
 ## [Unreleased] - 2026-08-16 (72)
 
 ### Cambiado — MARCADOR: reemplazo único de la pieza .MOV

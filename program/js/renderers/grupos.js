@@ -1,5 +1,6 @@
 import { crestFile, teamName } from '../../../shared/teams.js';
 import { applyFittedText, applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
+import { resolveImageSrc } from '../theme-assets.js';
 
 // PNG estaticos (sin video, ya preparados y escalados a 1920x1080 por el
 // usuario) — mismo criterio que marcadorZocalo.js/marcadorTiempoAdicional.js:
@@ -44,7 +45,7 @@ function sortedFilas(filas) {
 
 function cardMarkup() {
   const rows = Array.from({ length: ROW_COUNT }, (_, i) => `
-    <img class="ov-grupos-crest" data-row="${i}" />
+    <img class="ov-grupos-crest" data-row="${i}" data-adjust="crest" />
     <div class="ov-grupos-name" data-row="${i}"></div>
     <div class="ov-grupos-puntos" data-row="${i}"></div>
   `).join('');
@@ -72,7 +73,15 @@ function setCrest(imgEl, teamId) {
 // shared/teams.js) — escudo y nombre completo se derivan siempre de ese
 // ID, nunca se cargan ni se escriben a mano.
 function paintCard(cardEl, grupoKey, filas, textAdjust) {
-  cardEl.querySelector('[data-card-bg]').src = IMG_SRC[grupoKey];
+  const bgEl = cardEl.querySelector('[data-card-bg]');
+  const bgSrc = resolveImageSrc('grupos', IMG_SRC[grupoKey], grupoKey);
+  if (bgSrc) {
+    bgEl.src = bgSrc;
+    bgEl.style.visibility = 'visible';
+  } else {
+    bgEl.removeAttribute('src');
+    bgEl.style.visibility = 'hidden';
+  }
   const ordered = sortedFilas(filas || []);
   const nombreAdjust = readTextAdjust(textAdjust, 'nombre');
   const puntosAdjust = readTextAdjust(textAdjust, 'puntos');

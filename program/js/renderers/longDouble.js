@@ -1,4 +1,4 @@
-import { createAlphaVideo } from '../alpha-video.js';
+import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { applyFittedText, updateFittedTextWithTransition, readTextAdjust } from '../text-fit.js';
 import { resolveTeamTokens } from '../../../shared/text-tokens.js';
 
@@ -20,15 +20,16 @@ function buildStructure(el) {
       <div class="ov-long-double-line2"></div>
     </div>
   `;
-  el._alphaVideo = createAlphaVideo(el.querySelector('.av-target'), VIDEO_SRC);
+  el._alphaVideo = mountThemedAlphaVideo(el.querySelector('.av-target'), 'longDouble', VIDEO_SRC);
+  el._gfxBuilt = true;
 }
 
 export default function renderLongDouble(contentEl, data, justTaken, onOneShotEnded, allData) {
-  if (!contentEl._alphaVideo) {
+  if (!contentEl._gfxBuilt) {
     buildStructure(contentEl);
   }
   if (justTaken) {
-    contentEl._alphaVideo.playFromStart();
+    contentEl._alphaVideo?.playFromStart();
   }
   const adjust = data.textAdjust;
   const line1El = contentEl.querySelector('.ov-long-double-line1');

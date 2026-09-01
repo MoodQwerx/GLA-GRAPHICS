@@ -26,7 +26,7 @@ const ZOCALO_COLORS = {
   zocalo4: '#ff8787',
 };
 
-export function renderPlacaLInfoPanel(container, data, onDirty) {
+export function renderPlacaLInfoPanel(container, data, onDirty, saveOptions = {}) {
   container.innerHTML = '';
 
   for (const i of [1, 2, 3, 4]) {
@@ -393,7 +393,7 @@ export function renderPlacaLInfoPanel(container, data, onDirty) {
       if (fields.z2 !== undefined) data.zocalo2.text = fields.z2;
       if (fields.z3 !== undefined) data.zocalo3.text = fields.z3;
       if (fields.z4 !== undefined) data.zocalo4.text = fields.z4;
-      renderPlacaLInfoPanel(container, data, onDirty);
+      renderPlacaLInfoPanel(container, data, onDirty, saveOptions);
     },
     onDirty,
   });
@@ -496,6 +496,9 @@ export function renderPlacaLInfoPanel(container, data, onDirty) {
       defaultX: DEFAULTS_ZOCALO[key].offsetX,
       defaultY: DEFAULTS_ZOCALO[key].offsetY,
       defaultScale: DEFAULTS_ZOCALO[key].scale,
+      onSave: saveOptions.onSave,
+      isPendingSave: saveOptions.isPendingSave,
+      isConnected: saveOptions.isConnected,
     };
     const compOnDirty = () => {
       applyPreviewTransform(key);
@@ -514,7 +517,12 @@ export function renderPlacaLInfoPanel(container, data, onDirty) {
       applyPreviewTextAdjust(key);
       onDirty();
     };
-    renderTextAdjustControl(adjustWrap, zData.textAdjust, textAdjustOnDirty, { label: 'Ajuste fino de Texto' });
+    renderTextAdjustControl(adjustWrap, zData.textAdjust, textAdjustOnDirty, {
+      label: 'Ajuste fino de Texto',
+      onSave: saveOptions.onSave,
+      isPendingSave: saveOptions.isPendingSave,
+      isConnected: saveOptions.isConnected,
+    });
     card.appendChild(adjustWrap);
 
     // Presets de este zócalo

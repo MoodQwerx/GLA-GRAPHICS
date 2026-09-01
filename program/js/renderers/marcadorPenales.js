@@ -1,7 +1,9 @@
-import { createAlphaVideo } from '../alpha-video.js';
+import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { PROGRAM_FONT_FAMILY } from '../program-fonts.js';
 import { crestFile, teamAbbr } from '../../../shared/teams.js';
-import { applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
+import { sponsorFile } from '../../../shared/sponsors.js';
+import { PENALTY_KICK_STATUS } from '../../../shared/constants.js';
+import { applyPlainTextAdjust, readTextAdjust, toBroadcastUpper } from '../text-fit.js';
 
 const VIDEO_SRC = '/assets/marcador/marcador-penales-alpha.mp4';
 
@@ -55,6 +57,16 @@ function kickDotsHtml(count) {
   return html;
 }
 
+// Resultado de la TANDA DE PENALES (2026-08-31, corrección explícita del
+// usuario): cuenta unicamente los intentos en 'scored' -- nada que ver con
+// el resultado del partido (sb.scoreA/scoreB). Se recalcula en cada pasada
+// a partir de "data.kicksA/kicksB" (la fuente de verdad son los circulos,
+// nunca un numero tipeado a mano), asi que cambiar cualquier intento
+// (vacio<->verde<->rojo) actualiza el resultado solo, sin logica aparte.
+function countScored(kicks) {
+  return (kicks || []).filter((k) => k.status === PENALTY_KICK_STATUS.SCORED).length;
+}
+
 // Orden de capas (de atras hacia adelante), preparado para cuando el
 // asset se reemplace por la version con los 6 casilleros transparentes:
 // 1. Fondo transparente del Program (stage).
@@ -72,25 +84,28 @@ function kickDotsHtml(count) {
 function buildStructure(el, kicksPerTeam) {
   el.innerHTML = `
     <div class="gfx-overlay ov-pen-kicks-layer">
-      <div class="ov-pen-kicks ov-pen-kicksA">${kickDotsHtml(kicksPerTeam)}</div>
-      <div class="ov-pen-kicks ov-pen-kicksB">${kickDotsHtml(kicksPerTeam)}</div>
+      <div class="ov-pen-kicks ov-pen-kicksA" data-adjust="kicksLocal">${kickDotsHtml(kicksPerTeam)}</div>
+      <div class="ov-pen-kicks ov-pen-kicksB" data-adjust="kicksVisitante">${kickDotsHtml(kicksPerTeam)}</div>
     </div>
     <div class="av-target"></div>
     <div class="gfx-overlay">
       <div class="ov-pen-title"></div>
       <div class="ov-pen-team ov-pen-teamA">
-        <img class="ov-pen-crest" />
+        <img class="ov-pen-crest" data-adjust="localCrest" />
         <div class="ov-pen-name"></div>
       </div>
       <div class="ov-pen-score ov-pen-scoreA"></div>
+      <div class="ov-pen-score-sep" data-adjust="separator">-</div>
+      <div class="ov-pen-score ov-pen-scoreB"></div>
       <div class="ov-pen-team ov-pen-teamB">
-        <img class="ov-pen-crest" />
+        <img class="ov-pen-crest" data-adjust="awayCrest" />
         <div class="ov-pen-name"></div>
       </div>
-      <div class="ov-pen-score ov-pen-scoreB"></div>
+      <img class="ov-pen-sponsor" data-adjust="sponsor" />
     </div>
   `;
-  el._alphaVideo = createAlphaVideo(el.querySelector('.av-target'), VIDEO_SRC);
+  el._alphaVideo = mountThemedAlphaVideo(el.querySelector('.av-target'), 'marcadorPenales', VIDEO_SRC);
+  el._gfxBuilt = true;
 }
 
 function paintKicks(containerEl, kicks) {
@@ -114,14 +129,15 @@ function setCrest(imgEl, crestId) {
 // Sin nombre/escudo propios (se leen en vivo de "scoreboard", 5to
 // argumento, ver program/js/main.js, igual que marcadorEntretiempo). Ya
 // no muestra color de camiseta (eso queda unicamente en el marcador
-// principal) — en su lugar muestra el resultado final del encuentro,
-// tambien leido de "scoreboard".
+// principal). El resultado (".ov-pen-scoreA/B") es pura cuenta de
+// "kicksA/kicksB" (ver countScored arriba) -- NO tiene relacion con el
+// resultado del partido.
 export default function renderMarcadorPenales(contentEl, data, justTaken, onOneShotEnded, allData) {
-  if (!contentEl._alphaVideo) {
+  if (!contentEl._gfxBuilt) {
     buildStructure(contentEl, data.kicksA.length);
   }
   if (justTaken) {
-    contentEl._alphaVideo.playFromStart();
+    contentEl._alphaVideo?.playFromStart();
   }
 
   const sb = (allData && allData.scoreboard) || {};
@@ -134,9 +150,9 @@ export default function renderMarcadorPenales(contentEl, data, justTaken, onOneS
   // fuente del titulo (ver shared/modules.js), asi que si la tanda esta
   // marcada como MUERTE SUBITA eso se ve en el mismo lugar donde siempre
   // se mira el titulo, visible pero sin invadir el resto de la pieza.
-  const titleText = data.suddenDeath
+  const titleText = toBroadcastUpper(data.suddenDeath
     ? `${(data.titulo || 'PENALES').trim()} — MUERTE SÚBITA`
-    : (data.titulo || '');
+    : (data.titulo || ''));
   titleEl.textContent = titleText;
   titleEl.style.translate = `${titleAdjust.dx || 0}px ${titleAdjust.dy || 0}px`;
   fitTitleFontSize(titleText).then((size) => {
@@ -147,12 +163,42 @@ export default function renderMarcadorPenales(contentEl, data, justTaken, onOneS
   const teamAEl = contentEl.querySelector('.ov-pen-teamA');
   applyPlainTextAdjust(teamAEl.querySelector('.ov-pen-name'), teamAbbr(sb.teamA), readTextAdjust(ta, 'nameA'));
   setCrest(teamAEl.querySelector('.ov-pen-crest'), sb.teamA);
-  applyPlainTextAdjust(contentEl.querySelector('.ov-pen-scoreA'), sb.scoreA ?? '', readTextAdjust(ta, 'scoreA'));
+  applyPlainTextAdjust(contentEl.querySelector('.ov-pen-scoreA'), String(countScored(data.kicksA)), readTextAdjust(ta, 'scoreA'));
   paintKicks(contentEl.querySelector('.ov-pen-kicksA'), data.kicksA);
 
   const teamBEl = contentEl.querySelector('.ov-pen-teamB');
   applyPlainTextAdjust(teamBEl.querySelector('.ov-pen-name'), teamAbbr(sb.teamB), readTextAdjust(ta, 'nameB'));
   setCrest(teamBEl.querySelector('.ov-pen-crest'), sb.teamB);
-  applyPlainTextAdjust(contentEl.querySelector('.ov-pen-scoreB'), sb.scoreB ?? '', readTextAdjust(ta, 'scoreB'));
+  applyPlainTextAdjust(contentEl.querySelector('.ov-pen-scoreB'), String(countScored(data.kicksB)), readTextAdjust(ta, 'scoreB'));
   paintKicks(contentEl.querySelector('.ov-pen-kicksB'), data.kicksB);
+
+  // Sponsor: mismo fade-swap que Zocalo VS Compacto (ver
+  // program/js/renderers/vs.js) -- catalogo/logica reutilizados tal cual,
+  // sin inventar un mecanismo nuevo.
+  const sponsorEl = contentEl.querySelector('.ov-pen-sponsor');
+  const sponsorFileSrc = sponsorFile('vs_compact', data.sponsor);
+  if (sponsorFileSrc) {
+    const currentSrc = sponsorEl.getAttribute('src');
+    if (!currentSrc) {
+      sponsorEl.src = sponsorFileSrc;
+      void sponsorEl.offsetWidth;
+      sponsorEl.classList.add('is-visible');
+    } else if (currentSrc !== sponsorFileSrc && currentSrc !== window.location.origin + sponsorFileSrc) {
+      sponsorEl.classList.remove('is-visible');
+      setTimeout(() => {
+        sponsorEl.src = sponsorFileSrc;
+        void sponsorEl.offsetWidth;
+        sponsorEl.classList.add('is-visible');
+      }, 320);
+    } else {
+      sponsorEl.classList.add('is-visible');
+    }
+  } else {
+    sponsorEl.classList.remove('is-visible');
+    setTimeout(() => {
+      if (!sponsorEl.classList.contains('is-visible')) {
+        sponsorEl.removeAttribute('src');
+      }
+    }, 320);
+  }
 }

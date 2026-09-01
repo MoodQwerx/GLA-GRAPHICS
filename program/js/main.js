@@ -5,6 +5,16 @@ import { renderers } from './renderers/index.js';
 import { updateLocalTeamCatalog } from '../../shared/teams.js';
 import { initStageScale } from './stage-scale.js';
 import { waitForProgramFonts } from './program-fonts.js';
+import { setActiveThemeId as setRendererActiveThemeId } from './theme-client.js';
+import { applyElementAdjust } from './text-fit.js';
+import { ADJUST_REGISTRY } from '../../shared/adjust-registry.js';
+
+// THEME ACTIVO (2026-08-20/21, sistema multi-theme, pedido explícito): se
+// recibe por WS igual que cualquier otro estado global (sección 8, "no
+// quiero tener que refrescar Browser Source"). "theme-client.js" es la
+// fuente de verdad real que consultan los renderers (program/js/
+// theme-assets.js) para resolver su asset -- acá solo se la mantiene
+// actualizada en cada mensaje.
 
 initStageScale(document.getElementById('stage'));
 await waitForProgramFonts();
@@ -18,6 +28,14 @@ if (new URLSearchParams(window.location.search).get('debug') === '1') {
 const els = {};
 const tickers = {};
 const latestData = {};
+// "confirmedData" (2026-08-19, auditoría completa pedida por el usuario:
+// "cuando toco flechitas/+/− el cambio tiene que verse EN VIVO INMEDIATO,
+// sin apretar ACTUALIZAR -- pero el CONTENIDO sigue esperando ACTUALIZAR").
+// Guarda, por módulo, el ÚLTIMO "data" que realmente se pintó en pantalla
+// (por Take o por ACTUALIZAR explícito) -- es la base "congelada" de
+// contenido sobre la que se superponen los ajustes visuales en vivo, ver
+// "mergeVisualFields" más abajo.
+const confirmedData = {};
 const lastStatus = {};
 const exitCleanupTimers = {};
 // Estado del secuenciado asset -> contenido de los modulos "sequencedReveal"
@@ -56,6 +74,14 @@ function teardownContent(content) {
     content._plainVideo.destroy?.();
     delete content._plainVideo;
   }
+
+  // "_gfxBuilt" (2026-08-21, sistema multi-theme): marca "ya armé la
+  // estructura" que usan los renderers migrados a theme-assets.js en vez
+  // de "_alphaVideo" (que ahora puede ser legítimamente null cuando el
+  // theme activo no tiene ese asset todavía). Si no se borra acá, un
+  // renderer creería que el DOM ya está armado después de un teardown y
+  // se saltearía "buildStructure()" sobre un innerHTML vacío.
+  delete content._gfxBuilt;
 
   for (const key of Object.keys(content.dataset)) {
     delete content.dataset[key];
@@ -134,6 +160,100 @@ function applyComposition(target, data) {
   const dy = data.compositionOffsetY || 0;
   const scale = data.compositionScale || 1;
   target.content.style.transform = `translate(${dx}px, ${dy}px) scale(${scale})`;
+}
+
+// Registro declarativo de ajuste individual (2026-08-31, pedido explicito
+// del usuario: "que agregar un nuevo elemento editable sea tan simple como
+// definir id/label/xKey/yKey/scaleKey/target" -- ver shared/adjust-registry.js
+// para el contrato completo). Corre SIEMPRE junto a "applyComposition" (mismos
+// dos call sites, TAKE y ajuste en vivo) para cualquier modulo con entradas
+// "kind:'composition'" en su registro -- agregar un elemento nuevo a un
+// modulo YA migrado no requiere tocar este archivo de nuevo, solo:
+//   1. el data-adjust="<id>" en el template del renderer;
+//   2. los 3 campos <xKey>/<yKey>/<scaleKey> en shared/modules.js;
+//   3. la entrada en el registro.
+// Las entradas "kind:'text'" no pasan por aca -- esas ya se resuelven solas
+// dentro del propio renderer via readTextAdjust/applyPlainTextAdjust, el
+// registro solo las declara para que Master Control arme su seccion del
+// acordeon (ver master-control/js/main.js "renderModuleAdjustAccordion").
+function applyElementAdjustRegistry(id, target, data) {
+  const entries = ADJUST_REGISTRY[id]?.elements;
+  if (!entries || !entries.length) return;
+  for (const entry of entries) {
+    if (entry.kind !== 'composition') continue;
+    // "querySelectorAll" (no "querySelector"): cubre tanto el caso de un
+    // unico elemento (escudo/logo/sponsor puntual) como el de tablas con
+    // filas repetidas (ej. "escudo" de una columna en posiciones/grupos/
+    // goleadores) -- un mismo id "data-adjust" puede marcar VARIOS nodos
+    // (una fila cada uno), y el mismo offset de columna se les aplica a
+    // todos por igual, sin codigo extra por modulo (ajuste POR COLUMNA,
+    // pedido explicito del usuario para tablas).
+    const els = target.content.querySelectorAll(`[data-adjust="${entry.id}"]`);
+    if (!els.length) continue;
+    const adjustValue = {
+      offsetX: data[entry.xKey],
+      offsetY: data[entry.yKey],
+      scale: data[entry.scaleKey],
+    };
+    els.forEach((el) => applyElementAdjust(el, adjustValue));
+  }
+}
+
+// AJUSTES VISUALES EN VIVO (2026-08-19, auditoría completa pedida por el
+// usuario: "cuando toco flechitas/+/− el cambio tiene que verse EN VIVO
+// INMEDIATO... ACTUALIZAR sigue existiendo para contenido/datos, pero los
+// AJUSTES VISUALES deben ser live... No mezclar ambas cosas").
+//
+// Causa real de que esto NO fuera live: cualquier UPDATE mientras el
+// módulo está al aire y NO es "isExplicitUpdate" (Take real o clic en
+// ACTUALIZAR) se ignora por completo más abajo -- ver el "if (isOn &&
+// msg.isAutoSave...)" del handler de mensajes -- para no mostrar tipeo a
+// medio escribir. Eso es correcto para CONTENIDO, pero de paso también
+// bloqueaba composición/textAdjust, que es lo que arreglan estas dos
+// funciones: "isVisualKey" identifica, por NOMBRE de campo (la misma
+// convención que ya usa todo el proyecto: "compositionOffsetX/Y/Scale",
+// "motivoOffsetX/Y/Scale" en VAR, "offsetX/Y/scale" por zócalo en Placa L
+// Info, y "textAdjust" en cualquier módulo), qué campos son ajuste visual
+// puro. "mergeVisualFields" arma un objeto que combina el ÚLTIMO contenido
+// realmente confirmado (congelado) con los valores visuales MÁS RECIENTES
+// del draft -- así se puede volver a invocar el mismo renderer del módulo
+// sin repintar ningún texto todavía no confirmado por ACTUALIZAR, solo su
+// posición/tamaño. Centralizado acá (no en cada renderer ni en cada panel
+// de Master Control) porque es el único punto por el que pasan todos los
+// módulos por igual.
+function isVisualKey(key) {
+  return key === 'textAdjust' || /OffsetX$/i.test(key) || /OffsetY$/i.test(key) || /Scale$/i.test(key);
+}
+
+function mergeVisualFields(confirmed, incoming) {
+  if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) return confirmed;
+  const base = (confirmed && typeof confirmed === 'object') ? confirmed : {};
+  const out = { ...base };
+  for (const [key, value] of Object.entries(incoming)) {
+    if (isVisualKey(key)) {
+      out[key] = value;
+    } else if (value && typeof value === 'object' && !Array.isArray(value)) {
+      out[key] = mergeVisualFields(base[key], value);
+    }
+    // cualquier otro campo (contenido) se queda con el valor de "confirmed"
+    // que ya trae "{ ...base }" -- nunca se pisa con lo que hay en el draft.
+  }
+  return out;
+}
+
+// Repinta SOLO composición + textAdjust de un módulo ya al aire, con el
+// contenido congelado en su último valor confirmado -- se llama en cada
+// UPDATE en vivo mientras el módulo está ON y todavía no llegó su
+// ACTUALIZAR explícito (ver handler de mensajes más abajo). No pasa por
+// "applyModuleState" a propósito: eso re-dispararía animaciones de
+// entrada/revelado de secuenciado, que no corresponden acá (no es un Take).
+function applyVisualLive(id, data) {
+  const target = els[id];
+  if (!target) return;
+  applyComposition(target, data);
+  applyElementAdjustRegistry(id, target, data);
+  const merged = mergeVisualFields(confirmedData[id], data);
+  renderers[id](target.content, merged, false, () => handleOneShotEnded(id), latestData);
 }
 
 function cancelContentReveal(id) {
@@ -256,6 +376,7 @@ function applyModuleState(id, moduleState) {
   if (!target || !moduleState) return;
 
   latestData[id] = moduleState.data;
+  confirmedData[id] = moduleState.data;
   applyComposition(target, moduleState.data);
   const sequenced = isSequenced(id);
 
@@ -280,6 +401,12 @@ function applyModuleState(id, moduleState) {
     // referencia que latestData). Solo lo usa marcadorEntretiempo hoy,
     // para leer en vivo los datos de "scoreboard" sin duplicarlos.
     renderers[id](target.content, moduleState.data, justTaken, () => handleOneShotEnded(id), latestData);
+    // Despues de "renderers[id]" a proposito (no junto a "applyComposition"
+    // mas arriba): en un TAKE recien ahi existen los nodos "[data-adjust]"
+    // que el renderer acaba de construir -- ver applyVisualLive() mas
+    // arriba para el caso "modulo ya al aire", donde el orden inverso es
+    // correcto porque la estructura ya existia de antes.
+    applyElementAdjustRegistry(id, target, moduleState.data);
 
     if (sequenced) {
       // Autocurativo: algunos renderers reconstruyen ".gfx-overlay" en un
@@ -325,6 +452,8 @@ function applyModuleState(id, moduleState) {
   lastStatus[id] = moduleState.status;
 }
 
+let lastKnownThemeId = null;
+
 ws = connect({
   onMessage(msg) {
     if (msg.type === 'TEAM_CATALOG_UPDATE') {
@@ -334,13 +463,40 @@ ws = connect({
           renderers[id](els[id].content, latestData[id] || {}, false, () => handleOneShotEnded(id), latestData);
         }
       }
+    } else if (msg.type === WS_MSG.THEME_UPDATE) {
+      setRendererActiveThemeId(msg.themeId);
     } else if (msg.type === WS_MSG.STATE_SNAPSHOT) {
+      // El theme se fija ANTES de recorrer los módulos: cada renderer
+      // resuelve su asset (program/js/theme-assets.js) leyendo el theme
+      // activo en el momento exacto en que se lo vuelve a invocar acá.
+      const themeChanged = msg.theme && lastKnownThemeId !== null && msg.theme !== lastKnownThemeId;
+      if (msg.theme) {
+        setRendererActiveThemeId(msg.theme);
+        lastKnownThemeId = msg.theme;
+      }
+      if (themeChanged) {
+        // Cambio de theme real (no la conexión inicial): un módulo que YA
+        // está montado (".av-target"/"._alphaVideo" construidos con el
+        // asset del theme ANTERIOR) no se reconstruye solo -- cada
+        // renderer solo arma su estructura una vez ("if (!contentEl.
+        // _alphaVideo) buildStructure(...)"). Se fuerza un teardown+
+        // rebuild acá, centralizado, para que el asset (o su ausencia) del
+        // theme NUEVO se vuelva a resolver -- sin tocar la lógica interna
+        // de ningún renderer.
+        for (const id of MODULE_IDS) {
+          if (els[id]) teardownContent(els[id].content);
+        }
+      }
       for (const id of MODULE_IDS) applyModuleState(id, msg.state[id]);
     } else if (msg.type === WS_MSG.MODULE_UPDATE) {
       const isOn = msg.moduleState && msg.moduleState.status === MODULE_STATUS.ON;
       if (isOn && msg.isAutoSave && !msg.isExplicitUpdate) {
-        // Ignorar tipeo en directo en Master Control mientras la gráfica está al aire
+        // Ignorar CONTENIDO en directo mientras la gráfica está al aire (no
+        // repintar tipeo a medio escribir) -- pero los AJUSTES VISUALES
+        // (composición + textAdjust) sí tienen que verse ya, sin esperar a
+        // ACTUALIZAR (ver "applyVisualLive" más arriba).
         latestData[msg.moduleId] = msg.moduleState.data;
+        applyVisualLive(msg.moduleId, msg.moduleState.data);
         return;
       }
       applyModuleState(msg.moduleId, msg.moduleState, msg.isExplicitUpdate);

@@ -4,6 +4,7 @@ node_modules/
 # Variables de entorno y secretos locales
 .env
 .env.*
+!.env.example
 
 # Logs de gestores de paquetes y de ejecución
 *.log
@@ -14,6 +15,7 @@ pnpm-debug.log*
 
 # Estado y archivos de ejecución locales
 /data/
+data/**/*.tmp
 .gla-server.pid
 *.pid
 *.pid.lock

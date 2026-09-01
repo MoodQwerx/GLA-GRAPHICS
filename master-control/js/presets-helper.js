@@ -2,6 +2,29 @@
 // Permite guardar contenidos (texto o escudos) sin alterar los offsets visuales (textAdjust).
 // Soporta acciones de Cargar, Renombrar y Eliminar, con persistencia automática.
 
+// "savePresetEntry" (2026-08-19, extraído del botón GUARDAR de más abajo
+// para que el GENERADOR DE ZÓCALOS pueda guardar sus propuestas "usando
+// el sistema de presets existente... no crear un sistema paralelo" --
+// pedido explícito). Misma forma exacta de preset que ya crea el botón
+// GUARDAR PRESET COMPLETO/MAIN/SUB de siempre.
+export function savePresetEntry(data, presetKey, fields, type = 'text', presetLabel) {
+  if (!Array.isArray(data[presetKey])) data[presetKey] = [];
+  const defaultName = Object.entries(fields)
+    .filter(([k, v]) => !k.startsWith('__') && v)
+    .map(([, v]) => v)
+    .join(' | ') || 'Preset sin nombre';
+  const name = presetLabel !== undefined ? presetLabel : prompt('Nombre para el preset:', defaultName);
+  if (name === null) return false;
+  data[presetKey].unshift({
+    id: 'preset-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+    label: (name || '').trim() || defaultName,
+    type,
+    fields,
+    createdAt: new Date().toISOString(),
+  });
+  return true;
+}
+
 export function renderPresetsControl(container, data, {
   presetKey = 'textPresets',
   title = 'PRESETS',
@@ -182,18 +205,7 @@ export function renderPresetsControl(container, data, {
       btn.className = `presets-btn ${b.type === 'complete' ? 'save-complete' : ''}`;
       btn.textContent = b.label;
       btn.addEventListener('click', () => {
-        const fields = b.getFields();
-        const defaultName = Object.values(fields).filter(Boolean).join(' | ') || 'Preset sin nombre';
-        const name = prompt('Nombre para el preset:', defaultName);
-        if (name === null) return;
-        const newPreset = {
-          id: 'preset-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
-          label: name.trim() || defaultName,
-          type: b.type || 'text',
-          fields,
-          createdAt: new Date().toISOString(),
-        };
-        data[presetKey].unshift(newPreset);
+        if (!savePresetEntry(data, presetKey, b.getFields(), b.type || 'text')) return;
         if (onDirty) onDirty();
         render();
       });
@@ -262,6 +274,7 @@ export function renderPresetsControl(container, data, {
         const detailsEl = document.createElement('span');
         detailsEl.className = 'preset-details';
         detailsEl.textContent = Object.entries(preset.fields)
+          .filter(([k]) => !k.startsWith('__'))
           .map(([k, v]) => `${k}: "${v}"`)
           .join(' — ');
 

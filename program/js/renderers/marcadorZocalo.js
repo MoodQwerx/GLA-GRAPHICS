@@ -1,5 +1,6 @@
 import { elapsedMs, formatClock, parseClockLimit } from '../../../shared/clock.js';
 import { applyFittedText, applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
+import { resolveImageSrc } from '../theme-assets.js';
 
 // "FIN DEL CONTADOR" (2026-08-15, pedido explicito del usuario): default
 // 06:00 para Marcador Zocalo -- misma mecanica que el Marcador principal
@@ -22,17 +23,19 @@ const TITULO_MIN_FONT = 12;
 const TITULO_MAX_WIDTH = 300;
 
 function buildStructure(el) {
+  const imgSrc = resolveImageSrc('marcadorZocalo', IMG_SRC);
   el.innerHTML = `
-    <img class="gfx-bg-image" src="${IMG_SRC}" />
+    ${imgSrc ? `<img class="gfx-bg-image" src="${imgSrc}" />` : ''}
     <div class="gfx-overlay">
       <div class="ov-zocalo-titulo"></div>
       <div class="ov-zocalo-clock"></div>
     </div>
   `;
+  el._gfxBuilt = true;
 }
 
 export default function renderMarcadorZocalo(contentEl, data) {
-  if (!contentEl.querySelector('.gfx-bg-image')) {
+  if (!contentEl._gfxBuilt) {
     buildStructure(contentEl);
   }
   applyFittedText(contentEl.querySelector('.ov-zocalo-titulo'), data.titulo || '', {

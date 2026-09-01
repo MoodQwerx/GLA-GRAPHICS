@@ -9,8 +9,8 @@ const DEFAULT_CLOCK_END_MS = 15 * 60 * 1000;
 import { colorHex } from '../../../shared/team-colors.js';
 import { crestFile, teamAbbr } from '../../../shared/teams.js';
 import { sponsorFile } from '../../../shared/sponsors.js';
-import { createAlphaVideo } from '../alpha-video.js';
 import { applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
+import { mountThemedAlphaVideo } from '../theme-assets.js';
 
 const VIDEO_SRC = '/assets/marcador/marcador-principal-alpha.mp4';
 
@@ -19,22 +19,32 @@ function buildStructure(el) {
     <div class="av-target"></div>
     <div class="gfx-overlay">
       <div class="ov-team-a">
-        <img class="ov-crest" />
+        <img class="ov-crest" data-adjust="localCrest" />
         <span class="ov-dot"></span>
         <span class="ov-name"></span>
       </div>
-      <div class="ov-score"><span class="ov-score-a"></span><span class="ov-score-sep"> - </span><span class="ov-score-b"></span></div>
+      <div class="ov-score"><span class="ov-score-a"></span><span class="ov-score-sep" data-adjust="separator"> - </span><span class="ov-score-b"></span></div>
       <div class="ov-team-b">
         <span class="ov-name"></span>
         <span class="ov-dot"></span>
-        <img class="ov-crest" />
+        <img class="ov-crest" data-adjust="awayCrest" />
       </div>
       <div class="ov-period"></div>
       <div class="ov-clock"></div>
-      <img class="ov-scoreboard-sponsor" />
+      <img class="ov-scoreboard-sponsor" data-adjust="sponsor" />
     </div>
   `;
-  el._alphaVideo = createAlphaVideo(el.querySelector('.av-target'), VIDEO_SRC);
+  // "mountThemedAlphaVideo" (2026-08-21, sistema multi-theme): para GLA
+  // usa SIEMPRE este VIDEO_SRC de acá arriba (nunca el manifest -- cero
+  // riesgo de regresión). Para cualquier otro theme sin este asset
+  // todavía, devuelve null a propósito -- el ".gfx-overlay" de arriba
+  // (escudos/nombres/goles/reloj/período) sigue funcionando igual sobre
+  // transparencia, sin ningún video de fondo. "_gfxBuilt" (no
+  // "_alphaVideo", que puede ser legítimamente null) es el marcador real
+  // de "ya armé la estructura" -- si fuera "_alphaVideo" un theme sin
+  // asset reconstruiría el DOM en cada actualización, sin necesidad.
+  el._alphaVideo = mountThemedAlphaVideo(el.querySelector('.av-target'), 'scoreboard', VIDEO_SRC);
+  el._gfxBuilt = true;
 }
 
 function setCrest(imgEl, crestId) {
@@ -104,11 +114,11 @@ function updateOverlay(el, data) {
 }
 
 export default function renderScoreboard(contentEl, data, justTaken) {
-  if (!contentEl._alphaVideo) {
+  if (!contentEl._gfxBuilt) {
     buildStructure(contentEl);
   }
   if (justTaken) {
-    contentEl._alphaVideo.playFromStart();
+    contentEl._alphaVideo?.playFromStart();
   }
   updateOverlay(contentEl, data);
 }

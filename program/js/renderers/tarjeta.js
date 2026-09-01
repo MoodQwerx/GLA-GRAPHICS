@@ -1,7 +1,7 @@
-import { createAlphaVideo } from '../alpha-video.js';
 import { PROGRAM_FONT_FAMILY } from '../program-fonts.js';
 import { crestFile } from '../../../shared/teams.js';
-import { readTextAdjust } from '../text-fit.js';
+import { readTextAdjust, toBroadcastUpper } from '../text-fit.js';
+import { mountThemedAlphaVideo } from '../theme-assets.js';
 
 const VIDEO_BY_TIPO = {
   amarilla: '/assets/eventos/tarjeta-amarilla-alpha.mp4',
@@ -96,20 +96,21 @@ function setCrest(imgEl, crestId) {
 export default function renderTarjeta(contentEl, data, justTaken, onOneShotEnded, allData) {
   const src = VIDEO_BY_TIPO[data.tipo] || VIDEO_BY_TIPO.amarilla;
 
-  if (contentEl.dataset.tipo !== data.tipo) {
+  if (!contentEl._gfxBuilt || contentEl.dataset.tipo !== data.tipo) {
     contentEl.dataset.tipo = data.tipo;
     contentEl.innerHTML = `
       <div class="av-target"></div>
       <div class="gfx-overlay">
-        <div class="ov-tarjeta-team"><img class="ov-tarjeta-crest" /></div>
+        <div class="ov-tarjeta-team"><img class="ov-tarjeta-crest" data-adjust="crest" /></div>
         <div class="ov-tarjeta-jugador"></div>
       </div>
     `;
-    contentEl._alphaVideo = createAlphaVideo(contentEl.querySelector('.av-target'), src);
+    contentEl._alphaVideo = mountThemedAlphaVideo(contentEl.querySelector('.av-target'), 'tarjeta', src, undefined, data.tipo);
+    contentEl._gfxBuilt = true;
   }
 
   if (justTaken) {
-    contentEl._alphaVideo.playFromStart();
+    contentEl._alphaVideo?.playFromStart();
   }
 
   const sb = (allData && allData.scoreboard) || {};
@@ -117,7 +118,7 @@ export default function renderTarjeta(contentEl, data, justTaken, onOneShotEnded
   setCrest(contentEl.querySelector('.ov-tarjeta-crest'), crestId);
 
   const jugadorEl = contentEl.querySelector('.ov-tarjeta-jugador');
-  const jugadorText = data.jugador || '';
+  const jugadorText = toBroadcastUpper(data.jugador || '');
   const adjust = readTextAdjust(data.textAdjust, 'jugador');
   jugadorEl.textContent = jugadorText;
   jugadorEl.style.translate = `${adjust.dx || 0}px ${adjust.dy || 0}px`;

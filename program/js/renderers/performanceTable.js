@@ -1,5 +1,6 @@
 import { crestFile, teamName } from '../../../shared/teams.js';
 import { applyFittedText, applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
+import { resolveImageSrc } from '../theme-assets.js';
 
 const ROW_COUNT = 6;
 
@@ -81,7 +82,7 @@ function rowMarkup(index, ranking) {
     return `
       <div class="ov-performance-row ov-performance-row--ranking" data-row="${index}">
         <div class="ov-performance-position"></div>
-        <div class="ov-performance-crest-cell"><img class="ov-performance-crest" alt="" /></div>
+        <div class="ov-performance-crest-cell"><img class="ov-performance-crest" data-adjust="crest" alt="" /></div>
         <div class="ov-performance-name"></div>
         <div class="ov-performance-primary-stat"></div>
       </div>
@@ -89,7 +90,7 @@ function rowMarkup(index, ranking) {
   }
   return `
     <div class="ov-performance-row" data-row="${index}">
-      <div class="ov-performance-crest-cell"><img class="ov-performance-crest" alt="" /></div>
+      <div class="ov-performance-crest-cell"><img class="ov-performance-crest" data-adjust="crest" alt="" /></div>
       <div class="ov-performance-name"></div>
       <div class="ov-performance-stat" data-stat="0"></div>
       <div class="ov-performance-stat" data-stat="1"></div>
@@ -100,9 +101,10 @@ function rowMarkup(index, ranking) {
 
 function buildStructure(contentEl, moduleId, position) {
   const config = CONFIG[moduleId];
+  const imgSrc = resolveImageSrc(moduleId, config.image);
   contentEl.innerHTML = `
     <div class="ov-performance-card ov-performance-card--${moduleId} ov-performance-card--${positionClass(position)}">
-      <img class="gfx-bg-image" src="${config.image}" />
+      ${imgSrc ? `<img class="gfx-bg-image" src="${imgSrc}" />` : ''}
       <div class="gfx-overlay">
         ${Array.from({ length: ROW_COUNT }, (_, index) => rowMarkup(index, config.ranking)).join('')}
       </div>

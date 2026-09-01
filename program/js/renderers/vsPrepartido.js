@@ -1,4 +1,4 @@
-import { createAlphaVideo } from '../alpha-video.js';
+import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { crestFile, teamName } from '../../../shared/teams.js';
 import { applyFittedText, updateFittedTextWithTransition, readTextAdjust } from '../text-fit.js';
 
@@ -33,19 +33,20 @@ function buildStructure(el) {
     <div class="av-target"></div>
     <div class="gfx-overlay">
       <div class="ov-vsfull-titulo"></div>
-      <div class="ov-vsfull-teamA"><img class="ov-vsfull-crest" /></div>
-      <div class="ov-vsfull-teamB"><img class="ov-vsfull-crest" /></div>
+      <div class="ov-vsfull-teamA"><img class="ov-vsfull-crest" data-adjust="localCrest" /></div>
+      <div class="ov-vsfull-teamB"><img class="ov-vsfull-crest" data-adjust="awayCrest" /></div>
       <div class="ov-vsfull-separator"></div>
       <div class="ov-vsfull-name ov-vsfull-nameA"></div>
       <div class="ov-vsfull-name ov-vsfull-nameB"></div>
     </div>
   `;
-  el._alphaVideo = createAlphaVideo(el.querySelector('.av-target'), VIDEO_SRC);
+  el._alphaVideo = mountThemedAlphaVideo(el.querySelector('.av-target'), 'vsPrepartido', VIDEO_SRC);
+  el._gfxBuilt = true;
 }
 
 export default function renderVsPrepartido(contentEl, data, justTaken, onOneShotEnded, allData) {
-  if (!contentEl._alphaVideo) buildStructure(contentEl);
-  if (justTaken) contentEl._alphaVideo.playFromStart();
+  if (!contentEl._gfxBuilt) buildStructure(contentEl);
+  if (justTaken) contentEl._alphaVideo?.playFromStart();
 
   const sb = (allData && allData.scoreboard) || {};
 

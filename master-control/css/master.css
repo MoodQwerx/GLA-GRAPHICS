@@ -6,6 +6,53 @@
 :root {
   --font-display: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
   --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+
+  /* Superficies/bordes propios de Master Control (2026-08-25, re-theming
+     Argentina Streamers, pedido explícito: "no solo cambiar amarillo por
+     celeste... adaptar también fondos oscuros de contraste"). Valores por
+     defecto IDÉNTICOS a los hex que reemplazan (ver git blame de esta
+     línea) -- GLA no cambia un solo pixel; solo quedan disponibles para
+     que el bloque "[data-theme='argentinaStreamers']" de más abajo los
+     pise por los suyos. */
+  --surface-1: #111113;
+  --surface-panel: #17171a;
+  --surface-input: #101012;
+  --surface-select: #1a1a1c;
+  --hover-bg: #1c1c20;
+  --border-1: #26262a;
+  --border-2: #2c2c31;
+  --border-3: #35353a;
+}
+
+/* THEME ARGENTINA STREAMERS — celeste + blanco (2026-08-25, pedido
+   explícito, sección 1: "no quiero solamente reemplazar amarillo por
+   celeste, quiero una estética de transmisión genuinamente distinta").
+   Pisa los MISMOS tokens que usa toda la hoja de estilos (arriba, y
+   gold, white, grey y black en program/css/theme.css, cargado antes que
+   este archivo) -- así cada boton, borde, resaltado, selector de modulo,
+   input seleccionado, indicador ON-AIR, hover y divisor de Master Control
+   se re-tematiza solo, sin tener que tocar cada regla una por una.
+   Activado en vivo por applyThemeUI() (master-control/js/main.js) via
+   "document.body.dataset.theme", sin refresh, en ambas direcciones. */
+body[data-theme='argentinaStreamers'] {
+  --gold: #6ECBF5;        /* celeste principal */
+  --gold-bright: #FFFFFF; /* blanco -- enfasis maximo (ON-AIR, hover) */
+  --gold-dim: #209DDB;    /* azul complementario -- acento secundario */
+  --white: #FFFFFF;
+  --grey: #A9C9DC;
+  --grey-dim: #4A7A94;
+  --black: #0A1420;
+  --black-glass: rgba(8, 16, 26, 0.88);
+  --black-glass-soft: rgba(8, 16, 26, 0.65);
+
+  --surface-1: #0D1A24;
+  --surface-panel: #10202C;
+  --surface-input: #0A1620;
+  --surface-select: #122430;
+  --hover-bg: #163040;
+  --border-1: #1E3A4A;
+  --border-2: #234454;
+  --border-3: #2A4F61;
 }
 
 /* Layout tipo "app shell": el header ocupa su alto natural (flex-shrink:0)
@@ -34,7 +81,7 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 16px 28px;
-  background: #111113;
+  background: var(--surface-1);
   border-bottom: 2px solid var(--gold);
   flex-shrink: 0;
 }
@@ -78,6 +125,53 @@ body {
 .conn.on { border-color: var(--gold); color: var(--gold-bright); }
 .conn.off { border-color: #6b2020; color: #d16c6c; }
 
+/* SELECTOR DE THEME (2026-08-20, sistema multi-theme, pedido explícito:
+   "arriba de TODO en Master Control... debe estar en la barra/header
+   superior y permanecer visible independientemente del módulo
+   seleccionado"). Vive en .mc-header, entre la marca y el estado de
+   conexión -- nunca se desmonta al cambiar de módulo/tab. */
+.mc-theme-select-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mc-theme-label {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: var(--grey);
+}
+.mc-theme-select {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .5px;
+  color: var(--gold-bright);
+  background: var(--surface-select);
+  border: 1px solid var(--gold);
+  border-radius: 4px;
+  padding: 7px 12px;
+  cursor: pointer;
+}
+.mc-theme-select:disabled { opacity: .6; cursor: default; }
+
+/* Banner "THEME EN PREPARACIÓN / ASSETS PENDIENTES" (sección 4, pedido
+   explícito) -- ocupa todo el ancho, debajo del header, visible sin
+   importar qué módulo esté abierto mientras el theme activo no esté listo. */
+.mc-theme-banner {
+  background: #3a2a0c;
+  border-bottom: 2px solid #caa23a;
+  color: #ffd77a;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .5px;
+  text-align: center;
+  padding: 10px 16px;
+}
+.mc-theme-banner[hidden] { display: none; }
+
 .btn-stop-all {
   font-family: var(--font-display);
   font-size: 13px;
@@ -113,8 +207,8 @@ body {
 
 .tab-bar {
   width: 260px;
-  background: #111113;
-  border-right: 1px solid #26262a;
+  background: var(--surface-1);
+  border-right: 1px solid var(--border-1);
   padding: 12px;
   display: flex;
   flex-direction: column;
@@ -157,8 +251,8 @@ body {
   align-items: center;
   justify-content: space-between;
 }
-.tab:hover { background: #1c1c20; color: var(--white); }
-.tab.active { background: #1c1c20; border-color: var(--gold-dim); color: var(--white); }
+.tab:hover { background: var(--hover-bg); color: var(--white); }
+.tab.active { background: var(--hover-bg); border-color: var(--gold-dim); color: var(--white); }
 .tab.on-air::after {
   content: '● EN AIRE';
   font-size: 10px;
@@ -186,8 +280,8 @@ body {
      (minmax(0,1fr), la misma fraccion que .mc-panel — ver .mc-body) en
      vez de quedar angosta y pegada al borde derecho. */
   min-width: 0;
-  background: #111113;
-  border-left: 1px solid #26262a;
+  background: var(--surface-1);
+  border-left: 1px solid var(--border-1);
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -202,7 +296,7 @@ body {
     height: auto;
     overflow: visible;
     border-left: none;
-    border-top: 1px solid #26262a;
+    border-top: 1px solid var(--border-1);
   }
 }
 
@@ -243,8 +337,8 @@ body {
   font-family: var(--font-body);
   font-size: 12px;
   color: var(--grey);
-  background: #17171a;
-  border: 1px solid #2c2c31;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-2);
   border-radius: 6px;
   padding: 12px 14px;
   display: flex;
@@ -287,13 +381,13 @@ body {
   color: var(--gold-bright);
   cursor: pointer;
 }
-.btn-copy:hover { background: #1c1c20; }
+.btn-copy:hover { background: var(--hover-bg); }
 .btn-copy.copied { border-color: var(--gold); color: var(--gold); }
 
 .preview-info-caption {
   margin-top: 4px;
   padding-top: 8px;
-  border-top: 1px solid #26262a;
+  border-top: 1px solid var(--border-1);
   font-family: var(--font-display);
   font-size: 10px;
   font-weight: 800;
@@ -306,8 +400,8 @@ body {
 .panel-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid #26262a;
+  gap: 12px;
+  border-bottom: 1px solid var(--border-1);
   padding-bottom: 16px;
   margin-bottom: 24px;
 }
@@ -319,6 +413,26 @@ body {
   color: var(--white);
   margin: 0;
 }
+.panel-head .status-pill {
+  margin-left: auto;
+}
+
+/* Indicador discreto de asset pendiente (sección 6, pedido explícito):
+   nunca bloquea nada, solo informa -- mismo tono ambar que el banner
+   "THEME EN PREPARACIÓN" de arriba, en formato de pill chico junto al
+   título del módulo. */
+.asset-badge {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: #3a2a0c;
+  border: 1px solid #caa23a;
+  color: #ffd77a;
+  white-space: nowrap;
+}
 
 .status-pill {
   font-family: var(--font-display);
@@ -329,7 +443,7 @@ body {
   border-radius: 20px;
 }
 .status-pill.on { background: var(--gold); color: var(--black); }
-.status-pill.off { background: #26262a; color: var(--grey); }
+.status-pill.off { background: var(--border-1); color: var(--grey); }
 
 .fields-container {
   display: flex;
@@ -352,8 +466,8 @@ body {
 .field textarea,
 .field select {
   width: 100%;
-  background: #17171a;
-  border: 1px solid #2c2c31;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-2);
   border-radius: 4px;
   color: var(--white);
   font-family: var(--font-body);
@@ -397,7 +511,7 @@ body {
   cursor: pointer;
   font-weight: 600;
 }
-.btn-add:hover { background: #1c1c20; }
+.btn-add:hover { background: var(--hover-bg); }
 
 .penalty-editor {
   display: flex;
@@ -408,8 +522,8 @@ body {
   min-width: 64px;
   padding: 10px 12px;
   border-radius: 4px;
-  border: 1px solid #2c2c31;
-  background: #17171a;
+  border: 1px solid var(--border-2);
+  background: var(--surface-panel);
   color: var(--grey);
   font-weight: 700;
   cursor: pointer;
@@ -425,8 +539,8 @@ body {
 }
 
 .clock-box {
-  background: #17171a;
-  border: 1px solid #2c2c31;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-2);
   border-radius: 6px;
   padding: 16px 18px;
 }
@@ -463,13 +577,53 @@ body {
   font-weight: 700;
   cursor: pointer;
 }
-.btn-clock:hover { background: #1c1c20; }
-.btn-clock-set { border-color: #2c2c31; color: var(--white); }
+.btn-clock:hover { background: var(--hover-bg); }
+.btn-clock-set { border-color: var(--border-2); color: var(--white); }
 .btn-clock-danger { border-color: #4a2323; color: #e39a9a; }
 /* "active" (2026-08-15): usado por los botones de periodo 1T/2T/ET/
    PERSONALIZADO (ver master-control/js/scoreboard-clock-panel.js) para
    marcar cual esta elegido, mismo lenguaje visual que ".tab.active". */
 .btn-clock.active { background: var(--gold); border-color: var(--gold); color: var(--black); }
+
+/* "GOLES" — Marcador principal (2026-08-28, correccion visual explicita del
+   usuario): antes esta fila usaba el mismo ".clock-buttons" flex-wrap
+   generico que Periodo/Reloj, pero el largo tan dispar entre "GOL LOCAL +1"
+   y "-1 LOCAL" dejaba botones de ancho incoherente y aire irregular al
+   quebrar linea. Grid fijo de 2 columnas -- exclusivo de esta seccion via
+   "gol-buttons-grid"/"gol-btn" (ver scoreboard-clock-panel.js), no toca
+   ".clock-buttons"/".btn-clock" que siguen usando Periodo, Reloj, VAR, etc.
+   Mismo ritmo vertical (8px) entre las 2 filas de gol y la fila de reset
+   para que no se vea pegada. */
+.gol-buttons-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.gol-buttons-grid + .gol-buttons-grid { margin-top: 8px; }
+.gol-buttons-reset { grid-template-columns: 1fr; }
+.gol-btn {
+  width: 100%;
+  height: 38px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* Ocultar controles de color de camiseta/equipo del panel de MARCADOR
+   (2026-08-28, pedido explicito del usuario) -- SOLO Argentina Streamers,
+   GLA sigue viendo estos mismos controles sin cambios. Nada se borra: el
+   campo/dato ("teamAColor"/"teamBColor"/"teamColorAssignments") sigue
+   existiendo igual que siempre (ver shared/modules.js y
+   scoreboard-clock-panel.js), esto es pura visibilidad de UI. */
+body[data-theme='argentinaStreamers'] .field-teamAColor,
+body[data-theme='argentinaStreamers'] .field-teamBColor,
+body[data-theme='argentinaStreamers'] .clock-box-team-color {
+  display: none;
+}
 
 .clock-manual {
   display: flex;
@@ -478,8 +632,8 @@ body {
 }
 .clock-manual input {
   width: 70px;
-  background: #101012;
-  border: 1px solid #2c2c31;
+  background: var(--surface-input);
+  border: 1px solid var(--border-2);
   border-radius: 4px;
   color: var(--white);
   padding: 8px 10px;
@@ -491,7 +645,7 @@ body {
   gap: 12px;
   margin-top: 32px;
   padding-top: 20px;
-  border-top: 1px solid #26262a;
+  border-top: 1px solid var(--border-1);
 }
 
 .btn {
@@ -508,9 +662,9 @@ body {
 .btn-take { background: var(--gold); color: var(--black); }
 .btn-take:hover { background: var(--gold-bright); }
 .btn-update { background: transparent; border: 1px solid var(--gold-dim); color: var(--gold-bright); }
-.btn-update:hover { background: #1c1c20; }
-.btn-out { background: #1c1c1e; border: 1px solid #35353a; color: var(--grey); }
-.btn-out:hover { background: #26262a; color: var(--white); }
+.btn-update:hover { background: var(--hover-bg); }
+.btn-out { background: #1c1c1e; border: 1px solid var(--border-3); color: var(--grey); }
+.btn-out:hover { background: var(--border-1); color: var(--white); }
 .formation-editor {
   display: grid;
   gap: 18px;
@@ -534,7 +688,7 @@ body {
 }
 .formation-row-action {
   min-height: 34px;
-  border: 1px solid #35353a;
+  border: 1px solid var(--border-3);
   border-radius: 4px;
   background: #20242b;
   color: var(--white);
@@ -562,7 +716,7 @@ body {
 }
 .formation-side-tab {
   min-height: 34px;
-  border: 1px solid #35353a;
+  border: 1px solid var(--border-3);
   border-radius: 4px;
   background: #20242b;
   color: var(--grey);
@@ -611,7 +765,7 @@ body {
   display: grid;
   gap: 16px;
   padding: 14px;
-  border: 1px solid #26262a;
+  border: 1px solid var(--border-1);
   border-radius: 6px;
   background: #16161a;
 }
@@ -632,7 +786,7 @@ body {
 }
 .short-double-air-btn {
   min-height: 38px;
-  border: 1px solid #35353a;
+  border: 1px solid var(--border-3);
   border-radius: 4px;
   background: #20242b;
   color: var(--grey);
@@ -679,7 +833,7 @@ body {
 .text-adjust-btn {
   min-width: 30px;
   min-height: 26px;
-  border: 1px solid #35353a;
+  border: 1px solid var(--border-3);
   border-radius: 4px;
   background: #20242b;
   color: var(--grey);
@@ -700,7 +854,7 @@ body {
 .text-adjust-reset {
   min-height: 26px;
   padding: 0 8px;
-  border: 1px solid #35353a;
+  border: 1px solid var(--border-3);
   border-radius: 4px;
   background: transparent;
   color: var(--grey);
@@ -757,6 +911,90 @@ body {
   grid-template-columns: repeat(6, 30px) auto auto;
 }
 
+/* "GUARDAR POSICIÓN" (2026-08-31, pedido explicito del usuario) -- fila
+   propia debajo de los botones de siempre (ver save-position-control.js),
+   nunca adentro del grid de ".text-adjust-row"/".composition-adjust-row"
+   para no desalinear ni desbordar ningun control existente. Solo aparece
+   cuando el caller pasa "onSave" -- si no, esta fila queda vacia y no se
+   monta (ver composition-control.js/text-adjust-control.js). */
+.text-adjust-save-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+.text-adjust-save {
+  padding: 5px 10px;
+  border: 1px solid var(--gold-dim);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--gold-bright);
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.text-adjust-save:hover {
+  background: var(--hover-bg);
+}
+.text-adjust-save-status {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  min-height: 1em;
+}
+.text-adjust-save-status.is-dirty {
+  color: #e0a83a;
+}
+.text-adjust-save-status.is-saved-flash {
+  color: #4fd67a;
+}
+
+/* Acordeon de ajuste individual del MARCADOR -- SOLO Argentina Streamers
+   (2026-08-31, pedido explicito del usuario, ver
+   master-control/js/main.js "renderScoreboardAdjustAccordion"). Mismo
+   ".composition-container" de siempre como host -- GLA nunca ejecuta esta
+   rama, sigue viendo el ".composition-adjust" unico de siempre. */
+.adjust-accordion-heading {
+  margin: 0 0 8px;
+  font-size: 13px;
+  letter-spacing: 0.7px;
+  color: var(--gold-bright);
+}
+.adjust-accordion-section {
+  border: 1px solid var(--border-2);
+  border-radius: 6px;
+  background: #16140c;
+  margin-bottom: 8px;
+  padding: 0;
+}
+.adjust-accordion-section > summary {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--grey);
+  list-style: none;
+}
+.adjust-accordion-section > summary::-webkit-details-marker {
+  display: none;
+}
+.adjust-accordion-section > summary::before {
+  content: '▸ ';
+  color: var(--gold-dim);
+}
+.adjust-accordion-section[open] > summary::before {
+  content: '▾ ';
+}
+.adjust-accordion-section[open] > summary {
+  color: var(--gold-bright);
+  border-bottom: 1px solid var(--border-2);
+}
+.adjust-accordion-section > div {
+  padding: 12px 14px;
+}
+
 .grupos-editor {
   display: grid;
   gap: 18px;
@@ -794,7 +1032,7 @@ body {
 }
 .grupos-edit-tab {
   min-height: 34px;
-  border: 1px solid #35353a;
+  border: 1px solid var(--border-3);
   border-radius: 4px;
   background: #20242b;
   color: var(--grey);
@@ -837,7 +1075,7 @@ body {
   letter-spacing: 0.5px;
   cursor: pointer;
 }
-.performance-sync-btn:hover:not(:disabled) { background: #1c1c20; }
+.performance-sync-btn:hover:not(:disabled) { background: var(--hover-bg); }
 .performance-sync-btn.active {
   background: var(--gold-dim);
   color: #111;
@@ -852,7 +1090,7 @@ body {
 .match-roster-panel {
   flex-direction: column;
   padding: 12px;
-  border: 1px solid #35353a;
+  border: 1px solid var(--border-3);
   border-radius: 6px;
   background: #1b1b1e;
 }
@@ -879,7 +1117,7 @@ body {
   display: grid;
   gap: 10px;
   padding: 12px;
-  border: 1px solid #35353a;
+  border: 1px solid var(--border-3);
   border-radius: 6px;
   background: #1b1b1e;
 }
@@ -975,12 +1213,12 @@ body {
   align-items: center;
   padding-bottom: 20px;
   margin-bottom: 24px;
-  border-bottom: 1px solid #26262a;
+  border-bottom: 1px solid var(--border-1);
 }
 .marcador-subnav-btn {
   position: relative;
-  background: #17171a;
-  border: 1px solid #2c2c31;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-2);
   color: var(--grey);
   padding: 9px 14px;
   border-radius: 20px;
@@ -989,8 +1227,8 @@ body {
   font-weight: 700;
   cursor: pointer;
 }
-.marcador-subnav-btn:hover { background: #1c1c20; color: var(--white); }
-.marcador-subnav-btn.active { background: #1c1c20; border-color: var(--gold-dim); color: var(--white); }
+.marcador-subnav-btn:hover { background: var(--hover-bg); color: var(--white); }
+.marcador-subnav-btn.active { background: var(--hover-bg); border-color: var(--gold-dim); color: var(--white); }
 .marcador-subnav-btn.on-air { border-color: var(--gold); color: var(--gold-bright); }
 .marcador-subnav-btn.on-air::after {
   content: '';
@@ -1015,7 +1253,7 @@ body {
   font-weight: 700;
   cursor: pointer;
 }
-.marcador-entretiempo-toggle:hover { background: #1c1c20; }
+.marcador-entretiempo-toggle:hover { background: var(--hover-bg); }
 .marcador-entretiempo-toggle:disabled { opacity: 0.5; cursor: default; }
 
 /* "FIN DEL CONTADOR" / PERSONALIZADO de periodo: mismo look que
@@ -1035,8 +1273,8 @@ body {
   flex: 1;
   min-width: 90px;
   width: auto !important;
-  background: #101012;
-  border: 1px solid #2c2c31;
+  background: var(--surface-input);
+  border: 1px solid var(--border-2);
   border-radius: 4px;
   color: var(--white);
   padding: 8px 10px;

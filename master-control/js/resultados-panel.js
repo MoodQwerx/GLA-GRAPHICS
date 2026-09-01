@@ -1,5 +1,27 @@
 import { TEAM_OPTIONS } from '../../shared/teams.js';
 import { mountAdjustControl } from './field-editors.js';
+import { renderPresetsControl } from './presets-helper.js';
+import { renderCompositionControl } from './composition-control.js';
+
+// Claves que forman el snapshot COMPLETO del modulo para "GUARDAR PRESET
+// COMPLETO" (2026-08-16, pedido urgente del usuario: "quiero un snapshot
+// COMPLETO... no quiero guardar solamente equipos/resultados"). Incluye
+// datos (encuentros, tanda, posicion, titulo general) Y AJUSTES VISUALES
+// (textAdjust por columna + composicion global) para que cargar el preset
+// devuelva el modulo exactamente a como estaba, con o sin el modulo al aire
+// (se aplica via el mismo onDirty -> UPDATE que ya usa el resto del panel,
+// nunca TAKE, asi que si Resultados esta al aire no hay ningun corte).
+const SNAPSHOT_KEYS = [
+  'encuentros', 'tanda', 'posicion', 'titulo', 'textAdjust',
+  'compositionOffsetX', 'compositionOffsetY', 'compositionScale',
+  'faseWeb', 'snapshotsWeb', 'ultimaActualizacionWeb',
+];
+
+function captureSnapshot(data) {
+  const snap = {};
+  for (const key of SNAPSHOT_KEYS) snap[key] = data[key];
+  return JSON.parse(JSON.stringify(snap));
+}
 
 // "AJUSTE DE TEXTOS" (2026-08-15, auditoria completa): Resultados es una
 // tabla dinamica (hasta 9 encuentros, 6 visibles a la vez por tanda) -- un
@@ -35,7 +57,7 @@ const ESTADOS = [
 const MAX_ENCUENTROS = 9;
 const VISIBLE_ENCUENTROS = 6;
 
-export function renderResultadosPanel(container, data, onDirty) {
+export function renderResultadosPanel(container, data, onDirty, saveOptions) {
   const root = document.createElement('div');
   root.className = 'resultados-editor';
   container.appendChild(root);
@@ -43,15 +65,47 @@ export function renderResultadosPanel(container, data, onDirty) {
   // Inicializar encuentros si no existen
   if (!data.encuentros) {
     data.encuentros = [
-      { teamA: '', teamB: '', scoreA: '0', scoreB: '0', status: 'final', hora: '', titulo: '' }
+      { teamA: '', teamB: '', scoreA: '0', scoreB: '0', status: 'final', hora: '', titulo: '', penalesA: '', penalesB: '' }
     ];
   }
   // Encuentros creados antes de agregar "titulo" (2026-08-15) no lo tienen.
   for (const encuentro of data.encuentros) {
     if (typeof encuentro.titulo !== 'string') encuentro.titulo = '';
+    if (typeof encuentro.penalesA !== 'string') encuentro.penalesA = '';
+    if (typeof encuentro.penalesB !== 'string') encuentro.penalesB = '';
   }
   if (!data.snapshotsWeb || typeof data.snapshotsWeb !== 'object') data.snapshotsWeb = {};
+  if (!data.visualByFase || typeof data.visualByFase !== 'object') data.visualByFase = {};
   let syncStatus = null;
+
+  // AJUSTES VISUALES INDEPENDIENTES POR FASE (2026-08-16, pedido urgente
+  // del usuario: mover flechas/escala en PLAYOFFS no debe pisar ni
+  // depender de FASE DE GRUPOS y viceversa). El mecanismo UNIVERSAL de
+  // composicion (program/js/main.js "applyComposition", master-control/js/
+  // main.js "renderCompositionControl") sigue leyendo/escribiendo un unico
+  // set de claves activas ("compositionOffsetX/Y/Scale", "textAdjust")
+  // -- no se toca ese mecanismo. Lo que se agrega es un swap: antes de
+  // cambiar de fase se guarda el ajuste activo bajo la fase VIEJA en
+  // "data.visualByFase", y se carga (o resetea a neutro si es la primera
+  // vez) el de la fase NUEVA en esas mismas claves activas.
+  function snapshotVisual() {
+    return {
+      compositionOffsetX: data.compositionOffsetX || 0,
+      compositionOffsetY: data.compositionOffsetY || 0,
+      compositionScale: data.compositionScale !== undefined ? data.compositionScale : 1,
+      textAdjust: JSON.parse(JSON.stringify(data.textAdjust || {})),
+    };
+  }
+  function applyVisual(visual) {
+    data.compositionOffsetX = visual.compositionOffsetX;
+    data.compositionOffsetY = visual.compositionOffsetY;
+    data.compositionScale = visual.compositionScale;
+    data.textAdjust = visual.textAdjust;
+  }
+  function refreshCompositionWidget() {
+    const compositionContainer = document.getElementById('composition-container');
+    if (compositionContainer) renderCompositionControl(compositionContainer, data, onDirty);
+  }
 
   async function syncFromWeb(fase) {
     syncStatus = { kind: 'loading', fase, text: 'Actualizando...' };
@@ -60,13 +114,51 @@ export function renderResultadosPanel(container, data, onDirty) {
       const response = await fetch(`/api/resultados/${fase}/sync-web`, { method: 'POST' });
       const body = await response.json().catch(() => null);
       if (!response.ok || !body?.ok) throw new Error(body?.error || `HTTP ${response.status}`);
+
+      const previousFase = data.faseWeb;
+      if (previousFase && previousFase !== fase) {
+        data.visualByFase[previousFase] = snapshotVisual();
+      }
+      const savedForNewFase = data.visualByFase[fase];
+      const neutralTextAdjust = Object.fromEntries(
+        Object.keys(data.textAdjust || {}).map((k) => [k, { dx: 0, dy: 0, dSize: 0 }])
+      );
+      applyVisual(savedForNewFase || {
+        compositionOffsetX: 0, compositionOffsetY: 0, compositionScale: 1,
+        textAdjust: neutralTextAdjust,
+      });
+
       data.faseWeb = fase;
       data.snapshotsWeb = body.snapshotsWeb || data.snapshotsWeb;
-      data.encuentros = body.encuentros;
+      // DATOS vs AJUSTES VISUALES (2026-08-16, pedido urgente del usuario):
+      // equipos/goles/estado/hora SIEMPRE vienen frescos de la web, pero un
+      // titulo que el operador ya haya personalizado a mano (distinto del
+      // default del slot, ej. cambio "SEMIS 1" por "SEMIFINAL A") no debe
+      // perderse en la proxima sincronizacion -- se matchea por "id" (los
+      // slots de playoffs traen id estable, ver server/glaFutbolSync.js);
+      // sin "id" (fase de grupos) no hay como matchear, se usa el dato
+      // nuevo tal cual (comportamiento sin cambios para ese caso).
+      const previousById = new Map(
+        (Array.isArray(data.encuentros) ? data.encuentros : [])
+          .filter((e) => e && e.id)
+          .map((e) => [e.id, e])
+      );
+      data.encuentros = body.encuentros.map((enc) => {
+        const previous = enc.id ? previousById.get(enc.id) : null;
+        if (previous && previous.titulo && previous.titulo !== enc.titulo) {
+          return { ...enc, titulo: previous.titulo };
+        }
+        return enc;
+      });
       data.tanda = 'tanda1';
       data.ultimaActualizacionWeb = body.ultimaActualizacionWeb;
       syncStatus = { kind: 'success', fase, text: 'RESULTADOS ACTUALIZADOS', unmatchedTeams: body.unmatchedTeams || [] };
       onDirty();
+      // El widget de "AJUSTE DE COMPOSICIÓN" lo monta main.js aparte, en
+      // "#composition-container" -- sin este refresh el dato queda bien
+      // swapeado pero el readout en pantalla se ve viejo (mismo fix que
+      // ya se aplico para "cargar preset completo").
+      refreshCompositionWidget();
     } catch (error) {
       syncStatus = { kind: 'error', fase, text: 'ERROR AL ACTUALIZAR', detail: error.message };
     }
@@ -104,6 +196,48 @@ export function renderResultadosPanel(container, data, onDirty) {
       warning.textContent = `Sin equipo local equivalente para: ${syncStatus.unmatchedTeams.join(', ')}`;
       root.appendChild(warning);
     }
+
+    // --- Preset completo (2026-08-16, pedido urgente del usuario): un
+    // snapshot de TODO el modulo (encuentros, tanda, posicion, titulo
+    // general, textAdjust por columna, composicion global) para volver
+    // exactamente al estado visual+datos de cuando se guardo, incluso
+    // despues de "ACTUALIZAR PLAYOFFS" + acomodar todo a mano. Usa el
+    // mismo helper/infraestructura de CARGAR/RENOMBRAR/ELIMINAR que ya
+    // usan los demas modulos (ver presets-helper.js).
+    const presetsBox = document.createElement('div');
+    renderPresetsControl(presetsBox, data, {
+      presetKey: 'completePresets',
+      title: 'PRESET COMPLETO DE RESULTADOS (DATOS + AJUSTES VISUALES)',
+      buttons: [
+        {
+          label: 'GUARDAR PRESET COMPLETO',
+          type: 'complete',
+          getFields: () => ({
+            resumen: `${data.encuentros.length} encuentro(s) — ${data.tanda === 'tanda2' ? 'partidos 4–9' : 'partidos 1–6'}`,
+            __snapshot: captureSnapshot(data),
+          }),
+        },
+      ],
+      onApply: (fields) => {
+        const snap = fields.__snapshot;
+        if (!snap) return;
+        Object.assign(data, JSON.parse(JSON.stringify(snap)));
+        render();
+        // "AJUSTE DE COMPOSICIÓN" de este modulo lo monta main.js aparte,
+        // en "#composition-container" (fuera del arbol que reconstruye
+        // este panel) -- sin este refresh, el dato queda bien restaurado
+        // pero el readout de flechas visible en pantalla se ve viejo hasta
+        // el proximo click o cambio de pestaña. Mismo llamado/target que ya
+        // usa main.js para Resultados (no es "varCheck", que usa dos cajas
+        // con keys custom).
+        const compositionContainer = document.getElementById('composition-container');
+        if (compositionContainer) {
+          renderCompositionControl(compositionContainer, data, onDirty);
+        }
+      },
+      onDirty,
+    });
+    root.appendChild(presetsBox);
 
     // --- Posición ---
     const posicionField = document.createElement('div');
@@ -143,7 +277,7 @@ export function renderResultadosPanel(container, data, onDirty) {
       onDirty();
     });
     tituloField.appendChild(tituloInput);
-    mountAdjustControl(tituloField, data, 'titulo', onDirty);
+    mountAdjustControl(tituloField, data, 'titulo', onDirty, saveOptions);
     root.appendChild(tituloField);
 
     // --- Tanda / vista ---
@@ -304,6 +438,53 @@ export function renderResultadosPanel(container, data, onDirty) {
       teamsRow.appendChild(visitorSelect);
       card.appendChild(teamsRow);
 
+      // Penales (2026-08-16, pedido explicito del usuario: soportar
+      // "6(3) - 6(1)") -- OPCIONAL: si cualquiera de los dos queda vacio,
+      // Program muestra solo el resultado normal, sin parentesis (ver
+      // program/js/renderers/sideTable.js). Fila propia, chica, debajo de
+      // GOLES para no confundir con el resultado principal.
+      const penalesRow = document.createElement('div');
+      penalesRow.style.display = 'grid';
+      penalesRow.style.gridTemplateColumns = '1fr 1fr';
+      penalesRow.style.gap = '10px';
+      penalesRow.style.marginBottom = '10px';
+
+      const penalesLocalField = document.createElement('div');
+      penalesLocalField.className = 'field';
+      const penalesLocalLabel = document.createElement('label');
+      penalesLocalLabel.textContent = 'Penales local (opcional)';
+      const penalesLocalInput = document.createElement('input');
+      penalesLocalInput.type = 'text';
+      penalesLocalInput.value = encuentro.penalesA ?? '';
+      penalesLocalInput.placeholder = 'Ej: 3';
+      penalesLocalInput.style.textAlign = 'center';
+      penalesLocalInput.addEventListener('input', () => {
+        encuentro.penalesA = penalesLocalInput.value;
+        onDirty();
+      });
+      penalesLocalField.appendChild(penalesLocalLabel);
+      penalesLocalField.appendChild(penalesLocalInput);
+
+      const penalesVisitanteField = document.createElement('div');
+      penalesVisitanteField.className = 'field';
+      const penalesVisitanteLabel = document.createElement('label');
+      penalesVisitanteLabel.textContent = 'Penales visitante (opcional)';
+      const penalesVisitanteInput = document.createElement('input');
+      penalesVisitanteInput.type = 'text';
+      penalesVisitanteInput.value = encuentro.penalesB ?? '';
+      penalesVisitanteInput.placeholder = 'Ej: 1';
+      penalesVisitanteInput.style.textAlign = 'center';
+      penalesVisitanteInput.addEventListener('input', () => {
+        encuentro.penalesB = penalesVisitanteInput.value;
+        onDirty();
+      });
+      penalesVisitanteField.appendChild(penalesVisitanteLabel);
+      penalesVisitanteField.appendChild(penalesVisitanteInput);
+
+      penalesRow.appendChild(penalesLocalField);
+      penalesRow.appendChild(penalesVisitanteField);
+      card.appendChild(penalesRow);
+
       // Título individual (aparece arriba del estado/hora en Program, ej.
       // "SEMIS 1" / "GRAN FINAL" -- ver program/js/renderers/sideTable.js).
       // La posicion/tamaño de este texto se ajusta por columna, junto con
@@ -406,7 +587,7 @@ export function renderResultadosPanel(container, data, onDirty) {
       const lbl = document.createElement('label');
       lbl.textContent = label;
       wrap.appendChild(lbl);
-      mountAdjustControl(wrap, data, key, onDirty);
+      mountAdjustControl(wrap, data, key, onDirty, saveOptions);
       adjustSection.appendChild(wrap);
     }
     root.appendChild(adjustSection);
@@ -449,7 +630,9 @@ export function renderResultadosPanel(container, data, onDirty) {
           scoreB: '0',
           status: 'final',
           hora: '',
-          titulo: ''
+          titulo: '',
+          penalesA: '',
+          penalesB: ''
         });
         onDirty();
         render();

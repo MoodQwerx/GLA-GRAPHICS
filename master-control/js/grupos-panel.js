@@ -41,7 +41,7 @@ const POSICIONES = [
 // cargar/editar AMBOS grupos sin importar el modo de salida elegido (ej.
 // preparar el Grupo 2 con anticipacion mientras el modo fullscreen activo
 // todavia muestra el Grupo 1).
-export function renderGruposPanel(container, data, onDirty) {
+export function renderGruposPanel(container, data, onDirty, saveOptions) {
   const root = document.createElement('div');
   root.className = 'grupos-editor';
   container.appendChild(root);
@@ -234,7 +234,7 @@ export function renderGruposPanel(container, data, onDirty) {
       const lbl = document.createElement('label');
       lbl.textContent = label;
       wrap.appendChild(lbl);
-      mountAdjustControl(wrap, data, key, onDirty);
+      mountAdjustControl(wrap, data, key, onDirty, saveOptions);
       adjustSection.appendChild(wrap);
     }
     root.appendChild(adjustSection);

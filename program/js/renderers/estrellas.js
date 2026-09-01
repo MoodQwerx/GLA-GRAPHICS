@@ -1,4 +1,4 @@
-import { createAlphaVideo } from '../alpha-video.js';
+import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { crestFile, teamName } from '../../../shared/teams.js';
 import { applyFittedText, applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
 
@@ -39,7 +39,7 @@ function buildStructure(el) {
       <!-- Fila Jugador Local -->
       <div class="ov-estrellas-row ov-estrellas-row--local">
         <div class="ov-estrellas-escudo">
-          <img class="ov-estrellas-crest" />
+          <img class="ov-estrellas-crest" data-adjust="localCrest" />
         </div>
         <div class="ov-estrellas-name"></div>
         <div class="ov-estrellas-stat ov-estrellas-stat--g"></div>
@@ -50,7 +50,7 @@ function buildStructure(el) {
       <!-- Fila Jugador Visitante -->
       <div class="ov-estrellas-row ov-estrellas-row--visitante">
         <div class="ov-estrellas-escudo">
-          <img class="ov-estrellas-crest" />
+          <img class="ov-estrellas-crest" data-adjust="visitanteCrest" />
         </div>
         <div class="ov-estrellas-name"></div>
         <div class="ov-estrellas-stat ov-estrellas-stat--g"></div>
@@ -59,12 +59,13 @@ function buildStructure(el) {
       </div>
     </div>
   `;
-  el._alphaVideo = createAlphaVideo(el.querySelector('.av-target'), VIDEO_SRC);
+  el._alphaVideo = mountThemedAlphaVideo(el.querySelector('.av-target'), 'estrellas', VIDEO_SRC);
+  el._gfxBuilt = true;
 }
 
 export default function renderEstrellas(contentEl, data, justTaken, onOneShotEnded, allData) {
-  if (!contentEl._alphaVideo) buildStructure(contentEl);
-  if (justTaken) contentEl._alphaVideo.playFromStart();
+  if (!contentEl._gfxBuilt) buildStructure(contentEl);
+  if (justTaken) contentEl._alphaVideo?.playFromStart();
 
   const sb = (allData && allData.scoreboard) || {};
   const ta = data.textAdjust;

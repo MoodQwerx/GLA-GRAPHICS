@@ -74,8 +74,8 @@ function statsList(html, fuente, field) {
   return extractLeagueStatsList(html, field);
 }
 
-export async function syncGoleadoresFromWeb(fuente = 'liga') {
-  const html = await fetchGlaFutbolHtml();
+export async function syncGoleadoresFromWeb(fuente = 'liga', htmlSnapshot = null) {
+  const html = htmlSnapshot || await fetchGlaFutbolHtml();
   const rawScorers = statsList(html, fuente, 'scorers');
   const catalog = getTeamCatalog();
   const { jugadores, unmatchedTeams, totalEnLaWeb } = buildRankedPlayers(rawScorers, catalog);
@@ -86,8 +86,8 @@ export async function syncGoleadoresFromWeb(fuente = 'liga') {
 // Asistidores: leagueStats.assists, de mayor a menor cantidad de asistencias.
 // Mismo campo "count" del lado de la web, mismo shape de salida que
 // Goleadores -- solo cambia que stat se pide y con que campo se completa "g".
-export async function syncAsistidoresFromWeb(fuente = 'liga') {
-  const html = await fetchGlaFutbolHtml();
+export async function syncAsistidoresFromWeb(fuente = 'liga', htmlSnapshot = null) {
+  const html = htmlSnapshot || await fetchGlaFutbolHtml();
   const rawAssists = statsList(html, fuente, 'assists');
   const catalog = getTeamCatalog();
   const { jugadores, unmatchedTeams, totalEnLaWeb } = buildRankedPlayers(rawAssists, catalog);
@@ -128,8 +128,8 @@ function combinePlayerStats(scorers, assists, appearances) {
   });
 }
 
-export async function syncJugadoresFromWeb(fuente = 'liga') {
-  const html = await fetchGlaFutbolHtml();
+export async function syncJugadoresFromWeb(fuente = 'liga', htmlSnapshot = null) {
+  const html = htmlSnapshot || await fetchGlaFutbolHtml();
   const scorers = statsList(html, fuente, 'scorers');
   const assists = statsList(html, fuente, 'assists');
   const appearances = statsList(html, fuente, 'appearances');
@@ -168,8 +168,8 @@ function isValidStandingEntry(entry) {
 // puntual). Se respeta el orden oficial que ya trae la web -- no se
 // recalcula ranking propio, porque el torneo puede tener criterios de
 // desempate distintos a los que usa este sistema para otras tablas.
-export async function syncPosicionesFromWeb() {
-  const html = await fetchGlaFutbolHtml();
+export async function syncPosicionesFromWeb(htmlSnapshot = null) {
+  const html = htmlSnapshot || await fetchGlaFutbolHtml();
   const rawStandings = extractLeagueStandings(html);
   const valid = rawStandings.filter(isValidStandingEntry).slice(0, POSICIONES_ROWS);
   if (valid.length === 0) throw new Error('La tabla de posiciones de gla.futbol no tiene datos validos.');
@@ -220,18 +220,18 @@ function standingRows(rawStandings, rowCount) {
   return { filas, unmatchedTeams: [...unmatchedTeams], totalEnLaWeb: valid.length };
 }
 
-async function fetchTournament() {
-  const html = await fetchGlaFutbolHtml();
+async function fetchTournament(htmlSnapshot = null) {
+  const html = htmlSnapshot || await fetchGlaFutbolHtml();
   return findLightningTournament(extractProductData(html));
 }
 
-export async function syncPosicionesTorneoFromWeb() {
-  const tournament = await fetchTournament();
+export async function syncPosicionesTorneoFromWeb(htmlSnapshot = null) {
+  const tournament = await fetchTournament(htmlSnapshot);
   return standingRows(tournament.tournamentStandings, 6);
 }
 
-export async function syncGruposFromWeb() {
-  const tournament = await fetchTournament();
+export async function syncGruposFromWeb(htmlSnapshot = null) {
+  const tournament = await fetchTournament(htmlSnapshot);
   const catalog = getTeamCatalog();
   const unmatchedTeams = new Set();
   const findGroup = (letter) => tournament.groups?.find((group) => String(group?.name || '').toUpperCase().endsWith(letter));
@@ -370,8 +370,8 @@ export function buildPlayoffEncounters(rawMatches, catalog = getTeamCatalog()) {
   };
 }
 
-export async function syncResultadosFromWeb(fase = 'grupos') {
-  const tournament = await fetchTournament();
+export async function syncResultadosFromWeb(fase = 'grupos', htmlSnapshot = null) {
+  const tournament = await fetchTournament(htmlSnapshot);
   const rawMatches = fase === 'playoffs'
     ? tournament.knockoutMatches
     : (tournament.groups || []).flatMap((group) => Array.isArray(group.matches) ? group.matches : []);

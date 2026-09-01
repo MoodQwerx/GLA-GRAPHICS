@@ -19,6 +19,8 @@
 // de red: la persistencia y el "reflejarse inmediatamente si esta al
 // aire" ya los resuelve el mismo pipeline de auto-guardado que usa
 // cualquier otro campo de texto (scheduleAutoSave -> UPDATE).
+import { renderSavePositionControl } from './save-position-control.js';
+
 const STEP_PX = 2;
 const STEP_SIZE = 1;
 const REPEAT_DELAY_MS = 400;
@@ -77,7 +79,7 @@ function repeatButton(label, title, onFire) {
 // "onDirty" se llama en cada cambio (guardado/UPDATE); "onReset" es
 // opcional y, si se pasa, se llama ADEMAS de limpiar "adjust" (por si el
 // caller necesita re-pintar algo propio, ver short-double-panel.js).
-export function renderTextAdjustControl(container, adjust, onDirty, { label, onReset } = {}) {
+export function renderTextAdjustControl(container, adjust, onDirty, { label, onReset, onSave, isPendingSave, isConnected } = {}) {
   ensureShape(adjust);
 
   const root = document.createElement('div');
@@ -105,11 +107,13 @@ export function renderTextAdjustControl(container, adjust, onDirty, { label, onR
 
   const row = document.createElement('div');
   row.className = 'text-adjust-row';
+  let saveControl = null;
 
   function bump(prop, delta) {
     adjust[prop] += delta;
     refreshReadout();
     onDirty();
+    saveControl?.markDirty();
   }
 
   row.appendChild(repeatButton('←', 'Mover izquierda', () => bump('dx', -STEP_PX)));
@@ -131,11 +135,21 @@ export function renderTextAdjustControl(container, adjust, onDirty, { label, onR
     refreshReadout();
     onDirty();
     onReset?.();
+    saveControl?.markDirty();
   });
   row.appendChild(resetBtn);
   row.appendChild(readout);
 
   root.appendChild(row);
+
+  // Fila propia (no adentro de "row", que es un grid de columnas fijas
+  // pensado para los 8 controles de siempre) -- así no desalinea ni
+  // desborda ningún caller existente.
+  const saveRow = document.createElement('div');
+  saveRow.className = 'text-adjust-save-row';
+  saveControl = renderSavePositionControl(saveRow, { onSave, isPendingSave, isConnected });
+  if (saveControl) root.appendChild(saveRow);
+
   container.appendChild(root);
   return root;
 }

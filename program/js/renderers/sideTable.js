@@ -1,5 +1,8 @@
-import { applyFittedText, applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
+import { applyFittedText, readTextAdjust } from '../text-fit.js';
 import { crestFile } from '../../../shared/teams.js';
+import { DEFAULT_THEME_ID } from '../../../shared/themes.js';
+import { getActiveThemeId } from '../theme-client.js';
+import { resolveImageSrc } from '../theme-assets.js';
 
 // Cada bracket mide 124px + 12px de gap = 136px de paso vertical. Como
 // maximo se ven 6: tanda1 muestra 1-6 y tanda2 desplaza la misma tira tres
@@ -34,23 +37,57 @@ function cardMarkup(index) {
       <div class="gfx-overlay">
         <div class="ov-resultados-cuerpo">
           <div class="ov-resultados-escudo local">
-            <img class="ov-resultados-crest" alt="local">
+            <img class="ov-resultados-crest" data-adjust="crestLocal" alt="local">
           </div>
           <div class="ov-resultados-bloque-central">
-            <div class="ov-resultados-gol-local"></div>
+            <div class="ov-resultados-gol-local">
+              <span class="ov-resultados-gol-num"></span><span class="ov-resultados-gol-pen"></span>
+            </div>
             <div class="ov-resultados-titulo-encuentro"></div>
             <div class="ov-resultados-estado"></div>
-            <div class="ov-resultados-gol-visitante"></div>
+            <div class="ov-resultados-gol-visitante">
+              <span class="ov-resultados-gol-num"></span><span class="ov-resultados-gol-pen"></span>
+            </div>
             <div class="ov-resultados-titulo-encuentro-fullscreen"></div>
             <div class="ov-resultados-estado-fullscreen"></div>
           </div>
           <div class="ov-resultados-escudo visitante">
-            <img class="ov-resultados-crest" alt="visitante">
+            <img class="ov-resultados-crest" data-adjust="crestVisitante" alt="visitante">
           </div>
         </div>
       </div>
     </div>
   `;
+}
+
+// Penales opcionales (2026-08-16, pedido explicito del usuario:
+// "6(3) - 6(1)"): mismo criterio de translate/dSize que "applyPlainTextAdjust"
+// (ver program/js/text-fit.js) pero targeteando el span del NUMERO
+// principal (".ov-resultados-gol-num") -- el parentesis de penales
+// (".ov-resultados-gol-pen") usa un tamaño fijo mas chico por CSS, no es
+// parte del ajuste individual (mantiene el layout simple, sin agregar un
+// segundo control de tamaño solo para eso). "translate" se aplica al
+// CONTENEDOR completo (mismo elemento que antes tenia el texto directo),
+// asi que mover con las flechas mueve el bloque numero+parentesis junto.
+function paintGolConPenales(containerEl, score, penales, adjust = {}) {
+  const { dx = 0, dy = 0, dSize = 0 } = adjust;
+  const numEl = containerEl.querySelector('.ov-resultados-gol-num');
+  const penEl = containerEl.querySelector('.ov-resultados-gol-pen');
+  const penText = String(penales ?? '').trim();
+  const hasPenales = penText.length > 0;
+  numEl.textContent = String(score ?? '0');
+  penEl.textContent = hasPenales ? `(${penText})` : '';
+  containerEl.classList.toggle('has-penales', hasPenales);
+  containerEl.style.translate = `${dx}px ${dy}px`;
+  if (dSize) {
+    if (!numEl.dataset.baseFontSize) {
+      numEl.dataset.baseFontSize = parseFloat(getComputedStyle(numEl).fontSize) || 0;
+    }
+    const base = parseFloat(numEl.dataset.baseFontSize) || 0;
+    numEl.style.fontSize = `${Math.max(1, base + dSize)}px`;
+  } else if (numEl.style.fontSize) {
+    numEl.style.removeProperty('font-size');
+  }
 }
 
 function setCrest(imgEl, teamId) {
@@ -78,8 +115,8 @@ function paintCard(cardEl, enc, ta) {
   const tituloEnc = cardEl.querySelector('.ov-resultados-titulo-encuentro');
   const tituloEncFullscreen = cardEl.querySelector('.ov-resultados-titulo-encuentro-fullscreen');
 
-  applyPlainTextAdjust(golLocal, String(enc.scoreA ?? '0'), readTextAdjust(ta, 'golLocal'));
-  applyPlainTextAdjust(golVisitante, String(enc.scoreB ?? '0'), readTextAdjust(ta, 'golVisitante'));
+  paintGolConPenales(golLocal, enc.scoreA ?? '0', enc.penalesA, readTextAdjust(ta, 'golLocal'));
+  paintGolConPenales(golVisitante, enc.scoreB ?? '0', enc.penalesB, readTextAdjust(ta, 'golVisitante'));
 
   golLocal.style.display = ocultaGoles ? 'none' : 'flex';
   golVisitante.style.display = ocultaGoles ? 'none' : 'flex';
@@ -184,4 +221,16 @@ export default function renderSideTable(contentEl, data) {
   const track = contentEl.querySelector('.ov-resultados-track');
   const offsetPx = tanda === 'tanda2' ? TANDA2_OFFSET_ROWS * ROW_STEP : 0;
   track.style.transform = `translateY(-${offsetPx}px)`;
+
+  // Fondo compartido (2026-08-21, sistema multi-theme): GLA nunca toca este
+  // bloque (el background-image fijo por CSS sigue mandando, cero riesgo);
+  // para cualquier otro theme se resuelve del manifest -- sin asset
+  // todavia, se deja transparente y el contenido dinamico (escudos/goles/
+  // estado) sigue pintandose igual sobre el ".gfx-overlay".
+  if (getActiveThemeId() !== DEFAULT_THEME_ID) {
+    const bgSrc = resolveImageSrc('sideTable', null);
+    contentEl.querySelectorAll('.ov-resultados-bg').forEach((bgEl) => {
+      bgEl.style.backgroundImage = bgSrc ? `url('${bgSrc}')` : 'none';
+    });
+  }
 }

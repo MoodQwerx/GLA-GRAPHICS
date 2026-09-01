@@ -1,5 +1,6 @@
 import { applyFittedText, updateFittedTextWithTransition } from '../text-fit.js';
 import { resolveTeamTokens } from '../../../shared/text-tokens.js';
+import { resolveImageSrc } from '../theme-assets.js';
 
 const BRACKETS_SRC = '/assets/var/zocalo-cortito-brackets.png';
 
@@ -11,38 +12,41 @@ const DEFAULTS_POS = {
 };
 
 function buildStructure(el) {
+  const bracketsSrc = resolveImageSrc('placaLInfo', BRACKETS_SRC);
+  const bg = bracketsSrc ? `<img class="pli-zocalo-bg" src="${bracketsSrc}" alt="" />` : '';
   el.innerHTML = `
     <div class="pli-container">
       <div class="pli-zocalo-item pli-zocalo-1">
-        <img class="pli-zocalo-bg" src="${BRACKETS_SRC}" alt="" />
+        ${bg}
         <div class="gfx-overlay">
           <div class="ov-short-simple-text pli-text-1"></div>
         </div>
       </div>
       <div class="pli-zocalo-item pli-zocalo-2">
-        <img class="pli-zocalo-bg" src="${BRACKETS_SRC}" alt="" />
+        ${bg}
         <div class="gfx-overlay">
           <div class="ov-short-simple-text pli-text-2"></div>
         </div>
       </div>
       <div class="pli-zocalo-item pli-zocalo-3">
-        <img class="pli-zocalo-bg" src="${BRACKETS_SRC}" alt="" />
+        ${bg}
         <div class="gfx-overlay">
           <div class="ov-short-simple-text pli-text-3"></div>
         </div>
       </div>
       <div class="pli-zocalo-item pli-zocalo-4">
-        <img class="pli-zocalo-bg" src="${BRACKETS_SRC}" alt="" />
+        ${bg}
         <div class="gfx-overlay">
           <div class="ov-short-simple-text pli-text-4"></div>
         </div>
       </div>
     </div>
   `;
+  el._gfxBuilt = true;
 }
 
 export default function renderPlacaLInfo(contentEl, data, justTaken, onOneShotEnded, allData) {
-  if (!contentEl.querySelector('.pli-container')) {
+  if (!contentEl._gfxBuilt) {
     buildStructure(contentEl);
   }
 

@@ -1,4 +1,4 @@
-import { createAlphaVideo } from '../alpha-video.js';
+import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { crestFile, teamName } from '../../../shared/teams.js';
 import { sponsorFile } from '../../../shared/sponsors.js';
 import { applyFittedText, updateFittedTextWithTransition, readTextAdjust } from '../text-fit.js';
@@ -42,12 +42,13 @@ function buildStructure(el) {
       </div>
     </div>
   `;
-  el._alphaVideo = createAlphaVideo(el.querySelector('.av-target'), VIDEO_SRC);
+  el._alphaVideo = mountThemedAlphaVideo(el.querySelector('.av-target'), 'zocaloFinalDiv', VIDEO_SRC);
+  el._gfxBuilt = true;
 }
 
 export default function renderZocaloFinalDiv(contentEl, data, justTaken, onOneShotEnded, allData) {
-  if (!contentEl._alphaVideo) buildStructure(contentEl);
-  if (justTaken) contentEl._alphaVideo.playFromStart();
+  if (!contentEl._gfxBuilt) buildStructure(contentEl);
+  if (justTaken) contentEl._alphaVideo?.playFromStart();
 
   const sb = (allData && allData.scoreboard) || {};
 

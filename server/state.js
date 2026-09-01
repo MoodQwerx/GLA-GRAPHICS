@@ -1,50 +1,66 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { MODULE_IDS, cloneDefaults } from '../shared/modules.js';
 import { MODULE_STATUS } from '../shared/constants.js';
+import { DEFAULT_THEME_ID, listThemes } from '../shared/themes.js';
+import { loadPersistentValue, schedulePersistentWrite } from './persistence.js';
+import { getActiveThemeId } from './theme.js';
 
 // Estado autoritativo. El "status" (ON/OFF) SIEMPRE arranca en OUT al
-// iniciar el server — el Program siempre arranca vacio, eso no cambia.
-// Los "data" de cada modulo (todo lo que el operador tipeo/eligio) se
-// persisten en disco (data/master-control-state.json) para sobrevivir a
-// un refresh del navegador, un reinicio del Master Control o un reinicio
-// completo del servidor: es la MISMA estructura de estado que ya existia
-// (no una arquitectura de persistencia paralela), solo que ahora tambien
-// se lee/escribe a disco ademas de vivir en memoria.
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const STATE_FILE = path.join(__dirname, '..', 'data', 'master-control-state.json');
+// iniciar el server — el Program siempre arranca vacio, eso no cambia, y
+// es GLOBAL (no depende del theme: si un módulo está al aire, sigue al
+// aire aunque se cambie de theme -- lo que cambia es QUÉ datos muestra).
+//
+// "byTheme" (2026-08-21, sistema multi-theme etapa 2, pedido explícito:
+// "Cambiar Argentina NO puede modificar GLA" / "los ajustes deben
+// guardarse POR THEME"): cada módulo guarda un "data" INDEPENDIENTE por
+// cada theme registrado (ver shared/themes.js) -- GLA sigue leyendo y
+// escribiendo exactamente donde siempre escribió, Argentina Streamers
+// empieza en blanco (cloneDefaults) y nunca toca lo de GLA. Las funciones
+// de más abajo (getModuleState/applyUpdate/applyTake) resuelven el
+// "data" correcto internamente consultando el theme ACTIVO
+// (server/theme.js) -- ningún caller en server/index.js tuvo que cambiar
+// para saber esto.
+const persisted = await loadPersistentValue(
+  'master_control_state',
+  'master-control-state.json',
+  {},
+);
 
-function loadPersistedData() {
-  try {
-    return JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
-  } catch {
-    return {};
-  }
+const THEME_IDS = listThemes().map((t) => t.id);
+
+function isThemedFormat(value) {
+  return Boolean(value) && typeof value === 'object' && value.__themed === true;
 }
 
-const persisted = loadPersistedData();
 const state = {};
 
 for (const id of MODULE_IDS) {
-  state[id] = {
-    status: MODULE_STATUS.OUT,
-    data: cloneDefaults(id),
-  };
-  if (persisted[id] && typeof persisted[id] === 'object') {
-    Object.assign(state[id].data, persisted[id]);
+  const byTheme = {};
+  for (const themeId of THEME_IDS) byTheme[themeId] = cloneDefaults(id, themeId);
+
+  const savedForModule = persisted[id];
+  if (isThemedFormat(savedForModule)) {
+    for (const themeId of THEME_IDS) {
+      if (savedForModule[themeId] && typeof savedForModule[themeId] === 'object') {
+        Object.assign(byTheme[themeId], savedForModule[themeId]);
+      }
+    }
+  } else if (savedForModule && typeof savedForModule === 'object') {
+    // Formato viejo (pre multi-theme, un solo "data" plano por módulo):
+    // TODO lo que ya existía pertenecía a GLA -- migración en memoria,
+    // nunca se pierde nada. El próximo guardado ya escribe el formato
+    // nuevo (con "__themed"), así que esta rama solo se ejecuta una vez.
+    Object.assign(byTheme[DEFAULT_THEME_ID], savedForModule);
   }
+
+  state[id] = { status: MODULE_STATUS.OUT, byTheme };
 }
 
 function persist() {
   const toSave = {};
-  for (const id of MODULE_IDS) toSave[id] = state[id].data;
-  try {
-    fs.mkdirSync(path.dirname(STATE_FILE), { recursive: true });
-    fs.writeFileSync(STATE_FILE, JSON.stringify(toSave, null, 2));
-  } catch (err) {
-    console.error('[GLA] No se pudo persistir el estado:', err.message);
+  for (const id of MODULE_IDS) {
+    toSave[id] = { __themed: true, ...state[id].byTheme };
   }
+  schedulePersistentWrite('master_control_state', toSave);
 }
 
 function assertModule(moduleId) {
@@ -53,36 +69,58 @@ function assertModule(moduleId) {
   }
 }
 
+// Cualquier theme nuevo agregado en shared/themes.js DESPUÉS de que el
+// servidor ya arrancó (o de un JSON persistido viejo que no lo conocía
+// todavía) tiene que tener su "data" lista antes de leerla/escribirla --
+// se crea perezosamente acá, nunca pisa un theme que ya tenía datos.
+function ensureThemeData(moduleId, themeId) {
+  if (!state[moduleId].byTheme[themeId]) {
+    state[moduleId].byTheme[themeId] = cloneDefaults(moduleId, themeId);
+  }
+  return state[moduleId].byTheme[themeId];
+}
+
+function effectiveModuleState(moduleId, themeId) {
+  return { status: state[moduleId].status, data: ensureThemeData(moduleId, themeId) };
+}
+
 export function getSnapshot() {
-  return state;
+  const themeId = getActiveThemeId();
+  const snapshot = {};
+  for (const id of MODULE_IDS) snapshot[id] = effectiveModuleState(id, themeId);
+  return snapshot;
 }
 
 export function getModuleState(moduleId) {
   assertModule(moduleId);
-  return state[moduleId];
+  return effectiveModuleState(moduleId, getActiveThemeId());
 }
 
 export function applyUpdate(moduleId, data) {
   assertModule(moduleId);
+  const themeId = getActiveThemeId();
+  const themeData = ensureThemeData(moduleId, themeId);
   if (data && typeof data === 'object') {
-    Object.assign(state[moduleId].data, data);
+    Object.assign(themeData, data);
   }
   persist();
-  return state[moduleId];
+  return effectiveModuleState(moduleId, themeId);
 }
 
 export function applyTake(moduleId, data) {
   assertModule(moduleId);
+  const themeId = getActiveThemeId();
+  const themeData = ensureThemeData(moduleId, themeId);
   if (data && typeof data === 'object') {
-    Object.assign(state[moduleId].data, data);
+    Object.assign(themeData, data);
   }
   state[moduleId].status = MODULE_STATUS.ON;
   persist();
-  return state[moduleId];
+  return effectiveModuleState(moduleId, themeId);
 }
 
 export function applyOut(moduleId) {
   assertModule(moduleId);
   state[moduleId].status = MODULE_STATUS.OUT;
-  return state[moduleId];
+  return effectiveModuleState(moduleId, getActiveThemeId());
 }

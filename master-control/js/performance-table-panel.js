@@ -91,7 +91,7 @@ function formatUpdatedAt(isoString) {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-export function renderPerformanceTablePanel(container, data, moduleId, onDirty) {
+export function renderPerformanceTablePanel(container, data, moduleId, onDirty, saveOptions) {
   const config = CONFIG[moduleId];
   if (!config) throw new Error(`Tabla de rendimiento desconocida: ${moduleId}`);
   if (!Array.isArray(data.jugadores)) data.jugadores = [];
@@ -340,7 +340,7 @@ export function renderPerformanceTablePanel(container, data, moduleId, onDirty) 
       const lbl = document.createElement('span');
       lbl.textContent = label;
       wrap.appendChild(lbl);
-      mountAdjustControl(wrap, data, key, markDirty);
+      mountAdjustControl(wrap, data, key, markDirty, saveOptions);
       adjustSection.appendChild(wrap);
     }
     root.appendChild(adjustSection);

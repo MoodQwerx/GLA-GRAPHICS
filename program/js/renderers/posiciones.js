@@ -1,6 +1,6 @@
-import { createAlphaVideo } from '../alpha-video.js';
 import { crestFile, teamName } from '../../../shared/teams.js';
-import { applyFittedText, fitFontSize, readTextAdjust } from '../text-fit.js';
+import { applyFittedText, fitFontSize, readTextAdjust, toBroadcastUpper } from '../text-fit.js';
+import { mountThemedAlphaVideo } from '../theme-assets.js';
 
 // La liga tiene 11 equipos: "filas" (shared/modules.js) guarda las 11 con
 // su posicion real (1-11, nunca renumerada). El asset solo tiene
@@ -71,14 +71,14 @@ function rowMarkup(index) {
   return `
     <div class="ov-pos-row" data-row="${index}">
       <div class="ov-pos-cell ov-pos-num"></div>
-      <div class="ov-pos-cell ov-pos-escudo"><img class="ov-pos-crest" alt="" /></div>
+      <div class="ov-pos-cell ov-pos-escudo"><img class="ov-pos-crest" data-adjust="crest" alt="" /></div>
       <div class="ov-pos-cell ov-pos-equipo"></div>
       ${statCells}
     </div>
   `;
 }
 
-function buildStructure(el, pagina) {
+function buildStructure(el, pagina, paginaId) {
   const rows = Array.from({ length: pagina.rows }, (_, i) => rowMarkup(i)).join('');
   el.innerHTML = `
     <div class="av-target"></div>
@@ -87,11 +87,13 @@ function buildStructure(el, pagina) {
       ${rows}
     </div>
   `;
-  el._alphaVideo = createAlphaVideo(el.querySelector('.av-target'), pagina.src);
+  el._alphaVideo = mountThemedAlphaVideo(el.querySelector('.av-target'), 'posiciones', pagina.src, undefined, paginaId);
+  el._gfxBuilt = true;
 }
 
-async function applyCenteredTitle(el, text, adjust = {}) {
+async function applyCenteredTitle(el, rawText, adjust = {}) {
   const { dx = 0, dy = 0, dSize = 0 } = adjust;
+  const text = toBroadcastUpper(rawText);
   el.textContent = text;
   // "dx"/"dy" via "translate" (2026-08-15, auditoria completa), no
   // "transform": esta funcion depende de que "transform" quede SIEMPRE
@@ -140,13 +142,13 @@ export default function renderPosiciones(contentEl, data, justTaken) {
   // OUT -> cambiar pagina -> TAKE (justTaken ya fuerza playFromStart), pero
   // esto tambien deja el renderer correcto si en algun momento "pagina"
   // cambia sin pasar por ese ciclo.
-  const needsRebuild = !contentEl._alphaVideo || contentEl.dataset.paginaId !== paginaId;
+  const needsRebuild = !contentEl._gfxBuilt || contentEl.dataset.paginaId !== paginaId;
   if (needsRebuild) {
     if (contentEl._alphaVideo) contentEl._alphaVideo.destroy();
-    buildStructure(contentEl, pagina);
+    buildStructure(contentEl, pagina, paginaId);
     contentEl.dataset.paginaId = paginaId;
   }
-  if (justTaken || needsRebuild) contentEl._alphaVideo.playFromStart();
+  if (justTaken || needsRebuild) contentEl._alphaVideo?.playFromStart();
 
   // Titulo del zocalo superior: valor inicial 'POSICIONES' (ver defaults en
   // shared/modules.js) hasta que el operador lo cambie; completamente

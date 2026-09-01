@@ -34,7 +34,7 @@ function snapshotFromData(data) {
   ]));
 }
 
-export function renderEstrellasPanel(containerEl, data, scoreboardData, onChanged) {
+export function renderEstrellasPanel(containerEl, data, scoreboardData, onChanged, saveOptions) {
   data.fuente = data.fuente === 'torneo' ? 'torneo' : 'liga';
   if (!data.snapshots || typeof data.snapshots !== 'object') data.snapshots = {};
   if (!data.snapshots[data.fuente]) data.snapshots[data.fuente] = snapshotFromData(data);
@@ -170,7 +170,7 @@ export function renderEstrellasPanel(containerEl, data, scoreboardData, onChange
     const lbl = document.createElement('label');
     lbl.textContent = label;
     wrap.appendChild(lbl);
-    mountAdjustControl(wrap, data, key, onChanged);
+    mountAdjustControl(wrap, data, key, onChanged, saveOptions);
     adjustSection.appendChild(wrap);
   }
 

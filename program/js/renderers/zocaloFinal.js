@@ -1,7 +1,7 @@
-import { createAlphaVideo } from '../alpha-video.js';
 import { sponsorFile } from '../../../shared/sponsors.js';
 import { applyFittedText, updateFittedTextWithTransition, readTextAdjust } from '../text-fit.js';
 import { resolveTeamTokens } from '../../../shared/text-tokens.js';
+import { mountThemedAlphaVideo, resolveImageSrc } from '../theme-assets.js';
 
 const VIDEO_SRC = '/assets/zocalos/zocalo-final-alpha.mp4';
 const LOGO_SRC = '/assets/images/gla-logo.png';
@@ -16,10 +16,14 @@ const TEXTO2_MAX_WIDTH = 1111 - 40;
 const TEXTO2_LETTER_SPACING = 0.5;
 
 function buildStructure(el) {
+  // Logo: resuelto por theme (2026-08-21) -- GLA sigue mostrando SIEMPRE
+  // su propio logo (fallback, nunca el manifest); otro theme sin imagen
+  // propia todavía simplemente no muestra ningún <img> (sin src roto).
+  const logoSrc = resolveImageSrc('zocaloFinal', LOGO_SRC);
   el.innerHTML = `
     <div class="av-target"></div>
     <div class="gfx-overlay">
-      <img class="ov-zf-logo" src="${LOGO_SRC}" alt="GLA" />
+      ${logoSrc ? `<img class="ov-zf-logo" src="${logoSrc}" alt="logo" />` : ''}
       <div class="ov-zf-texto ov-zf-texto1"></div>
       <div class="ov-zf-texto ov-zf-texto2"></div>
       <div class="ov-zf-sponsor-box">
@@ -28,12 +32,13 @@ function buildStructure(el) {
       </div>
     </div>
   `;
-  el._alphaVideo = createAlphaVideo(el.querySelector('.av-target'), VIDEO_SRC);
+  el._alphaVideo = mountThemedAlphaVideo(el.querySelector('.av-target'), 'zocaloFinal', VIDEO_SRC);
+  el._gfxBuilt = true;
 }
 
 export default function renderZocaloFinal(contentEl, data, justTaken, onOneShotEnded, allData) {
-  if (!contentEl._alphaVideo) buildStructure(contentEl);
-  if (justTaken) contentEl._alphaVideo.playFromStart();
+  if (!contentEl._gfxBuilt) buildStructure(contentEl);
+  if (justTaken) contentEl._alphaVideo?.playFromStart();
 
   const sb = allData && allData.scoreboard;
   const texto1El = contentEl.querySelector('.ov-zf-texto1');

@@ -55,6 +55,8 @@ Estrellas consolida goles/asistencias por `playerId`, pero PJ pertenece siempre 
 
 Los planteles son un catalogo transversal, no el estado de una grafica. `server/glaFutbolRosters.js` los normaliza y guarda el ultimo snapshot valido en `data/gla-futbol-rosters.json`. Tarjetas, Cambios y Formacion consultan `/api/planteles/:teamId`, pero siguen permitiendo escritura manual. Todos los equipos web se resuelven contra `assets/crests/`; solo se persiste el `teamId` local y nunca se descarga ni reemplaza un escudo.
 
+El Generador de Zocalos agrega una proyeccion de solo lectura sobre esas integraciones. `server/lowerThirdContext.js` reune tabla, goleadores, asistidores, jugadores, resultados, grupos, planteles y los equipos vigentes de Marcador sin emitir `UPDATE` sobre los modulos estadisticos. `ACTUALIZAR DATOS` descarga una sola vez el payload RSC y reutiliza los normalizadores de `glaFutbolSync.js`; el snapshot Liga/Torneo se reemplaza de forma atomica solo cuando toda la fuente requerida fue valida. `GET /api/lower-thirds/context`, `POST /api/lower-thirds/context/refresh` y `POST /api/lower-thirds/generate` mantienen la UI desacoplada del proveedor editorial. La implementacion inicial de `server/lowerThirdGenerator.js` es deterministica, exige evidencia explicita por propuesta y aplica limites por layout; `buildLowerThirdPrompt()` deja preparado el contrato para un adaptador LLM posterior.
+
 ## Animacion de entrada/salida (Program)
 
 El Program no tiene una maquina de estados de animacion propia: reacciona a `status` (`OUT`/`ON`) con clases CSS y deja que el navegador maneje la transicion:
@@ -78,6 +80,8 @@ El `layer` de `shared/modules.js` es solo descriptivo (agrupa posicion tipica en
 El operador edita un "draft" local, inicializado una sola vez con el primer snapshot del servidor. Cada cambio de campo programa un `UPDATE` con debounce de 350ms para persistir los datos sin cambiar el status; cambiar de pestaña fuerza el envio pendiente. **Tomar al aire** envia el draft completo con `TAKE` y **Actualizar** permite forzar un `UPDATE` inmediato. Despues del primer snapshot, actualizaciones de otro Master Control no sobrescriben el draft local para evitar perder texto a mitad de tipeo.
 
 Un modulo puede declarar un panel a medida ademas del generico: se renderiza en `#extra-container` desde `master-control/js/main.js` cuando `activeId` coincide y muta el mismo draft/estado, no una fuente paralela. El Marcador usa este mecanismo para Play/Pause; Formación lo usa para sus arrays ordenados de titulares/suplentes (`formation-list-panel.js`), manteniendo LOCAL/VISITANTE en el schema genérico.
+
+`master-control/js/lower-third-generator-panel.js` es el panel compartido de los zocalos editables. `GENERAR` y `GENERAR OTRA` solo muestran una propuesta; `USAR TEXTO` copia MAIN/SUB al draft y al autosave persistente. Si el modulo esta al aire, Program ignora ese eco de autosave y conserva el contenido visible hasta el `ACTUALIZAR` explicito del operador.
 
 **STOP ALL**: boton global en el header (siempre visible, no depende del tab activo) que recorre todos los modulos y manda `OUT` a los que esten `ON`. No borra ningun dato cargado, solo cambia `status`.
 
@@ -153,8 +157,13 @@ Los dos PNG vienen con un corrimiento de calibracion respecto del marco real del
 
 El Master Control no necesita cambios de codigo para el panel generico: el tab (agrupado por `category`), los campos y el flujo Take/Update/Out se generan solos a partir de `shared/modules.js`. Solo hace falta tocar `master-control/js/main.js` si el modulo necesita un panel a medida (como el reloj del Marcador o `live-clock-display`).
 
+## Persistencia
+
+`server/persistence.js` centraliza cuatro claves (`master_control_state`, `team_abbreviations`, `gla_futbol_rosters`, `gla_lower_third_context`). Supabase es la fuente durable cuando esta configurado; los JSON bajo `data/` son seed, cache y fallback local. Las escrituras son asincronas, agrupadas, atomicas en disco y conservan un valor anterior. El contrato de estado no cambia: `data` se restaura y `status` siempre arranca en `OUT`. Ver [PERSISTENCE.md](PERSISTENCE.md).
+
 ## Limitaciones conocidas (v1)
 
-- Los datos se persisten en `data/master-control-state.json`, pero la hidratacion sobre los defaults es superficial (`Object.assign`): un cambio futuro en estructuras anidadas necesita contemplar compatibilidad o migracion.
+- La hidratacion de datos de modulo sobre defaults sigue siendo superficial (`Object.assign`): un cambio futuro en estructuras anidadas necesita contemplar compatibilidad o migracion.
+- Supabase Free puede pausar el proyecto despues de inactividad; durante una caida el proceso conserva memoria y fallback local, pero en Render ese fallback no sobrevive a reemplazar el contenedor. Revisar `GET /api/persistence/status` antes de una transmision.
 - El status no se persiste por diseño: despues de reiniciar, el Program arranca vacio aunque los datos cargados se conserven.
 - Si dos Master Control estan abiertos y ambos editan el mismo modulo, el draft local de uno no se refresca automaticamente con los datos del otro despues del primer snapshot (evita perder texto a mitad de tipeo). El indicador EN AIRE/FUERA si se sincroniza en tiempo real entre ambos.

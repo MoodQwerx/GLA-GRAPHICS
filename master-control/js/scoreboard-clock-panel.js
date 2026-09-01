@@ -32,7 +32,7 @@ const PERIOD_PRESETS = [
 //
 // Devuelve una funcion de limpieza que hay que llamar al salir de este panel
 // (cambiar de tab) para frenar el intervalo que refresca el reloj en pantalla.
-export function renderScoreboardClockPanel(container, data, sendPatch, { onGoalPlus, onGoalMinus } = {}) {
+export function renderScoreboardClockPanel(container, data, sendPatch, { onGoalPlus, onGoalMinus, onResetGoles } = {}) {
   container.innerHTML = '';
 
   if (!data.clockEndText) data.clockEndText = DEFAULT_CLOCK_END_TEXT;
@@ -209,17 +209,79 @@ export function renderScoreboardClockPanel(container, data, sendPatch, { onGoalP
     golTitle.textContent = 'GOLES (dispara la animación automáticamente)';
     golBox.appendChild(golTitle);
 
+    // "gol-buttons-grid" (2026-08-28, correccion visual explicita del
+    // usuario: la fila de goles quedaba desprolija con flex-wrap comun --
+    // texto de largo muy dispar entre "GOL LOCAL +1" y "-1 local" hacia que
+    // los botones quedaran de anchos incoherentes y con aire disparejo).
+    // Grid 2 columnas fijas (ver overlay CSS "gol-buttons-grid") en vez de
+    // flex-wrap: mismas 2 clases/callbacks de siempre, ningun cambio de
+    // logica, solo layout. Clase nueva y exclusiva de esta seccion -- no
+    // toca ".clock-buttons"/".btn-clock" que usan Periodo, Reloj, VAR, etc.
     const golRow = document.createElement('div');
-    golRow.className = 'clock-buttons';
+    golRow.className = 'clock-buttons gol-buttons-grid';
     golRow.append(
-      mkGoalBtn('GOL LOCAL +1', () => onGoalPlus('A')),
-      mkGoalBtn('-1 local', () => onGoalMinus('A'), 'btn-clock-danger'),
-      mkGoalBtn('GOL VISITANTE +1', () => onGoalPlus('B')),
-      mkGoalBtn('-1 visitante', () => onGoalMinus('B'), 'btn-clock-danger'),
+      mkGoalBtn('GOL LOCAL +1', () => onGoalPlus('A'), 'gol-btn'),
+      mkGoalBtn('-1 LOCAL', () => onGoalMinus('A'), 'btn-clock-danger gol-btn'),
+      mkGoalBtn('GOL VISITANTE +1', () => onGoalPlus('B'), 'gol-btn'),
+      mkGoalBtn('-1 VISITANTE', () => onGoalMinus('B'), 'btn-clock-danger gol-btn'),
     );
     golBox.appendChild(golRow);
+
+    // "RESETEAR GOLES" (2026-08-16, pedido explicito del usuario): vuelve
+    // 0-0 sin animacion de GOL -- el callback (main.js) NO pasa por
+    // scoreGoal/undoGoal, asi que nunca encola/dispara la pieza de festejo.
+    if (onResetGoles) {
+      const resetRow = document.createElement('div');
+      resetRow.className = 'clock-buttons gol-buttons-grid gol-buttons-reset';
+      resetRow.appendChild(mkBtn('RESETEAR GOLES (0-0)', onResetGoles, 'btn-clock-danger gol-btn'));
+      golBox.appendChild(resetRow);
+    }
+
     container.appendChild(golBox);
   }
+
+  // --- Color de equipo (2026-08-16, pedido explicito del usuario:
+  // "ASIGNAR COLOR AL EQUIPO") ---------------------------------------
+  // Cambiar el color arriba (campo generico "teamAColor"/"teamBColor") es
+  // siempre temporal. Solo apretando este boton se guarda en
+  // "data.teamColorAssignments[teamId]" -- de ahi en mas, cada vez que ese
+  // equipo se vuelva a elegir como local o visitante (en cualquier lado),
+  // "master-control/js/main.js" autocompleta el color guardado. Volver a
+  // apretar el boton con un color distinto pisa la asignacion anterior.
+  const colorBox = document.createElement('div');
+  // "clock-box-team-color" (2026-08-28, pedido explicito del usuario:
+  // ocultar TODO control de color de camiseta/equipo del panel de MARCADOR
+  // solo para Argentina Streamers -- ver master.css
+  // "body[data-theme='argentinaStreamers'] .clock-box-team-color").
+  colorBox.className = 'clock-box clock-box-team-color';
+  const colorTitle = document.createElement('div');
+  colorTitle.className = 'clock-box-title';
+  colorTitle.textContent = 'COLOR DE EQUIPO';
+  colorBox.appendChild(colorTitle);
+
+  const colorNote = document.createElement('p');
+  colorNote.className = 'clock-note';
+  colorNote.textContent = 'Elegí el color arriba y apretá para recordarlo: la próxima vez que selecciones ese equipo (local o visitante), se autocompleta solo.';
+  colorBox.appendChild(colorNote);
+
+  const colorRow = document.createElement('div');
+  colorRow.className = 'clock-buttons';
+  colorRow.append(
+    mkBtn('ASIGNAR COLOR — EQUIPO LOCAL', () => {
+      if (!data.teamA) return;
+      if (!data.teamColorAssignments || typeof data.teamColorAssignments !== 'object') data.teamColorAssignments = {};
+      data.teamColorAssignments[data.teamA] = data.teamAColor;
+      sendPatch({ teamColorAssignments: data.teamColorAssignments });
+    }),
+    mkBtn('ASIGNAR COLOR — EQUIPO VISITANTE', () => {
+      if (!data.teamB) return;
+      if (!data.teamColorAssignments || typeof data.teamColorAssignments !== 'object') data.teamColorAssignments = {};
+      data.teamColorAssignments[data.teamB] = data.teamBColor;
+      sendPatch({ teamColorAssignments: data.teamColorAssignments });
+    }),
+  );
+  colorBox.appendChild(colorRow);
+  container.appendChild(colorBox);
 
   return () => clearInterval(interval);
 }

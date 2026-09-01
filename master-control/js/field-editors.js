@@ -8,27 +8,46 @@ const KICK_LABEL = { pending: '—', scored: 'GOL', missed: 'X' };
 // input propio) -- si el modulo todavia no tiene "textAdjust" en su
 // estado persistido (dato viejo, de antes de este mecanismo) lo crea aca
 // mismo, mismo shape que "textAdjustDefaults()" en shared/modules.js.
-export function mountAdjustControl(wrap, data, key, onDirty) {
+export function mountAdjustControl(wrap, data, key, onDirty, options) {
   if (!data.textAdjust || typeof data.textAdjust !== 'object') data.textAdjust = {};
   if (!data.textAdjust[key] || typeof data.textAdjust[key] !== 'object') {
     data.textAdjust[key] = { dx: 0, dy: 0, dSize: 0 };
   }
-  renderTextAdjustControl(wrap, data.textAdjust[key], onDirty);
+  renderTextAdjustControl(wrap, data.textAdjust[key], onDirty, options);
 }
 
 // Genera el panel de edicion completo a partir del schema de un modulo.
 // `data` se muta in-place (es el draft local del operador); `onDirty` se
 // llama en cada cambio para que el caller sepa que hay ediciones pendientes.
-export function renderFields(container, fields, data, onDirty) {
+// "hideAdjustFor" (2026-08-31, pedido explicito del usuario: acordeon de
+// ajuste individual del MARCADOR en Argentina Streamers -- ver
+// "renderScoreboardAdjustAccordion" en main.js) -- Set opcional de field
+// keys cuyo control de ajuste YA se muestra en otro lado (el acordeon) y
+// no debe duplicarse aca: un ADJUST_ONLY con la key ahi se omite entero
+// (label+ajuste eran todo su contenido); un TEXT "adjustable" se sigue
+// mostrando normal (el operador todavia necesita tipear el valor), solo
+// se omite el bloque de flechitas. Sin este parametro (el 99% de los
+// casos, todo modulo salvo scoreboard/Argentina) el comportamiento es
+// exactamente el de siempre.
+export function renderFields(container, fields, data, onDirty, { hideAdjustFor } = {}) {
   function rerender() {
-    renderFields(container, fields, data, onDirty);
+    renderFields(container, fields, data, onDirty, { hideAdjustFor });
   }
 
   container.innerHTML = '';
 
   for (const field of fields) {
+    const adjustHidden = hideAdjustFor?.has(field.key);
+    if (adjustHidden && field.type === FIELD_TYPES.ADJUST_ONLY) continue;
+
     const wrap = document.createElement('div');
-    wrap.className = 'field';
+    // "field-<key>" (2026-08-28, pedido explicito del usuario: ocultar
+    // controles de color SOLO para Argentina Streamers, sin tocar GLA ni
+    // borrar el campo/dato) -- clase generica y reusable para que
+    // master.css pueda ocultar un campo puntual con
+    // "body[data-theme='...'] .field-<key> { display:none; }" sin togear
+    // nada a nivel de logica/render aca.
+    wrap.className = `field field-${field.key}`;
 
     const label = document.createElement('label');
     label.textContent = field.label;
@@ -47,7 +66,7 @@ export function renderFields(container, fields, data, onDirty) {
       // "adjustable" (2026-08-14, pedido explicito del usuario): campos de
       // texto que ademas de tipear el texto pueden ajustarse en X/Y/tamaño
       // con flechitas, sin tocar codigo.
-      if (field.adjustable) {
+      if (field.adjustable && !adjustHidden) {
         mountAdjustControl(wrap, data, field.key, onDirty);
       }
     } else if (field.type === FIELD_TYPES.ADJUST_ONLY) {

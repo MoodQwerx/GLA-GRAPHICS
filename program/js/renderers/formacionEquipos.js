@@ -1,8 +1,8 @@
-import { createAlphaVideo } from '../alpha-video.js';
+import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { crestFile, teamName } from '../../../shared/teams.js';
 import { normalizePlayers } from '../../../shared/player-lists.js';
 import { colorHex } from '../../../shared/team-colors.js';
-import { applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
+import { applyPlainTextAdjust, readTextAdjust, toBroadcastUpper } from '../text-fit.js';
 
 const VIDEO_SRC = '/assets/placas/formacion-equipos.mp4';
 const SHIRTS_BASE_SRC = '/assets/placas/formacion-camisetas.png';
@@ -39,12 +39,13 @@ function buildStructure(el) {
         <div class="ov-formacion-shirts-tint"></div>
       </div>
       ${slots}
-      <img class="ov-formacion-crest" alt="" />
+      <img class="ov-formacion-crest" data-adjust="crest" alt="" />
       <div class="ov-formacion-subs-title">SUPLENTES</div>
       <div class="ov-formacion-subs-viewport"></div>
     </div>
   `;
-  el._alphaVideo = createAlphaVideo(el.querySelector('.av-target'), VIDEO_SRC);
+  el._alphaVideo = mountThemedAlphaVideo(el.querySelector('.av-target'), 'formacionEquipos', VIDEO_SRC);
+  el._gfxBuilt = true;
 }
 
 // Sin campo de color propio: el equipo (y por lo tanto el color real de la
@@ -53,8 +54,8 @@ function buildStructure(el) {
 // catalogo de colores (shared/team-colors.js, mismo helper que usa el
 // Marcador principal).
 export default function renderFormacionEquipos(contentEl, data, justTaken, onOneShotEnded, allData) {
-  if (!contentEl._alphaVideo) buildStructure(contentEl);
-  if (justTaken) contentEl._alphaVideo.playFromStart();
+  if (!contentEl._gfxBuilt) buildStructure(contentEl);
+  if (justTaken) contentEl._alphaVideo?.playFromStart();
 
   const sb = (allData && allData.scoreboard) || {};
   const isVisitor = data.teamSide === 'visitor';
@@ -135,7 +136,7 @@ function renderSubstitutes(viewport, players) {
   for (const player of players) {
     const row = document.createElement('div');
     row.className = 'ov-formacion-sub';
-    row.textContent = player.number ? `${player.number} - ${player.name}` : player.name;
+    row.textContent = toBroadcastUpper(player.number ? `${player.number} - ${player.name}` : player.name);
     list.appendChild(row);
   }
   viewport.appendChild(list);

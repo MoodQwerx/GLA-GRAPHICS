@@ -104,6 +104,8 @@ Tarjetas, Cambios, VAR Chequeo, Replay y los cinco Zocalos (`longSimple` — des
 
 ## Zocalos
 
+Los modulos editables activos `longDouble`, `shortSimple`, `shortDouble`, `zocaloCompuesto` y `placaLInfo` comparten el panel **GENERADOR DE ZOCALOS**. Permite GENÉRICO/EQUIPOS, LIGA/TORNEO, contexto manual, refresh explicito del snapshot, variantes y seleccion de destino cuando el modulo tiene varios textos. La propuesta no altera Program: primero se copia con **USAR TEXTO** a los campos existentes y despues se usa el **ACTUALIZAR** normal. Los presets, editores de texto/composicion, assets y renderers existentes no cambian. `vs` queda excluido porque se opera dentro de Marcador y no ofrece el contrato MAIN/SUB editable; `longSimple` permanece desactivado.
+
 ### 15. Zocalo largo simple (`longSimple`) — DESACTIVADO TEMPORALMENTE
 Desactivado a pedido explicito del usuario (2026-07-31) hasta que haya un asset de reemplazo — no aparece en Master Control ni puede tomarse al aire en Program. El asset runtime anterior (`assets/zocalos/zocalo-largo-simple-alpha.mp4`) se eliminó; el original de diseño se conserva en `ai-gfx/zocalos/zocalo-largo-simple.mov`. Toda la lógica (schema, renderer, posición/timing en `overlay.css`) sigue en el repositorio, comentada: ver `shared/modules.js`, `program/js/renderers/index.js` y `program/index.html` (buscar "DESACTIVADO TEMPORALMENTE" en cada uno) para reactivarlo con el asset nuevo.
 - **Posicion (conservada, sin uso mientras esté desactivado)**: inferior, ancho completo. Sin transform — pegado al borde inferior por diseño (ver overlay.css), no participa del borde compartido de 1030px del resto de la familia. **Campos**: texto.

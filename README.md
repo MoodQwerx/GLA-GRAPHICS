@@ -1,6 +1,8 @@
-# GLA Broadcast Graphics System
+# LIVE GRAPHICS
 
-Software de graficas ("CG"/overlay) para transmisiones de futbol en vivo. Incluye un **Master Control** (panel de operador) y un **Program/Overlay** (la salida que se agrega en OBS como Browser Source), sincronizados en tiempo real.
+Software de graficas ("CG"/overlay) para transmisiones en vivo. Incluye un **Master Control** (panel de operador) y un **Program/Overlay** (la salida que se agrega en OBS como Browser Source), sincronizados en tiempo real.
+
+El software (LIVE GRAPHICS) ya no esta atado a una sola competencia: cada transmision se configura eligiendo un **theme** desde el selector superior del Master Control. Hoy existe **GRAN LIGA RELAMPAGO** (GLA, con sus datos de `gla.futbol`, listo y en uso) y esta preparado **ARGENTINA STREAMERS** (en preparacion, todavia sin assets definitivos). Ver [docs/THEMES.md](docs/THEMES.md) para la arquitectura completa.
 
 Identidad visual: dorado + negro, estetica broadcast premium inspirada en graficas deportivas de nivel Mundial, sin copiar diseños existentes.
 
@@ -8,6 +10,10 @@ Identidad visual: dorado + negro, estetica broadcast premium inspirada en grafic
 
 - [Node.js](https://nodejs.org/) 18 o superior instalado en la maquina que corre el software.
 - OBS Studio (u otro software de switching que soporte Browser Source) para capturar el Program.
+
+## Persistencia de datos
+
+En local, todos los datos configurados por el operador se guardan bajo `data/` (ignorada por Git). En Render Free, cuyo filesystem es efimero, produccion debe usar Supabase para que presets, posiciones, escalas, colores, formaciones, abreviaturas y snapshots sobrevivan a commits y deploys. La configuracion, migracion de los JSON actuales, variables exactas y recuperacion estan en [docs/PERSISTENCE.md](docs/PERSISTENCE.md).
 
 ## Como arrancar
 
@@ -56,15 +62,20 @@ Cada grafica usa el asset original entregado por el usuario (nunca una recreacio
 ## Estructura del proyecto
 
 ```
-GLA_SOFT/
+LIVE_GRAPHICS/
 ├── start.bat              # Levanta todo el entorno (menu P/Q para abrir Master Control o cerrar todo)
 ├── end.bat                # Cierra el servidor (lo mismo que hace la opcion Q de start.bat)
 ├── server/                # Servidor Express + WebSocket (estado autoritativo)
-├── shared/                # Constantes, schema de modulos y utilidades compartidas
+├── data/                  # Cache/fallback local de datos del operador (ignorada por Git)
+├── shared/                # Constantes, schema de modulos, manifest de themes y utilidades compartidas
 ├── master-control/        # UI del operador
 ├── program/                # Overlay que se captura en OBS/vMix (renderers de video con alfa en program/js/renderers/)
-├── assets/                 # Fuentes (Anton Regular) y videos transcodificados en uso (marcador/, eventos/, zocalos/, etc.)
-├── ai-gfx/                 # Archivo fuente de los assets originales (.mov/.png) — no se sirve en runtime
+├── assets/                 # Assets en uso, servidos en runtime:
+│   ├── marcador/, eventos/, zocalos/, ...   # Assets de GRAN LIGA RELÁMPAGO (theme por defecto, ruta plana histórica)
+│   ├── shared/             # Assets genuinamente compartidos entre themes (hoy: sponsors/)
+│   └── themes/             # Assets propios de cada theme no-GLA (hoy: argentina-streamers/)
+├── ai-gfx/                 # Archivo fuente de los assets originales (.mov/.psd/.ai) — no se sirve en runtime, ignorado por Git salvo este README
+├── scripts/                # Scripts de mantenimiento/diagnóstico manual (no forman parte del runtime)
 └── docs/                   # Documentacion tecnica
 ```
 

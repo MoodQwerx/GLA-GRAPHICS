@@ -180,7 +180,7 @@ export function renderFormationListPanel(container, data, scoreboardData, onDirt
       const lbl = document.createElement('label');
       lbl.textContent = label;
       wrap.appendChild(lbl);
-      mountAdjustControl(wrap, data, key, onDirty);
+      mountAdjustControl(wrap, data, key, onDirty, side && side.saveOptions);
       section.appendChild(wrap);
     }
     return section;

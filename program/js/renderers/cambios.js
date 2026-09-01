@@ -1,7 +1,7 @@
-import { createAlphaVideo } from '../alpha-video.js';
+import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { PROGRAM_FONT_FAMILY } from '../program-fonts.js';
 import { crestFile } from '../../../shared/teams.js';
-import { readTextAdjust } from '../text-fit.js';
+import { readTextAdjust, toBroadcastUpper } from '../text-fit.js';
 
 const VIDEO_SRC = '/assets/eventos/cambios-alpha.mp4';
 
@@ -113,16 +113,18 @@ function buildStructure(el) {
     <div class="av-target"></div>
     <div class="gfx-overlay">
       <div class="ov-cambio-title"></div>
-      <div class="ov-cambio-team"><img class="ov-cambio-crest" /></div>
+      <div class="ov-cambio-team"><img class="ov-cambio-crest" data-adjust="crest" /></div>
       <div class="ov-cambio-entra"></div>
       <div class="ov-cambio-sale"></div>
     </div>
   `;
-  el._alphaVideo = createAlphaVideo(el.querySelector('.av-target'), VIDEO_SRC);
+  el._alphaVideo = mountThemedAlphaVideo(el.querySelector('.av-target'), 'cambios', VIDEO_SRC);
+  el._gfxBuilt = true;
 }
 
-function applyText(el, text, adjust = {}) {
+function applyText(el, rawText, adjust = {}) {
   const { dx = 0, dy = 0, dSize = 0 } = adjust;
+  const text = toBroadcastUpper(rawText);
   el.textContent = text;
   el.style.translate = `${dx}px ${dy}px`;
   fitTextFontSize(text).then((size) => {
@@ -139,11 +141,11 @@ function applyText(el, text, adjust = {}) {
 // tarjeta/marcadorPenales/marcadorEntretiempo) — una sustitucion es
 // siempre del mismo equipo, un unico escudo para "entra" y "sale".
 export default function renderCambios(contentEl, data, justTaken, onOneShotEnded, allData) {
-  if (!contentEl._alphaVideo) {
+  if (!contentEl._gfxBuilt) {
     buildStructure(contentEl);
   }
   if (justTaken) {
-    contentEl._alphaVideo.playFromStart();
+    contentEl._alphaVideo?.playFromStart();
   }
 
   const sb = (allData && allData.scoreboard) || {};
@@ -155,7 +157,7 @@ export default function renderCambios(contentEl, data, justTaken, onOneShotEnded
 
   const titleAdjust = readTextAdjust(data.textAdjust, 'titulo');
   const titleEl = contentEl.querySelector('.ov-cambio-title');
-  const titleText = data.titulo || '';
+  const titleText = toBroadcastUpper(data.titulo || '');
   titleEl.textContent = titleText;
   titleEl.style.translate = `${titleAdjust.dx || 0}px ${titleAdjust.dy || 0}px`;
   fitTitleFontSize(titleText).then((size) => {

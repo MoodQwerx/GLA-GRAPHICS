@@ -5,6 +5,8 @@
 // abreviatura de 3 letras se derivan solos del nombre de archivo.
 import fs from 'node:fs';
 import path from 'node:path';
+import { loadPersistentValue, schedulePersistentWrite } from './persistence.js';
+import { DEFAULT_THEME_ID, getThemeTeams } from '../shared/themes.js';
 
 const CRESTS_DIR = path.join(process.cwd(), 'assets', 'crests');
 const CREST_EXT_RE = /\.(png|jpg|jpeg|webp|svg)$/i;
@@ -62,41 +64,47 @@ const ABBR_OVERRIDES = {
   'team-charrua': 'CHA',
 };
 
-const ABBR_FILE = path.join(process.cwd(), 'data', 'team-abbreviations.json');
-
-function loadCustomAbbreviations() {
-  try {
-    return JSON.parse(fs.readFileSync(ABBR_FILE, 'utf8'));
-  } catch {
-    return {};
-  }
-}
-
-function saveCustomAbbreviations(map) {
-  try {
-    fs.mkdirSync(path.dirname(ABBR_FILE), { recursive: true });
-    fs.writeFileSync(ABBR_FILE, JSON.stringify(map, null, 2));
-  } catch (err) {
-    console.error('[GLA] Error al guardar abreviaturas:', err.message);
-  }
-}
+let customAbbreviations = await loadPersistentValue(
+  'team_abbreviations',
+  'team-abbreviations.json',
+  {},
+);
 
 export function getBaseAbbreviation(id) {
   return ABBR_OVERRIDES[id] || deriveAbbr(id);
 }
 
-export function getTeamCatalog() {
+// Theme-aware (2026-08-21, sistema multi-theme etapa 2, pedido explícito:
+// "Preparar también la lógica de equipos"). GLA sigue derivando su
+// catálogo de assets/crests/ tal cual siempre -- CERO cambios en su
+// comportamiento. Cualquier otro theme usa su propio catálogo MANUAL
+// (shared/themes.js -> theme.teams), separado por completo: agregar un
+// equipo a Argentina Streamers nunca aparece en el selector de GLA, y
+// viceversa. "file: null" quiere decir "sin escudo real todavía" -- los
+// renderers ya saben ocultar el escudo quierdo cuando no hay archivo
+// (ver setCrest() en program/js/renderers/scoreboard.js, sin cambios).
+export function getTeamCatalog(themeId = DEFAULT_THEME_ID) {
+  if (themeId !== DEFAULT_THEME_ID) {
+    return getThemeTeams(themeId).map((team) => ({
+      id: team.id,
+      name: team.name,
+      baseAbbr: team.abbr,
+      abbr: team.abbr,
+      isCustom: false,
+      file: team.file || null,
+    }));
+  }
+
   let files = [];
   try {
     files = fs.readdirSync(CRESTS_DIR).filter((f) => CREST_EXT_RE.test(f));
   } catch {
     return [];
   }
-  const customAbbrs = loadCustomAbbreviations();
   const teams = files.map((file) => {
     const id = path.basename(file, path.extname(file));
     const baseAbbr = getBaseAbbreviation(id);
-    const custom = customAbbrs[id];
+    const custom = customAbbreviations[id];
     return {
       id,
       name: NAME_OVERRIDES[id] || deriveName(id),
@@ -111,22 +119,23 @@ export function getTeamCatalog() {
 }
 
 export function updateTeamAbbreviation(id, abbr) {
-  const custom = loadCustomAbbreviations();
   const base = getBaseAbbreviation(id);
   const cleanAbbr = (abbr || '').toUpperCase().trim();
+  const custom = { ...customAbbreviations };
   if (!cleanAbbr || cleanAbbr === base) {
     delete custom[id];
   } else {
     custom[id] = cleanAbbr;
   }
-  saveCustomAbbreviations(custom);
+  customAbbreviations = custom;
+  schedulePersistentWrite('team_abbreviations', customAbbreviations);
   return getTeamCatalog();
 }
 
 export function resetTeamAbbreviation(id) {
-  const custom = loadCustomAbbreviations();
+  const custom = { ...customAbbreviations };
   delete custom[id];
-  saveCustomAbbreviations(custom);
+  customAbbreviations = custom;
+  schedulePersistentWrite('team_abbreviations', customAbbreviations);
   return getTeamCatalog();
 }
-

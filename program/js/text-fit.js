@@ -13,6 +13,21 @@ import { PROGRAM_FONT_FAMILY } from './program-fonts.js';
 
 const FONT_FAMILY = PROGRAM_FONT_FAMILY;
 
+// "TODO texto en Program debe ir en MAYÚSCULA" (2026-08-16, pedido
+// explicito del usuario): transformacion en la CAPA DE RENDER unicamente
+// -- nunca toca lo que Master Control guarda/envia ("Gran Final" se sigue
+// guardando y editando tal cual), solo lo que termina pintado en pantalla.
+// Centralizada aca porque "applyFittedText"/"applyPlainTextAdjust"/
+// "applyFittedLines" son el punto de paso casi universal de texto visible
+// del proyecto -- un solo lugar en vez de tocar cada renderer. Solo
+// mayuscula strings (numeros/otros tipos pasan sin cambios); las pocas
+// piezas con logica de texto duplicada localmente (no pasan por estas
+// funciones, ver grep de "textContent =" en program/js/renderers) usan
+// este mismo helper importado explicitamente.
+export function toBroadcastUpper(text) {
+  return typeof text === 'string' ? text.toUpperCase() : text;
+}
+
 let measureCtx = null;
 function getCtx() {
   if (!measureCtx) measureCtx = document.createElement('canvas').getContext('2d');
@@ -106,11 +121,16 @@ export function verticalCorrection(text, fontPx, { weight = 700, letterSpacing =
 // mismo problema con una tercera fuente de verdad sobre la posicion.
 export async function applyFittedText(el, text, opts, adjust = {}) {
   const { dx = 0, dy = 0, dSize = 0 } = adjust;
-  el.textContent = text;
-  const baseSize = await fitFontSize(text, opts);
+  // Mayuscula ANTES de medir (no solo al pintar): si se midiera el texto
+  // original y se mostrara en mayuscula, el ancho real (mas ancho en
+  // mayuscula) podria desbordar la caja -- fitFontSize tiene que ver
+  // exactamente el mismo string que termina en pantalla.
+  const upperText = toBroadcastUpper(text);
+  el.textContent = upperText;
+  const baseSize = await fitFontSize(upperText, opts);
   const size = Math.max(1, baseSize + dSize);
   el.style.fontSize = `${size}px`;
-  el.style.transform = `translate(${dx}px, ${verticalCorrection(text, size, opts) + dy}px)`;
+  el.style.transform = `translate(${dx}px, ${verticalCorrection(upperText, size, opts) + dy}px)`;
   return size;
 }
 
@@ -163,7 +183,7 @@ export function readTextAdjust(textAdjust, key) {
 // leer fresco).
 export function applyPlainTextAdjust(el, text, adjust = {}) {
   const { dx = 0, dy = 0, dSize = 0 } = adjust;
-  el.textContent = text;
+  el.textContent = toBroadcastUpper(text);
   el.style.translate = `${dx}px ${dy}px`;
   if (dSize) {
     if (!el.dataset.baseFontSize) {
@@ -174,6 +194,27 @@ export function applyPlainTextAdjust(el, text, adjust = {}) {
   } else if (el.style.fontSize) {
     el.style.removeProperty('font-size');
   }
+}
+
+// Ajuste manual para elementos NO textuales (escudos <img>, el guion
+// estatico del marcador, etc. -- 2026-08-31, pedido explicito del
+// usuario: "cada elemento visual debe poder moverse Y ESCALARSE por
+// separado"). Deliberadamente separado de "applyPlainTextAdjust": no
+// toca "textContent" (rompería una <img> o un separador con texto fijo
+// ya puesto en el HTML) y la escala es proporcional (multiplicador),
+// no una resta de tamaño de fuente en px como "dSize".
+//
+// Misma tecnica que arriba: "el.style.translate"/"el.style.scale" son
+// propiedades CSS independientes de "transform" (no su shorthand) y se
+// COMPONEN con cualquier "transform" que el elemento ya tenga declarado
+// por CSS (ej. ".ov-crest" de Argentina Streamers usa
+// "transform: translateY(-50%)" para centrado vertical) -- offsetX=
+// offsetY=0/scale=1 nunca cambia nada sin importar que transform de
+// diseño ya tenga el elemento.
+export function applyElementAdjust(el, adjust = {}) {
+  const { offsetX = 0, offsetY = 0, scale = 1 } = adjust;
+  el.style.translate = `${offsetX}px ${offsetY}px`;
+  el.style.scale = String(scale);
 }
 
 // Variante multilinea de fitFontSize (ej. listas de goleadores en Zocalo
@@ -230,7 +271,7 @@ export async function fitLinesFontSize(lines, {
 // desbalance de linea-de-fuente vs. tinta real de Anton es imperceptible
 // a estos tamaños chicos (11-16px) frente al del resto del sistema.
 export async function applyFittedLines(el, rawLines, opts) {
-  const lines = rawLines.map((l) => l.trim()).filter(Boolean);
+  const lines = rawLines.map((l) => toBroadcastUpper(l.trim())).filter(Boolean);
   el.innerHTML = '';
   if (lines.length === 0 || opts.maxHeight <= 0) {
     return { fontSize: 0, shown: 0, total: lines.length, truncated: lines.length > 0 };
@@ -249,7 +290,7 @@ export async function applyFittedLines(el, rawLines, opts) {
   if (truncated) {
     const more = document.createElement('div');
     more.className = 'fitted-line fitted-line-more';
-    more.textContent = `+${lines.length - shown} más`;
+    more.textContent = `+${lines.length - shown} MÁS`;
     el.appendChild(more);
   }
 

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const SPONSORS_DIR = path.join(process.cwd(), 'Sponsors');
+const SPONSORS_DIR = path.join(process.cwd(), 'assets', 'shared', 'sponsors');
 
 export function getSponsorsCatalog() {
   const catalog = {

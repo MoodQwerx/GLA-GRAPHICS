@@ -1,8 +1,8 @@
-import { createAlphaVideo } from '../alpha-video.js';
 import { MATCH_STATUS_OPTIONS } from '../../../shared/modules.js';
 import { crestFile, teamName } from '../../../shared/teams.js';
 import { sponsorFile } from '../../../shared/sponsors.js';
-import { applyFittedText, fitFontSize, readTextAdjust } from '../text-fit.js';
+import { applyFittedText, fitFontSize, readTextAdjust, toBroadcastUpper } from '../text-fit.js';
+import { mountThemedAlphaVideo } from '../theme-assets.js';
 
 const VIDEO_BY_RENGLON = {
   normal: '/assets/zocalos/zocalo-vs-alpha.mp4',
@@ -68,8 +68,9 @@ function setCrest(imgEl, crestId) {
   }
 }
 
-async function applyTeamName(el, text, adjust = {}) {
+async function applyTeamName(el, rawText, adjust = {}) {
   const { dx = 0, dy = 0, dSize = 0 } = adjust;
+  const text = toBroadcastUpper(rawText);
   el.textContent = text;
   el.style.transform = `translate(${dx}px, ${TEAM_VERTICAL_OFFSET + dy}px)`;
   const size = await fitFontSize(text, {
@@ -115,12 +116,12 @@ function applyScorersAdjust(el, adjust = {}) {
 export default function renderVs(contentEl, data, justTaken, onOneShotEnded, allData) {
   const src = VIDEO_BY_RENGLON[data.renglon] || VIDEO_BY_RENGLON.normal;
 
-  if (contentEl.dataset.renglon !== data.renglon) {
+  if (!contentEl._gfxBuilt || contentEl.dataset.renglon !== data.renglon) {
     contentEl.dataset.renglon = data.renglon;
     contentEl.innerHTML = `
       <div class="av-target"></div>
       <div class="gfx-overlay">
-        <img class="ov-vs-crestA" />
+        <img class="ov-vs-crestA" data-adjust="localCrest" />
         <div class="ov-vs-teamA"></div>
         <div class="ov-vs-scorersA"></div>
         <div class="ov-vs-goalA"></div>
@@ -128,15 +129,16 @@ export default function renderVs(contentEl, data, justTaken, onOneShotEnded, all
         <div class="ov-vs-goalB"></div>
         <div class="ov-vs-scorersB"></div>
         <div class="ov-vs-teamB"></div>
-        <img class="ov-vs-crestB" />
-        <img class="ov-vs-sponsor" />
+        <img class="ov-vs-crestB" data-adjust="awayCrest" />
+        <img class="ov-vs-sponsor" data-adjust="sponsor" />
       </div>
     `;
-    contentEl._alphaVideo = createAlphaVideo(contentEl.querySelector('.av-target'), src);
+    contentEl._alphaVideo = mountThemedAlphaVideo(contentEl.querySelector('.av-target'), 'vs', src, undefined, data.renglon);
+    contentEl._gfxBuilt = true;
   }
 
   if (justTaken) {
-    contentEl._alphaVideo.playFromStart();
+    contentEl._alphaVideo?.playFromStart();
   }
 
   const sb = (allData && allData.scoreboard) || {};
@@ -226,11 +228,11 @@ export default function renderVs(contentEl, data, justTaken, onOneShotEnded, all
 }
 
 function renderScorers(el, rawText, side) {
-  const text = String(rawText || '')
+  const text = toBroadcastUpper(String(rawText || '')
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean)
-    .join('  •  ');
+    .join('  •  '));
   const signature = `${side}:${text}`;
   const visibleWidth = el.clientWidth;
   if (

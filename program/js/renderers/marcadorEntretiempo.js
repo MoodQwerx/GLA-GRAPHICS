@@ -1,4 +1,4 @@
-import { createAlphaVideo } from '../alpha-video.js';
+import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { colorHex } from '../../../shared/team-colors.js';
 import { crestFile, teamAbbr } from '../../../shared/teams.js';
 import { applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
@@ -10,7 +10,7 @@ function buildStructure(el) {
     <div class="av-target"></div>
     <div class="gfx-overlay">
       <div class="ov-ent-team-a">
-        <img class="ov-crest" />
+        <img class="ov-crest" data-adjust="localCrest" />
         <span class="ov-dot"></span>
         <span class="ov-name"></span>
       </div>
@@ -18,11 +18,12 @@ function buildStructure(el) {
       <div class="ov-ent-team-b">
         <span class="ov-name"></span>
         <span class="ov-dot"></span>
-        <img class="ov-crest" />
+        <img class="ov-crest" data-adjust="awayCrest" />
       </div>
     </div>
   `;
-  el._alphaVideo = createAlphaVideo(el.querySelector('.av-target'), VIDEO_SRC);
+  el._alphaVideo = mountThemedAlphaVideo(el.querySelector('.av-target'), 'marcadorEntretiempo', VIDEO_SRC);
+  el._gfxBuilt = true;
 }
 
 function setCrest(imgEl, crestId) {
@@ -40,11 +41,11 @@ function setCrest(imgEl, crestId) {
 // Marcador principal (5to argumento, ver program/js/main.js) para no
 // duplicar la carga de escudo/color/equipo/goles en dos paneles distintos.
 export default function renderMarcadorEntretiempo(contentEl, data, justTaken, onOneShotEnded, allData) {
-  if (!contentEl._alphaVideo) {
+  if (!contentEl._gfxBuilt) {
     buildStructure(contentEl);
   }
   if (justTaken) {
-    contentEl._alphaVideo.playFromStart();
+    contentEl._alphaVideo?.playFromStart();
   }
 
   const sb = (allData && allData.scoreboard) || {};

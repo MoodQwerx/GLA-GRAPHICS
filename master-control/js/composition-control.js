@@ -10,6 +10,8 @@
 // ni panel dedicado tenga que saber nada de esto -- es la pieza que hace
 // que un modulo NUEVO futuro (agregado solo en shared/modules.js)
 // herede este control automaticamente sin escribir una linea mas aca.
+import { renderSavePositionControl } from './save-position-control.js';
+
 const STEP_PX = 2;
 const STEP_SCALE = 0.01;
 const REPEAT_DELAY_MS = 400;
@@ -59,6 +61,9 @@ export function renderCompositionControl(container, data, onDirty, options = {})
     defaultX = 0,
     defaultY = 0,
     defaultScale = 1,
+    onSave,
+    isPendingSave,
+    isConnected,
   } = options;
 
   const xKey = keys.xKey || 'compositionOffsetX';
@@ -71,9 +76,11 @@ export function renderCompositionControl(container, data, onDirty, options = {})
   const root = document.createElement('section');
   root.className = 'composition-adjust';
 
-  const heading = document.createElement('h2');
-  heading.textContent = title;
-  root.appendChild(heading);
+  if (title) {
+    const heading = document.createElement('h2');
+    heading.textContent = title;
+    root.appendChild(heading);
+  }
 
   if (note) {
     const noteEl = document.createElement('p');
@@ -93,17 +100,20 @@ export function renderCompositionControl(container, data, onDirty, options = {})
 
   const row = document.createElement('div');
   row.className = 'text-adjust-row composition-adjust-row';
+  let saveControl = null;
 
   function bumpOffset(prop, delta) {
     data[prop] += delta;
     refreshReadout();
     onDirty();
+    saveControl?.markDirty();
   }
   function bumpScale(delta) {
     const next = Math.round((data[scaleKey] + delta) * 100) / 100;
     data[scaleKey] = Math.max(MIN_SCALE, next);
     refreshReadout();
     onDirty();
+    saveControl?.markDirty();
   }
 
   row.appendChild(repeatButton('←', 'Mover a la izquierda', () => bumpOffset(xKey, -STEP_PX)));
@@ -124,11 +134,21 @@ export function renderCompositionControl(container, data, onDirty, options = {})
     data[scaleKey] = defaultScale;
     refreshReadout();
     onDirty();
+    saveControl?.markDirty();
   });
   row.appendChild(resetBtn);
   row.appendChild(readout);
 
   root.appendChild(row);
+
+  // Fila propia (no adentro de "row", que es un grid de columnas fijas
+  // pensado para los 8 controles de siempre) -- así no desalinea ni
+  // desborda ningún caller existente.
+  const saveRow = document.createElement('div');
+  saveRow.className = 'text-adjust-save-row';
+  saveControl = renderSavePositionControl(saveRow, { onSave, isPendingSave, isConnected });
+  if (saveControl) root.appendChild(saveRow);
+
   container.appendChild(root);
   return root;
 }

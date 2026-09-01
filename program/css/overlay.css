@@ -425,6 +425,161 @@
 }
 
 /* ============================================================
+   MARCADOR — ARGENTINA STREAMERS (2026-08-28, correccion visual explicita
+   del usuario). Geometria PROPIA de este theme -- las reglas de GLA de
+   arriba (calibradas sobre marcador-principal-alpha.mp4) no se tocan.
+
+   Recuadro verde de goles: el asset de Argentina (scoreboard-alpha.mp4) es
+   un PARALELOGRAMO inclinado (lados izq/der en diagonal, borde superior e
+   inferior horizontales), no un rectangulo -- muy distinto del recuadro
+   dorado recto de GLA. Medido con escaneo de color sobre un frame asentado
+   del propio video (canvas 2D, deteccion de pixeles verdes contra fondo
+   azul/negro, ver historial de este cambio): esquinas reales
+   (165,57)-(261,57)-(245,91)-(149,91) en el espacio local 1920x1080 del
+   modulo. Ancho constante 96px, alto 35px (57 a 92), centro geometrico
+   exacto en (205, 74) -- promedio de las 4 esquinas.
+
+   ".ov-score" pasa a ser el contenedor de todo el ancho real del recuadro
+   (left:157/width:96, tomado a la altura del centro vertical y=74 donde
+   cae el texto) en vez del box angosto de 76px heredado de GLA. Los 3 hijos
+   (gol local / guion / gol visitante) se vuelven position:absolute
+   INDEPENDIENTES dentro de ese contenedor -- ya no es un flex-row que los
+   agrupa como bloque unico -- para poder centrar cada uno en SU mitad real:
+     - gol local: mitad izquierda, borde real (x157) a guion (x205) -> centro x181
+     - guion: exactamente el centro geometrico -> x205, y74
+     - gol visitante: guion (x205) a borde real (x253) -> centro x229
+   Los controles de ajuste manual existentes (nameA/scoreA/scoreB, "mover
+   X/Y/agrandar/achicar/resetear") siguen funcionando igual: "el.style.
+   translate" (ver program/js/text-fit.js, applyPlainTextAdjust) se aplica
+   ARRIBA de esta base nueva, no la reemplaza -- en vivo, sin apretar
+   Actualizar, exactamente como ya funcionaba. El guion (".ov-score-sep")
+   nunca tuvo control de ajuste (no lo pidio el usuario), solo la posicion
+   base de diseño. Tamaño/peso/color de los numeros y del guion: sin tocar. */
+body[data-theme='argentinaStreamers'] #mod-scoreboard .ov-score {
+  left: 157px;
+  top: 57px;
+  width: 96px;
+  height: 35px;
+  display: block;
+}
+body[data-theme='argentinaStreamers'] #mod-scoreboard .ov-score-a {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 48px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+body[data-theme='argentinaStreamers'] #mod-scoreboard .ov-score-sep {
+  position: absolute;
+  left: 38px;
+  top: 0;
+  width: 20px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+body[data-theme='argentinaStreamers'] #mod-scoreboard .ov-score-b {
+  position: absolute;
+  left: 48px;
+  top: 0;
+  width: 48px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* "CONTADOR" del Marcador en blanco (2026-08-28, pedido explicito del
+   usuario) -- solo el color de fuente, nada mas (tamaño/posicion/logica del
+   reloj sin tocar). Exclusivo de Argentina Streamers. */
+body[data-theme='argentinaStreamers'] #mod-scoreboard .ov-clock {
+  color: #ffffff;
+}
+
+/* Escudos con presencia/sobresalido (2026-08-31, pedido explicito del
+   usuario + referencia visual adjunta): mas grandes que la celda que los
+   contiene (28px de alto) para que sobresalgan LEVEMENTE arriba/abajo del
+   recuadro, en vez de quedar encerrados como en GLA (26px, casi idéntico a
+   la celda). "width:auto" + "object-fit:contain" (heredado de la regla base
+   de arriba, sin duplicar) escalan cada escudo proporcional a su propia
+   relacion de aspecto real, sin deformar ninguno ni forzar el mismo ancho
+   entre un escudo angosto/vertical y uno mas ancho/cuadrado. "max-width" es
+   solo un limite de seguridad para un escudo inusualmente ancho, no afecta
+   a ninguno de los 4 entregados (todos verticales/cuadrados).
+
+   CORRECCION 2026-08-31 (pedido explicito): la primera version dejaba el
+   escudo DENTRO del mismo flex row que el punto de color y la abreviatura
+   (".ov-team-a"/".ov-team-b", display:flex + justify-content:center) --
+   agrandar el escudo cambiaba el ancho total de ese grupo y por lo tanto
+   corria la abreviatura, aunque su propio textAdjust no se hubiera tocado
+   ("mover un escudo no debe modificar automaticamente la abreviatura",
+   pedido explicito). Fix: el escudo pasa a "position:absolute" (se saca
+   por completo del flex flow; ".ov-dot"+".ov-name" quedan solos en el flex
+   y vuelven a centrarse exactamente como antes de que existiera el escudo,
+   sin tocar ningun textAdjust) y se ancla con left/right propios,
+   independiente del centrado de abreviatura+punto. "top:50%" +
+   "translateY(-50%)" centran el escudo en el eje Y de la celda (28px) sin
+   tocarlo -- el sobresalido arriba/abajo sale solo de ser mas alto que la
+   celda. left/right negativos = pedido explicito de correrlos un poco mas
+   hacia afuera (visitante a la derecha, local a la izquierda). */
+body[data-theme='argentinaStreamers'] #mod-scoreboard .ov-crest {
+  position: absolute;
+  height: 46px;
+  max-width: 90px;
+  top: 50%;
+}
+/* Escudo LOCAL mas alto que el visitante, a proposito (2026-08-31, pedido
+   explicito del usuario: "se percibe mas chico, aumentalo hasta que ambos
+   tengan el mismo peso visual"). Causa real medida (canvas 2D, bbox del
+   canal alfa): el PNG de Argentina Streamers (660x1080) tiene mas aire
+   interno que el de Perú Creadores (660x852) -- el escudo VISIBLE ocupa
+   904/1080 = 83.7% del alto del archivo en Argentina contra 796/852 =
+   93.4% en Perú. A igual "height" de <img> (46px) el dibujo real queda
+   ~38.5px en Argentina contra ~43px en Perú -- de ahi la diferencia de
+   peso visual pese a usar la misma regla. 51.4px en el contenedor de
+   Argentina compensa esa proporcion (51.4 * 904/1080 ≈ 43px, igualado al
+   visible real de Perú). Ancla ("left") sin tocar -- crece desde el mismo
+   borde izquierdo ya fijado, no cambia de posicion, solo de tamaño. Si en
+   algun momento el equipo LOCAL deja de ser Argentina Streamers, este
+   valor puede necesitar revisarse (esta atado a la celda, no al escudo
+   especifico, tal como lo pidio el usuario). */
+body[data-theme='argentinaStreamers'] #mod-scoreboard .ov-team-a .ov-crest {
+  left: -8px;
+  height: 51.4px;
+  transform: translateY(-50%);
+}
+/* Escudo VISITANTE: mismo tamaño de siempre (46px), un poco mas afuera en
+   X (2026-08-31, pedido explicito) -- de -8px a -11px, solo el ancla
+   horizontal, eje Y y escala sin tocar. */
+body[data-theme='argentinaStreamers'] #mod-scoreboard .ov-team-b .ov-crest {
+  right: -11px;
+  transform: translateY(-50%);
+}
+
+/* Colores de equipo NO deben salir al aire en Argentina Streamers (2026-08-31,
+   pedido explicito) -- ".ov-dot" es el unico elemento visual que pinta el
+   color de camiseta (ver program/js/renderers/scoreboard.js,
+   "teamAEl.querySelector('.ov-dot').style.background = colorHex(...)").
+   Se oculta con display:none: el renderer sigue corriendo exactamente
+   igual (sigue leyendo/computando/asignando teamAColor/teamBColor sobre el
+   elemento, dato y logica intactos), solo que ese elemento ya no se ve.
+   Scoped a "#mod-scoreboard" a proposito -- no toca ".ov-dot" de otros
+   modulos (ej. Marcador Entretiempo, que reusa la misma clase).
+   "visibility:hidden", NO "display:none" a proposito: mismo criterio que
+   "setCrest()" ya usa para un escudo sin archivo (program/js/renderers/
+   scoreboard.js) -- oculta el circulo pero conserva su espacio dentro del
+   flex ".ov-team-a/.ov-team-b", así la abreviatura NO se vuelve a correr
+   (pedido explicito seccion 6, "mover/ocultar un elemento no debe
+   modificar automaticamente la abreviatura"). */
+body[data-theme='argentinaStreamers'] #mod-scoreboard .ov-dot {
+  visibility: hidden;
+}
+
+/* ============================================================
    MARCADOR - ENTRETIEMPO
    Asset propio (marcador-entretiempo-alpha.mp4), grilla medida por
    separado con ffmpeg (no coincide con la del marcador principal, es un
@@ -743,6 +898,39 @@
 .ov-pen-scoreA { top: 942px; }
 .ov-pen-scoreB { top: 1003.5px; }
 
+/* "Guión del resultado" y "Sponsor" (2026-08-31, pedido explicito del
+   usuario: reemplazar el "ARG PER" del centro de la pieza por el
+   resultado de la tanda de penales + agregar sponsor debajo).
+   ".ov-pen-score-sep" NO tiene lugar en el diseño de GLA (dos filas
+   apiladas, un resultado por fila, nunca lado a lado) -- oculto por
+   default aca, Argentina Streamers lo muestra y reposiciona mas abajo.
+   ".ov-pen-sponsor" SI aplica a los dos themes por igual (elemento nuevo,
+   sin geometria previa que romper) -- se ubica debajo del bloque
+   escudo+nombre+resultado de GLA (que termina en top:1003.5+40=1043.5),
+   centrado en el mismo ancho que ocupa ".ov-pen-title" (left:38,
+   width:356, centro x=216) para quedar prolijamente alineado con el
+   resto de la pieza. Mismo fade opacity+translateX que
+   ".ov-vs-sponsor" (ver mas abajo), reutilizado tal cual. */
+.ov-pen-score-sep {
+  display: none;
+}
+.ov-pen-sponsor {
+  position: absolute;
+  left: 136px;
+  top: 1050px;
+  width: 160px;
+  height: 40px;
+  object-fit: contain;
+  opacity: 0;
+  transform: translateX(-15px);
+  transition: opacity 320ms cubic-bezier(0.4, 0, 0.2, 1), transform 320ms cubic-bezier(0.4, 0, 0.2, 1);
+  display: block;
+}
+.ov-pen-sponsor.is-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
 /* Titulo editable del zocalo superior. CORRECCION IMPORTANTE (ver
    CHANGELOG): las rondas anteriores asumieron que el asset no tenia
    ningun zocalo dibujado, basandose en un escaneo binario de alfa
@@ -840,6 +1028,139 @@
 .ov-pen-kicksB [data-kick="0"] { left: 246px; top: 1003.5px; }
 .ov-pen-kicksB [data-kick="1"] { left: 294px; top: 1003.5px; }
 .ov-pen-kicksB [data-kick="2"] { left: 343px; top: 1003.5px; }
+
+/* ============================================================
+   PENALES — ARGENTINA STREAMERS (2026-08-28, corrección explícita del
+   usuario sobre un encuadre automático previo que quedó mal). Geometría
+   PROPIA de este theme, en el mismo espacio de coordenadas nativo
+   1920x1080 (el transform del root "#mod-marcadorPenales" es compartido
+   y se aplica por igual a ambos themes) -- las reglas de GLA de arriba
+   NO se tocan ni se comparten.
+
+   El asset nuevo YA trae: título "PENALES" horneado, 5 huecos numerados
+   1-5 por equipo, y un recuadro negro central para las abreviaturas. Por
+   eso: título/escudo/resultado dinámicos se OCULTAN (el diseño ya los
+   resuelve o no tienen lugar físico en este layout), y solo quedan vivos
+   los círculos de estado (reposicionados) y el nombre (reubicado en
+   horizontal dentro del recuadro negro).
+
+   Círculos: centro real de cada hueco medido con ffmpeg sobre un frame
+   asentado del .mp4 (crops 4x + grilla de 10px, ver scripts/scratch/ en
+   el historial de este cambio) -- LOCAL x=664/715/766/817/868 (paso
+   ~51px), VISITANTE x=1083/1132/1181/1230/1279 (paso ~49px), ambas filas
+   y=980. Con el círculo de 40x40 ya usado por GLA (sin redimensionar el
+   asset ni inventar un tamaño nuevo), left/top = centro - 20.
+
+   Recuadro negro: medido igual (crop+grilla) en x887-1053 / y947-1011
+   (es un trapecio, se angosta hacia abajo -> se usa un inset seguro
+   x900-1042 para que el texto nunca pise el borde inclinado). Centro
+   vertical y=979, prácticamente igual al centro de los círculos (y=980),
+   confirmando la medición.
+
+   CORRECCIÓN (2026-08-31, pedido explícito del usuario): el recuadro
+   negro ya NO muestra las abreviaturas ("ARG"/"PER", vía ".ov-pen-name")
+   -- ahora muestra el RESULTADO DE LA TANDA DE PENALES (".ov-pen-scoreA"
+   + guión ".ov-pen-score-sep" + ".ov-pen-scoreB"), partiendo el mismo
+   recuadro x900-1042 en 3 tercios iguales (local/guión/visitante). Los
+   escudos, antes ocultos, ahora se muestran en los EXTREMOS de la pieza
+   (afuera de los círculos, nunca adentro): ".ov-pen-crest" pasa a
+   position:absolute (se escapa del flex de ".ov-pen-team", que sigue
+   existiendo solo como ancla posicional) con left/top relativos a su
+   propio ".ov-pen-team" (contenedor posicionado mas cercano) -- estimado
+   a partir de la geometría ya medida de círculos/recuadro (sin re-medir
+   el asset ni cambiarlo), pensado para afinarse con las flechas de ajuste
+   individual si hiciera falta. */
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-title,
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-name {
+  display: none;
+}
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-team {
+  top: 947px;
+  width: 71px;
+  height: 64px;
+  gap: 0;
+}
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-teamA { left: 900px; }
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-teamB { left: 971px; }
+
+/* Escudos en los extremos (2026-08-31): position:absolute saca al escudo
+   del flex de ".ov-pen-team" -- su containing block pasa a ser
+   ".ov-pen-team" (el ancestro posicionado mas cercano), por eso left/top
+   son RELATIVOS a esa caja (900,947 para local / 971,947 para
+   visitante), no a la pieza completa. Local: extremo izquierdo, antes de
+   que arranquen los círculos (x646) -- left absoluto ~560 => 560-900 =
+   -340px. Visitante: extremo derecho, despues de que terminan los
+   círculos (x1293) -- left absoluto ~1309 => 1309-971 = 338px. Altura
+   55px (mas presencia que el circulo de 40px, sin invadir el resto de la
+   pieza), centrado sobre la misma franja Y de los círculos (960-1000). */
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-teamA .ov-pen-crest {
+  display: block;
+  position: absolute;
+  left: -340px;
+  top: 5px;
+  height: 55px;
+  width: auto;
+  object-fit: contain;
+}
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-teamB .ov-pen-crest {
+  display: block;
+  position: absolute;
+  left: 338px;
+  top: 5px;
+  height: 55px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* Resultado de la tanda (reemplaza a las abreviaturas dentro del mismo
+   recuadro negro x900-1042/y947-1011): 3 tercios de ~47px cada uno
+   (local / guión / visitante), texto blanco (el recuadro es oscuro, el
+   negro de GLA -- ".ov-pen-score" base -- quedaria invisible aca). */
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-score {
+  position: absolute;
+  top: 947px;
+  width: 47px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  color: var(--white);
+}
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-scoreA { left: 900px; }
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-scoreB { left: 995px; }
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-score-sep {
+  display: flex;
+  position: absolute;
+  left: 947px;
+  top: 947px;
+  width: 48px;
+  height: 64px;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 900;
+  color: var(--white);
+}
+
+/* Sponsor (2026-08-31): centrado bajo el conjunto círculos+recuadro
+   (x646 a x1293, centro x≈969.5), debajo de la fila de círculos
+   (y960-1000). */
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-sponsor {
+  left: 890px;
+  top: 1020px;
+}
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksA [data-kick="0"] { left: 646px; top: 960px; }
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksA [data-kick="1"] { left: 695px; top: 960px; }
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksA [data-kick="2"] { left: 741px; top: 960px; }
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksA [data-kick="3"] { left: 790px; top: 960px; }
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksA [data-kick="4"] { left: 840px; top: 960px; }
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksB [data-kick="0"] { left: 1063px; top: 960px; }
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksB [data-kick="1"] { left: 1112px; top: 960px; }
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksB [data-kick="2"] { left: 1156px; top: 960px; }
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksB [data-kick="3"] { left: 1204px; top: 960px; }
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksB [data-kick="4"] { left: 1253px; top: 960px; }
 
 /* ============================================================
    MARCADOR ZOCALO (reemplaza al ex Shootout) — arriba a la izquierda,
@@ -1615,6 +1936,23 @@
   white-space: nowrap;
 }
 
+/* MOSCA — ARGENTINA STREAMERS (2026-08-28, correccion visual explicita del
+   usuario: "la hora tiene que quedar perfectamente centrada dentro del
+   recuadrito verde"). El asset propio de este theme
+   (mosca-localstrike-alpha.mp4) tiene su casillero real en otra posicion
+   que el de GLA -- medido con escaneo de color sobre un frame asentado
+   (canvas 2D, deteccion de pixeles verdes): recuadro real
+   x1697-1793 / y88-122 (97x35), centro exacto (1745, 105). Contra el box
+   heredado de GLA (right:123/top:84 -> x1700-1797/y84-117, pensado para
+   OTRO casillero) el texto quedaba ~3px a la derecha y ~4px arriba de mas
+   -- de ahi "bajar y correr a la izquierda". Solo se corrige la posicion
+   (right/top); ancho/alto/fuente/formato/logica sin tocar, igual que en
+   GLA. */
+body[data-theme='argentinaStreamers'] #mod-bug .ov-mosca-clock {
+  right: 126.5px;
+  top: 88.5px;
+}
+
 /* ============================================================
    ZOCALOS — pasada global de composicion (mismo criterio que Tarjeta:
    bounding box y zonas medidas con lectura directa del alfa real de
@@ -2342,6 +2680,20 @@
 }
 
 /* ============================================================
+   ZÓCALO COMPUESTO (unificado, 2026-08-16) -- misma geometria exacta que
+   zocaloFinalDiv/zocaloFinal de arriba (por eso reusa sus clases ".ov-zfd-
+   *"/".ov-zf-*" tal cual dentro de su propio DOM en vez de duplicar CSS:
+   cero riesgo de que la posicion/escala aprobada se desvie un pixel). Solo
+   agrega la posicion del contenedor del modulo nuevo. */
+#mod-zocaloCompuesto {
+  width: 1920px;
+  height: 1080px;
+  left: 0;
+  top: 0;
+  --dur-content-delay: 1900ms;
+}
+
+/* ============================================================
    GRUPOS — PNG estatico (sin video, entregado ya preparado y escalado a
    1920x1080 por el usuario; no se reescala ni se reposiciona). Grupo 1 y
    Grupo 2 comparten exactamente la misma geometria (medida por separado
@@ -2668,6 +3020,22 @@
   right: 8px;
 }
 
+/* Penales opcionales (2026-08-16, pedido explicito del usuario: soportar
+   "6(3) - 6(1)"): el numero principal encoge un poco SOLO cuando hay
+   penales cargados (".has-penales", ver sideTable.js) para que el
+   parentesis entre sin romper la caja de 45px -- sin penales, el numero
+   sigue exactamente igual que antes (42px, sin el modificador). */
+.ov-resultados-gol-local.has-penales,
+.ov-resultados-gol-visitante.has-penales {
+  font-size: 26px;
+}
+
+.ov-resultados-gol-pen {
+  font-size: 0.6em;
+  font-weight: 900;
+  margin-left: 1px;
+}
+
 .ov-resultados-estado {
   position: absolute;
   left: 45px;
@@ -2801,12 +3169,18 @@
   height: 100%;
   display: flex;
   align-items: center;
-  justify-content: center;
+  /* Alineado a la izquierda (2026-08-16, pedido explicito del usuario:
+     "no quiero nombres centrados horizontalmente" -- mismo margen
+     izquierdo en las dos filas, centrado vertical sin cambios, nombres
+     largos siguen con fitted text -- ver NAME_MAX_WIDTH en
+     program/js/renderers/estrellas.js, no se toco). Estadisticas
+     (.ov-estrellas-stat*) sin cambios, siguen centradas en su columna. */
+  justify-content: flex-start;
   font-family: var(--font-display);
   font-weight: 800;
   text-transform: uppercase;
   color: var(--white);
-  text-align: center;
+  text-align: left;
 }
 
 .ov-estrellas-stat {

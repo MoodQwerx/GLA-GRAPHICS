@@ -106,6 +106,7 @@ export function renderPosicionesPanel(containerEl, data, onChanged, options = {}
   const paginas = options.paginas || PAGINAS;
   const syncEndpoint = options.syncEndpoint || '/api/posiciones/sync-web';
   const tableLabel = options.tableLabel || 'TABLA GLOBAL';
+  const saveOptions = options.saveOptions;
   if (!Array.isArray(data.filas) || data.filas.length !== totalRows) {
     data.filas = Array.from({ length: totalRows }, (_, i) => (
       data.filas && data.filas[i] ? data.filas[i] : { posicion: i + 1, teamId: '', puntos: 0, pj: 0, g: 0, gxp: 0, pxp: 0, p: 0, gf: 0, gc: 0, dg: 0 }
@@ -208,7 +209,7 @@ export function renderPosicionesPanel(containerEl, data, onChanged, options = {}
     const tituloLbl = document.createElement('label');
     tituloLbl.textContent = 'Título general';
     tituloWrap.appendChild(tituloLbl);
-    mountAdjustControl(tituloWrap, data, 'titulo', onChanged);
+    mountAdjustControl(tituloWrap, data, 'titulo', onChanged, saveOptions);
     adjustSection.appendChild(tituloWrap);
     for (const { key, label } of ADJUST_COLUMNS) {
       const wrap = document.createElement('div');
@@ -216,7 +217,7 @@ export function renderPosicionesPanel(containerEl, data, onChanged, options = {}
       const lbl = document.createElement('label');
       lbl.textContent = label;
       wrap.appendChild(lbl);
-      mountAdjustControl(wrap, data, key, onChanged);
+      mountAdjustControl(wrap, data, key, onChanged, saveOptions);
       adjustSection.appendChild(wrap);
     }
   }
@@ -455,11 +456,12 @@ export function renderPosicionesPanel(containerEl, data, onChanged, options = {}
   };
 }
 
-export function renderPosicionesTorneoPanel(containerEl, data, onChanged) {
+export function renderPosicionesTorneoPanel(containerEl, data, onChanged, saveOptions) {
   return renderPosicionesPanel(containerEl, data, onChanged, {
     totalRows: 6,
     paginas: [{ id: 'pagina1', label: 'POSICIONES 1-6', desde: 1, hasta: 6 }],
     syncEndpoint: '/api/posiciones-torneo/sync-web',
     tableLabel: 'TABLA DE TORNEO — GLA RELAMPAGO #2',
+    saveOptions,
   });
 }

@@ -1,4 +1,4 @@
-import { createAlphaVideo } from '../alpha-video.js';
+import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { sponsorFile } from '../../../shared/sponsors.js';
 
 const VIDEO_SRC = '/assets/replay/replay-sponsor-alpha.mp4';
@@ -7,18 +7,19 @@ function buildStructure(el) {
   el.innerHTML = `
     <div class="av-target"></div>
     <div class="gfx-overlay">
-      <img class="ov-var-replay-sponsor" />
+      <img class="ov-var-replay-sponsor" data-adjust="sponsor" />
     </div>
   `;
-  el._alphaVideo = createAlphaVideo(el.querySelector('.av-target'), VIDEO_SRC);
+  el._alphaVideo = mountThemedAlphaVideo(el.querySelector('.av-target'), 'replay', VIDEO_SRC);
+  el._gfxBuilt = true;
 }
 
 export default function renderReplay(contentEl, data, justTaken) {
-  if (!contentEl._alphaVideo) {
+  if (!contentEl._gfxBuilt) {
     buildStructure(contentEl);
   }
   if (justTaken) {
-    contentEl._alphaVideo.playFromStart();
+    contentEl._alphaVideo?.playFromStart();
   }
   
   const sponsorEl = contentEl.querySelector('.ov-var-replay-sponsor');

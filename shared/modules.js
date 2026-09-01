@@ -29,6 +29,7 @@ import { TEAM_COLORS } from './team-colors.js';
 import { TEAM_OPTIONS } from './teams.js';
 import { SPONSOR_OPTIONS } from './sponsors.js';
 import { emptyClock } from './clock.js';
+import { ARGENTINA_STREAMERS_THEME_ID } from './themes.js';
 
 function penaltyKicksDefault(count) {
   return Array.from({ length: count }, () => ({ status: PENALTY_KICK_STATUS.PENDING }));
@@ -111,7 +112,33 @@ export const MODULES = {
       // (parseClockLimit) y program/js/renderers/scoreboard.js.
       clockEndText: '15:00',
       sponsor: '',
+      // "teamColorAssignments" (2026-08-16, pedido explicito del usuario:
+      // "ASIGNAR COLOR AL EQUIPO"): mapa persistente { teamId: colorId }.
+      // Al elegir un equipo en "teamA"/"teamB", si existe una entrada aca
+      // se autocompleta "teamAColor"/"teamBColor" con ese color (ver
+      // master-control/js/main.js); el boton de asignar lo escribe/pisa
+      // (master-control/js/scoreboard-clock-panel.js). Cambiar el color
+      // sin apretar el boton es solo temporal, no toca este mapa.
+      teamColorAssignments: {},
       textAdjust: textAdjustDefaults('scoreA', 'scoreB', 'period', 'nameA', 'nameB', 'clock'),
+      // "localCrestOffset*/awayCrestOffset*/separatorOffset*" (2026-08-31,
+      // pedido explicito del usuario: cada elemento del marcador debe
+      // poder moverse/escalarse por separado -- ver
+      // master-control/js/composition-control.js). Mismo criterio que
+      // "compositionOffsetX/Y/Scale" (COMPOSITION_DEFAULTS mas abajo):
+      // sufijo "OffsetX"/"OffsetY"/"Scale" para que program/js/main.js
+      // ("isVisualKey") los trate como ajuste visual en vivo sin cambios
+      // ahi. Default 0/0/1 = no-op -- GLA nunca los toca desde su panel
+      // (el acordeon nuevo es exclusivo de Argentina Streamers, ver
+      // master-control/js/main.js) pero quedan disponibles para cualquier
+      // theme sin romper nada.
+      localCrestOffsetX: 0, localCrestOffsetY: 0, localCrestScale: 1,
+      awayCrestOffsetX: 0, awayCrestOffsetY: 0, awayCrestScale: 1,
+      separatorOffsetX: 0, separatorOffsetY: 0, separatorScale: 1,
+      // "sponsorOffsetX/Y/Scale" (2026-08-31, auditoria completa de
+      // edicion individual): el logo de sponsor del Marcador nunca tuvo
+      // ajuste propio.
+      sponsorOffsetX: 0, sponsorOffsetY: 0, sponsorScale: 1,
     },
   },
 
@@ -158,7 +185,13 @@ export const MODULES = {
       { key: 'scoreA', label: 'Gol local (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
       { key: 'scoreB', label: 'Gol visitante (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
     ],
-    defaults: { textAdjust: textAdjustDefaults('nameA', 'nameB', 'scoreA', 'scoreB') },
+    defaults: {
+      textAdjust: textAdjustDefaults('nameA', 'nameB', 'scoreA', 'scoreB'),
+      // "localCrestOffset*/awayCrestOffset*" (2026-08-31, auditoria
+      // completa): los escudos nunca tuvieron ajuste propio, solo src-swap.
+      localCrestOffsetX: 0, localCrestOffsetY: 0, localCrestScale: 1,
+      awayCrestOffsetX: 0, awayCrestOffsetY: 0, awayCrestScale: 1,
+    },
   },
 
   marcadorPenales: {
@@ -178,12 +211,23 @@ export const MODULES = {
       { key: 'kicksB', label: 'Tandas equipo B', type: FIELD_TYPES.PENALTY_SERIES, count: 3 },
       { key: 'nameA', label: 'Abreviatura equipo local (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
       { key: 'nameB', label: 'Abreviatura equipo visitante (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
-      { key: 'scoreA', label: 'Resultado final local (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
-      { key: 'scoreB', label: 'Resultado final visitante (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+      // "scoreA"/"scoreB" (2026-08-31, corrección explícita del usuario):
+      // dejaron de mostrar el resultado del PARTIDO (sb.scoreA/scoreB) —
+      // ahora Program calcula el resultado de la TANDA DE PENALES en vivo
+      // a partir de "kicksA"/"kicksB" (cuenta de intentos en 'scored'), ver
+      // program/js/renderers/marcadorPenales.js. Este campo sigue siendo
+      // solo de posición/tamaño (el numero no se tipea, se calcula solo).
+      { key: 'scoreA', label: 'Resultado de penales local (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+      { key: 'scoreB', label: 'Resultado de penales visitante (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+      // "sponsor" (2026-08-31, pedido explicito del usuario): mismo
+      // catalogo/categoria que Zocalo VS Compacto ("vs_compact"), sin
+      // inventar un catalogo nuevo.
+      { key: 'sponsor', label: 'Sponsor Penales', type: FIELD_TYPES.SELECT, options: SPONSOR_OPTIONS.vs_compact },
     ],
     defaults: {
       titulo: 'PENALES',
       kicksA: penaltyKicksDefault(3), kicksB: penaltyKicksDefault(3),
+      sponsor: '',
       // "suddenDeath" (2026-08-15, pedido explicito del usuario: indicar
       // MUERTE SUBITA sin inventar un asset nuevo) -- toggle desde un panel
       // a medida (ver master-control/js/penales-panel.js). Cuando esta en
@@ -193,6 +237,22 @@ export const MODULES = {
       // campo de texto propio, no se persiste por separado del titulo.
       suddenDeath: false,
       textAdjust: textAdjustDefaults('titulo', 'nameA', 'nameB', 'scoreA', 'scoreB'),
+      // "localCrestOffset*/awayCrestOffset*" (2026-08-31, auditoria
+      // completa): los escudos nunca tuvieron ajuste propio, solo src-swap.
+      localCrestOffsetX: 0, localCrestOffsetY: 0, localCrestScale: 1,
+      awayCrestOffsetX: 0, awayCrestOffsetY: 0, awayCrestScale: 1,
+      // "kicksLocalOffset*/kicksVisitanteOffset*" (2026-08-31, pedido
+      // explicito del usuario): cada fila de circulos de penales se mueve
+      // como grupo, independiente del escudo y del resultado.
+      kicksLocalOffsetX: 0, kicksLocalOffsetY: 0, kicksLocalScale: 1,
+      kicksVisitanteOffsetX: 0, kicksVisitanteOffsetY: 0, kicksVisitanteScale: 1,
+      // "separatorOffset*" (2026-08-31): guión entre el resultado local y
+      // visitante de la tanda de penales -- mismo criterio que el guión
+      // del Marcador principal (scoreboard.separatorOffsetX/Y/Scale).
+      separatorOffsetX: 0, separatorOffsetY: 0, separatorScale: 1,
+      // "sponsorOffsetX/Y/Scale" (2026-08-31): unico elemento visual del
+      // sponsor, nunca tuvo ajuste propio.
+      sponsorOffsetX: 0, sponsorOffsetY: 0, sponsorScale: 1,
     },
   },
 
@@ -262,6 +322,9 @@ export const MODULES = {
       // formacionEquipos.js) -- "subsTitle" es el rotulo fijo "SUPLENTES",
       // "subsList" es el bloque completo de la lista de suplentes.
       textAdjust: textAdjustDefaults('playerName', 'playerNumber', 'subsTitle', 'subsList'),
+      // "crestOffsetX/Y/Scale" (2026-08-31, auditoria completa): el escudo
+      // del equipo activo nunca tuvo ajuste propio, solo src-swap.
+      crestOffsetX: 0, crestOffsetY: 0, crestScale: 1,
     },
   },
 
@@ -281,6 +344,10 @@ export const MODULES = {
       titulo: 'PRÓXIMO PARTIDO',
       titlePresets: [],
       textAdjust: textAdjustDefaults('titulo', 'nameA', 'nameB'),
+      // "localCrestOffset*/awayCrestOffset*" (2026-08-31, auditoria
+      // completa): los escudos nunca tuvieron ajuste propio.
+      localCrestOffsetX: 0, localCrestOffsetY: 0, localCrestScale: 1,
+      awayCrestOffsetX: 0, awayCrestOffsetY: 0, awayCrestScale: 1,
     },
   },
 
@@ -302,6 +369,10 @@ export const MODULES = {
       titulo: 'RESULTADO',
       titlePresets: [],
       textAdjust: textAdjustDefaults('titulo', 'nameA', 'nameB', 'scoreA', 'scoreB'),
+      // "localCrestOffset*/awayCrestOffset*" (2026-08-31, auditoria
+      // completa): los escudos nunca tuvieron ajuste propio.
+      localCrestOffsetX: 0, localCrestOffsetY: 0, localCrestScale: 1,
+      awayCrestOffsetX: 0, awayCrestOffsetY: 0, awayCrestScale: 1,
     },
   },
 
@@ -343,7 +414,15 @@ export const MODULES = {
       },
       { key: 'jugador', label: 'Nombre del jugador', type: FIELD_TYPES.TEXT, adjustable: true },
     ],
-    defaults: { equipo: 'local', tipo: 'amarilla', jugador: '', textAdjust: textAdjustDefaults('jugador') },
+    defaults: {
+      equipo: 'local', tipo: 'amarilla', jugador: '', textAdjust: textAdjustDefaults('jugador'),
+      // "crestOffsetX/Y/Scale" (2026-08-31, pedido explicito del usuario:
+      // extender la edicion individual a todo el software) -- el escudo
+      // de este modulo nunca tuvo ajuste propio, solo src-swap (ver
+      // program/js/renderers/tarjeta.js). Default 0/0/1 = no-op, ver
+      // shared/adjust-registry.js.
+      crestOffsetX: 0, crestOffsetY: 0, crestScale: 1,
+    },
   },
 
   // El asset tiene un unico casillero de escudo (una sustitucion es
@@ -374,6 +453,9 @@ export const MODULES = {
     defaults: {
       equipo: 'local', entra: '', sale: '', titulo: 'CAMBIO',
       textAdjust: textAdjustDefaults('entra', 'sale', 'titulo'),
+      // "crestOffsetX/Y/Scale" (2026-08-31, pedido explicito del usuario):
+      // mismo criterio que "tarjeta" -- el escudo nunca tuvo ajuste propio.
+      crestOffsetX: 0, crestOffsetY: 0, crestScale: 1,
     },
   },
 
@@ -422,7 +504,23 @@ export const MODULES = {
       sponsor: '', motivoPreset: 'posible_penal', motivo: 'POSIBLE PENAL',
       compositionOffsetX: 0, compositionOffsetY: 0, compositionScale: 1,
       motivoOffsetX: 0, motivoOffsetY: 0, motivoScale: 1,
-      textAdjust: textAdjustDefaults('motivo')
+      textAdjust: textAdjustDefaults('motivo'),
+      // "sponsorOffsetX/Y/Scale" (2026-08-31, pedido explicito del
+      // usuario): el logo de sponsor nunca tuvo ajuste propio (solo
+      // fade-swap, ver program/js/renderers/varCheck.js).
+      sponsorOffsetX: 0, sponsorOffsetY: 0, sponsorScale: 1,
+      // "varGroupOffsetX/Y/Scale" (2026-08-31): antes de este campo,
+      // ".ov-var-group1" (clip VAR + sponsor) leia manualmente las MISMAS
+      // keys que "compositionOffsetX/Y/Scale" (COMPOSICION COMPLETA, ver
+      // COMPOSITION_DEFAULTS mas abajo) -- como ese grupo es hijo de
+      // ".content" y "COMPOSICION COMPLETA" YA mueve ".content" entero,
+      // el offset se aplicaba DOS VECES (compuesto) sobre group1 mientras
+      // que ".ov-var-motivo-group" solo lo heredaba una vez de ".content"
+      // -- rompia el requisito de que "Composicion completa" mueva TODO
+      // el modulo como una unidad rigida. Se separa en un campo propio
+      // para que group1 tenga su ajuste fino independiente sin volver a
+      // leer las keys universales.
+      varGroupOffsetX: 0, varGroupOffsetY: 0, varGroupScale: 1,
     },
   },
 
@@ -435,7 +533,12 @@ export const MODULES = {
     fields: [
       { key: 'sponsor', label: 'Sponsor REPLAY', type: FIELD_TYPES.SELECT, options: SPONSOR_OPTIONS.var },
     ],
-    defaults: { sponsor: '' },
+    defaults: {
+      sponsor: '',
+      // "sponsorOffsetX/Y/Scale" (2026-08-31, pedido explicito del
+      // usuario): unico elemento visual de este modulo, nunca tuvo ajuste.
+      sponsorOffsetX: 0, sponsorOffsetY: 0, sponsorScale: 1,
+    },
   },
 
   // ---------------------------------------------------------------------
@@ -499,7 +602,10 @@ export const MODULES = {
       { key: 'line1', label: 'Titulo principal', type: FIELD_TYPES.TEXT, adjustable: true },
       { key: 'line2', label: 'Subtitulo / bajada', type: FIELD_TYPES.TEXT, adjustable: true },
     ],
-    defaults: { line1: '', line2: '', textPresets: [], textAdjust: textAdjustDefaults('line1', 'line2') },
+    defaults: {
+      line1: '', line2: '', textPresets: [],
+      textAdjust: textAdjustDefaults('line1', 'line2'),
+    },
   },
 
   shortSimple: {
@@ -511,7 +617,10 @@ export const MODULES = {
     fields: [
       { key: 'text', label: 'Texto', type: FIELD_TYPES.TEXT, adjustable: true },
     ],
-    defaults: { text: '', textPresets: [], textAdjust: textAdjustDefaults('text') },
+    defaults: {
+      text: '', textPresets: [],
+      textAdjust: textAdjustDefaults('text'),
+    },
   },
 
   // "airMode" (2026-08-06, pedido explicito del usuario: poder mostrar uno
@@ -621,6 +730,11 @@ export const MODULES = {
       renglon: 'normal', status: '', statusTexto: '', goleadoresLocal: '', goleadoresVisitante: '',
       contentType: 'match_info', sponsor: '',
       textAdjust: textAdjustDefaults('statusTexto', 'nameA', 'nameB', 'goalA', 'goalB', 'scorersLocal', 'scorersVisitante'),
+      // "localCrestOffset*/awayCrestOffset*/sponsorOffset*" (2026-08-31,
+      // auditoria completa): ninguno de los 3 tenia ajuste propio.
+      localCrestOffsetX: 0, localCrestOffsetY: 0, localCrestScale: 1,
+      awayCrestOffsetX: 0, awayCrestOffsetY: 0, awayCrestScale: 1,
+      sponsorOffsetX: 0, sponsorOffsetY: 0, sponsorScale: 1,
     },
   },
 
@@ -668,6 +782,55 @@ export const MODULES = {
       { key: 'texto2', label: 'TEXTO 2', type: FIELD_TYPES.TEXT, adjustable: true },
     ],
     defaults: { texto1: '', texto2: '', sponsorsRotation: [], textPresets: [], textAdjust: textAdjustDefaults('texto1', 'texto2') },
+  },
+
+  // ---------------------------------------------------------------------
+  // ZÓCALO COMPUESTO (unificado) -- 2026-08-16, pedido explicito del
+  // usuario: "no quiero duplicar dos modulos casi idénticos". Reemplaza en
+  // la navegacion a "zocaloFinal"/"zocaloFinalDiv" (ambos arriba: quedan
+  // registrados y con su renderer intacto para no perder datos/presets
+  // viejos ya persistidos, pero ocultos de la lista de tabs -- ver
+  // HIDDEN_FROM_NAV_IDS en master-control/js/main.js, mismo patron que
+  // "gol"). "tipo" elige que sector izquierdo mostrar (EQUIPOS: escudos en
+  // vivo del Marcador, mismo campo/logica que zocaloFinalDiv; LOGO: logo
+  // GLA fijo, mismo criterio que zocaloFinal) -- texto1/texto2/sponsors/
+  // presets/ajustes de composicion y de texto son UNA sola copia
+  // compartida entre ambos tipos (program/js/renderers/zocaloCompuesto.js
+  // hace el swap de video+contenido, ver ese archivo para el detalle de
+  // "transicion segura" al cambiar tipo estando al aire).
+  zocaloCompuesto: {
+    id: 'zocaloCompuesto',
+    label: 'Zócalo Compuesto',
+    category: 'Zocalos',
+    layer: 'bottom-wide',
+    live: true,
+    sequencedReveal: true,
+    fields: [
+      {
+        key: 'tipo', label: 'Tipo', type: FIELD_TYPES.SELECT,
+        options: [
+          { id: 'equipos', label: 'EQUIPOS (escudos del Marcador)' },
+          { id: 'logo', label: 'LOGO GLA' },
+        ],
+      },
+      { key: 'texto1', label: 'TEXTO 1', type: FIELD_TYPES.TEXT, adjustable: true },
+      { key: 'texto2', label: 'TEXTO 2', type: FIELD_TYPES.TEXT, adjustable: true },
+    ],
+    defaults: {
+      tipo: 'equipos',
+      texto1: '', texto2: '', sponsorsRotation: [],
+      escudosFuente: 'MARCADOR', customTeamA: '', customTeamB: '',
+      shieldPresets: [], textPresets: [], completePresets: [],
+      textAdjust: textAdjustDefaults('texto1', 'texto2'),
+      // "localCrestOffset*/awayCrestOffset*/logoOffset*/sponsor1Offset*/
+      // sponsor2Offset*" (2026-08-31, auditoria completa): ninguno de los
+      // 5 elementos graficos tenia ajuste propio.
+      localCrestOffsetX: 0, localCrestOffsetY: 0, localCrestScale: 1,
+      awayCrestOffsetX: 0, awayCrestOffsetY: 0, awayCrestScale: 1,
+      logoOffsetX: 0, logoOffsetY: 0, logoScale: 1,
+      sponsor1OffsetX: 0, sponsor1OffsetY: 0, sponsor1Scale: 1,
+      sponsor2OffsetX: 0, sponsor2OffsetY: 0, sponsor2Scale: 1,
+    },
   },
 
   placaLInfo: {
@@ -731,6 +894,11 @@ export const MODULES = {
       // Ajuste column-level compartido entre Grupo 1 y Grupo 2 (2026-08-15,
       // auditoria completa) -- ver master-control/js/grupos-panel.js.
       textAdjust: textAdjustDefaults('nombre', 'puntos'),
+      // "crestOffsetX/Y/Scale" (2026-08-31, auditoria completa): mismo
+      // criterio column-level que "nombre"/"puntos" -- un unico ajuste
+      // mueve el escudo de TODAS las filas visibles (Grupo 1 y Grupo 2
+      // por igual), nunca tuvo ajuste propio.
+      crestOffsetX: 0, crestOffsetY: 0, crestScale: 1,
     },
   },
 
@@ -764,7 +932,14 @@ export const MODULES = {
           // texto propio de CADA encuentro (a diferencia de golLocal/
           // estado/etc., que son campos por-encuentro pero de tipo fijo),
           // ver program/js/renderers/sideTable.js.
-          titulo: ''
+          titulo: '',
+          // "penalesA"/"penalesB" (2026-08-16, pedido explicito del
+          // usuario: soportar "6(3) - 6(1)"): OPCIONALES, string vacio =
+          // sin definicion por penales -- Program muestra solo "6 - 6".
+          // Con ambos cargados, el numero de penales sale entre parentesis
+          // y mas chico junto al resultado (ver sideTable.js/overlay.css).
+          penalesA: '',
+          penalesB: ''
         }
       ],
       faseWeb: 'grupos',
@@ -777,6 +952,11 @@ export const MODULES = {
       // key ya lo usa el titulo GENERAL de todo el modulo (arriba de la
       // tabla, ej. "RESULTADOS").
       textAdjust: textAdjustDefaults('titulo', 'golLocal', 'golVisitante', 'estado', 'estadoFullscreen', 'tituloBracket'),
+      // "crestLocalOffset*/crestVisitanteOffset*" (2026-08-31, auditoria
+      // completa): ajuste column-level (mueve el escudo de TODOS los
+      // encuentros visibles) -- nunca tuvo ajuste propio.
+      crestLocalOffsetX: 0, crestLocalOffsetY: 0, crestLocalScale: 1,
+      crestVisitanteOffsetX: 0, crestVisitanteOffsetY: 0, crestVisitanteScale: 1,
     },
   },
 
@@ -811,6 +991,10 @@ export const MODULES = {
         'localNombre', 'localG', 'localA', 'localPJ',
         'visitanteNombre', 'visitanteG', 'visitanteA', 'visitantePJ',
       ),
+      // "localCrestOffset*/visitanteCrestOffset*" (2026-08-31, auditoria
+      // completa): los 2 escudos nunca tuvieron ajuste propio.
+      localCrestOffsetX: 0, localCrestOffsetY: 0, localCrestScale: 1,
+      visitanteCrestOffsetX: 0, visitanteCrestOffsetY: 0, visitanteCrestScale: 1,
     },
   },
 
@@ -856,6 +1040,9 @@ export const MODULES = {
       // control por columna se aplica a todas las filas visibles -- ver
       // master-control/js/posiciones-panel.js.
       textAdjust: textAdjustDefaults('titulo', 'numero', 'equipo', 'pts', 'pj', 'g', 'gxp', 'pxp', 'p', 'gf', 'gc', 'dg'),
+      // "crestOffsetX/Y/Scale" (2026-08-31, auditoria completa): mismo
+      // criterio column-level -- el escudo nunca tuvo ajuste propio.
+      crestOffsetX: 0, crestOffsetY: 0, crestScale: 1,
     },
   },
 
@@ -875,6 +1062,10 @@ export const MODULES = {
       })),
       ultimaActualizacionWeb: '',
       textAdjust: textAdjustDefaults('titulo', 'numero', 'equipo', 'pts', 'pj', 'g', 'gxp', 'pxp', 'p', 'gf', 'gc', 'dg'),
+      // "crestOffsetX/Y/Scale" (2026-08-31, auditoria completa): mismo
+      // criterio column-level que "posiciones" -- el escudo nunca tuvo
+      // ajuste propio.
+      crestOffsetX: 0, crestOffsetY: 0, crestScale: 1,
     },
   },
 
@@ -892,6 +1083,9 @@ export const MODULES = {
     defaults: {
       posicion: 'placaL', fuente: 'liga', jugadores: [], snapshots: {}, ultimaActualizacionWeb: '',
       textAdjust: textAdjustDefaults('position', 'name', 'primaryStat'),
+      // "crestOffsetX/Y/Scale" (2026-08-31, auditoria completa): ajuste
+      // column-level, el escudo nunca tuvo ajuste propio.
+      crestOffsetX: 0, crestOffsetY: 0, crestScale: 1,
     },
   },
 
@@ -904,6 +1098,9 @@ export const MODULES = {
     defaults: {
       posicion: 'placaL', fuente: 'liga', jugadores: [], snapshots: {}, ultimaActualizacionWeb: '',
       textAdjust: textAdjustDefaults('position', 'name', 'primaryStat'),
+      // "crestOffsetX/Y/Scale" (2026-08-31, auditoria completa): ajuste
+      // column-level, el escudo nunca tuvo ajuste propio.
+      crestOffsetX: 0, crestOffsetY: 0, crestScale: 1,
     },
   },
 
@@ -916,6 +1113,9 @@ export const MODULES = {
     defaults: {
       posicion: 'placaL', fuente: 'liga', jugadores: [], snapshots: {}, ultimaActualizacionWeb: '',
       textAdjust: textAdjustDefaults('name', 'stat0', 'stat1', 'stat2'),
+      // "crestOffsetX/Y/Scale" (2026-08-31, auditoria completa): ajuste
+      // column-level, el escudo nunca tuvo ajuste propio.
+      crestOffsetX: 0, crestOffsetY: 0, crestScale: 1,
     },
   },
 };
@@ -940,9 +1140,19 @@ const COMPOSITION_DEFAULTS = {
   compositionScale: 1,
 };
 
-export function cloneDefaults(moduleId) {
-  return {
+export function cloneDefaults(moduleId, themeId) {
+  const cloned = {
     ...COMPOSITION_DEFAULTS,
     ...JSON.parse(JSON.stringify(MODULES[moduleId].defaults)),
   };
+  // Argentina Streamers usa un asset de penales con 5 espacios por equipo
+  // (GLA sigue en 3, sin cambios) -- pedido explicito del usuario, ver
+  // CHANGELOG.md. Unico chokepoint: acá se genera el array por defecto de
+  // "kicksA"/"kicksB"; el panel (buildPenaltyEditor) y el renderer de
+  // Program (buildStructure) ya son 100% length-driven, no necesitan tocarse.
+  if (moduleId === 'marcadorPenales' && themeId === ARGENTINA_STREAMERS_THEME_ID) {
+    cloned.kicksA = penaltyKicksDefault(5);
+    cloned.kicksB = penaltyKicksDefault(5);
+  }
+  return cloned;
 }

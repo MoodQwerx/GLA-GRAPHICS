@@ -1,4 +1,4 @@
-import { createAlphaVideo } from '../alpha-video.js';
+import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
 
 const VIDEO_SRC = '/assets/mosca/mosca-localstrike-alpha.mp4';
@@ -29,7 +29,8 @@ function buildStructure(el) {
       <div class="ov-mosca-clock"></div>
     </div>
   `;
-  el._alphaVideo = createAlphaVideo(el.querySelector('.av-target'), VIDEO_SRC);
+  el._alphaVideo = mountThemedAlphaVideo(el.querySelector('.av-target'), 'bug', VIDEO_SRC);
+  el._gfxBuilt = true;
 
   // "clock" (2026-08-15, auditoria completa): el ajuste vivo se guarda en
   // el propio nodo (el._clockAdjust) porque este tick corre en un
@@ -44,12 +45,12 @@ function buildStructure(el) {
 }
 
 export default function renderBug(contentEl, data, justTaken) {
-  if (!contentEl._alphaVideo) {
+  if (!contentEl._gfxBuilt) {
     buildStructure(contentEl);
   }
   contentEl._clockAdjust = readTextAdjust(data.textAdjust, 'clock');
   applyPlainTextAdjust(contentEl.querySelector('.ov-mosca-clock'), currentClock(), contentEl._clockAdjust);
   if (justTaken) {
-    contentEl._alphaVideo.playFromStart();
+    contentEl._alphaVideo?.playFromStart();
   }
 }

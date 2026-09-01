@@ -1,37 +1,44 @@
-import { createAlphaVideo } from '../alpha-video.js';
 import { sponsorFile } from '../../../shared/sponsors.js';
 import { applyFittedText, readTextAdjust } from '../text-fit.js';
+import { mountThemedAlphaVideo, resolveImageSrc } from '../theme-assets.js';
 
 const VIDEO_SRC = '/assets/var/var-chequeo-alpha.mp4';
 const MOTIVO_IMAGE_SRC = '/assets/var/zocalo-cortito-brackets.png';
 
 export default function renderVarCheck(contentEl, data, justTaken) {
-  if (!contentEl._alphaVideo) {
+  if (!contentEl._gfxBuilt) {
+    const motivoImageSrc = resolveImageSrc('varCheck', MOTIVO_IMAGE_SRC);
     contentEl.innerHTML = `
       <div class="ov-var-group1">
         <div class="av-target"></div>
         <div class="gfx-overlay">
-          <img class="ov-var-replay-sponsor" />
+          <img class="ov-var-replay-sponsor" data-adjust="sponsor" />
         </div>
       </div>
       <div class="ov-var-motivo-group">
         <div class="ov-var-motivo-container">
-          <img class="ov-var-motivo-bg" src="${MOTIVO_IMAGE_SRC}" />
+          ${motivoImageSrc ? `<img class="ov-var-motivo-bg" src="${motivoImageSrc}" />` : ''}
           <div class="gfx-overlay">
             <div class="ov-short-simple-text"></div>
           </div>
         </div>
       </div>
     `;
-    contentEl._alphaVideo = createAlphaVideo(contentEl.querySelector('.av-target'), VIDEO_SRC);
+    contentEl._alphaVideo = mountThemedAlphaVideo(contentEl.querySelector('.av-target'), 'varCheck', VIDEO_SRC);
+    contentEl._gfxBuilt = true;
   }
 
-  // Grupo 1: VAR + SPONSOR
+  // Grupo 1: VAR + SPONSOR. Usa "varGroupOffsetX/Y/Scale" (propio, NO
+  // "compositionOffsetX/Y/Scale") porque group1 es hijo de ".content", y
+  // ".content" ya recibe compositionOffsetX/Y/Scale via applyComposition
+  // (COMPOSICIÓN COMPLETA, universal para los 30 módulos) -- leer la
+  // misma key aca compondria el offset dos veces sobre este grupo nada
+  // mas, rompiendo el movimiento como unidad rigida del modulo completo.
   const group1 = contentEl.querySelector('.ov-var-group1');
   if (group1) {
-    const x1 = data.compositionOffsetX || 0;
-    const y1 = data.compositionOffsetY || 0;
-    const s1 = data.compositionScale !== undefined ? data.compositionScale : 1;
+    const x1 = data.varGroupOffsetX || 0;
+    const y1 = data.varGroupOffsetY || 0;
+    const s1 = data.varGroupScale !== undefined ? data.varGroupScale : 1;
     group1.style.transform = `translate(${x1}px, ${y1}px) scale(${s1})`;
   }
 
@@ -47,7 +54,7 @@ export default function renderVarCheck(contentEl, data, justTaken) {
   const motivoEl = contentEl.querySelector('.ov-var-motivo-container');
 
   if (justTaken) {
-    contentEl._alphaVideo.playFromStart();
+    contentEl._alphaVideo?.playFromStart();
   }
 
   const sponsorEl = contentEl.querySelector('.ov-var-replay-sponsor');

@@ -1,5 +1,6 @@
 import { elapsedMs, formatClock } from '../../../shared/clock.js';
 import { applyFittedText, applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
+import { resolveImageSrc } from '../theme-assets.js';
 
 // Asset nuevo: imagen estatica (reemplazo del .mp4 con alfa compuesto que
 // usaba antes) — ver program/css/overlay.css para las coordenadas medidas
@@ -14,17 +15,19 @@ const LABEL_MIN_FONT = 11;
 const LABEL_MAX_WIDTH = 28;
 
 function buildStructure(el) {
+  const imgSrc = resolveImageSrc('marcadorTiempoAdicional', IMG_SRC);
   el.innerHTML = `
-    <img class="gfx-bg-image" src="${IMG_SRC}" />
+    ${imgSrc ? `<img class="gfx-bg-image" src="${imgSrc}" />` : ''}
     <div class="gfx-overlay">
       <div class="ov-added-label"></div>
       <div class="ov-added-clock"></div>
     </div>
   `;
+  el._gfxBuilt = true;
 }
 
 export default function renderMarcadorTiempoAdicional(contentEl, data) {
-  if (!contentEl.querySelector('.gfx-bg-image')) {
+  if (!contentEl._gfxBuilt) {
     buildStructure(contentEl);
   }
   const rawAdded = (data.addedMinutes || '').trim();

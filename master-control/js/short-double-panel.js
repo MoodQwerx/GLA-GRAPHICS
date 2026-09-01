@@ -26,7 +26,7 @@ function ensureTextAdjust(data, key) {
   return data.textAdjust[key];
 }
 
-export function renderShortDoublePanel(container, data, onDirty, air) {
+export function renderShortDoublePanel(container, data, onDirty, air, saveOptions) {
   if (!data.double1 || typeof data.double1 !== 'object') data.double1 = { name: '', role: '' };
   if (!data.double2 || typeof data.double2 !== 'object') data.double2 = { name: '', role: '' };
 
@@ -46,7 +46,7 @@ export function renderShortDoublePanel(container, data, onDirty, air) {
     input.addEventListener('input', () => onInput(input.value));
     wrap.appendChild(input);
     if (adjustKey) {
-      renderTextAdjustControl(wrap, ensureTextAdjust(data, adjustKey), onDirty);
+      renderTextAdjustControl(wrap, ensureTextAdjust(data, adjustKey), onDirty, saveOptions);
     }
     return wrap;
   }

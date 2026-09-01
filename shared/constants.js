@@ -5,10 +5,16 @@ export const WS_MSG = {
   // Servidor -> clientes
   STATE_SNAPSHOT: 'STATE_SNAPSHOT',
   MODULE_UPDATE: 'MODULE_UPDATE',
+  // THEME_UPDATE (2026-08-20, sistema multi-theme): el theme activo es
+  // GLOBAL -- Master Control y Program tienen que enterarse del mismo
+  // cambio sin refrescar, mismo mecanismo de broadcast que ya usan
+  // TAKE/UPDATE/OUT (ver shared/themes.js, server/theme.js).
+  THEME_UPDATE: 'THEME_UPDATE',
   // Cliente (Master Control) -> servidor
   TAKE: 'TAKE',
   OUT: 'OUT',
   UPDATE: 'UPDATE',
+  SET_THEME: 'SET_THEME',
 };
 
 export const MODULE_STATUS = {

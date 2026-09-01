@@ -1,6 +1,6 @@
-import { createAlphaVideo } from '../alpha-video.js';
 import { applyFittedText, updateFittedTextWithTransition, readTextAdjust } from '../text-fit.js';
 import { resolveTeamTokens } from '../../../shared/text-tokens.js';
+import { mountThemedAlphaVideo } from '../theme-assets.js';
 
 const VIDEO_SRC = '/assets/zocalos/zocalo-corto-doble-alpha.mp4';
 
@@ -24,7 +24,8 @@ function pairMarkup() {
 
 function buildSingleStructure(el) {
   el.innerHTML = pairMarkup();
-  el._alphaVideo = createAlphaVideo(el.querySelector('.av-target'), VIDEO_SRC);
+  el._alphaVideo = mountThemedAlphaVideo(el.querySelector('.av-target'), 'shortDouble', VIDEO_SRC);
+  el._gfxBuilt = true;
 }
 
 function buildDoubleStructure(el) {
@@ -32,12 +33,16 @@ function buildDoubleStructure(el) {
     <div class="ov-short-double-pair ov-short-double-pair-1">${pairMarkup()}</div>
     <div class="ov-short-double-pair ov-short-double-pair-2">${pairMarkup()}</div>
   `;
-  const video1 = createAlphaVideo(el.querySelector('.ov-short-double-pair-1 .av-target'), VIDEO_SRC);
-  const video2 = createAlphaVideo(el.querySelector('.ov-short-double-pair-2 .av-target'), VIDEO_SRC);
-  el._alphaVideo = {
-    playFromStart() { video1.playFromStart(); video2.playFromStart(); },
-    destroy() { video1.destroy(); video2.destroy(); },
-  };
+  const video1 = mountThemedAlphaVideo(el.querySelector('.ov-short-double-pair-1 .av-target'), 'shortDouble', VIDEO_SRC);
+  const video2 = mountThemedAlphaVideo(el.querySelector('.ov-short-double-pair-2 .av-target'), 'shortDouble', VIDEO_SRC);
+  // Wrapper "combinado" (2026-08-21, sistema multi-theme): cualquiera de
+  // los dos puede ser null si el theme activo todavía no tiene este
+  // asset -- cada método solo llama a los handles que de verdad existen.
+  el._alphaVideo = (video1 || video2) ? {
+    playFromStart() { video1?.playFromStart(); video2?.playFromStart(); },
+    destroy() { video1?.destroy(); video2?.destroy(); },
+  } : null;
+  el._gfxBuilt = true;
 }
 
 function fillPair(root, name, role, textAdjust, nameKey, roleKey, isExplicitUpdate, prevStore, sb) {
@@ -64,11 +69,11 @@ export default function renderShortDouble(contentEl, data, justTaken, onOneShotE
   const mode = data.airMode === 'double' ? 'double' : 'single';
   const sb = allData && allData.scoreboard;
 
-  if (!contentEl._alphaVideo || contentEl.dataset.airMode !== mode) {
+  if (!contentEl._gfxBuilt || contentEl.dataset.airMode !== mode) {
     if (mode === 'double') buildDoubleStructure(contentEl); else buildSingleStructure(contentEl);
     contentEl.dataset.airMode = mode;
   }
-  if (justTaken) contentEl._alphaVideo.playFromStart();
+  if (justTaken) contentEl._alphaVideo?.playFromStart();
 
   if (!contentEl._prevStore) contentEl._prevStore = {};
   const isExplicitUpdate = !justTaken;

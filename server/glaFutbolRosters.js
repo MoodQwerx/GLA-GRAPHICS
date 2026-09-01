@@ -1,7 +1,5 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { getTeamCatalog } from './teams.js';
+import { loadPersistentValue, schedulePersistentWrite } from './persistence.js';
 import {
   extractProductData,
   fetchGlaFutbolHtml,
@@ -9,26 +7,11 @@ import {
   normalizeRosterPlayer,
 } from './glaFutbolClient.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const SNAPSHOT_FILE = path.join(__dirname, '..', 'data', 'gla-futbol-rosters.json');
-
-function readSnapshots() {
-  try {
-    const parsed = JSON.parse(fs.readFileSync(SNAPSHOT_FILE, 'utf8'));
-    return parsed && typeof parsed === 'object' ? parsed : {};
-  } catch {
-    return {};
-  }
-}
-
-let snapshots = readSnapshots();
-
-function persistSnapshots() {
-  fs.mkdirSync(path.dirname(SNAPSHOT_FILE), { recursive: true });
-  const temporaryFile = `${SNAPSHOT_FILE}.tmp`;
-  fs.writeFileSync(temporaryFile, JSON.stringify(snapshots, null, 2));
-  fs.renameSync(temporaryFile, SNAPSHOT_FILE);
-}
+let snapshots = await loadPersistentValue(
+  'gla_futbol_rosters',
+  'gla-futbol-rosters.json',
+  {},
+);
 
 function requireLocalTeam(teamId) {
   const team = getTeamCatalog().find((item) => item.id === teamId);
@@ -69,18 +52,10 @@ export async function syncRosterFromWeb(teamId) {
     ultimaActualizacionWeb: new Date().toISOString(),
   };
 
-  // Reemplazar solo despues de validar el plantel completo. Si fetch,
-  // parseo o persistencia fallan, el ultimo snapshot util sigue en memoria.
-  const previous = snapshots[teamId];
+  // Reemplazar solo despues de validar el plantel completo. La escritura
+  // central es asincrona: ante una falla cloud el snapshot nuevo sigue en
+  // memoria y en el fallback local, sin resetear al valor por defecto.
   snapshots = { ...snapshots, [teamId]: snapshot };
-  try {
-    persistSnapshots();
-  } catch (error) {
-    snapshots = previous ? { ...snapshots, [teamId]: previous } : Object.fromEntries(
-      Object.entries(snapshots).filter(([id]) => id !== teamId),
-    );
-    throw error;
-  }
+  schedulePersistentWrite('gla_futbol_rosters', snapshots);
   return snapshot;
 }
-
