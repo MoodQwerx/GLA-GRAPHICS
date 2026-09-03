@@ -119,7 +119,6 @@ function timeToMs(value) {
 // no hay evidencia de que necesite variar por modulo.
 const rootStyle = getComputedStyle(document.documentElement);
 const CONTENT_FADE_MS = timeToMs(rootStyle.getPropertyValue('--dur-content'));
-const contentDelayMs = {};
 
 function isSequenced(id) {
   return !!MODULES[id].sequencedReveal;
@@ -359,15 +358,21 @@ for (const id of MODULE_IDS) {
   const content = root.querySelector('.content');
   els[id] = { root, content };
 
-  // Marca una sola vez, al arrancar, que clase CSS ("sequenced" en
-  // overlay.css) tiene que secuenciar su contenido — asi program/index.html
-  // y cada renderer no necesitan saber nada de este mecanismo. Tambien lee,
-  // una sola vez, el delay de este modulo puntual (--dur-content-delay
-  // definido sobre "#mod-<id>" en overlay.css, o el default de ":root" si
-  // el modulo no define el suyo).
+  // Marca, al arrancar, que clase CSS ("sequenced" en overlay.css) tiene
+  // que secuenciar su contenido -- asi program/index.html y cada renderer
+  // no necesitan saber nada de este mecanismo. El delay puntual
+  // (--dur-content-delay) YA NO se lee aca: para "marcadorPenales" (unico
+  // modulo con un valor DISTINTO por theme, ver overlay.css) leerlo en
+  // este punto devolvia el valor de GLA -- en el arranque de la pagina
+  // "document.body.dataset.theme" todavia no existe (el WS ni siquiera
+  // conecto), asi que "body[data-theme='argentinaStreamers'] #mod-..."
+  // nunca podia matchear y el override quedaba cacheado como si nunca
+  // hubiera existido (bug real, encontrado 2026-09-01 con un
+  // MutationObserver midiendo el timing en vivo: revelaba a ~300ms en vez
+  // de los 700ms configurados). Se lee fresco en cada Take en vez -- ver
+  // "getComputedStyle(target.root)..." mas abajo.
   if (MODULES[id].sequencedReveal) {
     root.classList.add('sequenced');
-    contentDelayMs[id] = timeToMs(getComputedStyle(root).getPropertyValue('--dur-content-delay'));
   }
 
   // Al terminar la transicion de salida (opacity llega a 0), recien ahi
@@ -380,10 +385,27 @@ for (const id of MODULE_IDS) {
   });
 }
 
+// "mergeVisualFields(confirmedData[id], latestData[id])" en vez de
+// "latestData[id]" a secas (2026-09-02, causa real de que texto1/texto2 de
+// Zócalo Compuesto con Equipos/Logo se vieran al aire ANTES de apretar
+// ACTUALIZAR): este ticker existe para que un módulo "live:true" (ej.
+// escudos/nombres que dependen de "scoreboard") se repinte solo cuando
+// cambia esa data EXTERNA -- que llega siempre por el 5to argumento
+// ("latestData", sin tocar acá), nunca por el 2do ("data", el propio
+// estado del módulo). Pasarle "latestData[id]" crudo como 2do argumento
+// respondía bien a eso, pero de paso también volvía a pintar CUALQUIER
+// autosave de contenido sin confirmar (isAutoSave, ver el handler de
+// WS_MSG.MODULE_UPDATE más abajo) cada 500ms, pisando por completo la
+// protección de "applyVisualLive"/"isVisualKey" que ya existía para el
+// mensaje en sí. Con el merge, el 2do argumento vuelve a ser
+// "contenido congelado + visual más reciente" -- exactamente lo mismo que
+// ya usa "applyVisualLive" -- así que ningún módulo "live" pierde su
+// reactividad a "scoreboard" (sigue viniendo del 5to argumento), solo se
+// deja de repintar contenido todavía no confirmado.
 function startTicker(id) {
   if (tickers[id]) return;
   tickers[id] = setInterval(() => {
-    renderers[id](els[id].content, latestData[id], false, undefined, latestData);
+    renderers[id](els[id].content, mergeVisualFields(confirmedData[id], latestData[id]), false, undefined, latestData);
   }, 500);
 }
 
@@ -450,11 +472,17 @@ function applyModuleState(id, moduleState) {
       // en vez de quedar oculto esperando un Take que no va a llegar.
       setContentVisible(target, contentRevealed[id] === true);
       if (justTaken) {
+        // Leido FRESCO en cada Take (no cacheado al arrancar la pagina,
+        // ver comentario en el "for" de mas arriba) -- para
+        // "marcadorPenales" esto resuelve el valor correcto segun el
+        // theme activo EN ESTE MOMENTO ("body[data-theme='...']" ya esta
+        // seteado para cualquier Take real, a diferencia del arranque).
+        const delayMs = timeToMs(getComputedStyle(target.root).getPropertyValue('--dur-content-delay'));
         contentRevealTimers[id] = setTimeout(() => {
           delete contentRevealTimers[id];
           contentRevealed[id] = true;
           setContentVisible(target, true);
-        }, contentDelayMs[id]);
+        }, delayMs);
       }
     }
 

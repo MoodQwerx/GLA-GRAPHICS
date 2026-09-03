@@ -1,6 +1,7 @@
 import { sponsorFile } from '../../../shared/sponsors.js';
 import { applyFittedText, readTextAdjust } from '../text-fit.js';
 import { mountThemedAlphaVideo, resolveImageSrc } from '../theme-assets.js';
+import { getActiveThemeId } from '../theme-client.js';
 
 const VIDEO_SRC = '/assets/var/var-chequeo-alpha.mp4';
 const MOTIVO_IMAGE_SRC = '/assets/var/zocalo-cortito-brackets.png';
@@ -17,6 +18,7 @@ export default function renderVarCheck(contentEl, data, justTaken) {
       </div>
       <div class="ov-var-motivo-group">
         <div class="ov-var-motivo-container">
+          <div class="ov-var-motivo-av-target av-target"></div>
           ${motivoImageSrc ? `<img class="ov-var-motivo-bg" src="${motivoImageSrc}" />` : ''}
           <div class="gfx-overlay">
             <div class="ov-short-simple-text"></div>
@@ -24,16 +26,12 @@ export default function renderVarCheck(contentEl, data, justTaken) {
         </div>
       </div>
     `;
-    contentEl._alphaVideo = mountThemedAlphaVideo(contentEl.querySelector('.av-target'), 'varCheck', VIDEO_SRC);
+    contentEl._alphaVideo = mountThemedAlphaVideo(contentEl.querySelector('.ov-var-group1 .av-target'), 'varCheck', VIDEO_SRC);
+    contentEl._motivoAlphaVideo = mountThemedAlphaVideo(contentEl.querySelector('.ov-var-motivo-av-target'), 'varCheckMotivo', null);
     contentEl._gfxBuilt = true;
   }
 
-  // Grupo 1: VAR + SPONSOR. Usa "varGroupOffsetX/Y/Scale" (propio, NO
-  // "compositionOffsetX/Y/Scale") porque group1 es hijo de ".content", y
-  // ".content" ya recibe compositionOffsetX/Y/Scale via applyComposition
-  // (COMPOSICIÓN COMPLETA, universal para los 30 módulos) -- leer la
-  // misma key aca compondria el offset dos veces sobre este grupo nada
-  // mas, rompiendo el movimiento como unidad rigida del modulo completo.
+  // Grupo 1: VAR + SPONSOR
   const group1 = contentEl.querySelector('.ov-var-group1');
   if (group1) {
     const x1 = data.varGroupOffsetX || 0;
@@ -52,9 +50,11 @@ export default function renderVarCheck(contentEl, data, justTaken) {
   }
 
   const motivoEl = contentEl.querySelector('.ov-var-motivo-container');
+  const textEl = motivoEl.querySelector('.ov-short-simple-text');
 
   if (justTaken) {
     contentEl._alphaVideo?.playFromStart();
+    contentEl._hasMotivoPlayed = false;
   }
 
   const sponsorEl = contentEl.querySelector('.ov-var-replay-sponsor');
@@ -84,17 +84,43 @@ export default function renderVarCheck(contentEl, data, justTaken) {
     }, 320);
   }
 
-  // Motivo text logic
+  // Motivo text & asset timing logic
   const motivoText = (data.motivo || '').trim();
+  const themeId = getActiveThemeId();
+  const isArgentinaStreamers = themeId === 'argentinaStreamers';
+
   if (motivoText) {
-    const textEl = motivoEl.querySelector('.ov-short-simple-text');
+    const maxWidth = isArgentinaStreamers ? (500 - 40) : (368 - 24);
     applyFittedText(textEl, motivoText, {
-      maxFont: 40, minFont: 14, maxWidth: 368 - 24, weight: 800,
+      maxFont: 40, minFont: 14, maxWidth, weight: 800,
     }, readTextAdjust(data.textAdjust, 'motivo'));
+
     if (!motivoEl.classList.contains('is-visible')) {
       motivoEl.classList.add('is-visible');
     }
+
+    if (justTaken || !contentEl._hasMotivoPlayed || contentEl._prevMotivoText !== motivoText) {
+      contentEl._motivoAlphaVideo?.playFromStart();
+      contentEl._hasMotivoPlayed = true;
+
+      if (contentEl._motivoTimer) clearTimeout(contentEl._motivoTimer);
+
+      const delayMs = isArgentinaStreamers ? 1900 : 0;
+      if (delayMs > 0) {
+        textEl.classList.remove('motivo-content-in');
+        contentEl._motivoTimer = setTimeout(() => {
+          textEl.classList.add('motivo-content-in');
+        }, delayMs);
+      } else {
+        textEl.classList.add('motivo-content-in');
+      }
+    }
   } else {
+    if (contentEl._motivoTimer) clearTimeout(contentEl._motivoTimer);
+    textEl.classList.remove('motivo-content-in');
     motivoEl.classList.remove('is-visible');
+    contentEl._hasMotivoPlayed = false;
   }
+
+  contentEl._prevMotivoText = motivoText;
 }

@@ -482,6 +482,30 @@ body {
 .field textarea { resize: vertical; }
 .field select { cursor: pointer; }
 
+/* ".mc-input"/".mc-select" (2026-09-02, pedido explicito del usuario:
+   textboxes de Zocalo Compuesto con Equipos/Logo "me quedan demasiado
+   cortos") -- mismos paneles usan estas clases sueltas, sin envolverlas en
+   ".field" (que ya tiene "width:100%" arriba). Regla generica con el mismo
+   look, para que ocupen el ancho util del panel sin duplicar estilos por
+   cada panel que las use. */
+.mc-input,
+.mc-select {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-2);
+  border-radius: 4px;
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 15px;
+  padding: 10px 12px;
+  outline: none;
+}
+.mc-input:focus,
+.mc-select:focus { border-color: var(--gold); }
+.mc-select { cursor: pointer; }
+
 .list-editor {
   display: flex;
   flex-direction: column;
@@ -1164,6 +1188,29 @@ body[data-theme='argentinaStreamers'] .clock-box-team-color {
 .performance-editor--goleadores .performance-stats,
 .performance-editor--asistidores .performance-stats {
   grid-template-columns: 1fr;
+}
+.performance-editor--fichaJugador .performance-stats {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.performance-editor--fichaJugador .performance-row-editor.is-selected {
+  border: 1px solid var(--gold-bright);
+}
+
+/* "MODO CANTIDAD" 5/10 SLOTS (2026-09-02, Argentina Streamers) --
+   agrupacion visual minima, mismo criterio de espaciado que el resto del
+   panel (".performance-editor" ya define el gap general via grid). */
+.performance-argentina-selector {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--gold-dim);
+  border-radius: 6px;
+}
+.performance-argentina-selector h3 {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  color: var(--gold-bright);
 }
 .performance-field {
   display: grid;

@@ -797,16 +797,24 @@ body[data-theme='argentinaStreamers'] #mod-scoreboard .ov-dot {
   --dur-content-delay: 300ms;
 }
 /* ARGENTINA STREAMERS usa un asset PROPIO y distinto para Penales (2026-09-01,
-   pedido explicito del usuario: "el contenido dinamico aparece demasiado
-   pronto respecto de la animacion del asset") -- los 300ms de arriba se
-   midieron sobre el asset de GLA, no sobre este; se sube a un valor
-   conservador mientras no haya una medicion cuadro a cuadro del asset nuevo
-   (no se cambio el mecanismo, que ya es 100% generico via "sequencedReveal"
-   -- ver program/js/main.js/CHANGELOG.md -- solo este valor puntual). Pedir
-   una revision visual real (Tomar al aire y mirar el asentamiento) si hace
-   falta afinarlo mas. */
+   pedido explicito del usuario, corrección definitiva del timing). MEDIDO
+   cuadro a cuadro con ffmpeg (extracción de frames cada 50ms) sobre
+   assets/themes/argentina-streamers/marcador/marcador-penales-alpha.mp4:
+   a 0.60s el título "PENALES" ya está pero los círculos todavía no
+   aparecieron; a 0.70s la pieza completa (título + 5 círculos por lado)
+   ya está asentada e idéntica al frame final -- 700ms es el primer punto
+   medido donde el asset está completamente quieto. Se evaluó usar el
+   evento nativo "ended" del <video> (ver alpha-video.js, que ya soporta
+   "onEnded") en vez de un delay: NO aplica acá -- el clip completo dura
+   6s (todos los assets de este theme se exportaron así, con relleno
+   estático al final), así que "ended" recién dispararía a los 6000ms,
+   mucho después de que la animación real termina a los ~700ms. Sin una
+   marca IN/HOLD/OUT separada en el archivo, la medición cuadro a cuadro
+   sigue siendo la señal más precisa disponible -- mismo criterio que ya
+   usa GLA arriba (300ms, medido igual). No recalibrar a mano de nuevo:
+   si hace falta un ajuste fino, medir con el mismo método. */
 body[data-theme='argentinaStreamers'] #mod-marcadorPenales {
-  --dur-content-delay: 600ms;
+  --dur-content-delay: 700ms;
 }
 
 /* Las 3 casillas de penal se posicionan una por una con blob-detection
@@ -1187,6 +1195,35 @@ body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksB [data-
 body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksB [data-kick="3"] { left: 1204px; top: 960px; }
 body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksB [data-kick="4"] { left: 1253px; top: 960px; }
 
+/* NOMBRE LOCAL/VISITANTE (2026-09-01, pedido explicito del usuario:
+   nombre de equipo en la franja azul horneada en el asset, arriba de
+   cada fila de circulos). Posicion INICIAL centrada sobre el ancho de
+   cada grupo de circulos (local x641-835, centro≈738; visitante
+   x1063-1253, centro≈1158), y=862 -- dentro de la franja azul, arriba
+   del hueco de circulos (y960) -- estimada por proporcion visual sobre
+   el asset, no remedida a pixel exacto (a diferencia de los circulos de
+   arriba). El usuario ajusta la posicion final con las flechas
+   individuales (GUARDAR POSICIÓN) -- no se debe volver a tocar esto a
+   mano en CSS. */
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-nombre {
+  position: absolute;
+  top: 862px;
+  width: 240px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 24px;
+  letter-spacing: 0.5px;
+  color: var(--white);
+  text-align: center;
+  white-space: nowrap;
+}
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-nombre-local { left: 618px; }
+body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-nombre-visitante { left: 1038px; }
+
 /* ============================================================
    MARCADOR ZOCALO (reemplaza al ex Shootout) — arriba a la izquierda,
    DETRAS del marcador principal (ver orden de nodos en program/index.html).
@@ -1441,6 +1478,101 @@ body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksB [data-
   animation-play-state: paused;
 }
 
+/* ARGENTINA STREAMERS — Formacion, geometria real medida pixel a pixel
+   (2026-09-02) sobre "formacion-arg.png" (11 camisetas: 2 arriba + 4 en la
+   fila siguiente + 4 mas + 1 arquero verde abajo) y "formacion-alpha.mp4"
+   (fondo: cancha a la izquierda + placa azul de suplentes a la derecha,
+   x=[1313,1778] y=[152,979], medido por umbral de color sobre el frame).
+   No se toca el PNG: se usa "clip-path" para no mostrar en pantalla las
+   4 camisetas + el arquero que el sistema actual (STARTER_LIMIT=6, unico
+   valor en todo el repo, sin variante por equipo/categoria) nunca llena --
+   dejarlas visibles se veria como 5 camisetas "rotas" sin nombre. El
+   arquero tampoco se usa: el modelo de datos no tiene un campo que
+   distinga "quien es arquero", asi que ponerlo en el slot verde mostraria
+   a cualquier jugador con la camiseta de arquero segun el orden en que lo
+   cargue el operador -- incorrecto. Se usan los 6 slots de las 2 filas de
+   arriba (2+4), en orden de lectura. GLA no se toca: sigue con las reglas
+   base de arriba. */
+body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-shirts {
+  clip-path: inset(0 0 546px 0);
+}
+body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-slot-0,
+body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-slot-1,
+body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-slot-2,
+body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-slot-3,
+body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-slot-4,
+body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-slot-5 {
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+}
+/* Dorsal centrado dentro de la camiseta: caja de 100x64 centrada en el
+   centro real de cada camiseta. La franja celeste central de la camiseta
+   (medida por scanline: rayas alternadas celeste/blanco, franja central
+   celeste solida en las 6 posiciones usadas) da buen contraste al blanco,
+   pero se agrega un trazo oscuro (text-stroke + text-shadow) para que siga
+   siendo legible aun si el nombre del jugador desplaza el numero o el
+   ancho del glifo cae sobre una franja blanca. */
+body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-number {
+  width: 100px;
+  height: 64px;
+  font-size: 42px;
+  -webkit-text-stroke: 1.5px rgba(0, 20, 45, 0.65);
+  text-shadow: 0 2px 5px rgba(0, 10, 25, 0.55);
+}
+/* Nombre centrado dentro del zocalito azul (navy, medido: 199x48 por
+   slot). No hereda ninguna posicion vieja de GLA: base nueva completa. */
+body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-player-name {
+  width: 190px;
+  height: 40px;
+  font-size: 20px;
+}
+body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-slot-0 .ov-formacion-number { left: 464px; top: 172px; }
+body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-slot-0 .ov-formacion-player-name { left: 419px; top: 280px; }
+body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-slot-1 .ov-formacion-number { left: 862px; top: 172px; }
+body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-slot-1 .ov-formacion-player-name { left: 817px; top: 280px; }
+body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-slot-2 .ov-formacion-number { left: 314px; top: 373px; }
+body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-slot-2 .ov-formacion-player-name { left: 269px; top: 482px; }
+body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-slot-3 .ov-formacion-number { left: 557px; top: 373px; }
+body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-slot-3 .ov-formacion-player-name { left: 512px; top: 482px; }
+body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-slot-4 .ov-formacion-number { left: 802px; top: 373px; }
+body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-slot-4 .ov-formacion-player-name { left: 757px; top: 482px; }
+body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-slot-5 .ov-formacion-number { left: 1044px; top: 373px; }
+body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-slot-5 .ov-formacion-player-name { left: 999px; top: 482px; }
+/* Escudo: el asset no reserva una caja propia para el escudo (el video de
+   fondo solo tiene cancha + placa de suplentes) -- se ubica en la esquina
+   superior izquierda de la cancha, zona vacia antes del circulo central,
+   sin pisar camisetas (arrancan en x=413) ni la placa de suplentes
+   (arranca en x=1313). */
+body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-crest {
+  left: 50px;
+  top: 40px;
+  width: 150px;
+  height: 150px;
+  transform: none;
+}
+/* Suplentes: alineado a la placa azul real medida sobre "formacion-alpha.mp4"
+   (x=[1313,1778] y=[152,979] incluyendo el borde verde punteado decorativo)
+   con 20-25px de margen interno respecto de ese borde. */
+body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-subs-title {
+  left: 1337px;
+  top: 172px;
+  width: 417px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44px;
+  line-height: 1;
+}
+body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-subs-viewport {
+  left: 1337px;
+  top: 252px;
+  width: 417px;
+  height: 707px;
+}
+
 /* VS Prepartido / VS Resultado. Geometria real medida por lectura de
    alfa/color sobre ambos .mp4 (2026-08-03, no a ojo) -- ambos assets
    comparten el mismo zocalo superior y la misma zona negra de escudo
@@ -1568,6 +1700,41 @@ body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksB [data-
 .ov-vsfull-scoreA { left: 794px; width: 136px; }
 .ov-vsfull-scoreB { left: 1000px; width: 136px; }
 
+/* ARGENTINA STREAMERS — VS Con Resultado (2026-09-02, geometria real
+   medida pixel a pixel sobre VS_RESULTADO.png, entregado por el usuario --
+   reemplaza el layout horizontal de GLA arriba, sin tocarlo. Header
+   compartido con Cronograma Hoy/Historial/Tabla Estadisticas (mismo
+   template de PNG); dos escudos apilados verticalmente con su gol debajo/
+   arriba respectivamente, sin zona de nombre de equipo en este asset --
+   se oculta ".ov-vsfull-name" para no dejar texto flotando sin caja real
+   detras. */
+body[data-theme='argentinaStreamers'] #mod-vsResultado .ov-vsfull-titulo {
+  left: 1487px;
+  top: 28px;
+  width: 415px;
+  height: 64px;
+  font-size: 24px;
+}
+body[data-theme='argentinaStreamers'] #mod-vsResultado .ov-vsfull-name {
+  display: none;
+}
+body[data-theme='argentinaStreamers'] #mod-vsResultado .ov-vsfull-teamA,
+body[data-theme='argentinaStreamers'] #mod-vsResultado .ov-vsfull-teamB {
+  left: 1626px;
+  width: 140px;
+  height: 140px;
+}
+body[data-theme='argentinaStreamers'] #mod-vsResultado .ov-vsfull-teamA { top: 206px; }
+body[data-theme='argentinaStreamers'] #mod-vsResultado .ov-vsfull-teamB { top: 701px; }
+body[data-theme='argentinaStreamers'] #mod-vsResultado .ov-vsfull-score {
+  left: 1646px;
+  width: 100px;
+  height: 80px;
+  font-size: 44px;
+}
+body[data-theme='argentinaStreamers'] #mod-vsResultado .ov-vsfull-scoreA { top: 357px; }
+body[data-theme='argentinaStreamers'] #mod-vsResultado .ov-vsfull-scoreB { top: 595px; }
+
 /* ============================================================
    EVENTOS
    ============================================================ */
@@ -1669,8 +1836,8 @@ body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksB [data-
   font-weight: 700;
   text-transform: uppercase;
   color: var(--white);
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
+  line-height: 1;
   white-space: nowrap;
 }
 
@@ -1749,8 +1916,8 @@ body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-kicksB [data-
   font-weight: 700;
   text-transform: uppercase;
   color: var(--white);
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
+  line-height: 1;
   white-space: nowrap;
 }
 .ov-cambio-entra { top: 910px; height: 60px; }
@@ -2014,6 +2181,9 @@ body[data-theme='argentinaStreamers'] #mod-bug .ov-mosca-clock {
      minimo) se conserva sin cambios. */
   --dur-content-delay: 250ms;
 }
+body[data-theme='argentinaStreamers'] #mod-shortDouble {
+  --dur-content-delay: 1900ms;
+}
 #mod-vs {
   transform: translate(17.5px, 14px);
   /* Asentamiento del armado inicial ~0.55-0.6s. Revisado en la
@@ -2124,6 +2294,10 @@ body[data-theme='argentinaStreamers'] #mod-bug .ov-mosca-clock {
   color: var(--gold-bright);
   text-align: center;
 }
+/* ARGENTINA STREAMERS: el dorado es color de marca de GLA, no se usa aca. */
+body[data-theme='argentinaStreamers'] #mod-longDouble .ov-long-double-line2 {
+  color: var(--white);
+}
 
 /* Zocalo corto simple: bbox real x590-1374,y880-978 (centro real 982,929
    — remedido en vivo 2026-07-31, no a ojo). El box de texto anterior
@@ -2178,6 +2352,32 @@ body[data-theme='argentinaStreamers'] #mod-bug .ov-mosca-clock {
   height: 54px;
 }
 
+/* ARGENTINA STREAMERS: VAR MOTIVO reutiliza el asset de zócalo corto video alpha */
+body[data-theme='argentinaStreamers'] .ov-var-motivo-container .ov-var-motivo-bg,
+body[data-theme='argentinaStreamers'] .ov-var-motivo-container .gfx-overlay {
+  transform: none;
+}
+body[data-theme='argentinaStreamers'] .ov-var-motivo-container .ov-short-simple-text {
+  position: absolute;
+  left: 710px;
+  top: 890px;
+  width: 500px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--white) !important;
+  font-family: var(--font-primary);
+  font-weight: 800;
+  text-transform: uppercase;
+  opacity: 0;
+  transition: opacity 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+body[data-theme='argentinaStreamers'] .ov-var-motivo-container .ov-short-simple-text.motivo-content-in {
+  opacity: 1;
+}
+
 /* Zocalo corto doble: bbox real x692-1227,y866-1011. Dos filas medidas
    con lectura de alfa (columna x800): nombre y874-958 (centro 916), rol
    y966-1012 (centro 989) — el rol anterior (top:927) quedaba invadiendo
@@ -2222,6 +2422,10 @@ body[data-theme='argentinaStreamers'] #mod-bug .ov-mosca-clock {
   text-transform: uppercase;
   color: var(--gold-bright);
   text-align: center;
+}
+/* ARGENTINA STREAMERS: el dorado es color de marca de GLA, no se usa aca. */
+body[data-theme='argentinaStreamers'] #mod-shortDouble .ov-short-double-role {
+  color: var(--white);
 }
 
 /* AIRE DOBLE de Zocalo corto doble (2026-08-06, pedido explicito del
@@ -2549,7 +2753,7 @@ body[data-theme='argentinaStreamers'] #mod-bug .ov-mosca-clock {
    contain) centrados en el sector izquierdo mas angosto (142px) para
    que ambos lados respeten el mismo criterio visual pese a que el
    sector visitante tiene mas espacio disponible. */
-#mod-zocaloFinalDiv {
+#mod-zocaloFinalDiv, #mod-zocaloCompuestoEquipos {
   width: 1920px;
   height: 1080px;
   left: 0;
@@ -2584,6 +2788,8 @@ body[data-theme='argentinaStreamers'] #mod-bug .ov-mosca-clock {
   font-weight: 800;
   text-transform: uppercase;
   text-align: left;
+  overflow: visible;
+  line-height: 1;
 }
 .ov-zfd-texto1 {
   top: 940px;
@@ -2611,7 +2817,7 @@ body[data-theme='argentinaStreamers'] #mod-bug .ov-mosca-clock {
    texto 1/2: identico a zocaloFinalDiv (misma caja, mismo alineado a la
    izquierda, mismos tamaños) -- pedido explicito del usuario de reusar
    exactamente esa logica. */
-#mod-zocaloFinal {
+#mod-zocaloFinal, #mod-zocaloCompuestoLogo {
   width: 1920px;
   height: 1080px;
   left: 0;
@@ -2637,6 +2843,8 @@ body[data-theme='argentinaStreamers'] #mod-bug .ov-mosca-clock {
   font-weight: 800;
   text-transform: uppercase;
   text-align: left;
+  overflow: visible;
+  line-height: 1;
 }
 .ov-zf-texto1 {
   top: 940px;
@@ -2650,6 +2858,19 @@ body[data-theme='argentinaStreamers'] #mod-bug .ov-mosca-clock {
   letter-spacing: 0.5px;
   color: var(--white);
 }
+
+/* ARGENTINA STREAMERS — "TEXTO MAIN" (texto1) de Zocalo Compuesto y de los
+   zocalos que comparten su misma plantilla base (Zocalo Final Div / Zocalo
+   Final). En Argentina Streamers no van textos negros ni dorados: blanco.
+   GLA conserva var(--black) sin cambios. */
+body[data-theme='argentinaStreamers'] #mod-zocaloCompuesto .ov-zfd-texto1,
+body[data-theme='argentinaStreamers'] #mod-zocaloCompuestoEquipos .ov-zfd-texto1,
+body[data-theme='argentinaStreamers'] #mod-zocaloCompuestoLogo .ov-zf-texto1,
+body[data-theme='argentinaStreamers'] #mod-zocaloFinalDiv .ov-zfd-texto1,
+body[data-theme='argentinaStreamers'] #mod-zocaloFinal .ov-zf-texto1 {
+  color: var(--white);
+}
+
 .ov-zfd-sponsor-box, .ov-zf-sponsor-box {
   position: absolute;
   left: 1535px;
@@ -2684,7 +2905,9 @@ body[data-theme='argentinaStreamers'] #mod-bug .ov-mosca-clock {
    *"/".ov-zf-*" tal cual dentro de su propio DOM en vez de duplicar CSS:
    cero riesgo de que la posicion/escala aprobada se desvie un pixel). Solo
    agrega la posicion del contenedor del modulo nuevo. */
-#mod-zocaloCompuesto {
+#mod-zocaloCompuesto,
+#mod-zocaloCompuestoEquipos,
+#mod-zocaloCompuestoLogo {
   width: 1920px;
   height: 1080px;
   left: 0;
@@ -2802,6 +3025,10 @@ body[data-theme='argentinaStreamers'] #mod-bug .ov-mosca-clock {
   font-size: 34px;
   font-weight: 900;
   color: var(--gold-bright);
+}
+/* ARGENTINA STREAMERS: el dorado es color de marca de GLA, no se usa aca. */
+body[data-theme='argentinaStreamers'] #mod-grupos .ov-grupos-puntos {
+  color: var(--white);
 }
 .ov-grupos-puntos[data-row="0"] { top: 150px; }
 .ov-grupos-puntos[data-row="1"] { top: 252px; }
@@ -3240,6 +3467,12 @@ body[data-theme='argentinaStreamers'] #mod-bug .ov-mosca-clock {
   white-space: nowrap;
 }
 
+/* ARGENTINA STREAMERS — titulo de Estrellas en blanco (pedido explicito:
+   nada de texto negro en este theme). GLA conserva var(--black) arriba. */
+body[data-theme='argentinaStreamers'] #mod-estrellas .ov-estrellas-titulo {
+  color: var(--white);
+}
+
 /* ============================================================
    POSICIONES (tabla de 6 filas, ver ai-gfx/placas-mid-full/posiciones)
    ============================================================ */
@@ -3491,6 +3724,11 @@ body[data-theme='argentinaStreamers'] #mod-bug .ov-mosca-clock {
 .ov-performance-card--asistidores .ov-performance-stat {
   color: var(--gold-bright);
 }
+/* ARGENTINA STREAMERS: el dorado es color de marca de GLA, no se usa aca. */
+body[data-theme='argentinaStreamers'] .ov-performance-card--goleadores .ov-performance-stat,
+body[data-theme='argentinaStreamers'] .ov-performance-card--asistidores .ov-performance-stat {
+  color: var(--white);
+}
 .ov-performance-card--jugadores .ov-performance-name {
   color: var(--black);
   justify-content: flex-start;
@@ -3526,6 +3764,11 @@ body[data-theme='argentinaStreamers'] #mod-bug .ov-mosca-clock {
   text-align: center;
   white-space: nowrap;
 }
+/* ARGENTINA STREAMERS: el dorado es color de marca de GLA, no se usa aca. */
+body[data-theme='argentinaStreamers'] .ov-performance-row--ranking .ov-performance-position,
+body[data-theme='argentinaStreamers'] .ov-performance-row--ranking .ov-performance-primary-stat {
+  color: var(--white);
+}
 .ov-performance-row--ranking .ov-performance-position {
   left: 0;
   width: 36px;
@@ -3549,6 +3792,197 @@ body[data-theme='argentinaStreamers'] #mod-bug .ov-mosca-clock {
 .ov-performance-row--ranking .ov-performance-primary-stat {
   left: 259px;
   width: 50px;
+}
+
+/* ARGENTINA STREAMERS — "modo cantidad" 5/10 SLOTS de Goleadores/
+   Asistidores/Participaciones (2026-09-02, pedido explicito del usuario).
+   Sin asset real todavia -- ver banner "ASSET PENDIENTE" de Master
+   Control (shared/themes.js). Posiciones PROVISORIAS: se parte de la
+   MISMA zona vertical real que ya usa GLA para su par goleadores/
+   asistidores en Placa L (los transforms
+   ".ov-performance-card--goleadores/asistidores.ov-performance-card--placaL"
+   de mas arriba, escala 0.845528 incluida) y se recalcula la posicion en
+   pantalla resultante -- sin la escala (aca no hay PNG que achicar), y
+   sin transform a nivel de card (las filas van directo en coordenadas de
+   pantalla). Ancho/alto/columnas internas de cada fila NO se tocan (se
+   reutiliza tal cual el ancho de 318px ya probado arriba, sin
+   redisenarlo). Cuando llegue el asset definitivo: re-medir sobre el PNG
+   real y ajustar con GUARDAR POSICIÓN -- no volver a calibrar a mano
+   este bloque.
+   - "placaL-top"/"placaL-bottom" (modo 5 SLOTS, dos placas apiladas):
+     5 filas cada una, mismo paso (~68px) que ya usa GLA entre sus 6.
+   - "placaL-solo" (modo 10 SLOTS, una sola placa ocupando toda la zona):
+     10 filas, paso ~84px para cubrir la zona completa (top+bottom
+     combinadas). */
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-top,
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-bottom,
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-solo {
+  transform: none;
+}
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-top .ov-performance-row,
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-bottom .ov-performance-row,
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-solo .ov-performance-row {
+  left: 1560px;
+}
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-top .ov-performance-row[data-row="0"] { top: 107px; }
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-top .ov-performance-row[data-row="1"] { top: 175px; }
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-top .ov-performance-row[data-row="2"] { top: 243px; }
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-top .ov-performance-row[data-row="3"] { top: 311px; }
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-top .ov-performance-row[data-row="4"] { top: 379px; }
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-bottom .ov-performance-row[data-row="0"] { top: 547px; }
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-bottom .ov-performance-row[data-row="1"] { top: 615px; }
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-bottom .ov-performance-row[data-row="2"] { top: 683px; }
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-bottom .ov-performance-row[data-row="3"] { top: 751px; }
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-bottom .ov-performance-row[data-row="4"] { top: 819px; }
+/* "placaL-solo" (2026-09-02, geometria REAL medida pixel a pixel sobre
+   TABLA_ESTADISTICAS.png -- reemplaza las 10 posiciones provisorias de
+   arriba, que eran una aproximacion sin asset). Fila = [POSICIÓN|JUGADOR|
+   ESTADÍSTICA], sin escudo (el asset real no tiene esa columna, a
+   diferencia de goleadores/asistidores de GLA) -- ver
+   ".ov-performance-crest-cell" mas abajo. "placaL-top"/"placaL-bottom"
+   (modo 5 SLOTS compartido) quedan con sus posiciones provisorias de
+   arriba, sin tocar: este asset es un template de 10 filas, no hay una
+   version de 5 sobre la que medir todavia. */
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-solo .ov-performance-row {
+  left: 1491px;
+  width: 407px;
+  height: 64px;
+}
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-solo .ov-performance-row[data-row="0"] { top: 108px; }
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-solo .ov-performance-row[data-row="1"] { top: 190px; }
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-solo .ov-performance-row[data-row="2"] { top: 273px; }
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-solo .ov-performance-row[data-row="3"] { top: 355px; }
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-solo .ov-performance-row[data-row="4"] { top: 437px; }
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-solo .ov-performance-row[data-row="5"] { top: 521px; }
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-solo .ov-performance-row[data-row="6"] { top: 603px; }
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-solo .ov-performance-row[data-row="7"] { top: 685px; }
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-solo .ov-performance-row[data-row="8"] { top: 769px; }
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-solo .ov-performance-row[data-row="9"] { top: 850px; }
+
+/* Sin columna de escudo en el asset real: se oculta por completo (no solo
+   visibility, para que POSICIÓN/JUGADOR/ESTADÍSTICA no dejen un hueco
+   donde estaba). */
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-solo .ov-performance-crest-cell {
+  display: none;
+}
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-solo .ov-performance-position {
+  left: 0px;
+  width: 46px;
+}
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-solo .ov-performance-name {
+  left: 46px;
+  width: 313px;
+}
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-solo .ov-performance-primary-stat {
+  left: 359px;
+  width: 48px;
+}
+
+/* TÍTULO (2026-09-02, pedido explicito del usuario): configurable por
+   modulo, zona superior real del asset (mismo header que ya se midio para
+   Historial -- mismo template de PNG, ver program/js/renderers/historial.js). */
+.ov-performance-titulo {
+  display: none;
+}
+body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-solo .ov-performance-titulo {
+  display: flex;
+  position: absolute;
+  left: 1487px;
+  top: 28px;
+  width: 415px;
+  height: 64px;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #ffffff;
+  font-size: 26px;
+}
+
+/* "participaciones" (jugadores) usa texto negro en GLA porque su PNG
+   tiene fondo claro detras de cada fila -- sobre transparencia (sin
+   asset todavia) quedaria invisible. Blanco solo para Argentina
+   Streamers, sin tocar el color real de GLA. */
+body[data-theme='argentinaStreamers'] .ov-performance-card--jugadores .ov-performance-name,
+body[data-theme='argentinaStreamers'] .ov-performance-card--jugadores .ov-performance-stat {
+  color: var(--white);
+}
+
+/* ============================================================
+   FICHA JUGADOR (2026-09-02, pedido explicito del usuario) — placa
+   vertical individual, Argentina Streamers. Sin asset real todavia:
+   misma zona vertical real (x1560, ancho ~300px) que ya usan Goleadores/
+   Asistidores/Participaciones arriba, en vez de inventar una nueva —
+   posiciones PROVISORIAS, a re-medir cuando llegue el asset definitivo.
+   ============================================================ */
+#mod-fichaJugador {
+  width: 1920px;
+  height: 1080px;
+}
+.ov-ficha-card {
+  position: absolute;
+  inset: 0;
+  width: 1920px;
+  height: 1080px;
+}
+.ov-ficha-header {
+  position: absolute;
+  left: 1560px;
+  top: 100px;
+  width: 300px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ov-ficha-crest {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+}
+.ov-ficha-name {
+  flex: 1;
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--white);
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.ov-ficha-stat-row {
+  position: absolute;
+  left: 1560px;
+  width: 300px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-display);
+}
+.ov-ficha-stat-row[data-stat-row="goles"] { top: 200px; }
+.ov-ficha-stat-row[data-stat-row="asistencias"] { top: 264px; }
+.ov-ficha-stat-row[data-stat-row="gMasA"] { top: 328px; }
+.ov-ficha-stat-row[data-stat-row="presencias"] { top: 392px; }
+.ov-ficha-stat-row[data-stat-row="mvps"] { top: 456px; }
+.ov-ficha-stat-label {
+  font-weight: 700;
+  color: var(--grey);
+  letter-spacing: 0.5px;
+}
+.ov-ficha-stat-value {
+  font-weight: 900;
+  color: var(--gold-bright);
+}
+/* ARGENTINA STREAMERS: el dorado es color de marca de GLA, no se usa aca
+   (Ficha Jugador ya es un modulo exclusivo del theme, pero se escopea
+   igual por consistencia con el resto de la auditoria). */
+body[data-theme='argentinaStreamers'] #mod-fichaJugador .ov-ficha-stat-value {
+  color: var(--white);
+}
+.ov-ficha-stat-row.is-empty {
+  visibility: hidden;
 }
 
 /* ============================================================

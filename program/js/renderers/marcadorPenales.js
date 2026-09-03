@@ -1,8 +1,11 @@
 import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { getProgramFontFamily } from '../program-fonts.js';
-import { crestFile, teamAbbr } from '../../../shared/teams.js';
+import { crestFile, teamAbbr, teamName } from '../../../shared/teams.js';
 import { sponsorFile } from '../../../shared/sponsors.js';
 import { PENALTY_KICK_STATUS } from '../../../shared/constants.js';
+import { resolveVsDisplayName } from '../../../shared/broadcast-names.js';
+import { getActiveThemeId } from '../theme-client.js';
+import { ARGENTINA_STREAMERS_THEME_ID } from '../../../shared/themes.js';
 import { applyPlainTextAdjust, readTextAdjust, toBroadcastUpper } from '../text-fit.js';
 
 const VIDEO_SRC = '/assets/marcador/marcador-penales-alpha.mp4';
@@ -47,10 +50,18 @@ async function fitTitleFontSize(text) {
   return size;
 }
 
-function kickDotsHtml(count) {
+// "adjustPrefix" (2026-09-01, pedido explicito del usuario: "control
+// total desde Master Control" sobre cada circulo individual, sin mas
+// ajustes hardcodeados en CSS) -- cada circulo se marca con su propio
+// "data-adjust" (kickLocal1..5 / kickVisitante1..5, ver
+// shared/adjust-registry.js), independiente del grupo "kicksLocal"/
+// "kicksVisitante" que ya movia la fila entera. Solo tiene efecto real
+// cuando Argentina Streamers guarda un valor propio (los defaults son
+// 0/0/1, no-op) -- GLA (3 circulos, mismo "kickDotsHtml") nunca los toca.
+function kickDotsHtml(count, adjustPrefix) {
   let html = '';
   for (let i = 0; i < count; i++) {
-    html += `<span class="ov-pen-kick" data-kick="${i}"></span>`;
+    html += `<span class="ov-pen-kick" data-kick="${i}" data-adjust="${adjustPrefix}${i + 1}"></span>`;
   }
   return html;
 }
@@ -82,12 +93,14 @@ function countScored(kicks) {
 function buildStructure(el, kicksPerTeam) {
   el.innerHTML = `
     <div class="gfx-overlay ov-pen-kicks-layer">
-      <div class="ov-pen-kicks ov-pen-kicksA" data-adjust="kicksLocal">${kickDotsHtml(kicksPerTeam)}</div>
-      <div class="ov-pen-kicks ov-pen-kicksB" data-adjust="kicksVisitante">${kickDotsHtml(kicksPerTeam)}</div>
+      <div class="ov-pen-kicks ov-pen-kicksA" data-adjust="kicksLocal">${kickDotsHtml(kicksPerTeam, 'kickLocal')}</div>
+      <div class="ov-pen-kicks ov-pen-kicksB" data-adjust="kicksVisitante">${kickDotsHtml(kicksPerTeam, 'kickVisitante')}</div>
     </div>
     <div class="av-target"></div>
     <div class="gfx-overlay">
       <div class="ov-pen-title"></div>
+      <div class="ov-pen-nombre ov-pen-nombre-local"></div>
+      <div class="ov-pen-nombre ov-pen-nombre-visitante"></div>
       <div class="ov-pen-team ov-pen-teamA">
         <img class="ov-pen-crest" data-adjust="localCrest" />
         <div class="ov-pen-name"></div>
@@ -157,6 +170,19 @@ export default function renderMarcadorPenales(contentEl, data, justTaken, onOneS
     if (titleEl.textContent !== titleText) return;
     titleEl.style.fontSize = `${Math.max(1, size + (titleAdjust.dSize || 0))}px`;
   });
+
+  // "NOMBRE LOCAL/VISITANTE" (2026-09-01, pedido explicito del usuario,
+  // franja azul arriba de cada fila de circulos) -- SOLO Argentina
+  // Streamers: GLA nunca escribe en "nombreLocalMode/Manual" (el campo
+  // existe en sus defaults pero nunca se toca, ver shared/modules.js),
+  // asi que dejarle texto vacio ahi es simplemente preservar "sin
+  // contenido" en un elemento que su propio asset/diseño no contempla.
+  if (getActiveThemeId() === ARGENTINA_STREAMERS_THEME_ID) {
+    const nombreLocal = resolveVsDisplayName({ mode: data.nombreLocalMode, manualText: data.nombreLocalManual, teamId: sb.teamA, fallbackName: teamName(sb.teamA) });
+    const nombreVisitante = resolveVsDisplayName({ mode: data.nombreVisitanteMode, manualText: data.nombreVisitanteManual, teamId: sb.teamB, fallbackName: teamName(sb.teamB) });
+    applyPlainTextAdjust(contentEl.querySelector('.ov-pen-nombre-local'), nombreLocal, readTextAdjust(ta, 'nombreLocal'));
+    applyPlainTextAdjust(contentEl.querySelector('.ov-pen-nombre-visitante'), nombreVisitante, readTextAdjust(ta, 'nombreVisitante'));
+  }
 
   const teamAEl = contentEl.querySelector('.ov-pen-teamA');
   applyPlainTextAdjust(teamAEl.querySelector('.ov-pen-name'), teamAbbr(sb.teamA), readTextAdjust(ta, 'nameA'));

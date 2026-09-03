@@ -95,11 +95,19 @@ Presets (zócalos, resultados, títulos, posiciones): viven dentro del mismo `da
 
 ## Cómo cargar un asset real cuando lo entregue el diseñador
 
-1. Copiar el archivo (`.mp4`/`.png`) a la subcarpeta correspondiente de `assets/themes/argentina-streamers/` (ver estructura abajo).
+Los archivos nuevos llegan por `cosas sueltas/`, que funciona como inbox del operador y nunca como ruta runtime. Una vez identificado un archivo utilizado, se mueve a su ubicación estable en `assets/` (o a `ai-gfx/` si es una fuente profesional que requiere derivación); los archivos no usados se conservan en la inbox.
+
+1. Mover el archivo (`.mp4`/`.png`) desde `cosas sueltas/` a la subcarpeta correspondiente de `assets/themes/argentina-streamers/` (ver estructura abajo).
 2. Editar `shared/themes.js` → `THEMES.argentinaStreamers.assets.<moduleId>` → completar `video`/`image` con la ruta pública (ej. `/assets/themes/argentina-streamers/marcador/MARCADOR_ARGENTINA.mp4`) y cambiar `status` a `'ready'` (o simplemente borrar `status` — `getModuleAssetStatus` infiere `'ready'` solo con que haya un `video`/`image`/`variants` real).
 3. Recargar Program (o esperar el próximo TAKE) — el video aparece automáticamente en la composición correcta, con textos/escudos/goles/reloj/editores funcionando igual que hoy. **Cero reprogramación.**
 
 Para módulos con variantes (tarjeta, vs, posiciones, zocaloCompuesto) completar `variants: { <clave>: '/ruta...' }` en vez de `video` directo — la clave de cada variante es la misma que ya usa el campo correspondiente en Master Control (ej. `amarilla`/`roja`/`azul`).
+
+Formación agrega un mapping `formationAssetsByTeam` por `teamId`. Integrar OXEN o Perú Creadores requiere mover su PNG a `formaciones/kits/`, registrar una sola entrada y probar; no requiere cambiar el renderer ni el panel.
+
+**Tablas (Goleadores/Asistidores/Participaciones) — "MODO CANTIDAD" 5/10 SLOTS** (2026-09-02): igual que arriba, hoy sin `video`/`image` real, contenido dinámico sobre transparencia. Cuando llegue el asset (una placa de 5 filas y otra de 10, o una única placa reescalable): completar `image`/`video` de los 3 módulos como cualquier otro, y remedir las posiciones de fila reales en `program/css/overlay.css` (las reglas `body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-top/-bottom/-solo`, hoy con coordenadas provisorias derivadas de la zona de GLA) — no hace falta tocar el selector de Master Control ni la lógica de TAKE/OUT.
+
+**Ficha Jugador** (`fichaJugador`, 2026-09-02): mismo patrón — sin asset todavía, `resolveImageSrc('fichaJugador')` devuelve `null` para cualquier theme. Cuando llegue: registrar `image`/`video` en `THEMES.argentinaStreamers.assets.fichaJugador` y remedir `.ov-ficha-*` en overlay.css.
 
 ### Estructura de carpetas (creada, vacía, con `.gitkeep`)
 

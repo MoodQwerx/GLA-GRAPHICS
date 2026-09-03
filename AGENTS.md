@@ -26,6 +26,10 @@ Los agentes no deben mejorar, limpiar, modernizar o refactorizar partes del proy
 
 No aprovechar una tarea localizada para cambiar otros módulos, reorganizar carpetas, renombrar IDs, reemplazar helpers, ajustar assets o alterar estilos globales.
 
+## Inbox de assets del operador
+
+`cosas sueltas/` es la carpeta de entrada donde el operador deja assets nuevos pendientes de integrar. Revisar únicamente esa carpeta para nuevas entregas; no usarla como ruta runtime definitiva. Cada archivo identificado y utilizado debe moverse a su ubicación estable en `assets/` o `ai-gfx/`, actualizar sus referencias y verificarse. Los archivos todavía no identificados o no utilizados se conservan en la inbox.
+
 ## Mapa rápido
 
 - Contexto real del repositorio: [`.agents/project-context.md`](.agents/project-context.md)

@@ -78,6 +78,11 @@ body[data-theme='argentinaStreamers'] {
   --font-body: 'LIVE Segoe Bold';
 }
 
+body[data-theme='argentinaStreamers'] .ov-zfd-texto1,
+body[data-theme='argentinaStreamers'] .ov-zf-texto1 {
+  color: #ffffff !important;
+}
+
 * {
   box-sizing: border-box;
 }

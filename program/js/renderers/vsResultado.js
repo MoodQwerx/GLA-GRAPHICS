@@ -1,5 +1,6 @@
-import { mountThemedAlphaVideo } from '../theme-assets.js';
+import { mountThemedAlphaVideo, resolveImageSrc } from '../theme-assets.js';
 import { crestFile, teamName } from '../../../shared/teams.js';
+import { resolveVsDisplayName } from '../../../shared/broadcast-names.js';
 import { applyFittedText, updateFittedTextWithTransition, readTextAdjust } from '../text-fit.js';
 
 const VIDEO_SRC = '/assets/placas/vs-resultado-alpha.mp4';
@@ -33,7 +34,15 @@ function setCrest(imgEl, teamId) {
 }
 
 function buildStructure(el) {
+  // Argentina Streamers entrego este asset como PNG (VS_RESULTADO), no
+  // como video -- "mountThemedAlphaVideo" solo resuelve "asset.video",
+  // mismo patron ya usado por marcadorEntretiempo.js/marcadorTiempoAdicional.js
+  // para no dejar ".av-target" vacio. GLA sigue exactamente igual, su
+  // propio VIDEO_SRC via mountThemedAlphaVideo (su manifest no tiene
+  // "image" para este modulo).
+  const imgSrc = resolveImageSrc('vsResultado');
   el.innerHTML = `
+    ${imgSrc ? `<img class="gfx-bg-image" src="${imgSrc}" />` : ''}
     <div class="av-target"></div>
     <div class="gfx-overlay">
       <div class="ov-vsfull-titulo"></div>
@@ -58,10 +67,12 @@ export default function renderVsResultado(contentEl, data, justTaken, onOneShotE
   setCrest(contentEl.querySelector('.ov-vsfull-teamA .ov-vsfull-crest'), sb.teamA);
   setCrest(contentEl.querySelector('.ov-vsfull-teamB .ov-vsfull-crest'), sb.teamB);
 
-  applyFittedText(contentEl.querySelector('.ov-vsfull-nameA'), teamName(sb.teamA), {
+  const nameA = resolveVsDisplayName({ mode: data.nameAMode, manualText: data.nameAManual, teamId: sb.teamA, fallbackName: teamName(sb.teamA) });
+  const nameB = resolveVsDisplayName({ mode: data.nameBMode, manualText: data.nameBManual, teamId: sb.teamB, fallbackName: teamName(sb.teamB) });
+  applyFittedText(contentEl.querySelector('.ov-vsfull-nameA'), nameA, {
     maxFont: NAME_MAX_FONT, minFont: NAME_MIN_FONT, maxWidth: NAME_MAX_WIDTH_A, weight: 800,
   }, readTextAdjust(data.textAdjust, 'nameA'));
-  applyFittedText(contentEl.querySelector('.ov-vsfull-nameB'), teamName(sb.teamB), {
+  applyFittedText(contentEl.querySelector('.ov-vsfull-nameB'), nameB, {
     maxFont: NAME_MAX_FONT, minFont: NAME_MIN_FONT, maxWidth: NAME_MAX_WIDTH_B, weight: 800,
   }, readTextAdjust(data.textAdjust, 'nameB'));
 

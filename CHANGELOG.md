@@ -2,6 +2,60 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [Unreleased] - 2026-09-02 (91)
+
+### Agregado — Tablas "MODO CANTIDAD" 5/10 SLOTS y Ficha Jugador (Argentina Streamers)
+
+Sin assets reales todavía para ninguno de los dos: contenido dinámico sobre transparencia, banner `ASSET AR STREAMERS: PENDIENTE` en Master Control, nada fabricado en CSS.
+
+**Goleadores/Asistidores/Participaciones** ("Participaciones" es el nombre de broadcast de `jugadores` solo en este theme — el id/label interno y GLA no cambian): se agregó un modo de cantidad reutilizando el campo `posicion` ya existente con 3 valores nuevos exclusivos de Argentina Streamers — `placaL-top`/`placaL-bottom` (5 SLOTS, dos placas apiladas, elegidas libremente entre las 3 sin poder repetir) y `placaL-solo` (10 SLOTS, una única placa). El selector cruzado vive en `master-control/js/performance-table-panel.js` (sección "MODO CANTIDAD", visible en cualquiera de los 3 paneles) y TAKE/UPDATE/OUT se generalizaron en `master-control/js/main.js` para operar la selección real y sacar del aire cualquier candidata deselecionada — mismo mecanismo que ya usaba GLA para su par fijo Goleadores+Asistidores (`PERFORMANCE_PAIR_IDS`), ahora theme-scoped explícitamente para que una sesión nueva de Argentina Streamers (con `posicion` todavía en su default `'placaL'`) no caiga en el camino viejo de GLA por error. `program/js/renderers/performanceTable.js` resuelve fila-count (5/6/10) y clase CSS según theme+posición; posiciones de fila en `program/css/overlay.css` son PROVISORIAS, derivadas de la misma zona vertical real que ya usa GLA (sin la escala 0.845528, acá no hay PNG que achicar).
+
+**Ficha Jugador** (`fichaJugador`, módulo nuevo): placa vertical individual — roster manual (mismo shape que Goleadores/Asistidores, con `mvp` como único stat nuevo), selector de "jugador mostrado", G+A siempre calculado. Botón `ACTUALIZAR DATOS DE LA WEB` existe deshabilitado, sin scraping ni endpoint falso — integración con `argentinastreamers.com` pendiente, indicado explícitamente en el panel. Registrado para los dos themes pero oculto de la navegación de GLA (no tenía pedido ningún uso ahí). Renderer/panel nuevos (`program/js/renderers/fichaJugador.js`, `master-control/js/ficha-jugador-panel.js`); escudo usa el mecanismo genérico de `shared/adjust-registry.js`, textos usan `mountAdjustControl` igual que el resto de "Tablas".
+
+### Integrado — Patch compartido de BRACKETS (agente concurrente)
+
+Se recibió `docs/PATCH_SHARED_CLAUDE.md` (handoff explícito) con 3 módulos nuevos (`cronogramaHoy`, `resultadosParciales`, `historial`) y se integró en los archivos compartidos bajo responsabilidad de esta tarea: `shared/themes.js` (`THEME_ASSET_MODULES`), `shared/modules.js` (import de `HISTORIAL_CATEGORIES` + los 3 módulos, categoría `Brackets`), `master-control/js/main.js` (imports, filtrado de navegación por theme — oculta `sideTable`/`posiciones`/`posicionesTorneo` en Argentina Streamers y los 3 nuevos en GLA — y despacho de panel), `program/index.html` (3 nodos `mod-*`). El patch pedía registrar los renderers en un objeto `RENDERERS` dentro de `program/js/main.js`; ese objeto no existe ahí (el registro real es `program/js/renderers/index.js`, que `program/js/main.js` importa) — se registraron en el lugar real, sin tocar los archivos propios de BRACKETS. Ningún archivo de BRACKETS (paneles/renderers/`shared/historial-helpers.js`/su propio `.md`) fue modificado.
+
+**Bug encontrado, NO corregido (fuera de esta superficie)**: los 3 paneles de BRACKETS (`cronograma-hoy-panel.js`, `resultados-parciales-panel.js`, `historial-panel.js`) llaman `mountAdjustControl(adjustSection, col.label, data.textAdjust[col.key], onDirty, {...})` — la firma real es `mountAdjustControl(wrap, data, key, onDirty, options)` (`master-control/js/field-editors.js`). Confirmado en vivo: abrir cualquiera de los 3 paneles tira `TypeError: Cannot create property 'textAdjust' on string 'Título general'` en consola apenas se intenta armar "AJUSTE DE TEXTOS/COMPOSICIÓN" — el resto del panel (título, encuentros/categorías) sigue funcionando porque el crash ocurre después. Los renderers de Program (`cronogramaHoy.js`/`resultadosParciales.js`/`historial.js`) NO comparten el bug — TAKE/render en Program funciona sin errores.
+
+### Verificado
+
+- `node --check` sobre los 9 archivos JS nuevos/modificados de esta tarea.
+- Servidor real en `:4400`: arranque sin errores tras cada cambio a `shared/`.
+- Navegación por theme: Argentina Streamers muestra Goleadores/Asistidores/Participaciones/Ficha Jugador/Cronograma Hoy/Resultados Parciales/Historial y oculta Resultados/Tabla Global/Posiciones Torneo; GLA muestra exactamente su lista original (Jugadores, no Participaciones; sin Ficha Jugador ni los 3 de BRACKETS) — confirmado con la navegación real, no inferido.
+- 5 SLOTS: elegido Goleadores=arriba / Participaciones=abajo desde el panel de Goleadores, confirmado el mismo estado leído desde el panel de Participaciones (selector cruzado); opciones de cada lado excluyen correctamente la del otro. Tope de 5 jugadores confirmado (6º intento de alta bloqueado, botón deshabilitado).
+- 10 SLOTS: cambiar de modo promovió automáticamente la placa de "arriba" a única y liberó la de "abajo"; tope de 10 confirmado (11º intento bloqueado).
+- TAKE real vía WebSocket (cliente Node aparte) confirmó `status`/`posicion` server-side en ambos modos: 5 SLOTS deja la tercera candidata en `OUT`; 10 SLOTS deja las otras dos en `OUT`. Program (1920×1080, tab real) mostró ambas placas apiladas (5 SLOTS) y una sola llenando la zona completa (10 SLOTS) con los datos y crests correctos, sin errores de consola.
+- Ficha Jugador: TAKE mostró la placa sola (crest + nombre + 5 stats, G+A calculado en vivo, ej. 5+3=8) con Goleadores ya sacado del aire; sin errores de consola.
+- Persistencia: reinicio real del servidor confirmó `posicion` (`placaL-solo` en Goleadores, `placaL` en Participaciones tras deseleccionar), los 10+5+1 jugadores cargados y `selectedPlayerId` de Ficha Jugador exactamente iguales; los 3 módulos forzados a `OUT` tras reiniciar.
+- GLA: `Posición` (PLACA L/FULLSCREEN, sin los 3 valores nuevos) y nota de par fijo Goleadores+Asistidores intactos en el panel; TAKE de Goleadores siguió tomando Asistidores junto (mecanismo original, sin cambios); Program mostró `ov-performance-card--placaL` (no las clases nuevas) con 6 filas y el PNG propio de GLA (`assets/tablas/tabla-goleadores.png`); navegación sin ninguna tab nueva.
+- Bug de BRACKETS reproducido en vivo en los 3 paneles (ver arriba); renderers de Program de BRACKETS confirmados sin el mismo error al hacer TAKE de Historial.
+- Sin rutas 404 causadas por assets inventados: ambos módulos nuevos resuelven `image`/`video` a `null` a propósito.
+
+### Sin verificar
+
+- `GUARDAR POSICIÓN` sobre las filas/composición de Tablas 5/10 SLOTS y Ficha Jugador (arquitectura reutilizada sin cambios, pero no se probó un ciclo completo guardar→reiniciar→confirmar en `shared/theme-layouts/argentinaStreamers.json` dentro de esta tarea puntual).
+- Breakpoint <1100px del nuevo selector "MODO CANTIDAD" y de Ficha Jugador.
+- Integración real con `argentinastreamers.com` (explícitamente fuera de alcance).
+
+## [Unreleased] - 2026-09-02 (90)
+
+### Agregado — Formación de Argentina Streamers por teamId
+
+Se integraron los dos entregables identificados en `cosas sueltas/`: `FORMACION.mov` (ProRes 4444 con alfa, 1920×1080, 30 fps, 6 s) y `FORMACION ARG.png` (RGBA 1920×1080). El MOV original se archivó en `ai-gfx/argentina-streamers/prores-originals/formacion.mov` y se derivó, sin recorte ni reescala, al runtime H.264 color+matte `assets/themes/argentina-streamers/formaciones/formacion-alpha.mp4`; el PNG pasó a `assets/themes/argentina-streamers/formaciones/kits/formacion-arg.png`. `cosas sueltas/` quedó documentada como inbox, nunca como ruta runtime; los PSD todavía no utilizados permanecen allí.
+
+`shared/themes.js` incorpora `formationAssetsByTeam`: `argentina-streamers` y `argentina-streamers-fem` apuntan al mismo PNG ARG. `oxen` y `peru-creadores` quedan registrados en `null` hasta que llegue su PNG, por lo que Formación mantiene video, textos, jugadores, suplentes y escudo pero omite la capa de camisetas y Master Control muestra `CAMISETA / FORMACIÓN DEL EQUIPO: ASSET PENDIENTE`, sin reutilizar otro equipo como fallback.
+
+El renderer específico conserva la lógica LOCAL/VISITANTE basada en `scoreboard.teamA/teamB`, monta el video del theme y aplica al PNG `formationKitByTeam.<teamId>`. El panel específico agrega el editor `CAMISETAS / FORMACIÓN EQUIPO` con ajuste LIVE y `GUARDAR POSICIÓN`; la ruta anidada se consolida mediante la arquitectura existente en `shared/theme-layouts/argentinaStreamers.json`. La entrada del MOV queda armada a ~0,67 s según medición de alfa cuadro a cuadro, por lo que Argentina revela camisetas/datos a 700 ms; GLA conserva su asset, tintado y delay de 1200 ms.
+
+### Verificado
+
+- Metadata y geometría inspeccionadas con `ffprobe`, `ffmpeg` y lectura RGBA del PNG; el runtime resultante conserva 180 frames a 30 fps y usa 1920×2160 H.264 `yuv420p` según el pipeline del proyecto.
+- Servidor real en puerto aislado: `/master`, `/program`, el MP4 y el PNG respondieron HTTP 200; `/api/themes` expuso el video y los cuatro teamId del mapping.
+- Navegador real a 1920×1080: ARG cargó `formacion-arg.png`; ARG FEM cargó la misma ruta; OXEN quedó sin atributo `src`, con la capa oculta y el aviso de asset pendiente. LOCAL↔VISITANTE estando al aire conservó esa selección automática.
+- TAKE ocultó el contenido a ~0,30 s y lo reveló después de 700 ms; UPDATE conservó el video en su frame final; OUT desmontó el contenido; un segundo TAKE remontó el MP4 desde el inicio y volvió a respetar el reveal. El editor movió el PNG 2 px en vivo y RESET volvió a 0. Consolas de Master Control y Program sin warnings ni errores.
+- `GUARDAR POSICIÓN` se validó con el mismo `commitElementBase` en un repositorio temporal para no tocar el JSON concurrente: `git diff` registró `formationKitByTeam.argentina-streamers` y un proceso nuevo recuperó `offsetX`, `offsetY` y `scale`. No se escribió `shared/theme-layouts/argentinaStreamers.json` en este workspace porque Claude lo estaba modificando.
+
 ## [Unreleased] - 2026-08-28 (89)
 
 ### Encuadre visual — ARGENTINA STREAMERS (los 14 módulos con asset real)

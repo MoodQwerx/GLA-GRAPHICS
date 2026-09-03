@@ -1,5 +1,5 @@
 import { MODULES, MODULE_IDS, cloneDefaults } from '../../shared/modules.js';
-import { WS_MSG, MODULE_STATUS } from '../../shared/constants.js';
+import { WS_MSG, MODULE_STATUS, FIELD_TYPES } from '../../shared/constants.js';
 import { connect } from '../../shared/ws-client.js';
 import { renderFields, mountAdjustControl } from './field-editors.js';
 import { renderScoreboardClockPanel } from './scoreboard-clock-panel.js';
@@ -12,6 +12,15 @@ import { renderResultadosPanel } from './resultados-panel.js';
 import { renderEstrellasPanel } from './estrellas-panel.js';
 import { renderPosicionesPanel, renderPosicionesTorneoPanel } from './posiciones-panel.js';
 import { renderPerformanceTablePanel } from './performance-table-panel.js';
+import { renderFichaJugadorPanel } from './ficha-jugador-panel.js';
+// BRACKETS (2026-09-02, handoff de un agente concurrente -- ver
+// docs/PATCH_SHARED_CLAUDE.md): paneles/renderers propios, integrados tal
+// cual el patch entregado, sin tocar su contenido.
+import { renderCronogramaHoyPanel } from './cronograma-hoy-panel.js';
+import { renderResultadosParcialesPanel } from './resultados-parciales-panel.js';
+import { renderHistorialPanel } from './historial-panel.js';
+import { renderZocaloCompuestoEquiposPanel } from './zocalo-compuesto-equipos-panel.js';
+import { renderZocaloCompuestoLogoPanel } from './zocalo-compuesto-logo-panel.js';
 import { renderZocaloSponsorsPanel } from './zocalo-sponsors-panel.js';
 import { renderCompositionControl } from './composition-control.js';
 import { renderPresetsControl, savePresetEntry } from './presets-helper.js';
@@ -441,12 +450,45 @@ function resetGoles() {
 function buildTabs() {
   tabBar.innerHTML = '';
 
+  // Filtrado por theme (2026-09-02, handoff BRACKETS -- ver
+  // docs/PATCH_SHARED_CLAUDE.md): "sideTable"/"posiciones"/
+  // "posicionesTorneo" quedan reemplazados conceptualmente por
+  // "cronogramaHoy"/"resultadosParciales"/"historial" SOLO en Argentina
+  // Streamers -- GLA sigue viendo exactamente sus 3 modulos de siempre,
+  // los 3 nuevos nunca aparecen en su navegacion.
+  // BUG real encontrado y corregido (2026-09-02, auditoria de wiring de
+  // Historial): "cronogramaHoy"/"resultadosParciales"/"historial" estaban
+  // A LA VEZ aca (ocultos para Argentina Streamers) Y en
+  // GLA_HIDDEN_MODULES un poco mas abajo (ocultos para GLA) -- los 3
+  // quedaban sin tab en NINGUN theme, invisibles para cualquier operador.
+  // El comentario de arriba ya decia la intencion real: ocultos solo para
+  // GLA (que es exactamente lo que GLA_HIDDEN_MODULES hace por su cuenta).
+  const ARGENTINA_STREAMERS_HIDDEN_MODULES = new Set([
+    'sideTable', 'posiciones', 'posicionesTorneo',
+    'grupos', 'zocaloCompuesto',
+  ]);
+  // "fichaJugador" (2026-09-02, pedido explicito del usuario: "GLA debe
+  // conservar exactamente sus modulos, navegacion y comportamiento") --
+  // GLA no tiene pedido ningun uso de este modulo, asi que no le agrega
+  // una tab nueva a su navegacion (el modulo sigue registrado igual para
+  // los dos themes, solo la navegacion lo oculta para GLA).
+  // "zocaloCompuestoEquipos"/"zocaloCompuestoLogo" (2026-09-02, regresion
+  // real encontrada y corregida durante esta auditoria): faltaban aca --
+  // GLA veia 3 zocalos compuestos en su navegacion (el suyo + los 2
+  // exclusivos de Argentina Streamers) en vez de solo el suyo.
+  const GLA_HIDDEN_MODULES = new Set([
+    'cronogramaHoy', 'resultadosParciales', 'historial', 'fichaJugador',
+    'zocaloCompuestoEquipos', 'zocaloCompuestoLogo', 'sitioWebPromoL',
+  ]);
+
   const byCategory = new Map();
   for (const id of MODULE_IDS) {
     // Absorbidos en la tab unica "MARCADOR" (ver mas abajo) o sacados de
     // la navegacion por completo (GOL) -- ninguno de los dos casos
     // consigue tab propia en el listado normal.
     if (MARCADOR_SUBSECTION_IDS.has(id) || HIDDEN_FROM_NAV_IDS.has(id)) continue;
+    if (activeThemeId === ARGENTINA_STREAMERS_THEME_ID && ARGENTINA_STREAMERS_HIDDEN_MODULES.has(id)) continue;
+    if (activeThemeId === DEFAULT_THEME_ID && GLA_HIDDEN_MODULES.has(id)) continue;
     const cat = MODULES[id].category || 'Otros';
     if (!byCategory.has(cat)) byCategory.set(cat, []);
     byCategory.get(cat).push(id);
@@ -485,13 +527,24 @@ function buildTabs() {
       tab.type = 'button';
       tab.className = 'tab';
       tab.dataset.id = id;
-      tab.textContent = id === 'abreviaturas' ? 'Abreviaturas' : MODULES[id].label;
+      tab.textContent = id === 'abreviaturas' ? 'Abreviaturas' : moduleDisplayLabel(id);
       tab.addEventListener('click', () => selectModule(id));
       tabBar.appendChild(tab);
     }
   }
 
   updateTabStates();
+}
+
+// "PARTICIPACIONES" (2026-09-02, pedido explicito del usuario): nombre de
+// broadcast para el modulo "jugadores" SOLO en Argentina Streamers -- el
+// id/label interno ("Jugadores") y el modulo de GLA no cambian en
+// absoluto, esto es puramente el texto mostrado en la navegacion y el
+// titulo del panel. Centralizado aca para no duplicar el chequeo en cada
+// lugar que muestra el label de un modulo.
+function moduleDisplayLabel(id) {
+  if (id === 'jugadores' && activeThemeId === ARGENTINA_STREAMERS_THEME_ID) return 'Participaciones';
+  return MODULES[id].label;
 }
 
 function updateTabStates() {
@@ -541,21 +594,60 @@ function selectModule(id) {
 // program/js/main.js, sin cambios ahi) + persistencia por theme
 // (cloneDefaults/state.byTheme, sin cambios ahi) + GUARDAR POSICIÓN
 // (save-position-control.js) sin logica nueva por elemento.
+// Arma un "<details>" de acordeon reusable -- extraido para que
+// renderModuleAdjustAccordion y el panel dedicado de Penales de Argentina
+// Streamers (renderPenalesArgentinaSections mas abajo) compartan el mismo
+// look/comportamiento sin duplicar el helper.
+function buildAccordionSection(container, title, build) {
+  const details = document.createElement('details');
+  details.className = 'adjust-accordion-section';
+  const summary = document.createElement('summary');
+  summary.textContent = title;
+  details.appendChild(summary);
+  const body = document.createElement('div');
+  details.appendChild(body);
+  build(body);
+  container.appendChild(details);
+}
+
+// Renderiza UNA entrada "kind:'composition'" del registro dentro de una
+// seccion de acordeon ya creada -- extraido de renderModuleAdjustAccordion
+// para que el panel dedicado de Penales (Argentina Streamers) pueda
+// reusar exactamente la misma logica (incluida la resolucion de escudo
+// por equipo) sin duplicarla.
+function renderCompositionEntry(body, entry, data, onDirty, saveOptions) {
+  const crestTarget = entry.crestTeam ? resolveCrestTeamTarget(entry, data) : null;
+  if (crestTarget) {
+    renderCompositionControl(body, crestTarget.data, onDirty, {
+      title: '', note: `Posición propia de ${crestTarget.label} en este slot -- independiente de los demás equipos.`,
+      keys: { xKey: entry.xKey, yKey: entry.yKey, scaleKey: entry.scaleKey },
+      ...saveOptions,
+      elementSpec: { kind: 'composition', dataPath: crestTarget.dataPath, xKey: entry.xKey, yKey: entry.yKey, scaleKey: entry.scaleKey },
+    });
+  } else {
+    renderCompositionControl(body, data, onDirty, {
+      title: '', note: '',
+      keys: { xKey: entry.xKey, yKey: entry.yKey, scaleKey: entry.scaleKey },
+      ...saveOptions,
+      elementSpec: { kind: 'composition', dataPath: [], xKey: entry.xKey, yKey: entry.yKey, scaleKey: entry.scaleKey },
+    });
+  }
+}
+
 function renderModuleAdjustAccordion(container, moduleId, data) {
   container.innerHTML = '';
   const onDirty = () => scheduleAutoSave(moduleId);
   const saveOptions = buildSaveOptions(moduleId);
+  const section = (title, build) => buildAccordionSection(container, title, build);
 
-  function section(title, build) {
-    const details = document.createElement('details');
-    details.className = 'adjust-accordion-section';
-    const summary = document.createElement('summary');
-    summary.textContent = title;
-    details.appendChild(summary);
-    const body = document.createElement('div');
-    details.appendChild(body);
-    build(body);
-    container.appendChild(details);
+  // Panel dedicado (2026-09-01, pedido explicito del usuario: "control
+  // total desde Master Control" para los 10 circulos de Penales + nombres
+  // de equipo, agrupados en 2 acordeones propios en vez del listado plano
+  // de siempre) -- SOLO para Argentina Streamers. GLA sigue exactamente
+  // por el camino generico de abajo, sin ningun cambio.
+  if (moduleId === 'marcadorPenales' && activeThemeId === ARGENTINA_STREAMERS_THEME_ID) {
+    renderPenalesArgentinaSections(container, data, onDirty, saveOptions, section);
+    return;
   }
 
   const heading = document.createElement('h2');
@@ -574,31 +666,84 @@ function renderModuleAdjustAccordion(container, moduleId, data) {
 
   const entries = ADJUST_REGISTRY[moduleId]?.elements || [];
   for (const entry of entries) {
+    // "themeOnly" (ver shared/adjust-registry.js): entradas nuevas que
+    // solo tienen sentido para un theme puntual -- GLA nunca las ve en
+    // este acordeon generico, sin tener que declarar nada especial en
+    // shared/modules.js ni en Program.
+    if (entry.themeOnly && entry.themeOnly !== activeThemeId) continue;
     if (entry.kind === 'text') {
       section(entry.label, (body) => {
         mountAdjustControl(body, data, entry.textKey, onDirty, saveOptions);
       });
     } else if (entry.kind === 'composition') {
-      section(entry.label, (body) => {
-        const crestTarget = entry.crestTeam ? resolveCrestTeamTarget(entry, data) : null;
-        if (crestTarget) {
-          renderCompositionControl(body, crestTarget.data, onDirty, {
-            title: '', note: `Posición propia de ${crestTarget.label} en este slot -- independiente de los demás equipos.`,
-            keys: { xKey: entry.xKey, yKey: entry.yKey, scaleKey: entry.scaleKey },
-            ...saveOptions,
-            elementSpec: { kind: 'composition', dataPath: crestTarget.dataPath, xKey: entry.xKey, yKey: entry.yKey, scaleKey: entry.scaleKey },
-          });
-        } else {
-          renderCompositionControl(body, data, onDirty, {
-            title: '', note: '',
-            keys: { xKey: entry.xKey, yKey: entry.yKey, scaleKey: entry.scaleKey },
-            ...saveOptions,
-            elementSpec: { kind: 'composition', dataPath: [], xKey: entry.xKey, yKey: entry.yKey, scaleKey: entry.scaleKey },
-          });
-        }
-      });
+      section(entry.label, (body) => renderCompositionEntry(body, entry, data, onDirty, saveOptions));
     }
   }
+}
+
+// PANEL DEDICADO — MARCADOR DE PENALES (ARGENTINA STREAMERS) (2026-09-01,
+// pedido explicito del usuario, seccion 15 de su mensaje: "AJUSTE DE
+// INTENTOS" con los 10 circulos agrupados, y "AJUSTE DE ELEMENTOS" con
+// el resto, en vez del listado plano de siempre). Reusa
+// renderCompositionEntry/mountAdjustControl -- ningun mecanismo nuevo,
+// solo una agrupacion/orden distinta de las MISMAS entradas del registro
+// (mas "COMPOSICIÓN COMPLETA", que para este panel se movio al final del
+// segundo grupo en vez de ser siempre la primera seccion, tal como pidio
+// el usuario).
+function renderPenalesArgentinaSections(container, data, onDirty, saveOptions, section) {
+  const entries = ADJUST_REGISTRY.marcadorPenales?.elements || [];
+  const byId = Object.fromEntries(entries.map((e) => [e.id, e]));
+
+  const heading1 = document.createElement('h2');
+  heading1.className = 'adjust-accordion-heading';
+  heading1.textContent = 'AJUSTE DE INTENTOS';
+  container.appendChild(heading1);
+
+  const kickIds = [
+    'kickLocal1', 'kickLocal2', 'kickLocal3', 'kickLocal4', 'kickLocal5',
+    'kickVisitante1', 'kickVisitante2', 'kickVisitante3', 'kickVisitante4', 'kickVisitante5',
+  ];
+  for (const id of kickIds) {
+    const entry = byId[id];
+    if (!entry) continue;
+    section(entry.label, (body) => renderCompositionEntry(body, entry, data, onDirty, saveOptions));
+  }
+
+  const heading2 = document.createElement('h2');
+  heading2.className = 'adjust-accordion-heading';
+  heading2.textContent = 'AJUSTE DE ELEMENTOS';
+  container.appendChild(heading2);
+
+  const elementSections = [
+    ['nombreLocal', 'NOMBRE LOCAL'],
+    ['nombreVisitante', 'NOMBRE VISITANTE'],
+    ['localCrest', 'ESCUDO LOCAL'],
+    ['awayCrest', 'ESCUDO VISITANTE'],
+    ['scoreA', 'RESULTADO LOCAL'],
+    ['separator', 'GUIÓN'],
+    ['scoreB', 'RESULTADO VISITANTE'],
+    ['sponsor', 'SPONSOR'],
+  ];
+  for (const [id, label] of elementSections) {
+    const entry = byId[id];
+    if (!entry) continue;
+    section(label, (body) => {
+      if (entry.kind === 'text') {
+        mountAdjustControl(body, data, entry.textKey, onDirty, saveOptions);
+      } else {
+        renderCompositionEntry(body, entry, data, onDirty, saveOptions);
+      }
+    });
+  }
+
+  section('COMPOSICIÓN COMPLETA', (body) => {
+    renderCompositionControl(body, data, onDirty, {
+      title: '', note: 'Mueve y escala TODO el módulo como una sola unidad.',
+      keys: { xKey: 'compositionOffsetX', yKey: 'compositionOffsetY', scaleKey: 'compositionScale' },
+      ...saveOptions,
+      elementSpec: { kind: 'composition', dataPath: [], xKey: 'compositionOffsetX', yKey: 'compositionOffsetY', scaleKey: 'compositionScale' },
+    });
+  });
 }
 
 // POSICIÓN DE ESCUDO POR EQUIPO (2026-09-01, pedido explicito del
@@ -714,11 +859,11 @@ function renderPanel() {
       renderMarcadorEntretiempoToggle(marcadorSubnav);
     } else {
       marcadorSubnav.style.display = 'none';
-      panelTitle.textContent = mod.label;
+      panelTitle.textContent = moduleDisplayLabel(activeId);
       updateAssetBadge(activeId);
     }
   } else {
-    panelTitle.textContent = mod.label;
+    panelTitle.textContent = moduleDisplayLabel(activeId);
     updateAssetBadge(activeId);
   }
 
@@ -734,6 +879,55 @@ function renderPanel() {
         { id: 'visitante', label: `VISITANTE — ${visitorName}` },
       ],
     } : field);
+  }
+  // "NOMBRE MOSTRADO" (2026-09-01, pedido explicito del usuario: VS
+  // Prepartido/VS Con Resultado necesitan un nombre de broadcast propio
+  // por equipo, AUTOMÁTICO o MANUAL -- ver shared/broadcast-names.js).
+  // Los campos "nameAMode/nameAManual/nameBMode/nameBManual" YA existen
+  // en los defaults de ambos modulos (shared/modules.js, validos para
+  // cualquier theme), pero el CONTROL solo se agrega para Argentina
+  // Streamers -- GLA nunca ve estos 4 campos nuevos en su panel (mismo
+  // criterio que "usesAdjustAccordion" mas abajo: "GRAN LIGA RELÁMPAGO
+  // debe quedar exactamente como está", pedido explicito de esta tarea).
+  const isVsNameModule = (activeId === 'vsPrepartido' || activeId === 'vsResultado') && activeThemeId === ARGENTINA_STREAMERS_THEME_ID;
+  if (isVsNameModule) {
+    const nameModeOptions = [
+      { id: 'auto', label: 'AUTOMÁTICO' },
+      { id: 'manual', label: 'MANUAL' },
+    ];
+    const extraFields = [
+      { key: 'nameAMode', label: 'NOMBRE LOCAL — MODO', type: FIELD_TYPES.SELECT, options: nameModeOptions },
+      { key: 'nameAManual', label: 'NOMBRE LOCAL MANUAL (solo si MODO = MANUAL)', type: FIELD_TYPES.TEXT },
+      { key: 'nameBMode', label: 'NOMBRE VISITANTE — MODO', type: FIELD_TYPES.SELECT, options: nameModeOptions },
+      { key: 'nameBManual', label: 'NOMBRE VISITANTE MANUAL (solo si MODO = MANUAL)', type: FIELD_TYPES.TEXT },
+    ];
+    const tituloIdx = fields.findIndex((f) => f.key === 'titulo');
+    const insertAt = tituloIdx === -1 ? 0 : tituloIdx + 1;
+    fields = [...fields.slice(0, insertAt), ...extraFields, ...fields.slice(insertAt)];
+  }
+  // "NOMBRE EQUIPO LOCAL/VISITANTE" de Penales (2026-09-01, pedido
+  // explicito del usuario, seccion 4-7 de su mensaje): misma logica
+  // AUTOMÁTICO/MANUAL de VS Prepartido/Resultado de arriba, reusando el
+  // mismo mapping de shared/broadcast-names.js -- solo que acá los campos
+  // se llaman "nombreLocalMode/nombreLocalManual/nombreVisitanteMode/
+  // nombreVisitanteManual" (shared/modules.js). Van en la sección "DATOS"
+  // pedida, ANTES de "kicksA/kicksB" (INTENTOS) -- se insertan justo
+  // después de "titulo".
+  const isPenalesArgentina = activeId === 'marcadorPenales' && activeThemeId === ARGENTINA_STREAMERS_THEME_ID;
+  if (isPenalesArgentina) {
+    const nameModeOptions = [
+      { id: 'auto', label: 'AUTOMÁTICO' },
+      { id: 'manual', label: 'MANUAL' },
+    ];
+    const extraFields = [
+      { key: 'nombreLocalMode', label: 'NOMBRE LOCAL — MODO', type: FIELD_TYPES.SELECT, options: nameModeOptions },
+      { key: 'nombreLocalManual', label: 'NOMBRE LOCAL MANUAL (solo si MODO = MANUAL)', type: FIELD_TYPES.TEXT },
+      { key: 'nombreVisitanteMode', label: 'NOMBRE VISITANTE — MODO', type: FIELD_TYPES.SELECT, options: nameModeOptions },
+      { key: 'nombreVisitanteManual', label: 'NOMBRE VISITANTE MANUAL (solo si MODO = MANUAL)', type: FIELD_TYPES.TEXT },
+    ];
+    const tituloIdx = fields.findIndex((f) => f.key === 'titulo');
+    const insertAt = tituloIdx === -1 ? 0 : tituloIdx + 1;
+    fields = [...fields.slice(0, insertAt), ...extraFields, ...fields.slice(insertAt)];
   }
   let renderedTeamSide = isRosterEvent ? draft[activeId].equipo : null;
   const isVarCheck = activeId === 'varCheck';
@@ -1025,7 +1219,39 @@ function renderPanel() {
       renderPanel();
     });
   } else if (activeId === 'goleadores' || activeId === 'asistidores' || activeId === 'jugadores') {
+    // "argentinaCtx" (2026-09-02, pedido explicito del usuario): SOLO se
+    // pasa para Argentina Streamers -- ver renderPerformanceTablePanel.
+    // "siblingData" apunta directo a "draft" (misma referencia que ya usa
+    // todo este archivo), asi el selector 5/10 SLOTS lee/escribe el
+    // estado real sin duplicarlo.
+    const argentinaCtx = activeThemeId === ARGENTINA_STREAMERS_THEME_ID
+      ? { siblingData: draft, scheduleAutoSave }
+      : undefined;
     panelCleanup = renderPerformanceTablePanel(extraContainer, draft[activeId], activeId, () => {
+      scheduleAutoSave(idForThisRender);
+    }, buildSaveOptions(activeId), argentinaCtx);
+  } else if (activeId === 'fichaJugador') {
+    panelCleanup = renderFichaJugadorPanel(extraContainer, draft[activeId], () => {
+      scheduleAutoSave(idForThisRender);
+    }, buildSaveOptions(activeId));
+  } else if (activeId === 'cronogramaHoy') {
+    panelCleanup = renderCronogramaHoyPanel(fieldsContainer, draft[activeId], () => {
+      scheduleAutoSave(idForThisRender);
+    }, buildSaveOptions(activeId)) || (() => {});
+  } else if (activeId === 'resultadosParciales') {
+    panelCleanup = renderResultadosParcialesPanel(fieldsContainer, draft[activeId], () => {
+      scheduleAutoSave(idForThisRender);
+    }, buildSaveOptions(activeId)) || (() => {});
+  } else if (activeId === 'historial') {
+    panelCleanup = renderHistorialPanel(fieldsContainer, draft[activeId], () => {
+      scheduleAutoSave(idForThisRender);
+    }, buildSaveOptions(activeId)) || (() => {});
+  } else if (activeId === 'zocaloCompuestoEquipos') {
+    panelCleanup = renderZocaloCompuestoEquiposPanel(extraContainer, draft[activeId], draft.scoreboard, () => {
+      scheduleAutoSave(idForThisRender);
+    }, buildSaveOptions(activeId));
+  } else if (activeId === 'zocaloCompuestoLogo') {
+    panelCleanup = renderZocaloCompuestoLogoPanel(extraContainer, draft[activeId], () => {
       scheduleAutoSave(idForThisRender);
     }, buildSaveOptions(activeId));
   } else if (mod.autoRunClock) {
@@ -1205,14 +1431,48 @@ function isPerformancePairModule(id) {
   return PERFORMANCE_PAIR_IDS.includes(id);
 }
 
+// Theme-scoped a proposito (2026-09-02): "posicion" default de estos 2
+// modulos sigue siendo 'placaL' (shared/modules.js) para CUALQUIER theme
+// -- sin este chequeo, una sesion nueva de Argentina Streamers que
+// todavia no toco el selector 5/10 SLOTS (ver mas abajo) caeria en el
+// mecanismo VIEJO de GLA por el simple hecho de no haber sido editada
+// todavia. GLA sigue exactamente igual, nunca usa las posiciones nuevas.
 function usesPerformancePairPlacaL(id) {
-  return isPerformancePairModule(id) && draft[id]?.posicion === 'placaL';
+  return activeThemeId !== ARGENTINA_STREAMERS_THEME_ID && isPerformancePairModule(id) && draft[id]?.posicion === 'placaL';
 }
 
 function sendPerformancePair(type) {
   for (const id of PERFORMANCE_PAIR_IDS) {
     draft[id].posicion = 'placaL';
     ws.send({ type, moduleId: id, data: draft[id] });
+  }
+}
+
+// "MODO CANTIDAD" 5/10 SLOTS (2026-09-02, pedido explicito del usuario,
+// Argentina Streamers): generaliza el mecanismo de arriba a los 3
+// candidatos (Goleadores/Asistidores/Participaciones) y a una eleccion
+// LIBRE de cuales 1 o 2 mostrar, en vez del par fijo de GLA. Misma idea:
+// "posicion" (ya elegida por master-control/js/performance-table-panel.js)
+// es la unica fuente de verdad, sin estado nuevo. Los candidatos SIN una
+// posicion de slot valida se mandan a OUT -- asi cambiar la seleccion y
+// volver a Tomar al Aire siempre deja el estado real alineado con lo que
+// el operador configuro, sin importar que habia antes.
+const ARGENTINA_PERFORMANCE_IDS = ['goleadores', 'asistidores', 'jugadores'];
+const ARGENTINA_SLOT_POSITIONS = new Set(['placaL-top', 'placaL-bottom', 'placaL-solo']);
+
+function usesArgentinaPerformanceSelection(id) {
+  return activeThemeId === ARGENTINA_STREAMERS_THEME_ID
+    && ARGENTINA_PERFORMANCE_IDS.includes(id)
+    && ARGENTINA_SLOT_POSITIONS.has(draft[id]?.posicion);
+}
+
+function sendArgentinaPerformanceSelection(type) {
+  for (const id of ARGENTINA_PERFORMANCE_IDS) {
+    if (ARGENTINA_SLOT_POSITIONS.has(draft[id]?.posicion)) {
+      ws.send({ type, moduleId: id, data: draft[id] });
+    } else {
+      ws.send({ type: WS_MSG.OUT, moduleId: id });
+    }
   }
 }
 
@@ -1227,11 +1487,19 @@ takeBtn.addEventListener('click', () => {
     sendPerformancePair(WS_MSG.TAKE);
     return;
   }
+  if (usesArgentinaPerformanceSelection(activeId)) {
+    sendArgentinaPerformanceSelection(WS_MSG.TAKE);
+    return;
+  }
   ws.send({ type: WS_MSG.TAKE, moduleId: activeId, data: draft[activeId] });
 });
 updateBtn.addEventListener('click', () => {
   if (usesPerformancePairPlacaL(activeId)) {
     sendPerformancePair(WS_MSG.UPDATE);
+    return;
+  }
+  if (usesArgentinaPerformanceSelection(activeId)) {
+    sendArgentinaPerformanceSelection(WS_MSG.UPDATE);
     return;
   }
   ws.send({ type: WS_MSG.UPDATE, moduleId: activeId, data: draft[activeId], isExplicitUpdate: true });
@@ -1245,11 +1513,16 @@ outBtn.addEventListener('click', () => {
     cancelFormationTransition();
     renderPanel();
   }
-  const activePairIsOn = isPerformancePairModule(activeId)
+  const activePairIsOn = activeThemeId !== ARGENTINA_STREAMERS_THEME_ID
+    && isPerformancePairModule(activeId)
     && serverState[activeId]?.status === MODULE_STATUS.ON
     && serverState[activeId]?.data?.posicion === 'placaL';
   if (usesPerformancePairPlacaL(activeId) || activePairIsOn) {
     for (const id of PERFORMANCE_PAIR_IDS) ws.send({ type: WS_MSG.OUT, moduleId: id });
+    return;
+  }
+  if (activeThemeId === ARGENTINA_STREAMERS_THEME_ID && ARGENTINA_PERFORMANCE_IDS.includes(activeId)) {
+    for (const id of ARGENTINA_PERFORMANCE_IDS) ws.send({ type: WS_MSG.OUT, moduleId: id });
     return;
   }
   ws.send({ type: WS_MSG.OUT, moduleId: activeId });

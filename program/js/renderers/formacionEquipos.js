@@ -1,13 +1,22 @@
 import { mountThemedAlphaVideo } from '../theme-assets.js';
+import { getActiveThemeId } from '../theme-client.js';
 import { crestFile, teamName } from '../../../shared/teams.js';
+import { DEFAULT_THEME_ID, getThemeAsset } from '../../../shared/themes.js';
 import { normalizePlayers } from '../../../shared/player-lists.js';
 import { colorHex } from '../../../shared/team-colors.js';
-import { applyPlainTextAdjust, readTextAdjust, toBroadcastUpper } from '../text-fit.js';
+import { applyElementAdjust, applyPlainTextAdjust, readTextAdjust, toBroadcastUpper } from '../text-fit.js';
 
 const VIDEO_SRC = '/assets/placas/formacion-equipos.mp4';
 const SHIRTS_BASE_SRC = '/assets/placas/formacion-camisetas.png';
 const SHIRTS_WHITE_SRC = '/assets/placas/formacion-camisetas-blancas.png';
 const STARTER_LIMIT = 6;
+const ARGENTINA_CONTENT_DELAY = '700ms';
+
+function resolveFormationShirts(teamId) {
+  const themeId = getActiveThemeId();
+  if (themeId === DEFAULT_THEME_ID) return SHIRTS_BASE_SRC;
+  return getThemeAsset(themeId, 'formacionEquipos')?.formationAssetsByTeam?.[teamId] || null;
+}
 
 function setCrest(img, teamId) {
   const src = crestFile(teamId);
@@ -60,10 +69,36 @@ export default function renderFormacionEquipos(contentEl, data, justTaken, onOne
   const sb = (allData && allData.scoreboard) || {};
   const isVisitor = data.teamSide === 'visitor';
   const teamId = isVisitor ? sb.teamB : sb.teamA;
+  const isGla = getActiveThemeId() === DEFAULT_THEME_ID;
+  const shirts = contentEl.querySelector('.ov-formacion-shirts');
+  const shirtsSrc = resolveFormationShirts(teamId);
+  if (shirtsSrc) {
+    shirts.src = shirtsSrc;
+    shirts.style.visibility = 'visible';
+  } else {
+    shirts.removeAttribute('src');
+    shirts.style.visibility = 'hidden';
+  }
+  contentEl.querySelector('.ov-formacion-shirts-wrap').style.display = isGla ? '' : 'none';
+  const shirtsAdjust = data.formationKitByTeam?.[teamId] || {};
+  applyElementAdjust(shirts, {
+    offsetX: shirtsAdjust.offsetX || 0,
+    offsetY: shirtsAdjust.offsetY || 0,
+    scale: shirtsAdjust.scale || 1,
+  });
+
+  // La entrada nueva queda estructuralmente armada a ~0,67 s. El brillo
+  // posterior es decorativo y no debe demorar los datos. GLA conserva sus
+  // 1200 ms definidos en overlay.css.
+  const moduleRoot = contentEl.closest('.gfx');
+  if (moduleRoot) {
+    if (isGla) moduleRoot.style.removeProperty('--dur-content-delay');
+    else moduleRoot.style.setProperty('--dur-content-delay', ARGENTINA_CONTENT_DELAY);
+  }
   setCrest(contentEl.querySelector('.ov-formacion-crest'), teamId);
 
   const shirtColorId = isVisitor ? sb.teamBColor : sb.teamAColor;
-  contentEl.querySelector('.ov-formacion-shirts-tint').style.backgroundColor = colorHex(shirtColorId);
+  if (isGla) contentEl.querySelector('.ov-formacion-shirts-tint').style.backgroundColor = colorHex(shirtColorId);
 
   // "playerName"/"playerNumber" (2026-08-15, auditoria completa): ajuste
   // compartido por las 6 posiciones (mismo criterio "column-level" que las

@@ -237,7 +237,7 @@ export const MODULES = {
       // zona/auto-ajuste de fuente que ya existe para ese texto -- no es un
       // campo de texto propio, no se persiste por separado del titulo.
       suddenDeath: false,
-      textAdjust: textAdjustDefaults('titulo', 'nameA', 'nameB', 'scoreA', 'scoreB'),
+      textAdjust: textAdjustDefaults('titulo', 'nameA', 'nameB', 'scoreA', 'scoreB', 'nombreLocal', 'nombreVisitante'),
       // "localCrestOffset*/awayCrestOffset*" (2026-08-31, auditoria
       // completa): los escudos nunca tuvieron ajuste propio, solo src-swap.
       localCrestOffsetX: 0, localCrestOffsetY: 0, localCrestScale: 1,
@@ -247,6 +247,27 @@ export const MODULES = {
       // como grupo, independiente del escudo y del resultado.
       kicksLocalOffsetX: 0, kicksLocalOffsetY: 0, kicksLocalScale: 1,
       kicksVisitanteOffsetX: 0, kicksVisitanteOffsetY: 0, kicksVisitanteScale: 1,
+      // "kickLocal{1-5}Offset*"/"kickVisitante{1-5}Offset*" (2026-09-01,
+      // pedido explicito del usuario: "no quiero seguir pidiendote mover
+      // circulos a mano en codigo... quiero CONTROL TOTAL desde Master
+      // Control"). Capa ADITIVA por-circulo, encima de la posicion base ya
+      // definida en program/css/overlay.css (que sigue existiendo como
+      // default -- "los defaults pueden existir") y de "kicksLocalOffset*"
+      // (que sigue moviendo la FILA completa como grupo) -- 0/0/1 es un
+      // no-op, cada circulo queda exactamente donde esta hoy hasta que el
+      // operador lo ajuste y confirme con GUARDAR POSICIÓN. Solo tiene
+      // panel propio para Argentina Streamers (ver "themeOnly" en
+      // shared/adjust-registry.js) -- GLA nunca los toca ni los ve.
+      kickLocal1OffsetX: 0, kickLocal1OffsetY: 0, kickLocal1Scale: 1,
+      kickLocal2OffsetX: 0, kickLocal2OffsetY: 0, kickLocal2Scale: 1,
+      kickLocal3OffsetX: 0, kickLocal3OffsetY: 0, kickLocal3Scale: 1,
+      kickLocal4OffsetX: 0, kickLocal4OffsetY: 0, kickLocal4Scale: 1,
+      kickLocal5OffsetX: 0, kickLocal5OffsetY: 0, kickLocal5Scale: 1,
+      kickVisitante1OffsetX: 0, kickVisitante1OffsetY: 0, kickVisitante1Scale: 1,
+      kickVisitante2OffsetX: 0, kickVisitante2OffsetY: 0, kickVisitante2Scale: 1,
+      kickVisitante3OffsetX: 0, kickVisitante3OffsetY: 0, kickVisitante3Scale: 1,
+      kickVisitante4OffsetX: 0, kickVisitante4OffsetY: 0, kickVisitante4Scale: 1,
+      kickVisitante5OffsetX: 0, kickVisitante5OffsetY: 0, kickVisitante5Scale: 1,
       // "separatorOffset*" (2026-08-31): guión entre el resultado local y
       // visitante de la tanda de penales -- mismo criterio que el guión
       // del Marcador principal (scoreboard.separatorOffsetX/Y/Scale).
@@ -254,6 +275,12 @@ export const MODULES = {
       // "sponsorOffsetX/Y/Scale" (2026-08-31): unico elemento visual del
       // sponsor, nunca tuvo ajuste propio.
       sponsorOffsetX: 0, sponsorOffsetY: 0, sponsorScale: 1,
+      // "nombreLocal/VisitanteMode/Manual" (2026-09-01, pedido explicito
+      // del usuario): mismo mecanismo que VS Prepartido/VS Resultado, ver
+      // shared/broadcast-names.js. Solo se muestra/usa para Argentina
+      // Streamers -- inocuo para GLA (nunca se lee ahi).
+      nombreLocalMode: 'auto', nombreLocalManual: '',
+      nombreVisitanteMode: 'auto', nombreVisitanteManual: '',
     },
   },
 
@@ -349,6 +376,18 @@ export const MODULES = {
       // completa): los escudos nunca tuvieron ajuste propio.
       localCrestOffsetX: 0, localCrestOffsetY: 0, localCrestScale: 1,
       awayCrestOffsetX: 0, awayCrestOffsetY: 0, awayCrestScale: 1,
+      // "nameXMode"/"nameXManual" (2026-09-01, pedido explicito del
+      // usuario: "los nombres actuales quedan mal visualmente" -- ver
+      // shared/broadcast-names.js). "auto" (default) resuelve un nombre
+      // de BROADCAST propio para los 4 equipos de Argentina Streamers sin
+      // tocar el nombre real del equipo; cualquier otro teamId (todos los
+      // de GLA) cae exactamente en "teamName()" de siempre, cero cambio
+      // visual ahi. El control en Master Control solo se muestra para
+      // Argentina Streamers (ver renderPanel() en main.js) -- estos
+      // defaults son inocuos para GLA aunque el campo exista en su arbol
+      // de datos.
+      nameAMode: 'auto', nameAManual: '',
+      nameBMode: 'auto', nameBManual: '',
     },
   },
 
@@ -374,6 +413,10 @@ export const MODULES = {
       // completa): los escudos nunca tuvieron ajuste propio.
       localCrestOffsetX: 0, localCrestOffsetY: 0, localCrestScale: 1,
       awayCrestOffsetX: 0, awayCrestOffsetY: 0, awayCrestScale: 1,
+      // "nameXMode"/"nameXManual" (2026-09-01): mismo mecanismo que
+      // vsPrepartido, ver el comentario ahi y shared/broadcast-names.js.
+      nameAMode: 'auto', nameAManual: '',
+      nameBMode: 'auto', nameBManual: '',
     },
   },
 
@@ -838,6 +881,58 @@ export const MODULES = {
     },
   },
 
+  // "zocaloCompuestoEquipos"/"zocaloCompuestoLogo" (2026-09-02, auditoria de
+  // wiring): habia una SEGUNDA entrada duplicada de cada uno mas abajo en
+  // este mismo objeto, incompleta (sin sponsorOffset*/compositionOffset*/
+  // textPresets) -- en un literal de objeto JS la clave repetida MAS TARDE
+  // gana, asi que esa version incompleta era la que realmente terminaba en
+  // MODULES, no esta. Se elimino el duplicado; esta queda como unica fuente.
+  zocaloCompuestoEquipos: {
+    id: 'zocaloCompuestoEquipos',
+    label: 'Zócalo Compuesto con Equipos',
+    category: 'Zocalos',
+    layer: 'bottom-left',
+    live: true,
+    sequencedReveal: true,
+    // "fields: []" (2026-09-02, auditoria de wiring): el CONTENIDO
+    // (texto1/texto2/sponsor) lo muestra el panel dedicado
+    // (master-control/js/zocalo-compuesto-equipos-panel.js) -- declararlos
+    // aca tambien los duplicaba (2 cajas "TEXTO MAIN" en pantalla, una
+    // generica sin ACTUALIZAR y otra del panel). Mismo criterio que
+    // "formacionEquipos" mas arriba.
+    fields: [],
+    defaults: {
+      // "subColor" (2026-09-02, pedido explicito del usuario): SOLO afecta
+      // texto2/SUBTEXTO -- texto1/MAIN se mantiene siempre blanco fijo, sin
+      // campo propio, tal como ya estaba. "sponsorsRotation" reemplaza al
+      // dropdown unico "sponsor" (mismo campo/mismo shape que ya usa
+      // zocaloCompuesto/zocaloFinal/zocaloFinalDiv -- array de ids,
+      // reutiliza el panel/renderer de rotacion existentes en vez de
+      // inventar uno nuevo).
+      texto1: '', texto2: '', subColor: 'negro', sponsorsRotation: [], textPresets: [],
+      sponsorOffsetX: 0, sponsorOffsetY: 0, sponsorScale: 1,
+      compositionOffsetX: 0, compositionOffsetY: 0, compositionScale: 1,
+      textAdjust: textAdjustDefaults('texto1', 'texto2'),
+      crestByTeam: { local: {}, away: {} },
+    },
+  },
+
+  zocaloCompuestoLogo: {
+    id: 'zocaloCompuestoLogo',
+    label: 'Zócalo Compuesto con Logo',
+    category: 'Zocalos',
+    layer: 'bottom-left',
+    sequencedReveal: true,
+    fields: [],
+    defaults: {
+      texto1: '', texto2: '', subColor: 'negro', sponsorsRotation: [], textPresets: [],
+      logoOffsetX: 0, logoOffsetY: 0, logoScale: 1,
+      sponsorOffsetX: 0, sponsorOffsetY: 0, sponsorScale: 1,
+      compositionOffsetX: 0, compositionOffsetY: 0, compositionScale: 1,
+      textAdjust: textAdjustDefaults('texto1', 'texto2'),
+    },
+  },
+
   placaLInfo: {
     id: 'placaLInfo',
     label: 'Placa L Info',
@@ -1074,6 +1169,119 @@ export const MODULES = {
     },
   },
 
+  // "cronogramaHoy"/"resultadosParciales"/"historial" (2026-09-02):
+  // modulos de BRACKETS para Argentina Streamers, entregados por un
+  // agente concurrente -- integrados tal cual el handoff (ver
+  // docs/PATCH_SHARED_CLAUDE.md y docs/BRACKETS_ARGENTINA_STREAMERS.md),
+  // sin modificar su forma de datos/logica. Renderer y panel dedicados
+  // propios, sin tocar goleadores/asistidores/jugadores/fichaJugador.
+  cronogramaHoy: {
+    id: 'cronogramaHoy',
+    label: 'Cronograma Hoy',
+    category: 'Brackets',
+    layer: 'fullscreen',
+    sequencedReveal: true,
+    fields: [],
+    // "encuentros" (2026-09-02, reconstruido desde cero -- ver informe):
+    // la implementacion anterior (2 partidos manuales, tarjeta fabricada
+    // en CSS) se descarto por completo, pedido explicito del usuario ("no
+    // reutilizar la placa vertical falsa anterior", "no quiero selector
+    // duplicado de equipos"). Ahora hay un PNG real
+    // (cronograma-hoy.png, VS_DEFAULT entregado) con UN solo partido: los
+    // escudos se heredan siempre del Marcador (scoreboard.teamA/teamB, en
+    // vivo), nunca se eligen aca -- por eso no hay "teamA"/"teamB" en
+    // estos defaults. "crestByTeam" seedeado por teamId real (mismo
+    // patron que zocaloCompuestoEquipos), asi la posicion de cada escudo
+    // sobrevive a que cambie el equipo.
+    defaults: {
+      titulo: 'PRÓXIMO PARTIDO',
+      textAdjust: textAdjustDefaults('titulo'),
+      crestByTeam: { local: {}, away: {} },
+    },
+  },
+
+  resultadosParciales: {
+    id: 'resultadosParciales',
+    label: 'Resultados Parciales',
+    category: 'Brackets',
+    layer: 'fullscreen',
+    sequencedReveal: true,
+    fields: [],
+    defaults: {
+      titulo: 'RESULTADOS PARCIALES',
+      encuentros: [
+        { teamA: 'argentina-streamers', teamB: 'oxen', scoreA: '2', scoreB: '1', estado: 'FINAL' },
+        { teamA: 'peru-creadores', teamB: 'argentina-streamers-fem', scoreA: '0', scoreB: '0', estado: 'EN JUEGO' },
+      ],
+      textAdjust: textAdjustDefaults('titulo', 'teamA1', 'teamB1', 'scoreA1', 'scoreB1', 'estado1', 'teamA2', 'teamB2', 'scoreA2', 'scoreB2', 'estado2'),
+    },
+  },
+
+  // "historial" (2026-09-02, reconstruido desde cero -- ver informe): la
+  // version anterior de Antigravity (categorias + paginacion + tarjeta
+  // fabricada en CSS) se descarto por completo, pedido explicito del
+  // usuario ("NO reutilices su diseño CSS/provisorio... la geometria/render
+  // debe partir del NUEVO asset"). Ahora hay un PNG real
+  // (assets/themes/argentina-streamers/tablas/historial.png, medido pixel
+  // a pixel: 5 filas fijas LOCAL/GOL LOCAL/GOL VISITANTE/VISITANTE, sin
+  // fecha/competencia/categoria -- esas columnas no existen en el asset
+  // real). Shape minimo pedido: 5 partidos fijos, cada uno con equipo
+  // local/visitante (teamId real, escudo automatico) + goles como texto
+  // libre (no siempre son numeros -- "P" de penales, etc., decision igual
+  // que el resto del proyecto: nunca forzar tipo numerico en un campo que
+  // el operador tipea).
+  historial: {
+    id: 'historial',
+    label: 'Historial',
+    category: 'Tablas',
+    layer: 'fullscreen',
+    sequencedReveal: true,
+    fields: [],
+    defaults: {
+      // "titulo"/"tipoHistorial" (2026-09-02, pedido explicito del
+      // usuario): titulo manual (aparece en la zona superior real del
+      // PNG, ver overlay.css/".ov-performance-titulo" que reutiliza este
+      // modulo) + categoria, valores internos estables para cuando se
+      // conecte la web mas adelante -- por ahora es solo un dato mas que
+      // el operador elige, sin logica de fetch.
+      titulo: '',
+      tipoHistorial: 'iwc',
+      partidos: [
+        { teamA: '', golLocal: '', golVisitante: '', teamB: '' },
+        { teamA: '', golLocal: '', golVisitante: '', teamB: '' },
+        { teamA: '', golLocal: '', golVisitante: '', teamB: '' },
+        { teamA: '', golLocal: '', golVisitante: '', teamB: '' },
+        { teamA: '', golLocal: '', golVisitante: '', teamB: '' },
+      ],
+      // Ajuste POR COLUMNA (2026-09-02, pedido explicito del usuario:
+      // "criterio por columna/bloque, no fila individual") -- un unico
+      // offset se aplica a los 5 escudos locales por igual, otro a los 5
+      // visitantes, mismo patron que "goleadores/asistidores" mas abajo.
+      crestLocalOffsetX: 0, crestLocalOffsetY: 0, crestLocalScale: 1,
+      crestVisitanteOffsetX: 0, crestVisitanteOffsetY: 0, crestVisitanteScale: 1,
+      textAdjust: textAdjustDefaults('titulo', 'golLocal', 'golVisitante'),
+    },
+  },
+
+  // "Sitio Web Promo L" (2026-09-02, pedido explicito del usuario): placa
+  // full-bleed estatica con el PNG real (ANUNCIO_AS entregado) -- sin
+  // texto dinamico, el asset ya trae su contenido horneado (captura del
+  // sitio web + boton "INGRESÁ"). Categoria nueva "Extras" (ninguna de las
+  // existentes encajaba con "publicidad/promocion"). SOLO Argentina
+  // Streamers -- GLA_HIDDEN_MODULES en master-control/js/main.js lo oculta
+  // de su navegacion, mismo criterio que fichaJugador/historial/etc.
+  sitioWebPromoL: {
+    id: 'sitioWebPromoL',
+    label: 'Sitio Web Promo L',
+    category: 'Extras',
+    layer: 'fullscreen',
+    sequencedReveal: true,
+    fields: [],
+    defaults: {
+      compositionOffsetX: 0, compositionOffsetY: 0, compositionScale: 1,
+    },
+  },
+
   // Tablas de rendimiento: comparten panel y renderer, pero cada modulo
   // conserva sus propios jugadores y posicion. El orden no se guarda como
   // una segunda fuente de datos: se deriva de estas estadisticas con sort
@@ -1086,8 +1294,13 @@ export const MODULES = {
     layer: 'fullscreen',
     fields: [],
     defaults: {
+      // "titulo" (2026-09-02, pedido explicito del usuario: "TÍTULO
+      // configurable según módulo" sobre TABLA_ESTADISTICAS.png) -- vacio
+      // por default, el renderer cae al nombre de broadcast del modulo
+      // ("GOLEADORES") si el operador no escribio nada, nunca lo pisa.
+      titulo: '',
       posicion: 'placaL', fuente: 'liga', jugadores: [], snapshots: {}, ultimaActualizacionWeb: '',
-      textAdjust: textAdjustDefaults('position', 'name', 'primaryStat'),
+      textAdjust: textAdjustDefaults('titulo', 'position', 'name', 'primaryStat'),
       // "crestOffsetX/Y/Scale" (2026-08-31, auditoria completa): ajuste
       // column-level, el escudo nunca tuvo ajuste propio.
       crestOffsetX: 0, crestOffsetY: 0, crestScale: 1,
@@ -1101,8 +1314,9 @@ export const MODULES = {
     layer: 'fullscreen',
     fields: [],
     defaults: {
+      titulo: '',
       posicion: 'placaL', fuente: 'liga', jugadores: [], snapshots: {}, ultimaActualizacionWeb: '',
-      textAdjust: textAdjustDefaults('position', 'name', 'primaryStat'),
+      textAdjust: textAdjustDefaults('titulo', 'position', 'name', 'primaryStat'),
       // "crestOffsetX/Y/Scale" (2026-08-31, auditoria completa): ajuste
       // column-level, el escudo nunca tuvo ajuste propio.
       crestOffsetX: 0, crestOffsetY: 0, crestScale: 1,
@@ -1116,13 +1330,60 @@ export const MODULES = {
     layer: 'fullscreen',
     fields: [],
     defaults: {
+      // "titulo" (2026-09-02): en Argentina Streamers el renderer usa modo
+      // "ranking" (posicion+nombre+UN estadistica -- ver
+      // program/js/renderers/performanceTable.js) sobre el mismo PNG que
+      // goleadores/asistidores, con "PARTICIPACIONES" (PJ del jugador,
+      // metrica ya existente en el modulo) como estadistica -- GLA sigue
+      // exactamente con su layout de 3 columnas (G/A/PJ) de siempre, sin
+      // "position" ni "titulo" en su propio asset.
+      titulo: '',
       posicion: 'placaL', fuente: 'liga', jugadores: [], snapshots: {}, ultimaActualizacionWeb: '',
-      textAdjust: textAdjustDefaults('name', 'stat0', 'stat1', 'stat2'),
+      textAdjust: textAdjustDefaults('titulo', 'position', 'name', 'primaryStat', 'stat0', 'stat1', 'stat2'),
       // "crestOffsetX/Y/Scale" (2026-08-31, auditoria completa): ajuste
       // column-level, el escudo nunca tuvo ajuste propio.
       crestOffsetX: 0, crestOffsetY: 0, crestScale: 1,
     },
   },
+
+  // FICHA JUGADOR (2026-09-02, pedido explicito del usuario: placa
+  // vertical individual con los datos de UN jugador, para Argentina
+  // Streamers). Modulo NUEVO, registrado igual para los dos themes (mismo
+  // criterio que el resto del proyecto: la estructura existe siempre, el
+  // ASSET real es lo que falta -- ver "getModuleAssetStatus", que ya
+  // infiere 'pending' sin "image"/"video" reales, sin tener que declarar
+  // "status" a mano aca). GLA no tiene pedido ningun uso de este modulo
+  // -- queda disponible en su navegacion (mismo patron que cualquier otro
+  // modulo del registro) pero sin contenido/flujo pensado para GLA.
+  //
+  // "jugadores" (el roster manual, mismo shape base que
+  // goleadores/asistidores/participaciones: teamId+nombre+stats) es la
+  // lista de CANDIDATOS -- "selectedPlayerId" elige cual de esa lista se
+  // esta mostrando ahora mismo en la placa. Doble fuente de datos
+  // (manual/futura sync web) preparada igual que el resto de Tablas:
+  // "fuente"/"snapshots" ya soportan reemplazar la lista completa sin
+  // tocar la logica del panel ni del renderer -- ver
+  // ficha-jugador-panel.js. "mvp" es el unico stat nuevo (no existia en
+  // ningun otro modulo); "g+a" se calcula en render, nunca se guarda
+  // aparte (mismo criterio que el resto de Tablas: la fuente de verdad
+  // son los stats base, no un numero derivado tipeado a mano).
+  fichaJugador: {
+    id: 'fichaJugador',
+    label: 'Ficha Jugador',
+    category: 'Tablas',
+    layer: 'fullscreen',
+    fields: [],
+    defaults: {
+      fuente: 'manual',
+      jugadores: [],
+      snapshots: {},
+      ultimaActualizacionWeb: '',
+      selectedPlayerId: '',
+      textAdjust: textAdjustDefaults('nombre', 'goles', 'asistencias', 'gMasA', 'presencias', 'mvps'),
+      crestOffsetX: 0, crestOffsetY: 0, crestScale: 1,
+    },
+  },
+
 };
 
 export const MODULE_IDS = Object.keys(MODULES);

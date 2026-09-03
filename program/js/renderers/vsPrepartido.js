@@ -1,5 +1,6 @@
 import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { crestFile, teamName } from '../../../shared/teams.js';
+import { resolveVsDisplayName } from '../../../shared/broadcast-names.js';
 import { applyFittedText, updateFittedTextWithTransition, readTextAdjust } from '../text-fit.js';
 
 const VIDEO_SRC = '/assets/placas/vs-prepartido-alpha.mp4';
@@ -53,10 +54,12 @@ export default function renderVsPrepartido(contentEl, data, justTaken, onOneShot
   setCrest(contentEl.querySelector('.ov-vsfull-teamA .ov-vsfull-crest'), sb.teamA);
   setCrest(contentEl.querySelector('.ov-vsfull-teamB .ov-vsfull-crest'), sb.teamB);
 
-  applyFittedText(contentEl.querySelector('.ov-vsfull-nameA'), teamName(sb.teamA), {
+  const nameA = resolveVsDisplayName({ mode: data.nameAMode, manualText: data.nameAManual, teamId: sb.teamA, fallbackName: teamName(sb.teamA) });
+  const nameB = resolveVsDisplayName({ mode: data.nameBMode, manualText: data.nameBManual, teamId: sb.teamB, fallbackName: teamName(sb.teamB) });
+  applyFittedText(contentEl.querySelector('.ov-vsfull-nameA'), nameA, {
     maxFont: NAME_MAX_FONT, minFont: NAME_MIN_FONT, maxWidth: NAME_MAX_WIDTH_A, weight: 800,
   }, readTextAdjust(data.textAdjust, 'nameA'));
-  applyFittedText(contentEl.querySelector('.ov-vsfull-nameB'), teamName(sb.teamB), {
+  applyFittedText(contentEl.querySelector('.ov-vsfull-nameB'), nameB, {
     maxFont: NAME_MAX_FONT, minFont: NAME_MIN_FONT, maxWidth: NAME_MAX_WIDTH_B, weight: 800,
   }, readTextAdjust(data.textAdjust, 'nameB'));
 

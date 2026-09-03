@@ -1,8 +1,36 @@
 import { crestFile, teamName } from '../../../shared/teams.js';
-import { applyFittedText, applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
+import { applyFittedText, applyPlainTextAdjust, readTextAdjust, toBroadcastUpper } from '../text-fit.js';
 import { resolveImageSrc } from '../theme-assets.js';
+import { getActiveThemeId } from '../theme-client.js';
+import { ARGENTINA_STREAMERS_THEME_ID } from '../../../shared/themes.js';
 
-const ROW_COUNT = 6;
+// Titulo por default segun modulo (2026-09-02, pedido explicito del
+// usuario: "TÍTULO configurable" sobre TABLA_ESTADISTICAS.png -- el
+// operador puede escribir el suyo, esto es solo el fallback cuando el
+// campo esta vacio).
+const DEFAULT_TITLE = {
+  goleadores: 'GOLEADORES',
+  asistidores: 'ASISTIDORES',
+  jugadores: 'PARTICIPACIONES',
+};
+
+// GLA: siempre 6 filas, sin cambios (mismo asset/geometria de siempre).
+// Argentina Streamers (2026-09-02, pedido explicito del usuario: "modo
+// cantidad" 5/10 SLOTS): 5 filas cuando la placa comparte la zona
+// vertical con otra ("placaL-top"/"placaL-bottom"), 10 cuando ocupa toda
+// la zona ella sola ("placaL-solo"). Sin asset real todavia -- ver
+// ROW_COUNT_ARGENTINA abajo y el comentario de "buildStructure": el
+// contenido dinamico funciona igual sobre transparencia, el banner
+// "ASSET PENDIENTE" de Master Control indica que falta el grafico.
+const ROW_COUNT_GLA = 6;
+const ROW_COUNT_ARGENTINA = { 'placaL-top': 5, 'placaL-bottom': 5, 'placaL-solo': 10 };
+
+function rowCountFor(position) {
+  if (getActiveThemeId() === ARGENTINA_STREAMERS_THEME_ID && ROW_COUNT_ARGENTINA[position]) {
+    return ROW_COUNT_ARGENTINA[position];
+  }
+  return ROW_COUNT_GLA;
+}
 
 const CONFIG = {
   goleadores: {
@@ -26,6 +54,14 @@ const CONFIG = {
   jugadores: {
     image: '/assets/tablas/mejores-jugadores.png',
     values: (player) => [number(player.g), number(player.a), number(player.pj)],
+    // "value" (2026-09-02, SOLO se usa en modo ranking -- ver
+    // "isRankingMode" mas abajo, exclusivo de Argentina Streamers): la
+    // unica estadistica visible en el layout de 3 columnas
+    // (posicion+jugador+estadistica) sobre TABLA_ESTADISTICAS.png es "PJ"
+    // (partidos jugados) -- la metrica que ya maneja este modulo y que
+    // literalmente significa "participaciones", el nombre de broadcast de
+    // este modulo. GLA nunca lee esto (sigue con "values", G/A/PJ).
+    value: (player) => number(player.pj),
     compare: (a, b) => {
       const scoreA = average(a.player.g + a.player.a, a.player.pj);
       const scoreB = average(b.player.g + b.player.a, b.player.pj);
@@ -34,6 +70,17 @@ const CONFIG = {
     },
   },
 };
+
+// "ranking" en CONFIG es estatico (goleadores/asistidores siempre lo son,
+// GLA y Argentina Streamers por igual). "jugadores" es la excepcion: GLA
+// mantiene su layout propio de 3 columnas (G/A/PJ, sin cambios); Argentina
+// Streamers pasa a modo ranking (posicion+jugador+PJ) porque comparte
+// TABLA_ESTADISTICAS.png con los otros dos -- mismo asset, mismo layout de
+// fila, para los 3 modulos.
+function isRankingMode(moduleId) {
+  if (CONFIG[moduleId].ranking) return true;
+  return moduleId === 'jugadores' && getActiveThemeId() === ARGENTINA_STREAMERS_THEME_ID;
+}
 
 function number(value) {
   const parsed = Number(value);
@@ -45,23 +92,34 @@ function average(numerator, pj) {
   return matches === 0 ? 0 : number(numerator) / matches;
 }
 
+// "placaL-top"/"placaL-bottom"/"placaL-solo" (2026-09-02): valores NUEVOS,
+// exclusivos del selector de Argentina Streamers (ver
+// master-control/js/performance-table-panel.js) -- GLA nunca los escribe,
+// asi que para GLA esta funcion sigue devolviendo exactamente lo mismo de
+// siempre. Fuera de Argentina Streamers estos 3 valores caen al mismo
+// 'placaL' de siempre (blindaje defensivo, no deberia ocurrir en la
+// practica ya que el panel los oculta segun theme).
+const ARGENTINA_POSITIONS = new Set(['placaL-top', 'placaL-bottom', 'placaL-solo']);
+
 function normalizePosition(position) {
   if (position === 'fullscreenDerecha' || position === 'fullscreenIzquierda') return position;
+  if (getActiveThemeId() === ARGENTINA_STREAMERS_THEME_ID && ARGENTINA_POSITIONS.has(position)) return position;
   return 'placaL';
 }
 
 function positionClass(position) {
   if (position === 'fullscreenDerecha') return 'fs-derecha';
   if (position === 'fullscreenIzquierda') return 'fs-izquierda';
+  if (ARGENTINA_POSITIONS.has(position)) return position;
   return 'placaL';
 }
 
-function sortedPlayers(players, compare) {
+function sortedPlayers(players, compare, rowCount) {
   return (Array.isArray(players) ? players : [])
     .map((player, index) => ({ player, index }))
     .sort(compare)
     .map((entry) => entry.player)
-    .slice(0, ROW_COUNT);
+    .slice(0, rowCount);
 }
 
 function setCrest(img, teamId) {
@@ -99,14 +157,16 @@ function rowMarkup(index, ranking) {
   `;
 }
 
-function buildStructure(contentEl, moduleId, position) {
+function buildStructure(contentEl, moduleId, position, rowCount) {
   const config = CONFIG[moduleId];
   const imgSrc = resolveImageSrc(moduleId, config.image);
+  const ranking = isRankingMode(moduleId);
   contentEl.innerHTML = `
     <div class="ov-performance-card ov-performance-card--${moduleId} ov-performance-card--${positionClass(position)}">
       ${imgSrc ? `<img class="gfx-bg-image" src="${imgSrc}" />` : ''}
       <div class="gfx-overlay">
-        ${Array.from({ length: ROW_COUNT }, (_, index) => rowMarkup(index, config.ranking)).join('')}
+        <div class="ov-performance-titulo"></div>
+        ${Array.from({ length: rowCount }, (_, index) => rowMarkup(index, ranking)).join('')}
       </div>
     </div>
   `;
@@ -117,34 +177,58 @@ export function renderPerformanceTable(moduleId, contentEl, data) {
   if (!config) throw new Error(`Tabla de rendimiento desconocida: ${moduleId}`);
 
   const position = normalizePosition(data.posicion);
-  const signature = `${moduleId}:${position}`;
+  const rowCount = rowCountFor(position);
+  // "isRankingMode(moduleId)" en la firma (2026-09-02): "jugadores" cambia
+  // de layout (3 columnas <-> ranking) segun theme -- sin esto, un cambio
+  // de theme en caliente con el mismo "position"/"rowCount" no reconstruia
+  // la estructura.
+  const signature = `${moduleId}:${position}:${rowCount}:${isRankingMode(moduleId)}`;
   if (contentEl.dataset.signature !== signature) {
     contentEl.dataset.signature = signature;
-    buildStructure(contentEl, moduleId, position);
+    buildStructure(contentEl, moduleId, position, rowCount);
   }
 
   const ta = data.textAdjust;
+  const ranking = isRankingMode(moduleId);
   const nameAdjust = readTextAdjust(ta, 'name');
-  const players = sortedPlayers(data.jugadores, config.compare);
-  for (let index = 0; index < ROW_COUNT; index += 1) {
+  const players = sortedPlayers(data.jugadores, config.compare, rowCount);
+
+  // TÍTULO (2026-09-02, pedido explicito del usuario): configurable por
+  // modulo, cae al nombre de broadcast si el operador no escribio nada.
+  const tituloEl = contentEl.querySelector('.ov-performance-titulo');
+  if (tituloEl) {
+    applyPlainTextAdjust(tituloEl, toBroadcastUpper((data.titulo || '').trim() || DEFAULT_TITLE[moduleId] || ''), readTextAdjust(ta, 'titulo'));
+  }
+
+  // "placaL-solo" (2026-09-02, Argentina Streamers, geometria real medida
+  // pixel a pixel sobre TABLA_ESTADISTICAS.png -- ver overlay.css): la
+  // columna JUGADOR es mucho mas ancha que en el layout viejo de GLA
+  // (313px reales contra 154px), asi que el fitted text necesita su
+  // propio maxWidth aca. GLA sigue exactamente con los valores de siempre.
+  const isArgentinaSolo = ranking && position === 'placaL-solo';
+
+  for (let index = 0; index < rowCount; index += 1) {
     const row = contentEl.querySelector(`.ov-performance-row[data-row="${index}"]`);
     const player = players[index];
     row.classList.toggle('is-empty', !player);
 
     setCrest(row.querySelector('.ov-performance-crest'), player?.teamId);
     applyFittedText(row.querySelector('.ov-performance-name'), player?.nombre || '', {
-      maxFont: config.ranking ? 23 : 24,
-      minFont: config.ranking ? 11 : 10,
-      maxWidth: config.ranking ? 154 : 145,
+      maxFont: isArgentinaSolo ? 26 : (ranking ? 23 : 24),
+      minFont: isArgentinaSolo ? 13 : (ranking ? 11 : 10),
+      maxWidth: isArgentinaSolo ? 300 : (ranking ? 154 : 145),
       weight: 800,
     }, nameAdjust);
 
-    if (config.ranking) {
+    if (ranking) {
       applyPlainTextAdjust(row.querySelector('.ov-performance-position'), player ? String(index + 1) : '', readTextAdjust(ta, 'position'));
+      // "placaL"/"placaL-top"/"placaL-bottom" (5-6 filas en media zona
+      // vertical): fuente grande, igual que siempre.
+      const isHalfColumn = position === 'placaL' || position === 'placaL-top' || position === 'placaL-bottom';
       applyFittedText(row.querySelector('.ov-performance-primary-stat'), player ? String(config.value(player)) : '', {
-        maxFont: position === 'placaL' ? 30 : 25,
-        minFont: position === 'placaL' ? 17 : 14,
-        maxWidth: 44,
+        maxFont: isArgentinaSolo ? 28 : (isHalfColumn ? 30 : 25),
+        minFont: isArgentinaSolo ? 15 : (isHalfColumn ? 17 : 14),
+        maxWidth: isArgentinaSolo ? 44 : 44,
         weight: 900,
       }, readTextAdjust(ta, 'primaryStat'));
       continue;

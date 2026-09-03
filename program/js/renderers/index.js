@@ -25,10 +25,23 @@ import grupos from './grupos.js';
 import estrellas from './estrellas.js';
 import posiciones from './posiciones.js';
 import { goleadores, asistidores, jugadores } from './performanceTable.js';
+import fichaJugador from './fichaJugador.js';
+// BRACKETS (2026-09-02, handoff de un agente concurrente -- ver
+// docs/PATCH_SHARED_CLAUDE.md). Su patch pedia registrarlos en un objeto
+// "RENDERERS" dentro de program/js/main.js, pero ese archivo no tiene tal
+// objeto -- el registro real de renderers es este archivo (program/js/main.js
+// importa "renderers" desde aca). Se registran aca para que su intencion
+// (renderer real, sin tocar su codigo) funcione con la arquitectura vigente.
+import cronogramaHoy from './cronogramaHoy.js';
+import resultadosParciales from './resultadosParciales.js';
+import historial from './historial.js';
 import zocaloFinalDiv from './zocaloFinalDiv.js';
 import zocaloFinal from './zocaloFinal.js';
 import zocaloCompuesto from './zocaloCompuesto.js';
+import zocaloCompuestoEquipos from './zocaloCompuestoEquipos.js';
+import zocaloCompuestoLogo from './zocaloCompuestoLogo.js';
 import placaLInfo from './placaLInfo.js';
+import sitioWebPromoL from './sitioWebPromoL.js';
 
 // Registro de funciones de render: id de modulo -> (contentEl, data, justTaken, onOneShotEnded) => void
 export const renderers = {
@@ -59,8 +72,15 @@ export const renderers = {
   goleadores,
   asistidores,
   jugadores,
+  fichaJugador,
+  cronogramaHoy,
+  resultadosParciales,
+  historial,
   zocaloFinalDiv,
   zocaloFinal,
   zocaloCompuesto,
+  zocaloCompuestoEquipos,
+  zocaloCompuestoLogo,
   placaLInfo,
+  sitioWebPromoL,
 };

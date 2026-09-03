@@ -1,6 +1,8 @@
 import { formatPlayer, normalizePlayers, parsePlayer } from '../../shared/player-lists.js';
 import { teamName } from '../../shared/teams.js';
+import { ARGENTINA_STREAMERS_THEME_ID, getThemeAsset } from '../../shared/themes.js';
 import { mountAdjustControl } from './field-editors.js';
+import { renderCompositionControl } from './composition-control.js';
 
 const STARTER_LIMIT = 6;
 
@@ -148,7 +150,55 @@ export function renderFormationListPanel(container, data, scoreboardData, onDirt
       addLabel: 'Agregar suplente',
       disabled: transitioning,
     }));
+    if (document.body.dataset.theme === ARGENTINA_STREAMERS_THEME_ID) {
+      root.appendChild(buildFormationKitSection());
+    }
     root.appendChild(buildAdjustSection());
+  }
+
+  function buildFormationKitSection() {
+    const section = document.createElement('section');
+    section.className = 'formation-list-section';
+    const heading = document.createElement('h2');
+    heading.textContent = 'CAMISETAS / FORMACIÓN EQUIPO';
+    section.appendChild(heading);
+
+    const assetPath = getThemeAsset(ARGENTINA_STREAMERS_THEME_ID, 'formacionEquipos')
+      ?.formationAssetsByTeam?.[teamId];
+    if (!teamId || !assetPath) {
+      const pending = document.createElement('p');
+      pending.className = 'formation-limit-note';
+      pending.textContent = 'CAMISETA / FORMACIÓN DEL EQUIPO: ASSET PENDIENTE';
+      section.appendChild(pending);
+      return section;
+    }
+
+    if (!data.formationKitByTeam || typeof data.formationKitByTeam !== 'object') {
+      data.formationKitByTeam = {};
+    }
+    if (!data.formationKitByTeam[teamId] || typeof data.formationKitByTeam[teamId] !== 'object') {
+      data.formationKitByTeam[teamId] = { offsetX: 0, offsetY: 0, scale: 1 };
+    }
+    const note = document.createElement('p');
+    note.className = 'formation-limit-note';
+    note.textContent = `${activeTeamName} — posición y escala propias por teamId.`;
+    section.appendChild(note);
+    const control = document.createElement('div');
+    section.appendChild(control);
+    renderCompositionControl(control, data.formationKitByTeam[teamId], onDirty, {
+      title: '',
+      note: '',
+      keys: { xKey: 'offsetX', yKey: 'offsetY', scaleKey: 'scale' },
+      ...(side?.saveOptions || {}),
+      elementSpec: {
+        kind: 'composition',
+        dataPath: ['formationKitByTeam', teamId],
+        xKey: 'offsetX',
+        yKey: 'offsetY',
+        scaleKey: 'scale',
+      },
+    });
+    return section;
   }
 
   // "AJUSTE DE TEXTOS" (2026-08-15, auditoria completa): "playerName"/

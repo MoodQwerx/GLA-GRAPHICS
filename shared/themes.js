@@ -38,12 +38,15 @@ export const THEME_ASSET_MODULES = [
   { key: 'cambios', label: 'Cambios' },
   { key: 'gol', label: 'Gol' },
   { key: 'varCheck', label: 'VAR' },
+  { key: 'varCheckMotivo', label: 'VAR Motivo (zócalo corto)' },
   { key: 'replay', label: 'Replay' },
   { key: 'bug', label: 'Mosca' },
   { key: 'longDouble', label: 'Zócalo largo doble' },
   { key: 'shortSimple', label: 'Zócalo corto simple' },
   { key: 'shortDouble', label: 'Zócalo corto doble' },
   { key: 'zocaloCompuesto', label: 'Zócalo compuesto' },
+  { key: 'zocaloCompuestoEquipos', label: 'Zócalo compuesto con equipos' },
+  { key: 'zocaloCompuestoLogo', label: 'Zócalo compuesto con logo' },
   { key: 'zocaloFinal', label: 'Zócalo final' },
   { key: 'zocaloFinalDiv', label: 'Zócalo final con equipos' },
   { key: 'placaLInfo', label: 'Placa L Info' },
@@ -56,6 +59,16 @@ export const THEME_ASSET_MODULES = [
   { key: 'goleadores', label: 'Goleadores' },
   { key: 'asistidores', label: 'Asistidores' },
   { key: 'jugadores', label: 'Mejores jugadores' },
+  { key: 'fichaJugador', label: 'Ficha Jugador' },
+  // "cronogramaHoy"/"resultadosParciales"/"historial" (2026-09-02):
+  // modulos de BRACKETS entregados por un agente concurrente -- ver
+  // docs/PATCH_SHARED_CLAUDE.md (handoff recibido) y
+  // docs/BRACKETS_ARGENTINA_STREAMERS.md. Integrados tal cual pidio el
+  // patch, sin tocar su logica/renderer/panel.
+  { key: 'cronogramaHoy', label: 'Cronograma Hoy' },
+  { key: 'resultadosParciales', label: 'Resultados Parciales' },
+  { key: 'historial', label: 'Historial' },
+  { key: 'sitioWebPromoL', label: 'Sitio Web Promo L' },
   { key: 'sideTable', label: 'Resultados' },
   { key: 'posiciones', label: 'Posiciones' },
   { key: 'posicionesTorneo', label: 'Posiciones (Torneo)' },
@@ -101,6 +114,8 @@ export const THEMES = {
       shortSimple: { video: '/assets/zocalos/zocalo-corto-simple-alpha.mp4' },
       shortDouble: { video: '/assets/zocalos/zocalo-corto-doble-alpha.mp4' },
       zocaloCompuesto: { image: '/assets/images/gla-logo.png' },
+      zocaloCompuestoEquipos: { video: '/assets/zocalos/zocalo-final-div-alpha.mp4' },
+      zocaloCompuestoLogo: { video: '/assets/zocalos/zocalo-final-alpha.mp4', image: '/assets/images/gla-logo.png' },
       zocaloFinal: { video: '/assets/zocalos/zocalo-final-alpha.mp4', image: '/assets/images/gla-logo.png' },
       zocaloFinalDiv: { video: '/assets/zocalos/zocalo-final-div-alpha.mp4' },
       placaLInfo: { image: '/assets/var/zocalo-cortito-brackets.png' },
@@ -219,15 +234,11 @@ export const THEMES = {
         },
       },
       varCheck: { video: '/assets/themes/argentina-streamers/var-replay/var-chequeo-alpha.mp4' },
+      varCheckMotivo: { video: '/assets/themes/argentina-streamers/zocalos/zocalo-corto-doble-alpha.mp4' },
       replay: { video: '/assets/themes/argentina-streamers/var-replay/replay-sponsor-alpha.mp4' },
       bug: { video: '/assets/themes/argentina-streamers/mosca/mosca-localstrike-alpha.mp4' },
       shortSimple: { video: '/assets/themes/argentina-streamers/zocalos/zocalo-corto-simple-alpha.mp4' },
-      // "shortDouble" (Zocalo Corto Doble) queda SIN asset a proposito
-      // (pedido explicito, 2026-09-01): el archivo que tenia estaba mal
-      // asignado y paso a Zocalo Largo Doble (ver "longDouble" abajo); no
-      // se inventa ni se copia un reemplazo -- cae al default
-      // {video:null,image:null,status:'pending'} del spread de arriba, el
-      // contenido dinamico sigue funcionando sobre transparencia.
+      shortDouble: { video: '/assets/themes/argentina-streamers/zocalos/zocalo-corto-doble-alpha.mp4' },
       longDouble: { video: '/assets/themes/argentina-streamers/zocalos/zocalo-largo-doble-alpha.mp4' },
       // Zocalo Compuesto: UN solo modulo con 2 variantes por "tipo" (ver
       // data.tipo en program/js/renderers/zocaloCompuesto.js, logica ya
@@ -264,6 +275,11 @@ export const THEMES = {
           equipos: '/assets/themes/argentina-streamers/zocalos/zocalo-compuesto-equipos-alpha.mp4',
         },
       },
+      zocaloCompuestoEquipos: { video: '/assets/themes/argentina-streamers/zocalos/zocalo-compuesto-equipos-alpha.mp4' },
+      zocaloCompuestoLogo: {
+        video: '/assets/themes/argentina-streamers/zocalos/zocalo-compuesto-logo-alpha.mp4',
+        image: '/assets/themes/argentina-streamers/zocalos/logo-localstrike.png'
+      },
       // VS Prepartido/Resultado (2026-09-01): los 2 assets estaban
       // CRUZADOS -- el que hoy vivia acá como "vsPrepartido" en realidad
       // tenia el recuadro verde de resultado (confirmado por inspeccion
@@ -272,11 +288,43 @@ export const THEMES = {
       // Prepartido real; el .mp4 que estaba mal puesto aca se movio a
       // "vsResultado" (recuadro verde, contenido correcto para ese modulo).
       vsPrepartido: { video: '/assets/themes/argentina-streamers/vs/vs-prepartido-alpha.mp4' },
-      vsResultado: { video: '/assets/themes/argentina-streamers/vs/vs-resultado-alpha.mp4' },
+      // vsResultado (2026-09-02): PNG real (VS_RESULTADO entregado por el
+      // usuario) reemplaza al .mp4 anterior -- geometria vertical medida
+      // pixel a pixel, ver program/js/renderers/vsResultado.js. El video
+      // viejo (vs-resultado-alpha.mp4) queda sin referenciar; no se borro
+      // el archivo por las dudas, solo se dejo de usar.
+      vsResultado: { image: '/assets/themes/argentina-streamers/brackets/vs-resultado.png' },
       // Estrellas (2026-09-01): asset real ("ASSET ESTRELLAS" del ZIP) --
       // solo el asset visual, la logica de datos (jugadores/escudos/
       // stats/PJ/editores/posiciones) sigue exactamente igual, sin tocar.
       estrellas: { video: '/assets/themes/argentina-streamers/estrellas/estrellas-alpha.mp4' },
+      formacionEquipos: {
+        video: '/assets/themes/argentina-streamers/formaciones/formacion-alpha.mp4',
+        // Mapping por teamId estable. Argentina masculino y femenino
+        // comparten el PNG entregado; equipos con valor null quedan sin
+        // capa de camisetas hasta que el operador integre su asset real.
+        formationAssetsByTeam: {
+          'argentina-streamers': '/assets/themes/argentina-streamers/formaciones/kits/formacion-arg.png',
+          'argentina-streamers-fem': '/assets/themes/argentina-streamers/formaciones/kits/formacion-arg.png',
+          oxen: '/assets/themes/argentina-streamers/formaciones/kits/formacion-oxen.png',
+          'peru-creadores': '/assets/themes/argentina-streamers/formaciones/kits/formacion-peru.png',
+        },
+      },
+      // Historial (2026-09-02): PNG real entregado por el usuario --
+      // geometria medida pixel a pixel, ver program/js/renderers/historial.js.
+      historial: { image: '/assets/themes/argentina-streamers/tablas/historial.png' },
+      // Goleadores/Asistidores/Participaciones (2026-09-02): comparten UN
+      // unico PNG real (10 slots, sin escudo por fila -- ver
+      // program/js/renderers/performanceTable.js), mismo archivo en los 3,
+      // sin duplicarlo en disco.
+      goleadores: { image: '/assets/themes/argentina-streamers/tablas/tabla-estadisticas.png' },
+      asistidores: { image: '/assets/themes/argentina-streamers/tablas/tabla-estadisticas.png' },
+      jugadores: { image: '/assets/themes/argentina-streamers/tablas/tabla-estadisticas.png' },
+      // Cronograma Hoy (2026-09-02): PNG real (VS_DEFAULT entregado por el
+      // usuario) -- reemplaza la tarjeta fabricada en CSS que habia antes.
+      cronogramaHoy: { image: '/assets/themes/argentina-streamers/brackets/cronograma-hoy.png' },
+      // Sitio Web Promo L (2026-09-02): PNG real (ANUNCIO_AS entregado).
+      sitioWebPromoL: { image: '/assets/themes/argentina-streamers/extras/anuncio-as.png' },
     },
   },
 };

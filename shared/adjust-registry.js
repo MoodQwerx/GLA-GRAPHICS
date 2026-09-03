@@ -52,6 +52,18 @@
 // argentinaStreamers -- GLA nunca puebla "crestByTeam" en su propio
 // arbol de datos, asi que esta logica cae siempre al camino de fallback
 // sin cambiar nada de su comportamiento.
+//
+// "themeOnly" (2026-09-01, pedido explicito del usuario: "trabajar
+// unicamente sobre Argentina Streamers, no tocar GLA, no tocar otros
+// modulos"). Marca una entrada como visible SOLO en el acordeon generico
+// de Master Control (renderModuleAdjustAccordion) cuando el theme activo
+// coincide -- Program (applyElementAdjustRegistry) la aplica igual para
+// cualquier theme, sin chequear "themeOnly" (es un concern de UI de
+// Master Control, no de renderizado): para GLA los campos que respalda
+// simplemente nunca se tocan/guardan, asi que quedan en su default
+// (0/0/1, no-op) para siempre. Usado por los 12 elementos nuevos de
+// "marcadorPenales" (10 circulos + 2 nombres) -- ninguna otra entrada del
+// registro lo necesita hoy.
 export const ADJUST_REGISTRY = {
   // MARCADOR (2026-08-31): migrado desde la funcion hecha a medida
   // "renderScoreboardAdjustAccordion" -- mismo orden, mismas labels,
@@ -170,6 +182,29 @@ export const ADJUST_REGISTRY = {
       { id: 'sponsor', label: 'SPONSOR', kind: 'composition', xKey: 'sponsorOffsetX', yKey: 'sponsorOffsetY', scaleKey: 'sponsorScale' },
       { id: 'nameA', label: 'ABREVIATURA LOCAL (solo GLA)', kind: 'text', textKey: 'nameA' },
       { id: 'nameB', label: 'ABREVIATURA VISITANTE (solo GLA)', kind: 'text', textKey: 'nameB' },
+      // "kickLocal{1-5}"/"kickVisitante{1-5}" (2026-09-01, pedido explicito
+      // del usuario: control total por circulo desde Master Control, sin
+      // mas ajustes hardcodeados en CSS). "themeOnly" (ver docstring mas
+      // abajo) los mantiene invisibles para GLA en el acordeon generico;
+      // el panel dedicado de Argentina Streamers Penales
+      // (renderPenalesArgentinaAccordion en master-control/js/main.js) los
+      // agrupa en su propia seccion "AJUSTE DE INTENTOS" en vez de listarlos
+      // aca sueltos.
+      { id: 'kickLocal1', label: 'LOCAL 1', kind: 'composition', xKey: 'kickLocal1OffsetX', yKey: 'kickLocal1OffsetY', scaleKey: 'kickLocal1Scale', themeOnly: 'argentinaStreamers' },
+      { id: 'kickLocal2', label: 'LOCAL 2', kind: 'composition', xKey: 'kickLocal2OffsetX', yKey: 'kickLocal2OffsetY', scaleKey: 'kickLocal2Scale', themeOnly: 'argentinaStreamers' },
+      { id: 'kickLocal3', label: 'LOCAL 3', kind: 'composition', xKey: 'kickLocal3OffsetX', yKey: 'kickLocal3OffsetY', scaleKey: 'kickLocal3Scale', themeOnly: 'argentinaStreamers' },
+      { id: 'kickLocal4', label: 'LOCAL 4', kind: 'composition', xKey: 'kickLocal4OffsetX', yKey: 'kickLocal4OffsetY', scaleKey: 'kickLocal4Scale', themeOnly: 'argentinaStreamers' },
+      { id: 'kickLocal5', label: 'LOCAL 5', kind: 'composition', xKey: 'kickLocal5OffsetX', yKey: 'kickLocal5OffsetY', scaleKey: 'kickLocal5Scale', themeOnly: 'argentinaStreamers' },
+      { id: 'kickVisitante1', label: 'VISITANTE 1', kind: 'composition', xKey: 'kickVisitante1OffsetX', yKey: 'kickVisitante1OffsetY', scaleKey: 'kickVisitante1Scale', themeOnly: 'argentinaStreamers' },
+      { id: 'kickVisitante2', label: 'VISITANTE 2', kind: 'composition', xKey: 'kickVisitante2OffsetX', yKey: 'kickVisitante2OffsetY', scaleKey: 'kickVisitante2Scale', themeOnly: 'argentinaStreamers' },
+      { id: 'kickVisitante3', label: 'VISITANTE 3', kind: 'composition', xKey: 'kickVisitante3OffsetX', yKey: 'kickVisitante3OffsetY', scaleKey: 'kickVisitante3Scale', themeOnly: 'argentinaStreamers' },
+      { id: 'kickVisitante4', label: 'VISITANTE 4', kind: 'composition', xKey: 'kickVisitante4OffsetX', yKey: 'kickVisitante4OffsetY', scaleKey: 'kickVisitante4Scale', themeOnly: 'argentinaStreamers' },
+      { id: 'kickVisitante5', label: 'VISITANTE 5', kind: 'composition', xKey: 'kickVisitante5OffsetX', yKey: 'kickVisitante5OffsetY', scaleKey: 'kickVisitante5Scale', themeOnly: 'argentinaStreamers' },
+      // "nombreLocal"/"nombreVisitante" (2026-09-01): nombre de broadcast
+      // en la franja azul arriba de cada fila de circulos -- ver
+      // shared/broadcast-names.js. Solo Argentina Streamers.
+      { id: 'nombreLocal', label: 'NOMBRE LOCAL', kind: 'text', textKey: 'nombreLocal', themeOnly: 'argentinaStreamers' },
+      { id: 'nombreVisitante', label: 'NOMBRE VISITANTE', kind: 'text', textKey: 'nombreVisitante', themeOnly: 'argentinaStreamers' },
     ],
   },
   marcadorZocalo: {
@@ -268,6 +303,29 @@ export const ADJUST_REGISTRY = {
       { id: 'sponsor2', label: 'SPONSOR 2', kind: 'composition', xKey: 'sponsor2OffsetX', yKey: 'sponsor2OffsetY', scaleKey: 'sponsor2Scale' },
     ],
   },
+  // Unica entrada de cada uno (2026-09-02, auditoria de wiring): habia una
+  // segunda entrada duplicada mas abajo en este objeto, sin "sponsor" -- en
+  // un literal de objeto JS la clave repetida MAS TARDE gana, asi que esa
+  // version incompleta (sin editor de posicion de sponsor en el acordeon
+  // generico) era la que realmente terminaba en ADJUST_REGISTRY, no esta.
+  // Se elimino el duplicado.
+  zocaloCompuestoEquipos: {
+    elements: [
+      { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale', crestTeam: 'A' },
+      { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale', crestTeam: 'B' },
+      { id: 'texto1', label: 'TEXTO MAIN (TIRA AZUL)', kind: 'text', textKey: 'texto1' },
+      { id: 'texto2', label: 'SUBTEXTO (TIRA VERDE)', kind: 'text', textKey: 'texto2' },
+      { id: 'sponsor', label: 'SPONSOR', kind: 'composition', xKey: 'sponsorOffsetX', yKey: 'sponsorOffsetY', scaleKey: 'sponsorScale' },
+    ],
+  },
+  zocaloCompuestoLogo: {
+    elements: [
+      { id: 'logo', label: 'LOGO', kind: 'composition', xKey: 'logoOffsetX', yKey: 'logoOffsetY', scaleKey: 'logoScale' },
+      { id: 'texto1', label: 'TEXTO MAIN (TIRA AZUL)', kind: 'text', textKey: 'texto1' },
+      { id: 'texto2', label: 'SUBTEXTO (TIRA VERDE)', kind: 'text', textKey: 'texto2' },
+      { id: 'sponsor', label: 'SPONSOR', kind: 'composition', xKey: 'sponsorOffsetX', yKey: 'sponsorOffsetY', scaleKey: 'sponsorScale' },
+    ],
+  },
   // "zocaloFinal"/"zocaloFinalDiv" (2026-08-31): sin entrada de registro.
   // HIDDEN_FROM_NAV_IDS (ver master-control/js/main.js) -- reemplazados
   // por "zocaloCompuesto" (2026-08-16), sin panel propio en Master Control
@@ -322,7 +380,44 @@ export const ADJUST_REGISTRY = {
       { id: 'crest', label: 'ESCUDO (COLUMNA)', kind: 'composition', xKey: 'crestOffsetX', yKey: 'crestOffsetY', scaleKey: 'crestScale' },
     ],
   },
-
+  // "fichaJugador" (2026-09-02, pedido explicito del usuario, Argentina
+  // Streamers): un unico escudo (el del jugador seleccionado), mismo
+  // criterio "column-level" que arriba aunque solo haya una fila -- no es
+  // "crestTeam" (ver esa docstring mas arriba) porque no depende de
+  // LOCAL/VISITANTE del Marcador, depende del jugador elegido en el
+  // propio modulo.
+  fichaJugador: {
+    elements: [
+      { id: 'crest', label: 'ESCUDO', kind: 'composition', xKey: 'crestOffsetX', yKey: 'crestOffsetY', scaleKey: 'crestScale' },
+    ],
+  },
+  // "historial" (2026-09-02, reconstruido desde cero sobre el PNG real --
+  // ver informe): sin panel dedicado de composicion propio, el acordeon
+  // generico alcanza para las 4 columnas (2 escudos + 2 goles) mas
+  // "COMPOSICIÓN COMPLETA" automatica -- mismo criterio "column-level" que
+  // goleadores/asistidores/jugadores arriba, un unico ajuste se aplica a
+  // las 5 filas por igual.
+  historial: {
+    elements: [
+      { id: 'titulo', label: 'TÍTULO', kind: 'text', textKey: 'titulo' },
+      { id: 'crestLocal', label: 'ESCUDO LOCAL (COLUMNA)', kind: 'composition', xKey: 'crestLocalOffsetX', yKey: 'crestLocalOffsetY', scaleKey: 'crestLocalScale' },
+      { id: 'crestVisitante', label: 'ESCUDO VISITANTE (COLUMNA)', kind: 'composition', xKey: 'crestVisitanteOffsetX', yKey: 'crestVisitanteOffsetY', scaleKey: 'crestVisitanteScale' },
+      { id: 'golLocal', label: 'GOL LOCAL (COLUMNA)', kind: 'text', textKey: 'golLocal' },
+      { id: 'golVisitante', label: 'GOL VISITANTE (COLUMNA)', kind: 'text', textKey: 'golVisitante' },
+    ],
+  },
+  // "cronogramaHoy" (2026-09-02, reconstruido desde cero sobre el PNG real
+  // -- ver informe): escudos con "crestTeam" (posicion propia por teamId
+  // real del Marcador, mismo mecanismo ya probado en zocaloCompuestoEquipos/
+  // marcadorPenales) -- nunca un selector de equipo propio, pedido
+  // explicito del usuario.
+  cronogramaHoy: {
+    elements: [
+      { id: 'titulo', label: 'TÍTULO', kind: 'text', textKey: 'titulo' },
+      { id: 'crestLocal', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'crestLocalOffsetX', yKey: 'crestLocalOffsetY', scaleKey: 'crestLocalScale', crestTeam: 'A' },
+      { id: 'crestVisitante', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'crestVisitanteOffsetX', yKey: 'crestVisitanteOffsetY', scaleKey: 'crestVisitanteScale', crestTeam: 'B' },
+    ],
+  },
   // "placaLInfo" (2026-08-31): sin entrada de registro aca a proposito --
   // ya tiene un panel dedicado propio (master-control/js/placa-l-info-panel.js)
   // con 4 zocalos independientes, cada uno con su propia composicion

@@ -21,16 +21,16 @@
       },
       "nameA": {
         "dx": -4,
-        "dy": 4,
+        "dy": 6,
         "dSize": 0
       },
       "nameB": {
-        "dx": 16,
-        "dy": 4,
+        "dx": 10,
+        "dy": 6,
         "dSize": 0
       },
       "clock": {
-        "dx": -20,
+        "dx": -22,
         "dy": 4,
         "dSize": 0
       }
@@ -46,7 +46,33 @@
     "separatorScale": 1,
     "sponsorOffsetX": 0,
     "sponsorOffsetY": 8,
-    "sponsorScale": 1
+    "sponsorScale": 1,
+    "crestByTeam": {
+      "away": {
+        "oxen": {
+          "awayCrestOffsetX": 8,
+          "awayCrestOffsetY": 8,
+          "awayCrestScale": 1.3
+        },
+        "peru-creadores": {
+          "awayCrestOffsetX": 10,
+          "awayCrestOffsetY": 4,
+          "awayCrestScale": 1.07
+        }
+      },
+      "local": {
+        "argentina-streamers": {
+          "localCrestOffsetX": -8,
+          "localCrestOffsetY": 4,
+          "localCrestScale": 1.03
+        },
+        "argentina-streamers-fem": {
+          "localCrestOffsetX": -8,
+          "localCrestOffsetY": 4,
+          "localCrestScale": 1.03
+        }
+      }
+    }
   },
   "marcadorTiempoAdicional": {
     "compositionOffsetX": 0,
@@ -119,14 +145,19 @@
         "dSize": 0
       },
       "scoreA": {
-        "dx": 0,
-        "dy": 0,
-        "dSize": 0
+        "dx": 6,
+        "dy": -2,
+        "dSize": 19
       },
       "scoreB": {
-        "dx": 0,
+        "dx": -6,
         "dy": 0,
-        "dSize": 0
+        "dSize": 17
+      },
+      "nombreLocal": {
+        "dx": 12,
+        "dy": 46,
+        "dSize": 2
       }
     },
     "localCrestOffsetX": 0,
@@ -146,7 +177,57 @@
     "separatorScale": 1,
     "sponsorOffsetX": 0,
     "sponsorOffsetY": 0,
-    "sponsorScale": 1
+    "sponsorScale": 1,
+    "crestByTeam": {
+      "local": {
+        "oxen": {
+          "localCrestOffsetX": 0,
+          "localCrestOffsetY": -2,
+          "localCrestScale": 1
+        },
+        "argentina-streamers": {
+          "localCrestOffsetX": 2,
+          "localCrestOffsetY": -16,
+          "localCrestScale": 1.34
+        }
+      },
+      "away": {
+        "peru-creadores": {
+          "awayCrestOffsetX": 32,
+          "awayCrestOffsetY": -14,
+          "awayCrestScale": 1.2
+        },
+        "oxen": {
+          "awayCrestOffsetX": 30,
+          "awayCrestOffsetY": -14,
+          "awayCrestScale": 1.42
+        }
+      }
+    },
+    "kickLocal1OffsetX": 4,
+    "kickLocal1OffsetY": 0,
+    "kickLocal1Scale": 1.06,
+    "kickLocal2OffsetX": -2,
+    "kickLocal2OffsetY": 0,
+    "kickLocal2Scale": 1.03,
+    "kickLocal3OffsetX": 2,
+    "kickLocal3OffsetY": 0,
+    "kickLocal3Scale": 1.12,
+    "kickLocal4OffsetX": 2,
+    "kickLocal4OffsetY": 0,
+    "kickLocal4Scale": 1.06,
+    "kickLocal5OffsetX": 0,
+    "kickLocal5OffsetY": 0,
+    "kickLocal5Scale": 1.03,
+    "kickVisitante1OffsetX": 0,
+    "kickVisitante1OffsetY": 0,
+    "kickVisitante1Scale": 1.01,
+    "kickVisitante2OffsetX": -2,
+    "kickVisitante2OffsetY": 0,
+    "kickVisitante2Scale": 1.03,
+    "kickVisitante5OffsetX": 0,
+    "kickVisitante5OffsetY": 0,
+    "kickVisitante5Scale": 1
   },
   "marcadorZocalo": {
     "compositionOffsetX": 0,
@@ -202,18 +283,18 @@
     "textAdjust": {
       "titulo": {
         "dx": 0,
-        "dy": 0,
-        "dSize": 0
+        "dy": -12,
+        "dSize": 2
       },
       "nameA": {
-        "dx": 0,
-        "dy": 0,
-        "dSize": 0
+        "dx": 20,
+        "dy": -16,
+        "dSize": -6
       },
       "nameB": {
-        "dx": 0,
-        "dy": 0,
-        "dSize": 0
+        "dx": -32,
+        "dy": -16,
+        "dSize": -4
       }
     },
     "localCrestOffsetX": 0,
@@ -221,7 +302,38 @@
     "localCrestScale": 1,
     "awayCrestOffsetX": 0,
     "awayCrestOffsetY": 0,
-    "awayCrestScale": 1
+    "awayCrestScale": 1,
+    "crestByTeam": {
+      "local": {
+        "oxen": {
+          "localCrestOffsetX": -22,
+          "localCrestOffsetY": 0,
+          "localCrestScale": 1.15
+        },
+        "argentina-streamers-fem": {
+          "localCrestOffsetX": -24,
+          "localCrestOffsetY": 0,
+          "localCrestScale": 1.02
+        },
+        "argentina-streamers": {
+          "localCrestOffsetX": -24,
+          "localCrestOffsetY": 0,
+          "localCrestScale": 1.15
+        }
+      },
+      "away": {
+        "oxen": {
+          "awayCrestOffsetX": 0,
+          "awayCrestOffsetY": 0,
+          "awayCrestScale": 1.12
+        },
+        "peru-creadores": {
+          "awayCrestOffsetX": 0,
+          "awayCrestOffsetY": 0,
+          "awayCrestScale": 1
+        }
+      }
+    }
   },
   "vsResultado": {
     "compositionOffsetX": 0,
@@ -230,18 +342,18 @@
     "textAdjust": {
       "titulo": {
         "dx": 0,
-        "dy": 0,
-        "dSize": 0
+        "dy": -14,
+        "dSize": -1
       },
       "nameA": {
-        "dx": 0,
-        "dy": 0,
+        "dx": 14,
+        "dy": -20,
         "dSize": 0
       },
       "nameB": {
-        "dx": 0,
-        "dy": 0,
-        "dSize": 0
+        "dx": -30,
+        "dy": -20,
+        "dSize": 3
       },
       "scoreA": {
         "dx": 0,
@@ -259,7 +371,28 @@
     "localCrestScale": 1,
     "awayCrestOffsetX": 0,
     "awayCrestOffsetY": 0,
-    "awayCrestScale": 1
+    "awayCrestScale": 1,
+    "crestByTeam": {
+      "away": {
+        "oxen": {
+          "awayCrestOffsetX": 0,
+          "awayCrestOffsetY": 2,
+          "awayCrestScale": 1
+        },
+        "peru-creadores": {
+          "awayCrestOffsetX": 0,
+          "awayCrestOffsetY": 0,
+          "awayCrestScale": 1
+        }
+      },
+      "local": {
+        "argentina-streamers": {
+          "localCrestOffsetX": -22,
+          "localCrestOffsetY": -8,
+          "localCrestScale": 1.09
+        }
+      }
+    }
   },
   "tarjeta": {
     "compositionOffsetX": 0,
@@ -268,7 +401,7 @@
     "textAdjust": {
       "jugador": {
         "dx": 0,
-        "dy": -26,
+        "dy": -28,
         "dSize": 0
       }
     },
@@ -277,24 +410,33 @@
     "crestScale": 1.21
   },
   "cambios": {
-    "compositionOffsetX": 0,
-    "compositionOffsetY": 0,
-    "compositionScale": 1,
+    "compositionOffsetX": -196,
+    "compositionOffsetY": 108,
+    "compositionScale": 0.79,
     "textAdjust": {
       "entra": {
         "dx": 42,
-        "dy": -20,
-        "dSize": 0
+        "dy": -18,
+        "dSize": 15
       },
       "sale": {
         "dx": 42,
-        "dy": -6,
-        "dSize": 0
+        "dy": -8,
+        "dSize": 15
       }
     },
     "crestOffsetX": 22,
     "crestOffsetY": -8,
-    "crestScale": 1.66
+    "crestScale": 1.66,
+    "crestByTeam": {
+      "away": {
+        "oxen": {
+          "crestOffsetX": 22,
+          "crestOffsetY": -8,
+          "crestScale": 1.66
+        }
+      }
+    }
   },
   "gol": {
     "compositionOffsetX": 0,
@@ -343,19 +485,19 @@
     }
   },
   "longDouble": {
-    "compositionOffsetX": 0,
-    "compositionOffsetY": 0,
-    "compositionScale": 1,
+    "compositionOffsetX": 50,
+    "compositionOffsetY": 82,
+    "compositionScale": 0.84,
     "textAdjust": {
       "line1": {
-        "dx": 0,
-        "dy": 0,
-        "dSize": 0
+        "dx": -12,
+        "dy": -34,
+        "dSize": 16
       },
       "line2": {
-        "dx": 0,
-        "dy": 0,
-        "dSize": 0
+        "dx": -26,
+        "dy": -24,
+        "dSize": 9
       }
     }
   },
@@ -366,7 +508,7 @@
     "textAdjust": {
       "text": {
         "dx": 0,
-        "dy": 30,
+        "dy": 32,
         "dSize": 0
       }
     }
@@ -387,8 +529,8 @@
         "dSize": 0
       },
       "double1.name": {
-        "dx": 0,
-        "dy": 0,
+        "dx": 50,
+        "dy": 50,
         "dSize": 0
       },
       "double1.role": {
@@ -397,8 +539,8 @@
         "dSize": 0
       },
       "double2.name": {
-        "dx": 0,
-        "dy": 0,
+        "dx": 60,
+        "dy": 52,
         "dSize": 0
       },
       "double2.role": {
@@ -523,7 +665,16 @@
     "sponsor1Scale": 1,
     "sponsor2OffsetX": 0,
     "sponsor2OffsetY": 0,
-    "sponsor2Scale": 1
+    "sponsor2Scale": 1,
+    "crestByTeam": {
+      "local": {
+        "oxen": {
+          "localCrestOffsetX": 0,
+          "localCrestOffsetY": 0,
+          "localCrestScale": 0.99
+        }
+      }
+    }
   },
   "placaLInfo": {
     "compositionOffsetX": 0,
@@ -689,7 +840,28 @@
     "localCrestScale": 1,
     "visitanteCrestOffsetX": 0,
     "visitanteCrestOffsetY": 0,
-    "visitanteCrestScale": 1
+    "visitanteCrestScale": 1,
+    "crestByTeam": {
+      "away": {
+        "peru-creadores": {
+          "visitanteCrestOffsetX": 8,
+          "visitanteCrestOffsetY": 0,
+          "visitanteCrestScale": 1
+        },
+        "oxen": {
+          "visitanteCrestOffsetX": 8,
+          "visitanteCrestOffsetY": -2,
+          "visitanteCrestScale": 1
+        }
+      },
+      "local": {
+        "argentina-streamers": {
+          "localCrestOffsetX": 8,
+          "localCrestOffsetY": 0,
+          "localCrestScale": 1.05
+        }
+      }
+    }
   },
   "posiciones": {
     "compositionOffsetX": 0,
@@ -910,5 +1082,74 @@
     "crestOffsetX": 0,
     "crestOffsetY": 0,
     "crestScale": 1
+  },
+  "zocaloCompuestoEquipos": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "textAdjust": {
+      "texto1": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "texto2": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    },
+    "crestByTeam": {
+      "local": {},
+      "away": {
+        "oxen": {
+          "awayCrestOffsetX": 14,
+          "awayCrestOffsetY": 0,
+          "awayCrestScale": 1
+        }
+      }
+    }
+  },
+  "zocaloCompuestoLogo": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "logoOffsetX": 0,
+    "logoOffsetY": 0,
+    "logoScale": 1,
+    "textAdjust": {
+      "texto1": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "texto2": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    }
+  },
+  "historial": {
+    "crestLocalOffsetX": -2,
+    "crestLocalOffsetY": 2,
+    "crestLocalScale": 1,
+    "textAdjust": {
+      "golLocal": {
+        "dx": -6,
+        "dy": 0,
+        "dSize": 26
+      },
+      "golVisitante": {
+        "dx": -2,
+        "dy": 0,
+        "dSize": 26
+      }
+    }
+  },
+  "sitioWebPromoL": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1
   }
 }
