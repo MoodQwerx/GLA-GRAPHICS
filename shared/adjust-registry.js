@@ -418,6 +418,23 @@ export const ADJUST_REGISTRY = {
       { id: 'crestVisitante', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'crestVisitanteOffsetX', yKey: 'crestVisitanteOffsetY', scaleKey: 'crestVisitanteScale', crestTeam: 'B' },
     ],
   },
+  // "resultadosParciales" (2026-09-03, reconstruido desde cero sobre
+  // VS_RESULTADO.png real -- corrección explícita del usuario, confirmada
+  // por AskUserQuestion): un solo partido, escudos con "crestTeam" (mismo
+  // mecanismo que cronogramaHoy/vsResultado) + resultado LOCAL/VISITANTE
+  // como texto (heredado en vivo del Marcador, sin selector de equipo
+  // propio). "titulo" ya tiene panel dedicado (resultados-parciales-panel.js)
+  // pero se declara aca igual para que el acordeon lo muestre con GUARDAR
+  // POSICIÓN, mismo criterio que el resto del proyecto.
+  resultadosParciales: {
+    elements: [
+      { id: 'titulo', label: 'TÍTULO', kind: 'text', textKey: 'titulo' },
+      { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale', crestTeam: 'A' },
+      { id: 'scoreLocal', label: 'RESULTADO LOCAL', kind: 'text', textKey: 'scoreLocal' },
+      { id: 'scoreVisitante', label: 'RESULTADO VISITANTE', kind: 'text', textKey: 'scoreVisitante' },
+      { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale', crestTeam: 'B' },
+    ],
+  },
   // "placaLInfo" (2026-08-31): sin entrada de registro aca a proposito --
   // ya tiene un panel dedicado propio (master-control/js/placa-l-info-panel.js)
   // con 4 zocalos independientes, cada uno con su propia composicion

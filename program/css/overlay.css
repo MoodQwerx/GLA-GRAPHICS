@@ -3729,6 +3729,24 @@ body[data-theme='argentinaStreamers'] .ov-performance-card--goleadores .ov-perfo
 body[data-theme='argentinaStreamers'] .ov-performance-card--asistidores .ov-performance-stat {
   color: var(--white);
 }
+/* ARGENTINA STREAMERS -- TABLA_ESTADISTICAS.png, modo ranking (2026-09-02,
+   auditoria visual real en Program): el fondo de cada fila es un
+   DEGRADE gris->blanco (izquierda a derecha, confirmado visualmente),
+   no un color solido oscuro como el resto del proyecto -- texto blanco
+   ahi queda con contraste marginal en la mitad gris y directamente
+   INVISIBLE sobre la mitad blanca (confirmado: la columna ESTADÍSTICA,
+   la mas cercana al borde blanco, no se leia nada en Program). Mismo
+   criterio que ".ov-performance-card--jugadores" (GLA, linea de arriba):
+   texto oscuro, legible en cualquier punto del degrade. Reemplaza el
+   "color:white" de mas abajo (".ov-performance-row--ranking
+   .ov-performance-position/.ov-performance-primary-stat") solo para este
+   theme; agrega el mismo criterio para NOMBRE de goleadores/asistidores
+   (jugadores/PARTICIPACIONES ya usa negro por herencia de la regla GLA
+   de arriba, sin cambios). */
+body[data-theme='argentinaStreamers'] .ov-performance-card--goleadores .ov-performance-name,
+body[data-theme='argentinaStreamers'] .ov-performance-card--asistidores .ov-performance-name {
+  color: var(--black);
+}
 .ov-performance-card--jugadores .ov-performance-name {
   color: var(--black);
   justify-content: flex-start;
@@ -3764,10 +3782,14 @@ body[data-theme='argentinaStreamers'] .ov-performance-card--asistidores .ov-perf
   text-align: center;
   white-space: nowrap;
 }
-/* ARGENTINA STREAMERS: el dorado es color de marca de GLA, no se usa aca. */
+/* ARGENTINA STREAMERS: el dorado es color de marca de GLA, no se usa aca.
+   NEGRO (no blanco -- ver comentario extenso arriba, mismo bug de
+   contraste sobre el degrade gris->blanco de TABLA_ESTADISTICAS.png,
+   confirmado visualmente en Program: sin este cambio la columna
+   ESTADÍSTICA es directamente invisible). */
 body[data-theme='argentinaStreamers'] .ov-performance-row--ranking .ov-performance-position,
 body[data-theme='argentinaStreamers'] .ov-performance-row--ranking .ov-performance-primary-stat {
-  color: var(--white);
+  color: var(--black);
 }
 .ov-performance-row--ranking .ov-performance-position {
   left: 0;
@@ -3901,14 +3923,17 @@ body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-solo .ov-perf
   font-size: 26px;
 }
 
-/* "participaciones" (jugadores) usa texto negro en GLA porque su PNG
-   tiene fondo claro detras de cada fila -- sobre transparencia (sin
-   asset todavia) quedaria invisible. Blanco solo para Argentina
-   Streamers, sin tocar el color real de GLA. */
-body[data-theme='argentinaStreamers'] .ov-performance-card--jugadores .ov-performance-name,
-body[data-theme='argentinaStreamers'] .ov-performance-card--jugadores .ov-performance-stat {
-  color: var(--white);
-}
+/* CORRECCIÓN (2026-09-02, auditoria visual real en Program): la regla de
+   arriba forzaba blanco aca porque en el momento en que se escribio
+   Argentina Streamers todavia no tenia el asset real de
+   TABLA_ESTADISTICAS.png (fondo transparente, texto negro se hubiera
+   perdido). Ahora que el asset real existe (degrade gris->blanco, mismo
+   fondo que Goleadores/Asistidores, ver mas arriba) blanco queda
+   invisible sobre la mitad clara -- confirmado visualmente en Program
+   (columna NOMBRE de Participaciones no se leia). Se retira el forzado a
+   blanco: ".ov-performance-card--jugadores .ov-performance-name" (mas
+   arriba) ya resuelve negro para los dos themes por igual, que es lo
+   correcto ahora que comparten el mismo fondo claro. */
 
 /* ============================================================
    FICHA JUGADOR (2026-09-02, pedido explicito del usuario) — placa

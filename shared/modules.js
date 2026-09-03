@@ -1209,11 +1209,27 @@ export const MODULES = {
     fields: [],
     defaults: {
       titulo: 'RESULTADOS PARCIALES',
+      // "encuentros" (2 partidos manuales con estado): NO se borra --
+      // pedido explicito del usuario ("si ya tiene su propia lógica de
+      // datos, no la destruyas"). Queda sin uso por el renderer nuevo
+      // (2026-09-03, reconstruido sobre VS_RESULTADO.png real: un solo
+      // partido, escudos+resultado heredados en vivo del Marcador, mismo
+      // criterio que vsResultado/cronogramaHoy -- confirmado con el
+      // usuario). Se conserva por si se reactiva un uso futuro.
       encuentros: [
         { teamA: 'argentina-streamers', teamB: 'oxen', scoreA: '2', scoreB: '1', estado: 'FINAL' },
         { teamA: 'peru-creadores', teamB: 'argentina-streamers-fem', scoreA: '0', scoreB: '0', estado: 'EN JUEGO' },
       ],
-      textAdjust: textAdjustDefaults('titulo', 'teamA1', 'teamB1', 'scoreA1', 'scoreB1', 'estado1', 'teamA2', 'teamB2', 'scoreA2', 'scoreB2', 'estado2'),
+      textAdjust: textAdjustDefaults('titulo', 'teamA1', 'teamB1', 'scoreA1', 'scoreB1', 'estado1', 'teamA2', 'teamB2', 'scoreA2', 'scoreB2', 'estado2', 'scoreLocal', 'scoreVisitante'),
+      // "localCrestOffset*/awayCrestOffset*" + "crestByTeam" (2026-09-03):
+      // escudos heredados en vivo del Marcador (sb.teamA/teamB), mismo
+      // mecanismo "crestTeam" que ya usan vsResultado/cronogramaHoy (ver
+      // resolveCrestTeamOverride en program/js/main.js) -- el offset
+      // flat es el default/fallback, "crestByTeam" guarda la posicion
+      // propia por equipo una vez que el operador la ajusta y guarda.
+      localCrestOffsetX: 0, localCrestOffsetY: 0, localCrestScale: 1,
+      awayCrestOffsetX: 0, awayCrestOffsetY: 0, awayCrestScale: 1,
+      crestByTeam: { local: {}, away: {} },
     },
   },
 

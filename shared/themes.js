@@ -323,6 +323,13 @@ export const THEMES = {
       // Cronograma Hoy (2026-09-02): PNG real (VS_DEFAULT entregado por el
       // usuario) -- reemplaza la tarjeta fabricada en CSS que habia antes.
       cronogramaHoy: { image: '/assets/themes/argentina-streamers/brackets/cronograma-hoy.png' },
+      // Resultados Parciales (2026-09-03, corrección explícita del
+      // usuario): PNG real entregado en "cosas sueltas/PSD/vs_resultado.psd"
+      // (confirmado por inspección -- mismos escudos con cuadrito blanco
+      // de resultado que VS_RESULTADO), exportado y copiado a la carpeta
+      // permanente de este theme (no referencia "cosas sueltas" en
+      // runtime) -- reemplaza la tarjeta fabricada en CSS que habia antes.
+      resultadosParciales: { image: '/assets/themes/argentina-streamers/brackets/resultados-parciales.png' },
       // Sitio Web Promo L (2026-09-02): PNG real (ANUNCIO_AS entregado).
       sitioWebPromoL: { image: '/assets/themes/argentina-streamers/extras/anuncio-as.png' },
     },

@@ -1,24 +1,55 @@
 import { resolveImageSrc } from '../theme-assets.js';
 import { crestFile, teamName } from '../../../shared/teams.js';
-import { applyFittedText, updateFittedTextWithTransition, readTextAdjust } from '../text-fit.js';
+import { applyFittedText, applyPlainTextAdjust, readTextAdjust, toBroadcastUpper } from '../text-fit.js';
 
-const DEFAULT_TITULO = 'RESULTADOS PARCIALES';
+// Reconstruido desde cero (2026-09-03, corrección explícita del usuario):
+// la version anterior (tarjeta fabricada en CSS, sin PNG real, 2
+// encuentros manuales) se descarto por completo. PNG real entregado en
+// "cosas sueltas/PSD/vs_resultado.psd" -- geometria medida pixel a pixel
+// (canvas + scan de color, nativo 962x541, escalado x1.99584/x1.99630
+// para proyectarlo sobre el stage logico 1920x1080). Mismo template de
+// header que Historial/Cronograma Hoy/Tabla Estadisticas.
+//
+// Confirmado explicitamente con el usuario (AskUserQuestion): un solo
+// partido -- escudo local/visitante + resultado, heredados en vivo del
+// Marcador (allData.scoreboard), mismo criterio que "cronogramaHoy"
+// (sin selector de equipo propio) y "vsResultado" (mismo asset, mismos
+// cuadritos blancos de resultado). "data.encuentros" (2 partidos
+// manuales) NO se borra del schema (shared/modules.js) pero este
+// renderer ya no lo usa.
+const HEADER_LEFT = 1487;
+const HEADER_TOP = 28;
+const HEADER_WIDTH = 415;
+const HEADER_HEIGHT = 64;
 
-const TITULO_MAX_FONT = 28;
-const TITULO_MIN_FONT = 16;
-const TITULO_MAX_WIDTH = 340;
+// Escudo: centro X compartido por local/visitante (misma columna),
+// centro Y propio de cada uno -- medido sobre la porcion de escudo SIN
+// superponer el cuadrito de resultado (que ocupa la parte inferior del
+// escudo local / superior del escudo visitante). Tamaño 140px, mismo
+// criterio ya validado visualmente en Program para vsResultado/
+// cronogramaHoy (comparten esta columna/geometria de escudo).
+const CREST_CENTER_X = 1696;
+const CREST_LOCAL_CENTER_Y = 276;
+const CREST_VISITANTE_CENTER_Y = 771;
+const CREST_SIZE = 140;
 
-const NAME_MAX_FONT = 18;
-const NAME_MIN_FONT = 11;
-const NAME_MAX_WIDTH = 90;
+// Cuadrito blanco de resultado: nativo x819-879 (60px), y170-229 (local,
+// parte inferior del escudo de arriba) / y289-348 (visitante, parte
+// superior del escudo de abajo) -- medido con scan de color real sobre
+// el PNG (longest-run de pixeles gris/blanco neutros, sin contaminacion
+// del borde blanco decorativo del escudo). Caja de texto con margen de
+// seguridad hacia adentro del cuadrito real (mismo criterio que el resto
+// del proyecto: nunca tocar el borde), igual a la ya validada en
+// vsResultado (mismo asset).
+const SCORE_LEFT = 1646;
+const SCORE_WIDTH = 100;
+const SCORE_HEIGHT = 80;
+const SCORE_LOCAL_TOP = 357;
+const SCORE_VISITANTE_TOP = 595;
 
-const SCORE_MAX_FONT = 22;
-const SCORE_MIN_FONT = 14;
-const SCORE_MAX_WIDTH = 30;
-
-const ESTADO_MAX_FONT = 14;
-const ESTADO_MIN_FONT = 10;
-const ESTADO_MAX_WIDTH = 70;
+const SCORE_MAX_FONT = 58;
+const SCORE_MIN_FONT = 30;
+const SCORE_MAX_WIDTH = SCORE_WIDTH - 36;
 
 function setCrest(imgEl, teamId) {
   if (!imgEl) return;
@@ -36,75 +67,27 @@ function setCrest(imgEl, teamId) {
 
 function buildStructure(el) {
   el.innerHTML = `
-    <div class="ov-resparc-card" style="position: absolute; left: 1517px; top: 120px; width: 386px; min-height: 340px; background: rgba(8, 8, 10, 0.92); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.12); padding: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); transform: translate(-29px, 0);">
-      <img class="gfx-bg-img" style="display:none; position:absolute; left:0; top:0; width:386px; height:100%; object-fit:cover; border-radius:8px;" />
-      <div class="gfx-overlay" style="position:relative; z-index:2;">
-        
-        <!-- TÍTULO -->
-        <div style="border-bottom: 2px solid rgba(255, 193, 7, 0.6); padding-bottom: 10px; margin-bottom: 16px; text-align: center;">
-          <div class="ov-resparc-titulo" style="font-family: var(--font-display); color: #ffffff; font-weight: 800; text-transform: uppercase;"></div>
-        </div>
-        
-        <!-- PARTIDO 1 -->
-        <div class="ov-resparc-match-1" style="background: rgba(255,255,255,0.04); border-radius: 6px; padding: 10px 8px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.06);">
-          <div style="display: flex; align-items: center; justify-content: space-between;">
-            <!-- LOCAL -->
-            <div style="display: flex; align-items: center; gap: 6px; width: 110px;">
-              <img class="ov-resparc-crest-local-1" style="width: 32px; height: 32px; object-fit: contain;" />
-              <div class="ov-resparc-name-local-1" style="font-family: var(--font-display); color: #ffffff; font-weight: 700; text-transform: uppercase;"></div>
-            </div>
-            
-            <!-- MARCADOR -->
-            <div style="display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.4); padding: 4px 10px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">
-              <div class="ov-resparc-score-local-1" style="font-family: var(--font-display); color: #ffffff; font-weight: 900;"></div>
-              <div style="font-family: var(--font-display); color: rgba(255,255,255,0.5); font-size: 16px;">-</div>
-              <div class="ov-resparc-score-visitante-1" style="font-family: var(--font-display); color: #ffffff; font-weight: 900;"></div>
-            </div>
-
-            <!-- VISITANTE -->
-            <div style="display: flex; align-items: center; gap: 6px; width: 110px; justify-content: flex-end;">
-              <div class="ov-resparc-name-visitante-1" style="font-family: var(--font-display); color: #ffffff; font-weight: 700; text-transform: uppercase; text-align: right;"></div>
-              <img class="ov-resparc-crest-visitante-1" style="width: 32px; height: 32px; object-fit: contain;" />
-            </div>
-          </div>
-          <div class="ov-resparc-estado-1" style="font-family: var(--font-display); color: #ffc107; font-weight: 700; text-align: center; margin-top: 6px;"></div>
-        </div>
-
-        <!-- PARTIDO 2 -->
-        <div class="ov-resparc-match-2" style="background: rgba(255,255,255,0.04); border-radius: 6px; padding: 10px 8px; border: 1px solid rgba(255,255,255,0.06);">
-          <div style="display: flex; align-items: center; justify-content: space-between;">
-            <!-- LOCAL -->
-            <div style="display: flex; align-items: center; gap: 6px; width: 110px;">
-              <img class="ov-resparc-crest-local-2" style="width: 32px; height: 32px; object-fit: contain;" />
-              <div class="ov-resparc-name-local-2" style="font-family: var(--font-display); color: #ffffff; font-weight: 700; text-transform: uppercase;"></div>
-            </div>
-            
-            <!-- MARCADOR -->
-            <div style="display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.4); padding: 4px 10px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">
-              <div class="ov-resparc-score-local-2" style="font-family: var(--font-display); color: #ffffff; font-weight: 900;"></div>
-              <div style="font-family: var(--font-display); color: rgba(255,255,255,0.5); font-size: 16px;">-</div>
-              <div class="ov-resparc-score-visitante-2" style="font-family: var(--font-display); color: #ffffff; font-weight: 900;"></div>
-            </div>
-
-            <!-- VISITANTE -->
-            <div style="display: flex; align-items: center; gap: 6px; width: 110px; justify-content: flex-end;">
-              <div class="ov-resparc-name-visitante-2" style="font-family: var(--font-display); color: #ffffff; font-weight: 700; text-transform: uppercase; text-align: right;"></div>
-              <img class="ov-resparc-crest-visitante-2" style="width: 32px; height: 32px; object-fit: contain;" />
-            </div>
-          </div>
-          <div class="ov-resparc-estado-2" style="font-family: var(--font-display); color: #ffc107; font-weight: 700; text-align: center; margin-top: 6px;"></div>
-        </div>
-
-      </div>
+    <img class="ov-resparc-bg" style="position:absolute; left:0; top:0; width:1920px; height:1080px;" />
+    <div class="gfx-overlay">
+      <div class="ov-resparc-titulo"
+        style="position:absolute; left:${HEADER_LEFT}px; top:${HEADER_TOP}px; width:${HEADER_WIDTH}px; height:${HEADER_HEIGHT}px; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:800; text-transform:uppercase; letter-spacing:1px; color:#ffffff; font-size:24px;"></div>
+      <img class="ov-resparc-crest ov-resparc-crest-local" data-adjust="localCrest"
+        style="position:absolute; left:${CREST_CENTER_X - CREST_SIZE / 2}px; top:${CREST_LOCAL_CENTER_Y - CREST_SIZE / 2}px; width:${CREST_SIZE}px; height:${CREST_SIZE}px; object-fit:contain;" />
+      <img class="ov-resparc-crest ov-resparc-crest-visitante" data-adjust="awayCrest"
+        style="position:absolute; left:${CREST_CENTER_X - CREST_SIZE / 2}px; top:${CREST_VISITANTE_CENTER_Y - CREST_SIZE / 2}px; width:${CREST_SIZE}px; height:${CREST_SIZE}px; object-fit:contain;" />
+      <div class="ov-resparc-score ov-resparc-score-local"
+        style="position:absolute; left:${SCORE_LEFT}px; top:${SCORE_LOCAL_TOP}px; width:${SCORE_WIDTH}px; height:${SCORE_HEIGHT}px; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:900; color:#0a0a0c;"></div>
+      <div class="ov-resparc-score ov-resparc-score-visitante"
+        style="position:absolute; left:${SCORE_LEFT}px; top:${SCORE_VISITANTE_TOP}px; width:${SCORE_WIDTH}px; height:${SCORE_HEIGHT}px; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:900; color:#0a0a0c;"></div>
     </div>
   `;
   el._gfxBuilt = true;
 }
 
-export default function renderResultadosParciales(contentEl, data, justTaken) {
+export default function renderResultadosParciales(contentEl, data, justTaken, onOneShotEnded, allData) {
   if (!contentEl._gfxBuilt) buildStructure(contentEl);
 
-  const bgImg = contentEl.querySelector('.gfx-bg-img');
+  const bgImg = contentEl.querySelector('.ov-resparc-bg');
   const imageSrc = resolveImageSrc('resultadosParciales', null);
   if (imageSrc) {
     bgImg.src = imageSrc;
@@ -114,63 +97,22 @@ export default function renderResultadosParciales(contentEl, data, justTaken) {
     bgImg.style.display = 'none';
   }
 
-  const encuentros = Array.isArray(data.encuentros) ? data.encuentros : [];
-  const enc1 = encuentros[0] || { teamA: '', teamB: '', scoreA: '0', scoreB: '0', estado: '' };
-  const enc2 = encuentros[1] || { teamA: '', teamB: '', scoreA: '0', scoreB: '0', estado: '' };
+  const ta = data.textAdjust;
+  applyPlainTextAdjust(
+    contentEl.querySelector('.ov-resparc-titulo'),
+    toBroadcastUpper((data.titulo || '').trim() || 'RESULTADOS PARCIALES'),
+    readTextAdjust(ta, 'titulo'),
+  );
 
-  // Título
-  const tituloEl = contentEl.querySelector('.ov-resparc-titulo');
-  const newTitulo = (data.titulo || '').trim() || DEFAULT_TITULO;
-  updateFittedTextWithTransition(tituloEl, newTitulo, contentEl._prevTitulo, {
-    maxFont: TITULO_MAX_FONT, minFont: TITULO_MIN_FONT, maxWidth: TITULO_MAX_WIDTH, weight: 800, letterSpacing: 0.5,
-  }, readTextAdjust(data.textAdjust, 'titulo'), !justTaken);
-  contentEl._prevTitulo = newTitulo;
+  const sb = (allData && allData.scoreboard) || {};
 
-  // Match 1
-  setCrest(contentEl.querySelector('.ov-resparc-crest-local-1'), enc1.teamA);
-  setCrest(contentEl.querySelector('.ov-resparc-crest-visitante-1'), enc1.teamB);
+  setCrest(contentEl.querySelector('.ov-resparc-crest-local'), sb.teamA);
+  setCrest(contentEl.querySelector('.ov-resparc-crest-visitante'), sb.teamB);
 
-  applyFittedText(contentEl.querySelector('.ov-resparc-name-local-1'), teamName(enc1.teamA) || enc1.teamA || '', {
-    maxFont: NAME_MAX_FONT, minFont: NAME_MIN_FONT, maxWidth: NAME_MAX_WIDTH, weight: 800,
-  }, readTextAdjust(data.textAdjust, 'teamA1'));
-
-  applyFittedText(contentEl.querySelector('.ov-resparc-name-visitante-1'), teamName(enc1.teamB) || enc1.teamB || '', {
-    maxFont: NAME_MAX_FONT, minFont: NAME_MIN_FONT, maxWidth: NAME_MAX_WIDTH, weight: 800,
-  }, readTextAdjust(data.textAdjust, 'teamB1'));
-
-  applyFittedText(contentEl.querySelector('.ov-resparc-score-local-1'), String(enc1.scoreA ?? '0'), {
+  applyFittedText(contentEl.querySelector('.ov-resparc-score-local'), String(sb.scoreA ?? ''), {
     maxFont: SCORE_MAX_FONT, minFont: SCORE_MIN_FONT, maxWidth: SCORE_MAX_WIDTH, weight: 900,
-  }, readTextAdjust(data.textAdjust, 'scoreA1'));
-
-  applyFittedText(contentEl.querySelector('.ov-resparc-score-visitante-1'), String(enc1.scoreB ?? '0'), {
+  }, readTextAdjust(ta, 'scoreLocal'));
+  applyFittedText(contentEl.querySelector('.ov-resparc-score-visitante'), String(sb.scoreB ?? ''), {
     maxFont: SCORE_MAX_FONT, minFont: SCORE_MIN_FONT, maxWidth: SCORE_MAX_WIDTH, weight: 900,
-  }, readTextAdjust(data.textAdjust, 'scoreB1'));
-
-  applyFittedText(contentEl.querySelector('.ov-resparc-estado-1'), enc1.estado || '', {
-    maxFont: ESTADO_MAX_FONT, minFont: ESTADO_MIN_FONT, maxWidth: ESTADO_MAX_WIDTH, weight: 700,
-  }, readTextAdjust(data.textAdjust, 'estado1'));
-
-  // Match 2
-  setCrest(contentEl.querySelector('.ov-resparc-crest-local-2'), enc2.teamA);
-  setCrest(contentEl.querySelector('.ov-resparc-crest-visitante-2'), enc2.teamB);
-
-  applyFittedText(contentEl.querySelector('.ov-resparc-name-local-2'), teamName(enc2.teamA) || enc2.teamA || '', {
-    maxFont: NAME_MAX_FONT, minFont: NAME_MIN_FONT, maxWidth: NAME_MAX_WIDTH, weight: 800,
-  }, readTextAdjust(data.textAdjust, 'teamA2'));
-
-  applyFittedText(contentEl.querySelector('.ov-resparc-name-visitante-2'), teamName(enc2.teamB) || enc2.teamB || '', {
-    maxFont: NAME_MAX_FONT, minFont: NAME_MIN_FONT, maxWidth: NAME_MAX_WIDTH, weight: 800,
-  }, readTextAdjust(data.textAdjust, 'teamB2'));
-
-  applyFittedText(contentEl.querySelector('.ov-resparc-score-local-2'), String(enc2.scoreA ?? '0'), {
-    maxFont: SCORE_MAX_FONT, minFont: SCORE_MIN_FONT, maxWidth: SCORE_MAX_WIDTH, weight: 900,
-  }, readTextAdjust(data.textAdjust, 'scoreA2'));
-
-  applyFittedText(contentEl.querySelector('.ov-resparc-score-visitante-2'), String(enc2.scoreB ?? '0'), {
-    maxFont: SCORE_MAX_FONT, minFont: SCORE_MIN_FONT, maxWidth: SCORE_MAX_WIDTH, weight: 900,
-  }, readTextAdjust(data.textAdjust, 'scoreB2'));
-
-  applyFittedText(contentEl.querySelector('.ov-resparc-estado-2'), enc2.estado || '', {
-    maxFont: ESTADO_MAX_FONT, minFont: ESTADO_MIN_FONT, maxWidth: ESTADO_MAX_WIDTH, weight: 700,
-  }, readTextAdjust(data.textAdjust, 'estado2'));
+  }, readTextAdjust(ta, 'scoreVisitante'));
 }

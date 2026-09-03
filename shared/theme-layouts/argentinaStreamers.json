@@ -1077,6 +1077,11 @@
         "dx": 0,
         "dy": 0,
         "dSize": 0
+      },
+      "primaryStat": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
       }
     },
     "crestOffsetX": 0,
@@ -1136,9 +1141,9 @@
     "crestLocalScale": 1,
     "textAdjust": {
       "golLocal": {
-        "dx": -6,
+        "dx": 0,
         "dy": 0,
-        "dSize": 26
+        "dSize": 0
       },
       "golVisitante": {
         "dx": -2,
@@ -1151,5 +1156,54 @@
     "compositionOffsetX": 0,
     "compositionOffsetY": 0,
     "compositionScale": 1
+  },
+  "cronogramaHoy": {
+    "crestByTeam": {
+      "local": {
+        "argentina-streamers": {
+          "crestLocalOffsetX": 0,
+          "crestLocalOffsetY": 0,
+          "crestLocalScale": 1
+        }
+      }
+    }
+  },
+  "resultadosParciales": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 1,
+    "textAdjust": {
+      "titulo": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "scoreLocal": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      },
+      "scoreVisitante": {
+        "dx": 0,
+        "dy": 0,
+        "dSize": 0
+      }
+    },
+    "crestByTeam": {
+      "local": {
+        "argentina-streamers": {
+          "localCrestOffsetX": 0,
+          "localCrestOffsetY": 0,
+          "localCrestScale": 1
+        }
+      },
+      "away": {
+        "peru-creadores": {
+          "awayCrestOffsetX": 0,
+          "awayCrestOffsetY": 0,
+          "awayCrestScale": 1
+        }
+      }
+    }
   }
 }
