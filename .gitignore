@@ -45,6 +45,12 @@ temp/
 *.psd
 *.raw
 
+# Excepción: "cosas sueltas/" es el inbox de assets del usuario (PSD, MOV,
+# PNG, MP4, ZIP, RAR, etc.) y debe versionarse completo, incluso los tipos
+# ignorados globalmente arriba (*.mov, *.psd). No afecta ninguna otra regla.
+!cosas sueltas/
+!cosas sueltas/**
+
 # Configuración local de editores y herramientas
 .vscode/
 .idea/
