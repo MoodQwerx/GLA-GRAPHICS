@@ -21,6 +21,18 @@ export const WS_MSG = {
   // archivo versionado del theme activo. No toca el estado runtime -- ver
   // applyPositionCommit en server/state.js.
   COMMIT_POSITION: 'COMMIT_POSITION',
+  // PERFILES DE PARTIDO (2026-09-05, ver server/match-profiles.js): global,
+  // Argentina Streamers unicamente. "APPLY" pisa el estado visual EN VIVO
+  // (mismo broadcast STATE_SNAPSHOT que SET_THEME, para que Program y
+  // Master Control se enteren sin refrescar); "SAVE"/"SAVE_AS"/"DELETE" son
+  // operaciones de archivo (ver server/match-profiles.js), el servidor
+  // responde con la lista actualizada via PROFILE_LIST_UPDATE.
+  PROFILE_LIST_UPDATE: 'PROFILE_LIST_UPDATE',
+  APPLY_MATCH_PROFILE: 'APPLY_MATCH_PROFILE',
+  SAVE_MATCH_PROFILE: 'SAVE_MATCH_PROFILE',
+  SAVE_AS_NEW_MATCH_PROFILE: 'SAVE_AS_NEW_MATCH_PROFILE',
+  DELETE_MATCH_PROFILE: 'DELETE_MATCH_PROFILE',
+  ACTIVE_MATCH_PROFILE_UPDATE: 'ACTIVE_MATCH_PROFILE_UPDATE',
 };
 
 export const MODULE_STATUS = {

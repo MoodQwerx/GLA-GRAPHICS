@@ -1,0 +1,1519 @@
+{
+  "name": "ARG STREAMERS VS ARG SENIOR",
+  "teamLocal": "argentina-streamers",
+  "teamVisitante": "argentina-senior",
+  "modules": {
+    "scoreboard": {
+      "compositionOffsetX": -10,
+      "compositionOffsetY": -20,
+      "compositionScale": 1,
+      "textAdjust": {
+        "scoreA": {
+          "dx": 2,
+          "dy": 0,
+          "dSize": 0
+        },
+        "scoreB": {
+          "dx": 2,
+          "dy": 0,
+          "dSize": 0
+        },
+        "period": {
+          "dx": 88,
+          "dy": 4,
+          "dSize": 0
+        },
+        "nameA": {
+          "dx": 2,
+          "dy": 4,
+          "dSize": 0
+        },
+        "nameB": {
+          "dx": 10,
+          "dy": 4,
+          "dSize": 0
+        },
+        "clock": {
+          "dx": -20,
+          "dy": 4,
+          "dSize": 0
+        }
+      },
+      "localCrestOffsetX": -4,
+      "localCrestOffsetY": 8,
+      "localCrestScale": 1.06,
+      "awayCrestOffsetX": 12,
+      "awayCrestOffsetY": 8,
+      "awayCrestScale": 1.04,
+      "separatorOffsetX": 2,
+      "separatorOffsetY": -2,
+      "separatorScale": 1,
+      "sponsorOffsetX": 2,
+      "sponsorOffsetY": 2,
+      "sponsorScale": 1,
+      "crestByTeam": {
+        "away": {
+          "oxen": {
+            "awayCrestOffsetX": 8,
+            "awayCrestOffsetY": 8,
+            "awayCrestScale": 1.3
+          },
+          "peru-creadores": {
+            "awayCrestOffsetX": 10,
+            "awayCrestOffsetY": 4,
+            "awayCrestScale": 1.07
+          },
+          "argentina-senior": {
+            "awayCrestOffsetX": 12,
+            "awayCrestOffsetY": 8,
+            "awayCrestScale": 1.04
+          }
+        },
+        "local": {
+          "argentina-streamers": {
+            "localCrestOffsetX": -8,
+            "localCrestOffsetY": 4,
+            "localCrestScale": 1.03
+          },
+          "argentina-streamers-fem": {
+            "localCrestOffsetX": -8,
+            "localCrestOffsetY": 4,
+            "localCrestScale": 1.03
+          }
+        }
+      }
+    },
+    "marcadorTiempoAdicional": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 0,
+      "compositionScale": 1,
+      "textAdjust": {
+        "addedMinutes": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "clock": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      }
+    },
+    "marcadorEntretiempo": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 0,
+      "compositionScale": 1,
+      "textAdjust": {
+        "nameA": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "nameB": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "scoreA": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "scoreB": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      },
+      "localCrestOffsetX": 0,
+      "localCrestOffsetY": 0,
+      "localCrestScale": 1,
+      "awayCrestOffsetX": 0,
+      "awayCrestOffsetY": 0,
+      "awayCrestScale": 1,
+      "crestByTeam": {
+        "local": {
+          "argentina-streamers": {
+            "localCrestOffsetX": 14,
+            "localCrestOffsetY": -12,
+            "localCrestScale": 2.68
+          }
+        },
+        "away": {
+          "peru-creadores": {
+            "awayCrestOffsetX": 150,
+            "awayCrestOffsetY": -14,
+            "awayCrestScale": 2.42
+          }
+        }
+      }
+    },
+    "marcadorPenales": {
+      "compositionOffsetX": 226,
+      "compositionOffsetY": 14,
+      "compositionScale": 1,
+      "textAdjust": {
+        "titulo": {
+          "dx": 0,
+          "dy": -4,
+          "dSize": 0
+        },
+        "nameA": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "nameB": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "scoreA": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "scoreB": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "nombreLocal": {
+          "dx": 14,
+          "dy": 42,
+          "dSize": 0
+        },
+        "nombreVisitante": {
+          "dx": 34,
+          "dy": 40,
+          "dSize": 0
+        }
+      },
+      "localCrestOffsetX": 0,
+      "localCrestOffsetY": 0,
+      "localCrestScale": 1,
+      "awayCrestOffsetX": 0,
+      "awayCrestOffsetY": -2,
+      "awayCrestScale": 1,
+      "kicksLocalOffsetX": 0,
+      "kicksLocalOffsetY": 0,
+      "kicksLocalScale": 1,
+      "kicksVisitanteOffsetX": 0,
+      "kicksVisitanteOffsetY": 0,
+      "kicksVisitanteScale": 1,
+      "kickLocal1OffsetX": 4,
+      "kickLocal1OffsetY": 0,
+      "kickLocal1Scale": 1.06,
+      "kickLocal2OffsetX": -2,
+      "kickLocal2OffsetY": 0,
+      "kickLocal2Scale": 1.03,
+      "kickLocal3OffsetX": 2,
+      "kickLocal3OffsetY": 0,
+      "kickLocal3Scale": 1.12,
+      "kickLocal4OffsetX": 2,
+      "kickLocal4OffsetY": 0,
+      "kickLocal4Scale": 1.06,
+      "kickLocal5OffsetX": 0,
+      "kickLocal5OffsetY": 0,
+      "kickLocal5Scale": 1.03,
+      "kickVisitante1OffsetX": 0,
+      "kickVisitante1OffsetY": 0,
+      "kickVisitante1Scale": 1.01,
+      "kickVisitante2OffsetX": -2,
+      "kickVisitante2OffsetY": 0,
+      "kickVisitante2Scale": 1.03,
+      "kickVisitante3OffsetX": 0,
+      "kickVisitante3OffsetY": 0,
+      "kickVisitante3Scale": 1,
+      "kickVisitante4OffsetX": 0,
+      "kickVisitante4OffsetY": 0,
+      "kickVisitante4Scale": 1,
+      "kickVisitante5OffsetX": 0,
+      "kickVisitante5OffsetY": 0,
+      "kickVisitante5Scale": 1,
+      "separatorOffsetX": 0,
+      "separatorOffsetY": 0,
+      "separatorScale": 1,
+      "sponsorOffsetX": 0,
+      "sponsorOffsetY": 0,
+      "sponsorScale": 1,
+      "crestByTeam": {
+        "local": {
+          "oxen": {
+            "localCrestOffsetX": 0,
+            "localCrestOffsetY": -2,
+            "localCrestScale": 1
+          },
+          "argentina-streamers": {
+            "localCrestOffsetX": 2,
+            "localCrestOffsetY": -16,
+            "localCrestScale": 1.34
+          }
+        },
+        "away": {
+          "peru-creadores": {
+            "awayCrestOffsetX": 32,
+            "awayCrestOffsetY": -14,
+            "awayCrestScale": 1.2
+          },
+          "oxen": {
+            "awayCrestOffsetX": 30,
+            "awayCrestOffsetY": -14,
+            "awayCrestScale": 1.42
+          },
+          "argentina-senior": {
+            "awayCrestOffsetX": 32,
+            "awayCrestOffsetY": -18,
+            "awayCrestScale": 1.13
+          }
+        }
+      }
+    },
+    "marcadorZocalo": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 0,
+      "compositionScale": 1,
+      "textAdjust": {
+        "titulo": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "clock": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      }
+    },
+    "formacionEquipos": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 0,
+      "compositionScale": 1,
+      "textAdjust": {
+        "playerName": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "playerNumber": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "subsTitle": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "subsList": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      },
+      "crestOffsetX": 0,
+      "crestOffsetY": 0,
+      "crestScale": 1,
+      "crestByTeam": {
+        "oxen": {
+          "crestOffsetX": 1428,
+          "crestOffsetY": 174,
+          "crestScale": 1.45
+        },
+        "argentina-streamers": {
+          "crestOffsetX": 0,
+          "crestOffsetY": 0,
+          "crestScale": 1
+        }
+      },
+      "formationKitByTeam": {
+        "argentina-streamers": {
+          "offsetX": 0,
+          "offsetY": 0,
+          "scale": 1
+        }
+      }
+    },
+    "vsPrepartido": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 36,
+      "compositionScale": 1.12,
+      "textAdjust": {
+        "titulo": {
+          "dx": 0,
+          "dy": -12,
+          "dSize": 0
+        },
+        "nameA": {
+          "dx": 12,
+          "dy": -16,
+          "dSize": -2
+        },
+        "nameB": {
+          "dx": -38,
+          "dy": -16,
+          "dSize": -5
+        }
+      },
+      "localCrestOffsetX": 0,
+      "localCrestOffsetY": 0,
+      "localCrestScale": 1,
+      "awayCrestOffsetX": 0,
+      "awayCrestOffsetY": 0,
+      "awayCrestScale": 1,
+      "crestByTeam": {
+        "local": {
+          "oxen": {
+            "localCrestOffsetX": -22,
+            "localCrestOffsetY": 0,
+            "localCrestScale": 1.15
+          },
+          "argentina-streamers-fem": {
+            "localCrestOffsetX": -24,
+            "localCrestOffsetY": 0,
+            "localCrestScale": 1.02
+          },
+          "argentina-streamers": {
+            "localCrestOffsetX": -24,
+            "localCrestOffsetY": 0,
+            "localCrestScale": 1.15
+          }
+        },
+        "away": {
+          "oxen": {
+            "awayCrestOffsetX": 0,
+            "awayCrestOffsetY": 0,
+            "awayCrestScale": 1.12
+          },
+          "peru-creadores": {
+            "awayCrestOffsetX": 0,
+            "awayCrestOffsetY": 0,
+            "awayCrestScale": 1
+          },
+          "argentina-senior": {
+            "awayCrestOffsetX": 0,
+            "awayCrestOffsetY": 0,
+            "awayCrestScale": 1
+          }
+        }
+      }
+    },
+    "vsResultado": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 44,
+      "compositionScale": 1.16,
+      "textAdjust": {
+        "titulo": {
+          "dx": 0,
+          "dy": -14,
+          "dSize": 0
+        },
+        "nameA": {
+          "dx": 14,
+          "dy": -24,
+          "dSize": 5
+        },
+        "nameB": {
+          "dx": -34,
+          "dy": -20,
+          "dSize": -4
+        },
+        "scoreA": {
+          "dx": 24,
+          "dy": -14,
+          "dSize": 21
+        },
+        "scoreB": {
+          "dx": -32,
+          "dy": -14,
+          "dSize": 19
+        }
+      },
+      "localCrestOffsetX": 0,
+      "localCrestOffsetY": 0,
+      "localCrestScale": 1,
+      "awayCrestOffsetX": 0,
+      "awayCrestOffsetY": 0,
+      "awayCrestScale": 1,
+      "crestByTeam": {
+        "away": {
+          "oxen": {
+            "awayCrestOffsetX": 0,
+            "awayCrestOffsetY": 2,
+            "awayCrestScale": 1
+          },
+          "peru-creadores": {
+            "awayCrestOffsetX": 0,
+            "awayCrestOffsetY": 0,
+            "awayCrestScale": 1
+          },
+          "argentina-senior": {
+            "awayCrestOffsetX": 0,
+            "awayCrestOffsetY": 0,
+            "awayCrestScale": 1
+          }
+        },
+        "local": {
+          "argentina-streamers": {
+            "localCrestOffsetX": -22,
+            "localCrestOffsetY": -8,
+            "localCrestScale": 1.09
+          }
+        }
+      }
+    },
+    "tarjeta": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 0,
+      "compositionScale": 1,
+      "textAdjust": {
+        "jugador": {
+          "dx": -8,
+          "dy": -26,
+          "dSize": 0
+        }
+      },
+      "crestOffsetX": -6,
+      "crestOffsetY": -4,
+      "crestScale": 1.31,
+      "crestByTeam": {
+        "away": {
+          "oxen": {
+            "crestOffsetX": -6,
+            "crestOffsetY": -6,
+            "crestScale": 1.21
+          }
+        },
+        "local": {
+          "argentina-streamers-fem": {
+            "crestOffsetX": -6,
+            "crestOffsetY": -6,
+            "crestScale": 1.21
+          },
+          "argentina-streamers": {
+            "crestOffsetX": -6,
+            "crestOffsetY": -4,
+            "crestScale": 1.31
+          }
+        }
+      }
+    },
+    "cambios": {
+      "compositionOffsetX": -110,
+      "compositionOffsetY": 64,
+      "compositionScale": 0.86,
+      "textAdjust": {
+        "entra": {
+          "dx": 36,
+          "dy": -22,
+          "dSize": 4
+        },
+        "sale": {
+          "dx": 34,
+          "dy": -8,
+          "dSize": 6
+        },
+        "titulo": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      },
+      "crestOffsetX": 2,
+      "crestOffsetY": -6,
+      "crestScale": 1.48,
+      "crestByTeam": {
+        "away": {
+          "oxen": {
+            "crestOffsetX": 22,
+            "crestOffsetY": -8,
+            "crestScale": 1.66
+          },
+          "argentina-senior": {
+            "crestOffsetX": 18,
+            "crestOffsetY": 2,
+            "crestScale": 1
+          }
+        },
+        "local": {
+          "argentina-streamers": {
+            "crestOffsetX": 18,
+            "crestOffsetY": -2,
+            "crestScale": 1.09
+          }
+        }
+      }
+    },
+    "gol": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 0,
+      "compositionScale": 1
+    },
+    "varCheck": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 44,
+      "compositionScale": 1,
+      "motivoOffsetX": 642,
+      "motivoOffsetY": -22,
+      "motivoScale": 1,
+      "textAdjust": {
+        "motivo": {
+          "dx": 58,
+          "dy": 26,
+          "dSize": 0
+        }
+      },
+      "sponsorOffsetX": 58,
+      "sponsorOffsetY": -226,
+      "sponsorScale": 1.33,
+      "varGroupOffsetX": -168,
+      "varGroupOffsetY": 204,
+      "varGroupScale": 0.8
+    },
+    "replay": {
+      "compositionOffsetX": -96,
+      "compositionOffsetY": 240,
+      "compositionScale": 0.89,
+      "sponsorOffsetX": 60,
+      "sponsorOffsetY": -226,
+      "sponsorScale": 1.31
+    },
+    "bug": {
+      "compositionOffsetX": -18,
+      "compositionOffsetY": -6,
+      "compositionScale": 1,
+      "textAdjust": {
+        "clock": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      }
+    },
+    "longDouble": {
+      "compositionOffsetX": 16,
+      "compositionOffsetY": 78,
+      "compositionScale": 0.82,
+      "textAdjust": {
+        "line1": {
+          "dx": -16,
+          "dy": -32,
+          "dSize": 0
+        },
+        "line2": {
+          "dx": -24,
+          "dy": -22,
+          "dSize": 0
+        }
+      }
+    },
+    "shortSimple": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": -58,
+      "compositionScale": 1,
+      "textAdjust": {
+        "text": {
+          "dx": -14,
+          "dy": 32,
+          "dSize": 0
+        }
+      }
+    },
+    "shortDouble": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 100,
+      "compositionScale": 0.74,
+      "textAdjust": {
+        "name": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "role": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "double1.name": {
+          "dx": 0,
+          "dy": -20,
+          "dSize": 14
+        },
+        "double1.role": {
+          "dx": 0,
+          "dy": -12,
+          "dSize": 18
+        },
+        "double2.name": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "double2.role": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      }
+    },
+    "vs": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 0,
+      "compositionScale": 1,
+      "textAdjust": {
+        "statusTexto": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "nameA": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "nameB": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "goalA": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "goalB": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "scorersLocal": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "scorersVisitante": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      },
+      "localCrestOffsetX": 0,
+      "localCrestOffsetY": 0,
+      "localCrestScale": 1,
+      "awayCrestOffsetX": 0,
+      "awayCrestOffsetY": 0,
+      "awayCrestScale": 1,
+      "sponsorOffsetX": 0,
+      "sponsorOffsetY": 0,
+      "sponsorScale": 1
+    },
+    "zocaloFinalDiv": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 0,
+      "compositionScale": 1,
+      "textAdjust": {
+        "texto1": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "texto2": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      }
+    },
+    "zocaloFinal": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 0,
+      "compositionScale": 1,
+      "textAdjust": {
+        "texto1": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "texto2": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      }
+    },
+    "zocaloCompuesto": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 0,
+      "compositionScale": 1,
+      "textAdjust": {
+        "texto1": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "texto2": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      },
+      "localCrestOffsetX": 0,
+      "localCrestOffsetY": 0,
+      "localCrestScale": 1,
+      "awayCrestOffsetX": 0,
+      "awayCrestOffsetY": 0,
+      "awayCrestScale": 1,
+      "logoOffsetX": 0,
+      "logoOffsetY": 0,
+      "logoScale": 1,
+      "sponsor1OffsetX": 0,
+      "sponsor1OffsetY": 0,
+      "sponsor1Scale": 1,
+      "sponsor2OffsetX": 0,
+      "sponsor2OffsetY": 0,
+      "sponsor2Scale": 1,
+      "crestByTeam": {
+        "local": {
+          "oxen": {
+            "localCrestOffsetX": 0,
+            "localCrestOffsetY": 0,
+            "localCrestScale": 0.99
+          }
+        }
+      }
+    },
+    "zocaloCompuestoEquipos": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 0,
+      "compositionScale": 1,
+      "sponsorOffsetX": 0,
+      "sponsorOffsetY": 0,
+      "sponsorScale": 1,
+      "textAdjust": {
+        "texto1": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "texto2": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      },
+      "crestByTeam": {
+        "local": {
+          "argentina-streamers": {
+            "localCrestOffsetX": 0,
+            "localCrestOffsetY": 0,
+            "localCrestScale": 1
+          }
+        },
+        "away": {
+          "oxen": {
+            "awayCrestOffsetX": 14,
+            "awayCrestOffsetY": 0,
+            "awayCrestScale": 1
+          },
+          "argentina-senior": {
+            "awayCrestOffsetX": 20,
+            "awayCrestOffsetY": 4,
+            "awayCrestScale": 0.88
+          }
+        }
+      }
+    },
+    "zocaloCompuestoLogo": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 0,
+      "compositionScale": 1,
+      "logoOffsetX": 0,
+      "logoOffsetY": 0,
+      "logoScale": 2.08,
+      "sponsorOffsetX": 0,
+      "sponsorOffsetY": 0,
+      "sponsorScale": 1,
+      "textAdjust": {
+        "texto1": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "texto2": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      }
+    },
+    "placaLInfo": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 0,
+      "compositionScale": 1,
+      "zocalo1": {
+        "offsetX": -1256,
+        "offsetY": 408,
+        "scale": 1,
+        "textAdjust": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      },
+      "zocalo2": {
+        "offsetX": -296,
+        "offsetY": 408,
+        "scale": 1,
+        "textAdjust": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      },
+      "zocalo3": {
+        "offsetX": -1256,
+        "offsetY": 948,
+        "scale": 1,
+        "textAdjust": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      },
+      "zocalo4": {
+        "offsetX": -296,
+        "offsetY": 948,
+        "scale": 1,
+        "textAdjust": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      }
+    },
+    "grupos": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 0,
+      "compositionScale": 1,
+      "textAdjust": {
+        "nombre": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "puntos": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      },
+      "crestOffsetX": 0,
+      "crestOffsetY": 0,
+      "crestScale": 1
+    },
+    "sideTable": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 0,
+      "compositionScale": 1,
+      "textAdjust": {
+        "titulo": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "golLocal": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "golVisitante": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "estado": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "estadoFullscreen": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "tituloBracket": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      },
+      "crestLocalOffsetX": 0,
+      "crestLocalOffsetY": 0,
+      "crestLocalScale": 1,
+      "crestVisitanteOffsetX": 0,
+      "crestVisitanteOffsetY": 0,
+      "crestVisitanteScale": 1
+    },
+    "estrellas": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 0,
+      "compositionScale": 1,
+      "textAdjust": {
+        "titulo": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "localNombre": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "localG": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "localA": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "localPJ": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "visitanteNombre": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "visitanteG": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "visitanteA": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "visitantePJ": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      },
+      "localCrestOffsetX": 0,
+      "localCrestOffsetY": 0,
+      "localCrestScale": 1,
+      "visitanteCrestOffsetX": 0,
+      "visitanteCrestOffsetY": 0,
+      "visitanteCrestScale": 1,
+      "crestByTeam": {
+        "away": {
+          "peru-creadores": {
+            "visitanteCrestOffsetX": 8,
+            "visitanteCrestOffsetY": 0,
+            "visitanteCrestScale": 1
+          },
+          "oxen": {
+            "visitanteCrestOffsetX": 8,
+            "visitanteCrestOffsetY": -2,
+            "visitanteCrestScale": 1
+          },
+          "argentina-senior": {
+            "visitanteCrestOffsetX": 0,
+            "visitanteCrestOffsetY": 0,
+            "visitanteCrestScale": 1
+          }
+        },
+        "local": {
+          "argentina-streamers": {
+            "localCrestOffsetX": 8,
+            "localCrestOffsetY": 0,
+            "localCrestScale": 1.05
+          }
+        }
+      }
+    },
+    "posiciones": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 0,
+      "compositionScale": 1,
+      "textAdjust": {
+        "titulo": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "numero": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "equipo": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "pts": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "pj": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "g": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "gxp": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "pxp": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "p": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "gf": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "gc": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "dg": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      },
+      "crestOffsetX": 0,
+      "crestOffsetY": 0,
+      "crestScale": 1
+    },
+    "posicionesTorneo": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 0,
+      "compositionScale": 1,
+      "textAdjust": {
+        "titulo": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "numero": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "equipo": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "pts": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "pj": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "g": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "gxp": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "pxp": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "p": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "gf": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "gc": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "dg": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      },
+      "crestOffsetX": 0,
+      "crestOffsetY": 0,
+      "crestScale": 1
+    },
+    "cronogramaHoy": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 0,
+      "compositionScale": 1,
+      "textAdjust": {
+        "titulo": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 8
+        }
+      },
+      "crestByTeam": {
+        "local": {
+          "argentina-streamers": {
+            "crestLocalOffsetX": 0,
+            "crestLocalOffsetY": 0,
+            "crestLocalScale": 1
+          }
+        },
+        "away": {
+          "peru-creadores": {
+            "crestVisitanteOffsetX": 0,
+            "crestVisitanteOffsetY": 0,
+            "crestVisitanteScale": 1
+          },
+          "argentina-senior": {
+            "crestVisitanteOffsetX": 0,
+            "crestVisitanteOffsetY": 0,
+            "crestVisitanteScale": 1
+          }
+        }
+      },
+      "crestLocalOffsetX": 14,
+      "crestLocalOffsetY": 0,
+      "crestLocalScale": 1.62,
+      "crestVisitanteOffsetX": 0,
+      "crestVisitanteOffsetY": 0,
+      "crestVisitanteScale": 1
+    },
+    "resultadosParciales": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 0,
+      "compositionScale": 1,
+      "textAdjust": {
+        "titulo": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 8
+        },
+        "teamA1": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "teamB1": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "scoreA1": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "scoreB1": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "estado1": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "teamA2": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "teamB2": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "scoreA2": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "scoreB2": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "estado2": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "scoreLocal": {
+          "dx": 0,
+          "dy": -4,
+          "dSize": 15
+        },
+        "scoreVisitante": {
+          "dx": 0,
+          "dy": -6,
+          "dSize": 15
+        }
+      },
+      "localCrestOffsetX": 0,
+      "localCrestOffsetY": 0,
+      "localCrestScale": 1,
+      "awayCrestOffsetX": 0,
+      "awayCrestOffsetY": 0,
+      "awayCrestScale": 1,
+      "crestByTeam": {
+        "local": {
+          "argentina-streamers": {
+            "localCrestOffsetX": 0,
+            "localCrestOffsetY": -42,
+            "localCrestScale": 1.2
+          }
+        },
+        "away": {
+          "peru-creadores": {
+            "awayCrestOffsetX": 0,
+            "awayCrestOffsetY": 0,
+            "awayCrestScale": 1
+          },
+          "argentina-senior": {
+            "awayCrestOffsetX": 0,
+            "awayCrestOffsetY": 36,
+            "awayCrestScale": 1.1
+          }
+        }
+      }
+    },
+    "historial": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 0,
+      "compositionScale": 1,
+      "crestLocalOffsetX": -2,
+      "crestLocalOffsetY": 2,
+      "crestLocalScale": 1,
+      "crestVisitanteOffsetX": 0,
+      "crestVisitanteOffsetY": 0,
+      "crestVisitanteScale": 1,
+      "tituloCrestOffsetX": 62,
+      "tituloCrestOffsetY": 0,
+      "tituloCrestScale": 1,
+      "textAdjust": {
+        "titulo": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "golLocal": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "golVisitante": {
+          "dx": -2,
+          "dy": 0,
+          "dSize": 26
+        },
+        "fase": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      }
+    },
+    "sitioWebPromoL": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 0,
+      "compositionScale": 1
+    },
+    "goleadores": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 0,
+      "compositionScale": 1,
+      "textAdjust": {
+        "position": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "name": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": -1
+        },
+        "primaryStat": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "titulo": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      },
+      "crestOffsetX": 0,
+      "crestOffsetY": 0,
+      "crestScale": 1,
+      "tituloCrestOffsetX": 0,
+      "tituloCrestOffsetY": 0,
+      "tituloCrestScale": 1
+    },
+    "asistidores": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 0,
+      "compositionScale": 1,
+      "textAdjust": {
+        "position": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "name": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": -1
+        },
+        "primaryStat": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "titulo": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      },
+      "crestOffsetX": 0,
+      "crestOffsetY": 0,
+      "crestScale": 1,
+      "tituloCrestOffsetX": 0,
+      "tituloCrestOffsetY": 0,
+      "tituloCrestScale": 1
+    },
+    "jugadores": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 0,
+      "compositionScale": 1,
+      "textAdjust": {
+        "name": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "stat0": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "stat1": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "stat2": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "titulo": {
+          "dx": 8,
+          "dy": 0,
+          "dSize": 0
+        },
+        "position": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "primaryStat": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      },
+      "crestOffsetX": 0,
+      "crestOffsetY": 0,
+      "crestScale": 1,
+      "tituloCrestOffsetX": 0,
+      "tituloCrestOffsetY": 0,
+      "tituloCrestScale": 1
+    },
+    "fichaJugador": {
+      "compositionOffsetX": 0,
+      "compositionOffsetY": 0,
+      "compositionScale": 1,
+      "textAdjust": {
+        "nombre": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "goles": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "asistencias": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "gMasA": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "presencias": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        },
+        "mvps": {
+          "dx": 0,
+          "dy": 0,
+          "dSize": 0
+        }
+      },
+      "crestOffsetX": 0,
+      "crestOffsetY": 0,
+      "crestScale": 1
+    }
+  },
+  "createdAt": "2026-09-05T22:21:09.647Z",
+  "updatedAt": "2026-09-05T22:31:40.770Z"
+}

@@ -87,10 +87,19 @@ export default function renderZocaloCompuestoLogo(contentEl, data, justTaken, on
   const img2 = contentEl.querySelector('.ov-zf-sponsor-2');
   const listSignature = JSON.stringify(sponsorsList);
 
+  // Mismo fix de raiz que zocaloCompuestoEquipos.js (2026-09-05): nunca
+  // reemplazar el className entero (borraba la clase identificadora
+  // ".ov-zf-sponsor-1"/"-2", provocando querySelector->null->TypeError en el
+  // siguiente render y la rotacion muerta/logo pegado). Solo classList.
+  function setSponsorState(img, state) {
+    img.classList.remove('active', 'exit');
+    if (state) img.classList.add(state);
+  }
+
   const updateSponsorImage = (isFirstShow = false) => {
     if (sponsorsList.length === 0) {
-      img1.className = 'ov-zf-sponsor-img';
-      img2.className = 'ov-zf-sponsor-img';
+      setSponsorState(img1, null);
+      setSponsorState(img2, null);
       img1.removeAttribute('src');
       img2.removeAttribute('src');
       return;
@@ -101,8 +110,8 @@ export default function renderZocaloCompuestoLogo(contentEl, data, justTaken, on
 
     if (isFirstShow || sponsorsList.length === 1) {
       img1.src = file || '';
-      img1.className = 'ov-zf-sponsor-img active';
-      img2.className = 'ov-zf-sponsor-img';
+      setSponsorState(img1, 'active');
+      setSponsorState(img2, null);
       img2.removeAttribute('src');
       contentEl._activeImgIdx = 1;
       return;
@@ -112,14 +121,14 @@ export default function renderZocaloCompuestoLogo(contentEl, data, justTaken, on
     const inactiveImg = contentEl._activeImgIdx === 1 ? img2 : img1;
 
     inactiveImg.src = file || '';
-    activeImg.className = 'ov-zf-sponsor-img exit';
-    inactiveImg.className = 'ov-zf-sponsor-img active';
+    setSponsorState(activeImg, 'exit');
+    setSponsorState(inactiveImg, 'active');
     contentEl._activeImgIdx = contentEl._activeImgIdx === 1 ? 2 : 1;
 
     const prevImg = activeImg;
     setTimeout(() => {
-      if (prevImg.className.includes('exit')) {
-        prevImg.className = 'ov-zf-sponsor-img';
+      if (prevImg.classList.contains('exit')) {
+        setSponsorState(prevImg, null);
         prevImg.removeAttribute('src');
       }
     }, 600);

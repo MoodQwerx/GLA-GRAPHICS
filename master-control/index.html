@@ -21,6 +21,20 @@
 </header>
 <div id="theme-pending-banner" class="mc-theme-banner" hidden></div>
 
+<!-- PERFIL DE PARTIDO (2026-09-05, pedido explicito del usuario: seccion
+     visible cerca del arriba de Master Control, solo Argentina Streamers --
+     GLA no tiene perfiles). Ver master-control/js/main.js (setupMatchProfileBar)
+     y server/match-profiles.js (arquitectura completa). -->
+<div id="match-profile-bar" class="mc-profile-bar" hidden>
+  <span class="mc-profile-label">PERFIL DE PARTIDO:</span>
+  <select id="match-profile-select" class="mc-profile-select"></select>
+  <button id="btn-profile-apply" type="button" class="btn-profile">APLICAR PERFIL</button>
+  <button id="btn-profile-save" type="button" class="btn-profile">GUARDAR PERFIL ACTUAL</button>
+  <button id="btn-profile-save-as" type="button" class="btn-profile">GUARDAR COMO NUEVO PERFIL</button>
+  <button id="btn-profile-delete" type="button" class="btn-profile btn-profile-danger">ELIMINAR PERFIL</button>
+  <span id="match-profile-status" class="mc-profile-status"></span>
+</div>
+
 <div class="mc-body">
   <nav id="tab-bar" class="tab-bar"></nav>
 

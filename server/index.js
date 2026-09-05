@@ -7,7 +7,14 @@ import { WebSocketServer } from 'ws';
 import { MODULE_IDS } from '../shared/modules.js';
 import { WS_MSG, WS_PATH } from '../shared/constants.js';
 import { formatPlayerName, PLAYER_NAME_FORMAT } from '../shared/player-name-format.js';
-import { getSnapshot, getModuleState, applyTake, applyOut, applyUpdate, applyPositionCommit } from './state.js';
+import {
+  getSnapshot, getModuleState, applyTake, applyOut, applyUpdate, applyPositionCommit,
+  captureCurrentModulesVisualState, applyMatchProfile,
+  getActiveMatchProfileSlug, setActiveMatchProfileSlug,
+} from './state.js';
+import {
+  listMatchProfiles, readMatchProfile, createMatchProfile, overwriteMatchProfile, deleteMatchProfile,
+} from './match-profiles.js';
 import { getTeamCatalog, updateTeamAbbreviation, resetTeamAbbreviation } from './teams.js';
 import { getSponsorsCatalog } from './sponsors.js';
 import {
@@ -70,6 +77,22 @@ app.get('/api/persistence/status', (req, res) => {
 // avisaría a Program.
 app.get('/api/themes', (req, res) => {
   res.json({ ok: true, themes: listThemes(), activeThemeId: getActiveThemeId() });
+});
+
+// PERFILES DE PARTIDO (2026-09-05, ver server/match-profiles.js): listado
+// via REST (mismo criterio que /api/teams, /api/sponsors -- catalogos
+// livianos, sin costo real de releer 2-3 archivos chicos por pedido).
+// Cambios REALES (crear/guardar/aplicar/borrar) viajan por WS, igual que
+// SET_THEME, porque tienen que llegar a Master Control Y Program al mismo
+// tiempo sin refrescar.
+app.get('/api/match-profiles', async (req, res) => {
+  try {
+    const profiles = await listMatchProfiles();
+    res.json({ ok: true, profiles, activeSlug: getActiveMatchProfileSlug() });
+  } catch (err) {
+    console.error('[GLA] Error listando perfiles de partido:', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
 app.post('/api/teams/abbreviation', (req, res) => {
@@ -370,6 +393,7 @@ function broadcast(message) {
 wss.on('connection', (socket) => {
   socket.send(JSON.stringify({ type: WS_MSG.STATE_SNAPSHOT, state: getSnapshot(), theme: getActiveThemeId() }));
   socket.send(JSON.stringify({ type: 'TEAM_CATALOG_UPDATE', catalog: getTeamCatalog(getActiveThemeId()) }));
+  socket.send(JSON.stringify({ type: WS_MSG.ACTIVE_MATCH_PROFILE_UPDATE, slug: getActiveMatchProfileSlug(), name: null }));
 
   socket.on('message', async (raw) => {
     let msg;
@@ -405,6 +429,71 @@ wss.on('connection', (socket) => {
         broadcast({ type: 'TEAM_CATALOG_UPDATE', catalog: getTeamCatalog(themeId) });
       } catch (err) {
         console.error('[GLA] Error cambiando theme:', err.message);
+      }
+      return;
+    }
+
+    // PERFILES DE PARTIDO (2026-09-05, ver server/match-profiles.js):
+    // resueltos ANTES del chequeo generico de mas abajo, mismo motivo que
+    // SET_THEME/COMMIT_POSITION -- ninguno es un moduleId real.
+    if (msg.type === WS_MSG.APPLY_MATCH_PROFILE) {
+      const { slug } = msg;
+      try {
+        const profile = await readMatchProfile(slug);
+        applyMatchProfile(profile);
+        setActiveMatchProfileSlug(slug);
+        broadcast({ type: WS_MSG.STATE_SNAPSHOT, state: getSnapshot(), theme: getActiveThemeId() });
+        broadcast({ type: WS_MSG.ACTIVE_MATCH_PROFILE_UPDATE, slug, name: profile.name });
+      } catch (err) {
+        console.error('[GLA] Error aplicando perfil de partido:', err.message);
+      }
+      return;
+    }
+
+    if (msg.type === WS_MSG.SAVE_MATCH_PROFILE) {
+      const slug = getActiveMatchProfileSlug();
+      if (!slug) {
+        console.error('[GLA] SAVE_MATCH_PROFILE sin perfil activo -- ignorado.');
+        return;
+      }
+      try {
+        await overwriteMatchProfile(slug, captureCurrentModulesVisualState());
+        const profiles = await listMatchProfiles();
+        broadcast({ type: WS_MSG.PROFILE_LIST_UPDATE, profiles, activeSlug: slug });
+      } catch (err) {
+        console.error('[GLA] Error guardando perfil de partido activo:', err.message);
+      }
+      return;
+    }
+
+    if (msg.type === WS_MSG.SAVE_AS_NEW_MATCH_PROFILE) {
+      const { name, teamLocal, teamVisitante } = msg;
+      if (!name || !String(name).trim()) return;
+      try {
+        const { slug } = await createMatchProfile(
+          String(name).trim(), teamLocal || '', teamVisitante || '',
+          captureCurrentModulesVisualState(),
+        );
+        setActiveMatchProfileSlug(slug);
+        const profiles = await listMatchProfiles();
+        broadcast({ type: WS_MSG.PROFILE_LIST_UPDATE, profiles, activeSlug: slug });
+        broadcast({ type: WS_MSG.ACTIVE_MATCH_PROFILE_UPDATE, slug, name: String(name).trim() });
+      } catch (err) {
+        console.error('[GLA] Error creando perfil de partido nuevo:', err.message);
+      }
+      return;
+    }
+
+    if (msg.type === WS_MSG.DELETE_MATCH_PROFILE) {
+      const { slug } = msg;
+      if (!slug) return;
+      try {
+        await deleteMatchProfile(slug);
+        if (getActiveMatchProfileSlug() === slug) setActiveMatchProfileSlug(null);
+        const profiles = await listMatchProfiles();
+        broadcast({ type: WS_MSG.PROFILE_LIST_UPDATE, profiles, activeSlug: getActiveMatchProfileSlug() });
+      } catch (err) {
+        console.error('[GLA] Error eliminando perfil de partido:', err.message);
       }
       return;
     }

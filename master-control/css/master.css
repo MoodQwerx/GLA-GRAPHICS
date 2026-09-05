@@ -172,6 +172,62 @@ body {
 }
 .mc-theme-banner[hidden] { display: none; }
 
+/* PERFIL DE PARTIDO (2026-09-05) -- misma franja de ancho completo que el
+   banner de arriba, pero siempre visible en Argentina Streamers (oculta
+   por completo con [hidden] en GLA, ver setupMatchProfileBar en main.js). */
+.mc-profile-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: #14202c;
+  border-bottom: 2px solid var(--gold-dim);
+  padding: 10px 16px;
+}
+.mc-profile-bar[hidden] { display: none; }
+.mc-profile-label {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .5px;
+  color: var(--gold-bright);
+  white-space: nowrap;
+}
+.mc-profile-select {
+  background: #0d1620;
+  color: #fff;
+  border: 1px solid var(--border-1);
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 220px;
+}
+.btn-profile {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .5px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--gold-dim);
+  background: transparent;
+  color: var(--gold-bright);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-profile:hover { background: var(--hover-bg); }
+.btn-profile:disabled { opacity: .4; cursor: not-allowed; }
+.btn-profile-danger { border-color: #c0392b; color: #ff6b5e; }
+.btn-profile-danger:hover { background: rgba(192, 57, 41, .15); }
+.mc-profile-status {
+  font-size: 11px;
+  font-weight: 700;
+  color: #9fd88a;
+  white-space: nowrap;
+}
+
 .btn-stop-all {
   font-family: var(--font-display);
   font-size: 13px;

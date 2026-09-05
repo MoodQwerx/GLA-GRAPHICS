@@ -123,10 +123,28 @@ export default function renderZocaloCompuestoEquipos(contentEl, data, justTaken,
   const img2 = contentEl.querySelector('.ov-zfd-sponsor-2');
   const listSignature = JSON.stringify(sponsorsList);
 
+  // "setSponsorState" (2026-09-05, correccion de raiz del freeze reportado):
+  // el codigo anterior hacia "imgX.className = 'ov-zfd-sponsor-img active'"
+  // -- eso BORRA la clase identificadora ".ov-zfd-sponsor-1"/"-2" del propio
+  // <img> (el className se REEMPLAZA entero, no se le agrega nada). Al
+  // primer tick de rotacion esa clase ya desaparecia del DOM; el siguiente
+  // render completo del modulo (un nudge de composicion, o ACTUALIZAR tras
+  // cambiar la lista) volvia a hacer "contentEl.querySelector('.ov-zfd-sponsor-1')"
+  // y encontraba null -- el siguiente "img1.className = ..." tiraba
+  // TypeError ANTES de llegar a crear el nuevo setInterval, dejando la
+  // rotacion muerta y el ultimo logo mostrado pegado en pantalla para
+  // siempre (exactamente el sintoma reportado). Fix: nunca tocar el
+  // className entero, solo alternar "active"/"exit" via classList --  la
+  // clase identificadora nunca se pierde.
+  function setSponsorState(img, state) {
+    img.classList.remove('active', 'exit');
+    if (state) img.classList.add(state);
+  }
+
   const updateSponsorImage = (isFirstShow = false) => {
     if (sponsorsList.length === 0) {
-      img1.className = 'ov-zfd-sponsor-img';
-      img2.className = 'ov-zfd-sponsor-img';
+      setSponsorState(img1, null);
+      setSponsorState(img2, null);
       img1.removeAttribute('src');
       img2.removeAttribute('src');
       return;
@@ -137,8 +155,8 @@ export default function renderZocaloCompuestoEquipos(contentEl, data, justTaken,
 
     if (isFirstShow || sponsorsList.length === 1) {
       img1.src = file || '';
-      img1.className = 'ov-zfd-sponsor-img active';
-      img2.className = 'ov-zfd-sponsor-img';
+      setSponsorState(img1, 'active');
+      setSponsorState(img2, null);
       img2.removeAttribute('src');
       contentEl._activeImgIdx = 1;
       return;
@@ -148,14 +166,14 @@ export default function renderZocaloCompuestoEquipos(contentEl, data, justTaken,
     const inactiveImg = contentEl._activeImgIdx === 1 ? img2 : img1;
 
     inactiveImg.src = file || '';
-    activeImg.className = 'ov-zfd-sponsor-img exit';
-    inactiveImg.className = 'ov-zfd-sponsor-img active';
+    setSponsorState(activeImg, 'exit');
+    setSponsorState(inactiveImg, 'active');
     contentEl._activeImgIdx = contentEl._activeImgIdx === 1 ? 2 : 1;
 
     const prevImg = activeImg;
     setTimeout(() => {
-      if (prevImg.className.includes('exit')) {
-        prevImg.className = 'ov-zfd-sponsor-img';
+      if (prevImg.classList.contains('exit')) {
+        setSponsorState(prevImg, null);
         prevImg.removeAttribute('src');
       }
     }, 600);

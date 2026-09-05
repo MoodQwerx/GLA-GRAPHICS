@@ -54,6 +54,117 @@ let activeThemeId = DEFAULT_THEME_ID;
 const themeSelect = document.getElementById('theme-select');
 const themeBanner = document.getElementById('theme-pending-banner');
 
+// PERFIL DE PARTIDO (2026-09-05, pedido explicito del usuario, seccion 19:
+// "una zona general y visible de Master Control, preferentemente cerca
+// del arriba"). Ver server/match-profiles.js para la arquitectura
+// completa (captura/aplicacion/GUARDAR POSICIÓN redirigido). Declarado acá
+// arriba (antes de "connect()", mas abajo en este archivo) porque
+// "applyThemeUI" -- que puede correr en cuanto llega el primer
+// STATE_SNAPSHOT -- ya necesita mostrar/ocultar esta barra.
+const matchProfileBar = document.getElementById('match-profile-bar');
+const matchProfileSelect = document.getElementById('match-profile-select');
+const matchProfileStatus = document.getElementById('match-profile-status');
+const btnProfileApply = document.getElementById('btn-profile-apply');
+const btnProfileSave = document.getElementById('btn-profile-save');
+const btnProfileSaveAs = document.getElementById('btn-profile-save-as');
+const btnProfileDelete = document.getElementById('btn-profile-delete');
+
+let matchProfiles = [];
+// "null" es un estado real y distinto de "" (nunca todavia se supo la
+// respuesta del servidor) -- evita que "renderMatchProfileSelect" corra
+// una vez de mas con un valor todavia no confirmado antes de que llegue
+// PROFILE_LIST_UPDATE/ACTIVE_MATCH_PROFILE_UPDATE la primera vez.
+let activeMatchProfileSlug = null;
+let matchProfileListLoaded = false;
+
+function renderMatchProfileSelect() {
+  if (!matchProfileSelect) return;
+  matchProfileSelect.innerHTML = '';
+  const emptyOpt = document.createElement('option');
+  emptyOpt.value = '';
+  emptyOpt.textContent = matchProfiles.length ? 'SIN PERFIL ACTIVO' : 'SIN PERFILES GUARDADOS TODAVÍA';
+  matchProfileSelect.appendChild(emptyOpt);
+  for (const p of matchProfiles) {
+    const opt = document.createElement('option');
+    opt.value = p.slug;
+    const localLabel = teamName(p.teamLocal) || p.teamLocal || '?';
+    const visitanteLabel = teamName(p.teamVisitante) || p.teamVisitante || '?';
+    opt.textContent = `${p.name} (${localLabel} vs ${visitanteLabel})`;
+    matchProfileSelect.appendChild(opt);
+  }
+  matchProfileSelect.value = activeMatchProfileSlug || '';
+  updateMatchProfileButtons();
+}
+
+function updateMatchProfileButtons() {
+  const selectedSlug = matchProfileSelect ? matchProfileSelect.value : '';
+  if (btnProfileApply) btnProfileApply.disabled = !selectedSlug;
+  if (btnProfileDelete) btnProfileDelete.disabled = !selectedSlug;
+  if (btnProfileSave) btnProfileSave.disabled = !activeMatchProfileSlug;
+  if (matchProfileStatus) {
+    const activeProfile = matchProfiles.find((p) => p.slug === activeMatchProfileSlug);
+    matchProfileStatus.textContent = activeProfile ? `Perfil activo: ${activeProfile.name}` : '';
+  }
+}
+
+async function refreshMatchProfileList() {
+  try {
+    const res = await fetch('/api/match-profiles');
+    const json = await res.json();
+    if (!json.ok) return;
+    matchProfiles = json.profiles;
+    // Solo adopta el "activeSlug" del servidor la PRIMERA vez (carga
+    // inicial de la pagina) -- despues de eso, la fuente de verdad del
+    // perfil activo son los broadcasts PROFILE_LIST_UPDATE/
+    // ACTIVE_MATCH_PROFILE_UPDATE (evita pisar un cambio que ya llego por
+    // WS con una respuesta REST que salio antes pero volvio despues).
+    if (!matchProfileListLoaded) activeMatchProfileSlug = json.activeSlug;
+    matchProfileListLoaded = true;
+    renderMatchProfileSelect();
+  } catch (err) {
+    console.error('[GLA] Error cargando perfiles de partido:', err.message);
+  }
+}
+
+function setupMatchProfileBar() {
+  if (!matchProfileBar) return;
+  refreshMatchProfileList();
+
+  matchProfileSelect?.addEventListener('change', updateMatchProfileButtons);
+
+  btnProfileApply?.addEventListener('click', () => {
+    const slug = matchProfileSelect.value;
+    if (!slug) return;
+    ws.send({ type: WS_MSG.APPLY_MATCH_PROFILE, slug });
+  });
+
+  btnProfileSave?.addEventListener('click', () => {
+    if (!activeMatchProfileSlug) return;
+    ws.send({ type: WS_MSG.SAVE_MATCH_PROFILE });
+  });
+
+  btnProfileSaveAs?.addEventListener('click', () => {
+    const name = window.prompt('Nombre del nuevo perfil de partido (ej. "ARG STREAMERS FEM VS OXEN"):', '');
+    if (!name || !name.trim()) return;
+    // Equipos: los que esten seleccionados AHORA MISMO en el Marcador --
+    // mismo criterio que "resolveCrestTeamTarget" (seccion 17, pedido
+    // explicito: "aplicar un perfil debe también seleccionar
+    // automáticamente esos equipos").
+    const teamLocal = draft.scoreboard?.teamA || '';
+    const teamVisitante = draft.scoreboard?.teamB || '';
+    ws.send({ type: WS_MSG.SAVE_AS_NEW_MATCH_PROFILE, name: name.trim(), teamLocal, teamVisitante });
+  });
+
+  btnProfileDelete?.addEventListener('click', () => {
+    const slug = matchProfileSelect.value;
+    if (!slug) return;
+    const profile = matchProfiles.find((p) => p.slug === slug);
+    const confirmed = window.confirm(`¿Eliminar el perfil "${profile?.name || slug}"? Esta acción no se puede deshacer.`);
+    if (!confirmed) return;
+    ws.send({ type: WS_MSG.DELETE_MATCH_PROFILE, slug });
+  });
+}
+
 function populateThemeSelect() {
   if (!themeSelect) return;
   themeSelect.innerHTML = '';
@@ -76,6 +187,11 @@ function applyThemeUI(themeId) {
       themeBanner.textContent = `THEME EN PREPARACIÓN / ASSETS PENDIENTES — ${getTheme(themeId).name} todavía no tiene sus piezas gráficas cargadas.`;
     }
   }
+  // PERFIL DE PARTIDO (2026-09-05): solo tiene sentido en Argentina
+  // Streamers -- GLA nunca tuvo pedido este sistema, "GLA debe conservar
+  // exactamente sus modulos, navegacion y comportamiento" (mismo criterio
+  // ya aplicado en toda esta tarea).
+  if (matchProfileBar) matchProfileBar.hidden = themeId !== ARGENTINA_STREAMERS_THEME_ID;
 }
 
 populateThemeSelect();
@@ -466,6 +582,12 @@ function buildTabs() {
   const ARGENTINA_STREAMERS_HIDDEN_MODULES = new Set([
     'sideTable', 'posiciones', 'posicionesTorneo',
     'grupos', 'zocaloCompuesto',
+    // "placaLInfo" (2026-09-05, pedido explicito del usuario: "sacar Placa
+    // L Info de Argentina Streamers por completo, sin romper GLA que sigue
+    // dependiendo de el") -- mismo mecanismo ya usado arriba, el modulo
+    // sigue registrado igual para los dos themes (shared/modules.js sin
+    // tocar), solo la navegacion de Argentina Streamers deja de mostrarlo.
+    'placaLInfo',
   ]);
   // "fichaJugador" (2026-09-02, pedido explicito del usuario: "GLA debe
   // conservar exactamente sus modulos, navegacion y comportamiento") --
@@ -1436,6 +1558,14 @@ const ws = connect({
       if (msg.moduleId === 'gol' && msg.moduleState.status === MODULE_STATUS.OUT) {
         fireNextGolAnimation();
       }
+    } else if (msg.type === WS_MSG.PROFILE_LIST_UPDATE) {
+      matchProfiles = msg.profiles;
+      activeMatchProfileSlug = msg.activeSlug;
+      matchProfileListLoaded = true;
+      renderMatchProfileSelect();
+    } else if (msg.type === WS_MSG.ACTIVE_MATCH_PROFILE_UPDATE) {
+      activeMatchProfileSlug = msg.slug;
+      renderMatchProfileSelect();
     }
   },
 });
@@ -1631,6 +1761,7 @@ stopAllBtn.addEventListener('click', () => {
 buildTabs();
 renderPanel();
 setupPreviewMonitor();
+setupMatchProfileBar();
 
 // Monitor de preview (columna derecha): un iframe que carga el Program
 // real (misma URL que se usa como Browser Source/Input en OBS/vMix) a su

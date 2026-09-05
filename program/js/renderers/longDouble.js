@@ -16,6 +16,7 @@ function buildStructure(el) {
   el.innerHTML = `
     <div class="av-target"></div>
     <div class="gfx-overlay">
+      <div class="ov-long-double-strip2"></div>
       <div class="ov-long-double-line1"></div>
       <div class="ov-long-double-line2"></div>
     </div>
