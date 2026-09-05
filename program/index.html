@@ -10,17 +10,19 @@
 <body>
 <div id="stage">
   <!-- Marcador -->
-  <!-- Marcador Zocalo antes que el marcador principal a proposito: el orden
-       de estos nodos define el apilado real (ver docs/ARCHITECTURE.md), y
-       este modulo tiene que quedar DETRAS del marcador principal (que lo
-       "pisa" en el margen medido donde se superponen — ver
-       program/css/overlay.css). Tiempo adicional, en cambio, NO va pisado
-       por el marcador principal (queda apenas debajo, sin superposicion
-       real) asi que su orden respecto de scoreboard no es significativo;
-       se lo deja despues, como el resto de la familia Marcador. -->
+  <!-- Marcador Zocalo y Tiempo Adicional van ANTES que el marcador
+       principal a proposito: el orden de estos nodos define el apilado
+       real (ver docs/ARCHITECTURE.md), y ambos tienen que quedar DETRAS
+       del marcador principal (que los "pisa" donde se superponen — ver
+       program/css/overlay.css). Tiempo Adicional se movio aca (2026-09-04,
+       pedido explicito del usuario, Argentina Streamers) despues de que su
+       posicion guardada paso a superponerse con el marcador principal --
+       antes no hacia falta este orden porque no se pisaban. Solo cambia el
+       orden DOM (asi el navegador lo apila abajo sin tocar CSS/z-index
+       nuevo); X/Y/Scale guardados del modulo no se tocaron. -->
   <div id="mod-marcadorZocalo" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
-  <div id="mod-scoreboard" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
   <div id="mod-marcadorTiempoAdicional" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-scoreboard" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
   <div id="mod-marcadorEntretiempo" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
   <div id="mod-marcadorPenales" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
 

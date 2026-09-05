@@ -200,6 +200,13 @@ export const THEMES = {
       // primeras palabras de "Argentina Streamers FEM" tambien da "ARG".
       { id: 'oxen', name: 'OXEN', abbr: 'OXE', file: '/assets/themes/argentina-streamers/escudos/oxen.png' },
       { id: 'argentina-streamers-fem', name: 'Argentina Streamers FEM', abbr: 'ARF', file: '/assets/themes/argentina-streamers/escudos/argentina-streamers-fem.png' },
+      // Argentina Senior (2026-09-04, pedido explicito del usuario): escudo
+      // extraido del PDF vectorial entregado en "cosas sueltas/" (nunca
+      // usado directo en runtime -- exportado una vez a PNG transparente,
+      // recorte ajustado al bounding box real del arte via analisis de
+      // canal alfa, misma carpeta que el resto de escudos AS). "LSF" es la
+      // abreviatura pedida explicitamente (no derivada del logo).
+      { id: 'argentina-senior', name: 'ARGENTINA SENIOR', abbr: 'LSF', file: '/assets/themes/argentina-streamers/escudos/argentina-senior.png' },
     ],
     // Un objeto por cada módulo de THEME_ASSET_MODULES, generado acá mismo
     // (no a mano) para garantizar que NINGUNO quede afuera -- "video"/
@@ -218,11 +225,23 @@ export const THEMES = {
       scoreboard: { video: '/assets/themes/argentina-streamers/marcador/scoreboard-alpha.mp4' },
       marcadorPenales: { video: '/assets/themes/argentina-streamers/marcador/marcador-penales-alpha.mp4' },
       marcadorTiempoAdicional: { image: '/assets/themes/argentina-streamers/marcador/marcador-tiempo-adicional.png' },
-      // Nuevo (2026-09-01): asset real de Entretiempo entregado en la
-      // segunda tanda ("ASSET ENTRETIEMPO") -- toda la logica/datos
-      // heredados que ya usaba este modulo en Marcador siguen sin tocarse,
-      // solo cambia que ahora monta esta imagen en vez de quedar sin asset.
-      marcadorEntretiempo: { image: '/assets/themes/argentina-streamers/marcador/marcador-entretiempo.png' },
+      // ACTUALIZADO (2026-09-04, pedido explicito del usuario): el PNG que
+      // vivia aca ("marcador-entretiempo.png", entregado 2026-09-01) en
+      // realidad no era el asset correcto de ESTE modulo -- el usuario
+      // aviso explicitamente "no lo confundas con el asset que ya
+      // identificamos como de MARCADOR ZÓCALO" (ver esa entrada, unas
+      // lineas abajo, que sigue usando ese archivo viejo sin tocarse).
+      // Este es el PNG real de Entretiempo ("ENTRETIEMPO_FINAL2.png" en
+      // cosas sueltas/), archivo PROPIO (nunca compartido con Zócalo) para
+      // que un futuro cambio de uno no afecte al otro por accidente.
+      marcadorEntretiempo: { image: '/assets/themes/argentina-streamers/marcador/entretiempo.png' },
+      // "marcadorZocalo" (2026-09-04, correccion explicita del usuario: "el
+      // error fue mio con el nombre") no tenia entrada propia aca -- quedaba
+      // sin asset (solo texto/reloj flotando). Sigue usando el PNG viejo de
+      // arriba (el que en su momento se identifico, erroneamente, como
+      // "ENTRETIEMPO") -- ese diseño SI es el correcto para Zócalo, no se
+      // toca.
+      marcadorZocalo: { image: '/assets/themes/argentina-streamers/marcador/marcador-entretiempo.png' },
       gol: { video: '/assets/themes/argentina-streamers/incidencias/gol-alpha.mp4' },
       cambios: { video: '/assets/themes/argentina-streamers/incidencias/cambios-alpha.mp4' },
       tarjeta: {
@@ -293,7 +312,15 @@ export const THEMES = {
       // pixel a pixel, ver program/js/renderers/vsResultado.js. El video
       // viejo (vs-resultado-alpha.mp4) queda sin referenciar; no se borro
       // el archivo por las dudas, solo se dejo de usar.
-      vsResultado: { image: '/assets/themes/argentina-streamers/brackets/vs-resultado.png' },
+      // Revertido (2026-09-04, pedido explicito del usuario: "se reemplazo
+      // accidentalmente por el asset que corresponde a RESULTADOS
+      // PARCIALES") al video que este modulo usaba ANTES del cambio a PNG
+      // del 2026-09-02 (commit 83cf1fa) -- confirmado por git history, no
+      // inventado. El PNG "vs-resultado.png" y su geometria vertical
+      // quedan reservados exclusivamente para "resultadosParciales" (ver
+      // esa entrada mas abajo), que ya tiene su propio asset separado
+      // "resultados-parciales.png" -- no se vuelven a mezclar.
+      vsResultado: { video: '/assets/themes/argentina-streamers/vs/vs-resultado-alpha.mp4' },
       // Estrellas (2026-09-01): asset real ("ASSET ESTRELLAS" del ZIP) --
       // solo el asset visual, la logica de datos (jugadores/escudos/
       // stats/PJ/editores/posiciones) sigue exactamente igual, sin tocar.
@@ -306,6 +333,9 @@ export const THEMES = {
         formationAssetsByTeam: {
           'argentina-streamers': '/assets/themes/argentina-streamers/formaciones/kits/formacion-arg.png',
           'argentina-streamers-fem': '/assets/themes/argentina-streamers/formaciones/kits/formacion-arg.png',
+          // Argentina Senior (2026-09-04, pedido explicito): misma camiseta
+          // FORMACION ARG que Argentina Streamers / FEM.
+          'argentina-senior': '/assets/themes/argentina-streamers/formaciones/kits/formacion-arg.png',
           oxen: '/assets/themes/argentina-streamers/formaciones/kits/formacion-oxen.png',
           'peru-creadores': '/assets/themes/argentina-streamers/formaciones/kits/formacion-peru.png',
         },

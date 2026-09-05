@@ -79,7 +79,7 @@ function repeatButton(label, title, onFire) {
 // "onDirty" se llama en cada cambio (guardado/UPDATE); "onReset" es
 // opcional y, si se pasa, se llama ADEMAS de limpiar "adjust" (por si el
 // caller necesita re-pintar algo propio, ver short-double-panel.js).
-export function renderTextAdjustControl(container, adjust, onDirty, { label, onReset, onSave, isPendingSave, isConnected, elementSpec } = {}) {
+export function renderTextAdjustControl(container, adjust, onDirty, { label, onReset, onSave, isPendingSave, isConnected, elementSpec, initialBaseline } = {}) {
   ensureShape(adjust);
 
   const root = document.createElement('div');
@@ -90,7 +90,15 @@ export function renderTextAdjustControl(container, adjust, onDirty, { label, onR
   // en {0,0,0} (el default de diseño de siempre para un ajuste de texto) y
   // se actualiza al valor absoluto actual cada GUARDAR POSICIÓN exitoso. El
   // dato real ("adjust.dx/dy/dSize", lo que YA lee Program) nunca se toca.
-  const baseline = { dx: 0, dy: 0, dSize: 0 };
+  // "initialBaseline" (2026-09-04, opcional, retrocompatible -- sin pasarlo
+  // el comportamiento es EXACTAMENTE el de siempre): un caller que
+  // reconstruye este control repetidas veces sobre el MISMO "adjust" ya
+  // comprometido (ver "TÍTULO — POSICIÓN/ESCALA" por categoria en
+  // historial-panel.js, que rearma el control entero cada vez que cambia
+  // la categoria) puede pasar un snapshot del valor YA confirmado para que
+  // RESET vuelva ahi -- sin esto, cada reconstruccion olvidaba la base real
+  // y RESET volvia a 0/0/0 en vez de a la ultima posicion guardada.
+  const baseline = initialBaseline ? { ...initialBaseline } : { dx: 0, dy: 0, dSize: 0 };
 
   if (label) {
     const labelEl = document.createElement('span');

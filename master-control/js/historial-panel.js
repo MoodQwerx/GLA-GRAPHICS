@@ -1,4 +1,5 @@
 import { TEAM_OPTIONS } from '../../shared/teams.js';
+import { renderTextAdjustControl } from './text-adjust-control.js';
 
 const ROW_COUNT = 5;
 
@@ -11,6 +12,17 @@ const TIPO_HISTORIAL_OPTIONS = [
   { id: 'amistosos-oficiales', label: 'AMISTOSOS OFICIALES' },
   { id: 'amistosos', label: 'AMISTOSOS' },
 ];
+
+// Título automático por categoría (2026-09-04, pedido explicito del
+// usuario, seccion 14 del pedido de integracion web): "HISTORIAL - <id>",
+// mismos rotulos que TIPO_HISTORIAL_OPTIONS -- se aplica SOLO al apretar
+// "ACTUALIZAR DATOS DE LA WEB" (no en cada cambio del selector, para no
+// pisar un titulo custom que el operador este tipeando mientras solo
+// esta mirando categorias).
+function autoTituloFor(tipoHistorial) {
+  const opt = TIPO_HISTORIAL_OPTIONS.find((t) => t.id === tipoHistorial);
+  return opt ? `HISTORIAL - ${opt.label}` : 'HISTORIAL';
+}
 
 // "AJUSTE DE COMPOSICIÓN" (COMPOSICIÓN COMPLETA + ESCUDO LOCAL/VISITANTE +
 // GOL LOCAL/VISITANTE, todo por columna) NO se arma aca -- ver el mismo
@@ -31,8 +43,25 @@ function ensureDefaults(data) {
   if (!Array.isArray(data.partidos) || data.partidos.length !== ROW_COUNT) {
     const existing = Array.isArray(data.partidos) ? data.partidos : [];
     data.partidos = Array.from({ length: ROW_COUNT }, (_, i) => existing[i] || {
-      teamA: '', golLocal: '', golVisitante: '', teamB: '',
+      teamA: '', golLocal: '', golVisitante: '', teamB: '', teamBCrestUrl: '', penalLocal: '', penalVisitante: '', fase: '',
     });
+  }
+  // "tituloByCategoria" (2026-09-04, pedido explicito del usuario, items
+  // 5-6): un {dx,dy,dSize} INDEPENDIENTE por categoria -- se asegura la
+  // forma de las 4 aca (defensivo, por si el draft viene de antes de este
+  // cambio) para que renderTituloAdjust() siempre tenga un objeto real
+  // para mutar in-place.
+  if (!data.tituloByCategoria || typeof data.tituloByCategoria !== 'object') data.tituloByCategoria = {};
+  for (const { id } of TIPO_HISTORIAL_OPTIONS) {
+    if (!data.tituloByCategoria[id] || typeof data.tituloByCategoria[id] !== 'object') {
+      data.tituloByCategoria[id] = { dx: 0, dy: 0, dSize: 0 };
+    }
+  }
+  // "resultadoNormal"/"resultadoConPenales"/"penalesFino" (2026-09-04,
+  // pedido explicito del usuario): defensivo, por si el draft viene de
+  // antes de este cambio.
+  for (const key of ['resultadoNormal', 'resultadoConPenales', 'penalesFino']) {
+    if (!data[key] || typeof data[key] !== 'object') data[key] = { dx: 0, dy: 0, dSize: 0 };
   }
 }
 
@@ -56,10 +85,18 @@ export function renderHistorialPanel(container, data, onDirty, saveOptions) {
       <label style="display:block; font-size:11px; margin-bottom:4px; opacity:0.8;">TIPO DE HISTORIAL</label>
       <select class="mc-select sel-tipoHistorial">${renderTipoHistorialOptions(data.tipoHistorial)}</select>
     </div>
+    <div class="titulo-adjust-box" style="margin-bottom:10px;"></div>
     <div style="margin-bottom:4px;">
       <button type="button" class="performance-sync-btn btn-actualizar-web">ACTUALIZAR DATOS DE LA WEB</button>
       <div class="web-update-msg" style="font-size:11px; opacity:0.7; margin-top:6px;"></div>
     </div>
+    <h3 class="panel-subtitle" style="margin-top:16px;">HISTORIAL — RESULTADOS</h3>
+    <div style="font-size:11px; opacity:0.7; margin-bottom:8px;">
+      GOL LOCAL y GOL VISITANTE se mueven SIEMPRE juntos. "RESULTADO NORMAL" solo afecta partidos sin penales; "RESULTADO CON PENALES" solo afecta partidos definidos por penales (nunca se pisan entre sí). "PENALES" ajusta fino la segunda línea "(N) (N)" respecto del score reglamentario.
+    </div>
+    <div class="resultado-normal-box" style="margin-bottom:10px;"></div>
+    <div class="resultado-penales-box" style="margin-bottom:10px;"></div>
+    <div class="penales-fino-box" style="margin-bottom:10px;"></div>
   `;
 
   const inpTitulo = topSection.querySelector('.inp-titulo');
@@ -68,19 +105,123 @@ export function renderHistorialPanel(container, data, onDirty, saveOptions) {
     onDirty();
   });
 
+  // TÍTULO — posición/escala INDEPENDIENTE por categoría (2026-09-04,
+  // pedido explicito del usuario, items 5-6: "HISTORIAL - IWC" es mucho
+  // mas corto que "HISTORIAL - AMISTOSOS OFICIALES", no quiero una unica
+  // posicion global"). Reusa el MISMO componente generico que el resto del
+  // proyecto (renderTextAdjustControl) pero apuntado a
+  // "data.tituloByCategoria[tipoHistorial]" en vez de "data.textAdjust.X"
+  // -- por eso NO vive en shared/adjust-registry.js/el acordeon generico
+  // (que solo sabe escribir textAdjust), se arma a mano aca. Se reconstruye
+  // completo cada vez que cambia la categoria (adjustBox.innerHTML=''),
+  // así siempre muestra/edita el ajuste de la categoria ACTUALMENTE
+  // elegida -- RESET tambien queda automaticamente acotado a esa unica
+  // categoria (nunca toca las otras 3, que ni siquiera se tocan).
+  const adjustBox = topSection.querySelector('.titulo-adjust-box');
+  function renderTituloAdjust() {
+    adjustBox.innerHTML = '';
+    const cat = data.tipoHistorial;
+    const adjust = data.tituloByCategoria[cat];
+    const catLabel = TIPO_HISTORIAL_OPTIONS.find((t) => t.id === cat)?.label || cat;
+    renderTextAdjustControl(adjustBox, adjust, onDirty, {
+      label: `TÍTULO — POSICIÓN/ESCALA (${catLabel})`,
+      ...saveOptions,
+      elementSpec: { kind: 'text', dataPath: ['tituloByCategoria', cat] },
+      // Snapshot de la posicion YA confirmada para ESTA categoria (2026-09-04):
+      // este control se reconstruye entero cada vez que cambia la categoria
+      // (arriba), asi que sin esto "baseline" olvidaria cualquier GUARDAR
+      // POSICIÓN de una vuelta anterior y RESET volveria a 0/0/0 en vez de a
+      // la ultima base real -- ver el comentario en text-adjust-control.js.
+      initialBaseline: { ...adjust },
+    });
+  }
+  renderTituloAdjust();
+
+  // RESULTADO NORMAL / CON PENALES / PENALES (2026-09-04, pedido explicito
+  // del usuario: "eliminar la edicion independiente GOL LOCAL/GOL
+  // VISITANTE... los dos goles deben moverse juntos", con geometria
+  // COMPLETAMENTE separada segun si la fila tiene penales o no). Mismo
+  // componente generico (renderTextAdjustControl) apuntado a 3 campos de
+  // NIVEL SUPERIOR de "data" (no textAdjust.X, no por columna individual):
+  // la aplicacion CONDICIONAL real (que fila usa cual bloque) vive en
+  // program/js/renderers/historial.js. Se montan UNA sola vez (no dependen
+  // de la categoria activa, a diferencia del titulo) asi que no necesitan
+  // el patron de reconstruccion+"initialBaseline" de arriba.
+  renderTextAdjustControl(topSection.querySelector('.resultado-normal-box'), data.resultadoNormal, onDirty, {
+    label: 'RESULTADO NORMAL (gol local + gol visitante, SIN penales)',
+    ...saveOptions,
+    elementSpec: { kind: 'text', dataPath: ['resultadoNormal'] },
+  });
+  renderTextAdjustControl(topSection.querySelector('.resultado-penales-box'), data.resultadoConPenales, onDirty, {
+    label: 'RESULTADO CON PENALES (gol local + gol visitante + penales, junto)',
+    ...saveOptions,
+    elementSpec: { kind: 'text', dataPath: ['resultadoConPenales'] },
+  });
+  renderTextAdjustControl(topSection.querySelector('.penales-fino-box'), data.penalesFino, onDirty, {
+    label: 'PENALES / SEGUNDA LÍNEA (ajuste fino, respecto del score reglamentario)',
+    ...saveOptions,
+    elementSpec: { kind: 'text', dataPath: ['penalesFino'] },
+  });
+
   const selTipo = topSection.querySelector('.sel-tipoHistorial');
   selTipo.addEventListener('change', () => {
     data.tipoHistorial = selTipo.value;
+    renderTituloAdjust();
     onDirty();
   });
 
   const btnWeb = topSection.querySelector('.btn-actualizar-web');
   const webMsg = topSection.querySelector('.web-update-msg');
-  // Integracion real (fetch/scraping/API) NO implementada a proposito --
-  // pedido explicito del usuario (2026-09-02): "NO inventar datos. NO hacer
-  // llamadas ficticias. NO scraping todavia." Este boton queda inerte.
-  btnWeb.addEventListener('click', () => {
-    webMsg.textContent = 'INTEGRACIÓN WEB PENDIENTE';
+  // Integracion real (2026-09-04, pedido explicito del usuario -- ver
+  // server/argentinaStreamersSync.js): fetch/parseo corre SOLO en el
+  // servidor (server/index.js, ruta /api/argentina-streamers/historial/
+  // sync-web), nunca desde este panel ni desde Program (seccion 24 del
+  // pedido: "Program NO consulta argentinastreamers.com"). Este boton
+  // solo actualiza el draft (data.partidos/titulo) -- nunca manda al aire
+  // por si solo, el operador decide TAKE/UPDATE despues.
+  // GLA sigue con el placeholder original tal cual (este modulo existe
+  // para los dos themes, pero la integracion web es exclusiva de
+  // Argentina Streamers -- "document.body.dataset.theme" ya lo fija
+  // main.js globalmente, sin tener que cambiar la firma de
+  // renderHistorialPanel para pasarlo aparte).
+  let webSyncTimer = null;
+  btnWeb.addEventListener('click', async () => {
+    if (document.body.dataset.theme !== 'argentinaStreamers') {
+      webMsg.className = 'web-update-msg';
+      webMsg.textContent = 'INTEGRACIÓN WEB PENDIENTE';
+      return;
+    }
+    clearTimeout(webSyncTimer);
+    webMsg.className = 'web-update-msg loading';
+    webMsg.textContent = 'ACTUALIZANDO...';
+    btnWeb.disabled = true;
+    try {
+      const categoria = encodeURIComponent(data.tipoHistorial);
+      const res = await fetch(`/api/argentina-streamers/historial/sync-web?categoria=${categoria}`, { method: 'POST' });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || !body?.ok) throw new Error(body?.error || `HTTP ${res.status}`);
+      data.partidos = body.partidos;
+      data.titulo = autoTituloFor(data.tipoHistorial);
+      inpTitulo.value = data.titulo;
+      for (let i = 0; i < ROW_COUNT; i++) {
+        const partido = data.partidos[i] || { teamA: '', golLocal: '', golVisitante: '', teamB: '' };
+        const row = rowInputs[i];
+        row.selA.value = partido.teamA;
+        row.selB.value = partido.teamB;
+        row.inpGolLocal.value = partido.golLocal;
+        row.inpGolVisitante.value = partido.golVisitante;
+      }
+      onDirty();
+      webMsg.className = 'web-update-msg success';
+      webMsg.textContent = body.unmatchedTeams?.length
+        ? `DATOS ACTUALIZADOS ✓ — sin equipo local para: ${body.unmatchedTeams.join(', ')}`
+        : 'DATOS ACTUALIZADOS ✓';
+    } catch (err) {
+      webMsg.className = 'web-update-msg error';
+      webMsg.textContent = `ERROR AL ACTUALIZAR — ${err.message}`;
+    }
+    btnWeb.disabled = false;
+    webSyncTimer = setTimeout(() => { webMsg.textContent = ''; webMsg.className = 'web-update-msg'; }, 8000);
   });
 
   root.appendChild(topSection);
@@ -94,6 +235,7 @@ export function renderHistorialPanel(container, data, onDirty, saveOptions) {
     </div>
   `;
 
+  const rowInputs = [];
   for (let i = 0; i < ROW_COUNT; i++) {
     const partido = data.partidos[i];
     const box = document.createElement('div');
@@ -137,6 +279,11 @@ export function renderHistorialPanel(container, data, onDirty, saveOptions) {
     });
     selB.addEventListener('change', () => {
       data.partidos[i].teamB = selB.value;
+      // Elegir un equipo del catalogo a mano reemplaza cualquier escudo de
+      // rival historico que haya traido la sincro web (2026-09-04) -- sin
+      // esto quedaria un "teamBCrestUrl" viejo colgado (inofensivo para el
+      // renderer, que ya prioriza "teamB" real, pero prolijo limpiarlo).
+      data.partidos[i].teamBCrestUrl = '';
       onDirty();
     });
     inpGolLocal.addEventListener('input', () => {
@@ -148,6 +295,7 @@ export function renderHistorialPanel(container, data, onDirty, saveOptions) {
       onDirty();
     });
 
+    rowInputs.push({ selA, selB, inpGolLocal, inpGolVisitante });
     section.appendChild(box);
   }
 

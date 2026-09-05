@@ -21,10 +21,16 @@ import {
   syncEstrellasFromWeb,
 } from './glaFutbolSync.js';
 import { getRosterSnapshot, syncRosterFromWeb } from './glaFutbolRosters.js';
+import {
+  syncGoleadoresFromWeb as syncGoleadoresFromArgentinaStreamersWeb,
+  syncAsistidoresFromWeb as syncAsistidoresFromArgentinaStreamersWeb,
+  syncParticipacionesFromWeb as syncParticipacionesFromArgentinaStreamersWeb,
+  syncHistorialFromWeb as syncHistorialFromArgentinaStreamersWeb,
+} from './argentinaStreamersSync.js';
 import { flushPersistence, getPersistenceStatus } from './persistence.js';
 import { correctLowerThirdText } from './textCorrection.js';
 import { getActiveThemeId, setActiveThemeId } from './theme.js';
-import { listThemes, getTheme } from '../shared/themes.js';
+import { listThemes, getTheme, ARGENTINA_STREAMERS_THEME_ID } from '../shared/themes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, '..');
@@ -143,6 +149,63 @@ registerPerformanceSyncRoute('/api/asistidores/sync-web', 'asistidores', syncAsi
 registerPerformanceSyncRoute('/api/jugadores/sync-web', 'jugadores', syncJugadoresFromWeb);
 registerSyncRoute('/api/posiciones/sync-web', 'posiciones', syncPosicionesFromWeb, 'filas');
 registerSyncRoute('/api/posiciones-torneo/sync-web', 'posicionesTorneo', syncPosicionesTorneoFromWeb, 'filas');
+
+// Sincronizacion manual "ACTUALIZAR DATOS DE LA WEB" contra
+// https://argentinastreamers.com (Goleadores/Asistidores/Participaciones/
+// Historial de Argentina Streamers, ver server/argentinaStreamersSync.js).
+// Mismo contrato que el bloque de gla.futbol de arriba (consulta SOLO
+// aca, nunca desde Program ni en cada render -- ver seccion 24 del pedido
+// del usuario) pero con rutas y guarda de theme propias, completamente
+// separadas: ninguna de las dos integraciones puede disparar la consulta
+// del otro theme por error.
+function requireArgentinaStreamersTheme(res) {
+  if (getActiveThemeId() === ARGENTINA_STREAMERS_THEME_ID) return true;
+  res.status(409).json({
+    ok: false,
+    error: `Esta sincronización pertenece al theme ARGENTINA STREAMERS; el theme activo es "${getTheme(getActiveThemeId()).name}".`,
+  });
+  return false;
+}
+
+function registerArgentinaStreamersStatsRoute(path, moduleId, syncFn) {
+  app.post(path, async (req, res) => {
+    if (!requireArgentinaStreamersTheme(res)) return;
+    try {
+      const result = await syncFn();
+      const ultimaActualizacionWeb = new Date().toISOString();
+      const moduleState = applyUpdate(moduleId, { jugadores: result.jugadores, ultimaActualizacionWeb });
+      broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId, moduleState });
+      res.json({ ok: true, ...result, ultimaActualizacionWeb });
+    } catch (err) {
+      console.error(`[GLA] Error sincronizando ${moduleId} desde argentinastreamers.com:`, err.message);
+      res.status(502).json({ ok: false, error: err.message });
+    }
+  });
+}
+
+registerArgentinaStreamersStatsRoute('/api/argentina-streamers/goleadores/sync-web', 'goleadores', syncGoleadoresFromArgentinaStreamersWeb);
+registerArgentinaStreamersStatsRoute('/api/argentina-streamers/asistidores/sync-web', 'asistidores', syncAsistidoresFromArgentinaStreamersWeb);
+registerArgentinaStreamersStatsRoute('/api/argentina-streamers/jugadores/sync-web', 'jugadores', syncParticipacionesFromArgentinaStreamersWeb);
+
+// Historial: la categoria ("iwc"/"copa-america"/"amistosos-oficiales"/
+// "amistosos") llega por query string -- el operador ya la eligio en el
+// selector "TIPO DE HISTORIAL" del panel antes de apretar el boton, asi
+// que el titulo automatico ("HISTORIAL - <CATEGORIA>") tambien se resuelve
+// del lado del cliente con el mismo valor, sin duplicar la lista aca.
+app.post('/api/argentina-streamers/historial/sync-web', async (req, res) => {
+  if (!requireArgentinaStreamersTheme(res)) return;
+  const categoria = String(req.query.categoria || '');
+  try {
+    const result = await syncHistorialFromArgentinaStreamersWeb(categoria);
+    const ultimaActualizacionWeb = new Date().toISOString();
+    const moduleState = applyUpdate('historial', { partidos: result.partidos, ultimaActualizacionWeb });
+    broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId: 'historial', moduleState });
+    res.json({ ok: true, ...result, ultimaActualizacionWeb });
+  } catch (err) {
+    console.error('[GLA] Error sincronizando historial desde argentinastreamers.com:', err.message);
+    res.status(502).json({ ok: false, error: err.message });
+  }
+});
 
 app.get('/api/planteles/:teamId', (req, res) => {
   try {

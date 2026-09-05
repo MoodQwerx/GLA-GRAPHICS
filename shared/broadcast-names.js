@@ -13,6 +13,7 @@ const BROADCAST_NAME_MAP = {
   'argentina-streamers-fem': 'AR STREAMERS FEM',
   'argentina-streamers': 'AR STREAMERS',
   'peru-creadores': 'PERÚ CREADORES',
+  'argentina-senior': 'ARGENTINA SENIOR',
 };
 
 export function getBroadcastName(teamId) {

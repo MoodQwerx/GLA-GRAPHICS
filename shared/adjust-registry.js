@@ -154,6 +154,12 @@ export const ADJUST_REGISTRY = {
       { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale', crestTeam: 'A' },
       { id: 'nameA', label: 'ABREVIATURA LOCAL', kind: 'text', textKey: 'nameA' },
       { id: 'scoreA', label: 'GOL LOCAL', kind: 'text', textKey: 'scoreA' },
+      // "GUIÓN / SEPARADOR" (2026-09-04, pedido explicito del usuario):
+      // editor propio, independiente de los goles -- antes el "-" quedaba
+      // fijo/no editable en el HTML de buildStructure. "themeOnly" porque
+      // es un pedido exclusivo de Argentina Streamers (GLA no lo pidio, no
+      // se le agrega un control nuevo que no tenia).
+      { id: 'separador', label: 'GUIÓN / SEPARADOR', kind: 'text', textKey: 'separador', themeOnly: 'argentinaStreamers' },
       { id: 'scoreB', label: 'GOL VISITANTE', kind: 'text', textKey: 'scoreB' },
       { id: 'nameB', label: 'ABREVIATURA VISITANTE', kind: 'text', textKey: 'nameB' },
       { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale', crestTeam: 'B' },
@@ -215,17 +221,27 @@ export const ADJUST_REGISTRY = {
   },
 
   // --- PLACAS ---
+  // "formacionEquipos" (2026-09-04, escudo con posicion propia POR EQUIPO
+  // en Argentina Streamers, pedido explicito del usuario -- "no tocar GLA"
+  // es regla absoluta de esta tarea). "playerName"/"playerNumber"/
+  // "subsTitle"/"subsList" ya tienen su propio control dentro de "AJUSTE
+  // DE TEXTOS" del panel dedicado (2026-08-31, ver
+  // master-control/js/formation-list-panel.js), no se declaran aca.
+  // "crest" (escudo) queda SOLO para GLA ("themeOnly:'gla'"): Argentina
+  // Streamers tiene su propia seccion dedicada en el panel ("ESCUDO",
+  // buildCrestSection) que guarda por teamId (data.crestByTeam[teamId],
+  // mismo criterio que "formationKitByTeam" un poco mas abajo en ese mismo
+  // panel) -- dejar tambien esta entrada generica plana visible para ese
+  // theme duplicaria el control de forma confusa. GLA sigue exactamente
+  // igual que antes de esta tarea: mismo id/label/xKey/yKey/scaleKey,
+  // mismo "data-adjust=crest" en el renderer (ver mas abajo, gateado por
+  // theme).
   formacionEquipos: {
-    // "playerName"/"playerNumber"/"subsTitle"/"subsList" NO se declaran
-    // aca: ya tienen su propio control (con GUARDAR POSICIÓN) dentro de la
-    // seccion "AJUSTE DE TEXTOS" del panel dedicado (2026-08-31, ver
-    // master-control/js/formation-list-panel.js) -- agregarlos aca
-    // duplicaria el control. Solo "crest" es genuinamente nuevo (escudo,
-    // nunca tuvo ajuste propio), se resuelve via el acordeon generico.
     elements: [
-      { id: 'crest', label: 'ESCUDO EQUIPO ACTIVO', kind: 'composition', xKey: 'crestOffsetX', yKey: 'crestOffsetY', scaleKey: 'crestScale' },
+      { id: 'crest', label: 'ESCUDO EQUIPO ACTIVO', kind: 'composition', xKey: 'crestOffsetX', yKey: 'crestOffsetY', scaleKey: 'crestScale', themeOnly: 'gla' },
     ],
   },
+
   vsPrepartido: {
     elements: [
       { id: 'titulo', label: 'TÍTULO', kind: 'text', textKey: 'titulo' },
@@ -368,16 +384,23 @@ export const ADJUST_REGISTRY = {
   goleadores: {
     elements: [
       { id: 'crest', label: 'ESCUDO (COLUMNA)', kind: 'composition', xKey: 'crestOffsetX', yKey: 'crestOffsetY', scaleKey: 'crestScale' },
+      // "ESCUDO TÍTULO" (2026-09-04, pedido explicito del usuario): escudo
+      // FIJO de Argentina Streamers masculino a la izquierda del titulo de
+      // la placa de 10 filas -- no depende del Marcador, por eso no lleva
+      // "crestTeam". Solo Argentina Streamers (GLA no tiene esa zona).
+      { id: 'tituloCrest', label: 'ESCUDO TÍTULO', kind: 'composition', xKey: 'tituloCrestOffsetX', yKey: 'tituloCrestOffsetY', scaleKey: 'tituloCrestScale', themeOnly: 'argentinaStreamers' },
     ],
   },
   asistidores: {
     elements: [
       { id: 'crest', label: 'ESCUDO (COLUMNA)', kind: 'composition', xKey: 'crestOffsetX', yKey: 'crestOffsetY', scaleKey: 'crestScale' },
+      { id: 'tituloCrest', label: 'ESCUDO TÍTULO', kind: 'composition', xKey: 'tituloCrestOffsetX', yKey: 'tituloCrestOffsetY', scaleKey: 'tituloCrestScale', themeOnly: 'argentinaStreamers' },
     ],
   },
   jugadores: {
     elements: [
       { id: 'crest', label: 'ESCUDO (COLUMNA)', kind: 'composition', xKey: 'crestOffsetX', yKey: 'crestOffsetY', scaleKey: 'crestScale' },
+      { id: 'tituloCrest', label: 'ESCUDO TÍTULO', kind: 'composition', xKey: 'tituloCrestOffsetX', yKey: 'tituloCrestOffsetY', scaleKey: 'tituloCrestScale', themeOnly: 'argentinaStreamers' },
     ],
   },
   // "fichaJugador" (2026-09-02, pedido explicito del usuario, Argentina
@@ -398,12 +421,40 @@ export const ADJUST_REGISTRY = {
   // goleadores/asistidores/jugadores arriba, un unico ajuste se aplica a
   // las 5 filas por igual.
   historial: {
+    // "titulo" (2026-09-04, pedido explicito del usuario: "posicion/escala
+    // INDEPENDIENTE por categoria, no una unica posicion global") ya NO
+    // vive aca -- el acordeon generico solo sabe escribir un unico
+    // "textAdjust.titulo" compartido por las 4 categorias, que es
+    // exactamente lo que el usuario no quiere. Su control propio (uno por
+    // categoria, sobre "data.tituloByCategoria[tipoHistorial]") vive
+    // directo en master-control/js/historial-panel.js, reusando el mismo
+    // componente generico (renderTextAdjustControl) por fuera de este
+    // registro. "ESCUDO TÍTULO" (2026-09-04, mismo pedido, item 7: mismo
+    // escudo Argentina Streamers masculino que ya usan
+    // goleadores/asistidores/jugadores) SI sigue aca -- no depende del
+    // largo del texto, un unico ajuste alcanza para las 4 categorias.
+    // "GOL LOCAL"/"GOL VISITANTE"/"PENALES LOCAL"/"PENALES VISITANTE" como
+    // columnas independientes YA NO viven aca (2026-09-04, pedido explicito
+    // del usuario: "eliminar la edicion independiente... los dos goles
+    // deben moverse juntos", con geometria completamente separada segun si
+    // la fila tiene penales o no). Reemplazados por 3 controles propios
+    // ("RESULTADO NORMAL"/"RESULTADO CON PENALES"/"PENALES") que viven
+    // directo en master-control/js/historial-panel.js -- igual criterio
+    // que "titulo" arriba: el acordeon generico solo sabe escribir UN
+    // textAdjust por columna, aplicado sin condicion a las 5 filas, que es
+    // exactamente lo que este pedido prohibe (mover el bloque de penales
+    // NO puede tocar las filas sin penales). Ver
+    // program/js/renderers/historial.js para la logica de aplicacion
+    // condicional real.
     elements: [
-      { id: 'titulo', label: 'TÍTULO', kind: 'text', textKey: 'titulo' },
+      { id: 'tituloCrest', label: 'ESCUDO TÍTULO', kind: 'composition', xKey: 'tituloCrestOffsetX', yKey: 'tituloCrestOffsetY', scaleKey: 'tituloCrestScale' },
       { id: 'crestLocal', label: 'ESCUDO LOCAL (COLUMNA)', kind: 'composition', xKey: 'crestLocalOffsetX', yKey: 'crestLocalOffsetY', scaleKey: 'crestLocalScale' },
       { id: 'crestVisitante', label: 'ESCUDO VISITANTE (COLUMNA)', kind: 'composition', xKey: 'crestVisitanteOffsetX', yKey: 'crestVisitanteOffsetY', scaleKey: 'crestVisitanteScale' },
-      { id: 'golLocal', label: 'GOL LOCAL (COLUMNA)', kind: 'text', textKey: 'golLocal' },
-      { id: 'golVisitante', label: 'GOL VISITANTE (COLUMNA)', kind: 'text', textKey: 'golVisitante' },
+      // "FASE / INSTANCIA" (2026-09-04, pedido explicito del usuario, item
+      // 3: "manejarlo como bloque/columna comun ya que todos los slots
+      // comparten geometria") -- mismo criterio por columna, dato real
+      // ("stage" de la web) por fila, un unico ajuste para las 5.
+      { id: 'fase', label: 'FASE / INSTANCIA (COLUMNA)', kind: 'text', textKey: 'fase' },
     ],
   },
   // "cronogramaHoy" (2026-09-02, reconstruido desde cero sobre el PNG real

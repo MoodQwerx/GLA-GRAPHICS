@@ -1,5 +1,5 @@
 import { crestFile, teamName } from '../../../shared/teams.js';
-import { applyFittedText, applyPlainTextAdjust, readTextAdjust, toBroadcastUpper } from '../text-fit.js';
+import { applyElementAdjust, applyFittedText, applyPlainTextAdjust, readTextAdjust, toBroadcastUpper } from '../text-fit.js';
 import { resolveImageSrc } from '../theme-assets.js';
 import { getActiveThemeId } from '../theme-client.js';
 import { ARGENTINA_STREAMERS_THEME_ID } from '../../../shared/themes.js';
@@ -96,14 +96,28 @@ function average(numerator, pj) {
 // exclusivos del selector de Argentina Streamers (ver
 // master-control/js/performance-table-panel.js) -- GLA nunca los escribe,
 // asi que para GLA esta funcion sigue devolviendo exactamente lo mismo de
-// siempre. Fuera de Argentina Streamers estos 3 valores caen al mismo
-// 'placaL' de siempre (blindaje defensivo, no deberia ocurrir en la
-// practica ya que el panel los oculta segun theme).
+// siempre.
 const ARGENTINA_POSITIONS = new Set(['placaL-top', 'placaL-bottom', 'placaL-solo']);
 
+// Fallback de Argentina Streamers (2026-09-04, correccion PERMANENTE
+// pedida explicitamente por el usuario: "no quiero depender de seleccionar
+// manualmente Placa unica" / "no quiero que placaL haga fallback al layout
+// viejo de GLA para estos modulos dentro de Argentina Streamers"). Un
+// modulo de esta familia (goleadores/asistidores/jugadores) sin posicion
+// valida todavia -- server recien reiniciado, estado nuevo, "posicion"
+// nunca seleccionado a mano via "MODO CANTIDAD" -- caia en el 'placaL'
+// generico compartido con GLA (6 filas, tipografia y composicion
+// distintas: la causa real del desencuadre de Asistidores/Participaciones
+// reportado). GLA SI sigue usando 'placaL' como valor real (su propio
+// "Placa L Info"), asi que el fallback theme-gated de abajo es
+// EXCLUSIVAMENTE para Argentina Streamers -- cero cambio de
+// comportamiento para GLA (misma guarda de siempre).
 function normalizePosition(position) {
   if (position === 'fullscreenDerecha' || position === 'fullscreenIzquierda') return position;
-  if (getActiveThemeId() === ARGENTINA_STREAMERS_THEME_ID && ARGENTINA_POSITIONS.has(position)) return position;
+  if (getActiveThemeId() === ARGENTINA_STREAMERS_THEME_ID) {
+    if (ARGENTINA_POSITIONS.has(position)) return position;
+    return 'placaL-solo';
+  }
   return 'placaL';
 }
 
@@ -166,6 +180,7 @@ function buildStructure(contentEl, moduleId, position, rowCount) {
       ${imgSrc ? `<img class="gfx-bg-image" src="${imgSrc}" />` : ''}
       <div class="gfx-overlay">
         <div class="ov-performance-titulo"></div>
+        <img class="ov-performance-titulo-crest" data-adjust="tituloCrest" alt="" />
         ${Array.from({ length: rowCount }, (_, index) => rowMarkup(index, ranking)).join('')}
       </div>
     </div>
@@ -198,6 +213,24 @@ export function renderPerformanceTable(moduleId, contentEl, data) {
   const tituloEl = contentEl.querySelector('.ov-performance-titulo');
   if (tituloEl) {
     applyPlainTextAdjust(tituloEl, toBroadcastUpper((data.titulo || '').trim() || DEFAULT_TITLE[moduleId] || ''), readTextAdjust(ta, 'titulo'));
+  }
+
+  // ESCUDO TÍTULO (2026-09-04, pedido explicito del usuario): siempre
+  // Argentina Streamers MASCULINO, fijo -- no depende del Marcador. Solo
+  // Argentina Streamers (GLA nunca muestra esta placa de 10 filas, la caja
+  // del titulo queda oculta por CSS para ese theme). Posicion/escala via
+  // "data-adjust=tituloCrest" + shared/adjust-registry.js (mecanismo
+  // generico, mismo patron que el resto de los "data-adjust" del archivo).
+  const tituloCrestEl = contentEl.querySelector('.ov-performance-titulo-crest');
+  if (tituloCrestEl) {
+    const src = getActiveThemeId() === ARGENTINA_STREAMERS_THEME_ID ? crestFile('argentina-streamers') : null;
+    if (src) {
+      tituloCrestEl.src = src;
+      tituloCrestEl.style.visibility = 'visible';
+    } else {
+      tituloCrestEl.removeAttribute('src');
+      tituloCrestEl.style.visibility = 'hidden';
+    }
   }
 
   // "placaL-solo" (2026-09-02, Argentina Streamers, geometria real medida

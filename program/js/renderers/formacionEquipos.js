@@ -9,8 +9,20 @@ import { applyElementAdjust, applyPlainTextAdjust, readTextAdjust, toBroadcastUp
 const VIDEO_SRC = '/assets/placas/formacion-equipos.mp4';
 const SHIRTS_BASE_SRC = '/assets/placas/formacion-camisetas.png';
 const SHIRTS_WHITE_SRC = '/assets/placas/formacion-camisetas-blancas.png';
-const STARTER_LIMIT = 6;
+// GLA conserva su asset original (6 camisetas, sin arquero dibujado) tal
+// cual estaba. Argentina Streamers pasa a 11 (2026-09-03, pedido explicito
+// del usuario: "una formacion de futbol tiene que permitir 11 titulares")
+// porque "formacion-arg/oxen/peru.png" YA tienen las 11 posiciones dibujadas
+// -- medidas pixel a pixel (ver overlay.css), el sistema solo las tapaba con
+// un clip-path. No hay variante por asset/equipo: los 3 PNG miden igual
+// (centros de camiseta iguales +/-3px en los 3, ver informe de medicion).
+const STARTER_LIMIT_GLA = 6;
+const STARTER_LIMIT_ARGENTINA = 11;
 const ARGENTINA_CONTENT_DELAY = '700ms';
+
+function getStarterLimit() {
+  return getActiveThemeId() === DEFAULT_THEME_ID ? STARTER_LIMIT_GLA : STARTER_LIMIT_ARGENTINA;
+}
 
 function resolveFormationShirts(teamId) {
   const themeId = getActiveThemeId();
@@ -31,14 +43,22 @@ function setCrest(img, teamId) {
   }
 }
 
-function buildStructure(el) {
-  const slots = Array.from({ length: STARTER_LIMIT }, (_, index) => `
+function buildStructure(el, starterLimit, isGla) {
+  const slots = Array.from({ length: starterLimit }, (_, index) => `
     <div class="ov-formacion-slot ov-formacion-slot-${index}">
       <div class="ov-formacion-number"></div>
       <div class="ov-formacion-player-name"></div>
     </div>
   `).join('');
 
+  // "data-adjust=crest" (2026-09-04): SOLO GLA -- dispara el mecanismo
+  // generico de Program (applyElementAdjustRegistry) que lee el registro
+  // de shared/adjust-registry.js (entrada "crest", ahora "themeOnly:'gla'",
+  // exactamente como funcionaba antes de esta tarea). Argentina Streamers
+  // NO lo lleva: su posicion por equipo se resuelve 100% a mano mas abajo
+  // (crestByTeam) -- si tambien llevara el atributo, el mecanismo generico
+  // pisaria ese calculo con el valor plano de siempre, rompiendo el
+  // guardado por equipo en cuanto hubiera una posicion especifica guardada.
   el.innerHTML = `
     <div class="av-target"></div>
     <div class="gfx-overlay">
@@ -48,7 +68,7 @@ function buildStructure(el) {
         <div class="ov-formacion-shirts-tint"></div>
       </div>
       ${slots}
-      <img class="ov-formacion-crest" data-adjust="crest" alt="" />
+      <img class="ov-formacion-crest" alt="" ${isGla ? 'data-adjust="crest"' : ''} />
       <div class="ov-formacion-subs-title">SUPLENTES</div>
       <div class="ov-formacion-subs-viewport"></div>
     </div>
@@ -63,13 +83,24 @@ function buildStructure(el) {
 // catalogo de colores (shared/team-colors.js, mismo helper que usa el
 // Marcador principal).
 export default function renderFormacionEquipos(contentEl, data, justTaken, onOneShotEnded, allData) {
-  if (!contentEl._gfxBuilt) buildStructure(contentEl);
+  const starterLimit = getStarterLimit();
+  const isGla = getActiveThemeId() === DEFAULT_THEME_ID;
+  // Reconstruye si cambia el theme en caliente (6 titulares GLA <-> 11
+  // Argentina Streamers, con o sin "data-adjust=crest" -- ver
+  // buildStructure): mismo criterio que "signature" en
+  // performanceTable.js -- sin esto, un cambio de theme sin recargar la
+  // pagina dejaba el DOM viejo (6 u 11 slots fijos desde el primer render).
+  const signature = String(starterLimit);
+  if (contentEl.dataset.signature !== signature) {
+    contentEl.dataset.signature = signature;
+    contentEl._gfxBuilt = false;
+  }
+  if (!contentEl._gfxBuilt) buildStructure(contentEl, starterLimit, isGla);
   if (justTaken) contentEl._alphaVideo?.playFromStart();
 
   const sb = (allData && allData.scoreboard) || {};
   const isVisitor = data.teamSide === 'visitor';
   const teamId = isVisitor ? sb.teamB : sb.teamA;
-  const isGla = getActiveThemeId() === DEFAULT_THEME_ID;
   const shirts = contentEl.querySelector('.ov-formacion-shirts');
   const shirtsSrc = resolveFormationShirts(teamId);
   if (shirtsSrc) {
@@ -95,7 +126,29 @@ export default function renderFormacionEquipos(contentEl, data, justTaken, onOne
     if (isGla) moduleRoot.style.removeProperty('--dur-content-delay');
     else moduleRoot.style.setProperty('--dur-content-delay', ARGENTINA_CONTENT_DELAY);
   }
-  setCrest(contentEl.querySelector('.ov-formacion-crest'), teamId);
+  const crestEl = contentEl.querySelector('.ov-formacion-crest');
+  setCrest(crestEl, teamId);
+  // Posicion del escudo POR EQUIPO (2026-09-04, pedido explicito del
+  // usuario, SOLO Argentina Streamers): mismo patron ya probado arriba
+  // para "formationKitByTeam" (sin "data-adjust" en AS -- se removio del
+  // <img> a proposito para este theme, se resuelve 100% aca para no
+  // duplicar aplicacion). Si todavia no existe una posicion guardada para
+  // este teamId puntual, usa el valor plano "crestOffsetX/Y/Scale" (el
+  // mismo que ya existia antes de este cambio) como fallback -- asi la
+  // posicion actual, ya acomodada por el usuario, NO se mueve para ningun
+  // equipo hasta que el operador guarde una especifica desde el nuevo
+  // control del panel. GLA NO entra aca: su <img> SI lleva
+  // "data-adjust=crest" (ver buildStructure), el mecanismo generico de
+  // Program ya se lo aplica solo -- llamarlo tambien aca lo pisaria con el
+  // mismo valor (inofensivo hoy, pero redundante y innecesario).
+  if (!isGla) {
+    const crestAdjust = data.crestByTeam?.[teamId] || {};
+    applyElementAdjust(crestEl, {
+      offsetX: crestAdjust.crestOffsetX ?? data.crestOffsetX ?? 0,
+      offsetY: crestAdjust.crestOffsetY ?? data.crestOffsetY ?? 0,
+      scale: crestAdjust.crestScale ?? data.crestScale ?? 1,
+    });
+  }
 
   const shirtColorId = isVisitor ? sb.teamBColor : sb.teamAColor;
   if (isGla) contentEl.querySelector('.ov-formacion-shirts-tint').style.backgroundColor = colorHex(shirtColorId);
@@ -107,8 +160,8 @@ export default function renderFormacionEquipos(contentEl, data, justTaken, onOne
   const ta = data.textAdjust;
   const nameAdjust = readTextAdjust(ta, 'playerName');
   const numberAdjust = readTextAdjust(ta, 'playerNumber');
-  const starters = normalizePlayers(data.starters).slice(0, STARTER_LIMIT);
-  for (let index = 0; index < STARTER_LIMIT; index++) {
+  const starters = normalizePlayers(data.starters).slice(0, starterLimit);
+  for (let index = 0; index < starterLimit; index++) {
     const slot = contentEl.querySelector(`.ov-formacion-slot-${index}`);
     const player = starters[index] || { number: '', name: '' };
     applyPlainTextAdjust(slot.querySelector('.ov-formacion-number'), player.number, numberAdjust);

@@ -88,6 +88,7 @@ export default function renderResultadosParciales(contentEl, data, justTaken, on
   if (!contentEl._gfxBuilt) buildStructure(contentEl);
 
   const bgImg = contentEl.querySelector('.ov-resparc-bg');
+  if (!bgImg) return; // OUT/TAKE muy rapidos: un tick tardio del ticker (setInterval de 500ms, program/js/main.js) puede llegar a correr contra un contentEl recien vaciado por teardownContent -- ver mismo guard en cronogramaHoy.js/historial.js
   const imageSrc = resolveImageSrc('resultadosParciales', null);
   if (imageSrc) {
     bgImg.src = imageSrc;

@@ -180,6 +180,14 @@ export function renderPerformanceTablePanel(container, data, moduleId, onDirty, 
   let syncStatus = null; // { kind: 'loading' | 'success' | 'error', text, unmatchedTeams? }
   let syncStatusTimer = null;
 
+  // "ACTUALIZAR DATOS DE LA WEB" contra https://argentinastreamers.com
+  // (2026-09-04, pedido explicito del usuario -- distinto del bloque
+  // "ACTUALIZAR DESDE WEB"/gla.futbol de arriba, que es exclusivo de GLA).
+  // Estado propio y separado (nunca se mezcla con "syncStatus") para que
+  // ambas integraciones puedan mostrar su resultado sin pisarse.
+  let webSyncStatus = null; // { kind: 'loading' | 'success' | 'error', text, unmatchedTeams? }
+  let webSyncStatusTimer = null;
+
   function saveActiveSnapshot() {
     data.snapshots[data.fuente] = {
       jugadores: JSON.parse(JSON.stringify(data.jugadores)),
@@ -201,6 +209,38 @@ export function renderPerformanceTablePanel(container, data, moduleId, onDirty, 
         render();
       }, 6000);
     }
+  }
+
+  function setWebSyncStatus(next) {
+    webSyncStatus = next;
+    clearTimeout(webSyncStatusTimer);
+    if (next && next.kind !== 'loading') {
+      webSyncStatusTimer = setTimeout(() => {
+        webSyncStatus = null;
+        render();
+      }, 6000);
+    }
+  }
+
+  // Solo actualiza el draft (data.jugadores/ultimaActualizacionWeb) -- NUNCA
+  // manda al aire por si sola (pedido explicito del usuario, seccion 22):
+  // el operador decide TAKE/UPDATE despues, con los datos ya visibles en
+  // el panel para revisar antes de salir en vivo.
+  async function syncFromArgentinaStreamersWeb() {
+    setWebSyncStatus({ kind: 'loading', text: 'ACTUALIZANDO...' });
+    render();
+    try {
+      const res = await fetch(`/api/argentina-streamers/${moduleId}/sync-web`, { method: 'POST' });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || !body?.ok) throw new Error(body?.error || `HTTP ${res.status}`);
+      data.jugadores = body.jugadores;
+      data.ultimaActualizacionWeb = body.ultimaActualizacionWeb;
+      markDirty();
+      setWebSyncStatus({ kind: 'success', text: 'DATOS ACTUALIZADOS ✓' });
+    } catch (err) {
+      setWebSyncStatus({ kind: 'error', text: 'ERROR AL ACTUALIZAR', detail: err.message });
+    }
+    render();
   }
 
   async function syncFromWeb() {
@@ -407,6 +447,40 @@ export function renderPerformanceTablePanel(container, data, moduleId, onDirty, 
       });
       tituloField.append(tituloLabel, tituloInput);
       root.appendChild(tituloField);
+    }
+
+    // "ACTUALIZAR DATOS DE LA WEB" (argentinastreamers.com) -- exclusivo
+    // de Argentina Streamers, separado del bloque de gla.futbol de mas
+    // abajo. Solo actualiza el draft del panel (data.jugadores), nunca
+    // manda al aire por si solo.
+    if (isArgentinaCandidate) {
+      const webSyncRow = document.createElement('div');
+      webSyncRow.className = 'performance-sync';
+
+      const webSyncBtn = document.createElement('button');
+      webSyncBtn.type = 'button';
+      webSyncBtn.className = 'performance-sync-btn';
+      webSyncBtn.textContent = 'ACTUALIZAR DATOS DE LA WEB';
+      webSyncBtn.disabled = webSyncStatus?.kind === 'loading';
+      webSyncBtn.addEventListener('click', syncFromArgentinaStreamersWeb);
+      webSyncRow.appendChild(webSyncBtn);
+
+      if (webSyncStatus) {
+        const statusEl = document.createElement('span');
+        statusEl.className = `performance-sync-status ${webSyncStatus.kind}`;
+        statusEl.textContent = webSyncStatus.text;
+        if (webSyncStatus.detail) statusEl.title = webSyncStatus.detail;
+        webSyncRow.appendChild(statusEl);
+      }
+
+      const webUpdatedAt = formatUpdatedAt(data.ultimaActualizacionWeb);
+      if (webUpdatedAt) {
+        const updatedEl = document.createElement('span');
+        updatedEl.className = 'performance-sync-updated-at';
+        updatedEl.textContent = `Última actualización: ${webUpdatedAt}`;
+        webSyncRow.appendChild(updatedEl);
+      }
+      root.appendChild(webSyncRow);
     }
 
     if (WEB_SYNC_MODULE_IDS.includes(moduleId)) {

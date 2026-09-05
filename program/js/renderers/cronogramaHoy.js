@@ -52,14 +52,17 @@ function buildStructure(el) {
   el._gfxBuilt = true;
 }
 
-// Sin selector de equipo propio (pedido explicito del usuario: "No quiero
-// selector duplicado de equipos dentro de Cronograma Hoy") -- primer slot
-// = LOCAL del Marcador, segundo = VISITANTE, siempre en vivo via
-// "allData.scoreboard", mismo criterio que Zócalo Compuesto con Equipos.
+// Seleccion MANUAL de equipo (2026-09-04, cambio explicito del usuario:
+// "quiero poder armar manualmente un enfrentamiento" -- reemplaza la
+// herencia automatica del Marcador que tenia antes). "data.teamLocal"/
+// "data.teamVisitante" los elige el operador en el panel dedicado
+// (master-control/js/cronograma-hoy-panel.js), catalogo Argentina
+// Streamers -- ya no se lee "allData.scoreboard" aca.
 export default function renderCronogramaHoy(contentEl, data, justTaken, onOneShotEnded, allData) {
   if (!contentEl._gfxBuilt) buildStructure(contentEl);
 
   const bgImg = contentEl.querySelector('.ov-crono-bg');
+  if (!bgImg) return; // OUT/TAKE muy rapidos: mismo guard que resultadosParciales.js/historial.js (ver ahi el porque)
   const imageSrc = resolveImageSrc('cronogramaHoy', null);
   if (imageSrc) {
     bgImg.src = imageSrc;
@@ -71,9 +74,8 @@ export default function renderCronogramaHoy(contentEl, data, justTaken, onOneSho
 
   applyPlainTextAdjust(contentEl.querySelector('.ov-crono-titulo'), data.titulo || '', readTextAdjust(data.textAdjust, 'titulo'));
 
-  const sb = (allData && allData.scoreboard) || {};
-  const teamA = sb.teamA || '';
-  const teamB = sb.teamB || '';
+  const teamA = data.teamLocal || '';
+  const teamB = data.teamVisitante || '';
 
   const localAdjust = data.crestByTeam?.local?.[teamA] || {};
   const awayAdjust = data.crestByTeam?.away?.[teamB] || {};

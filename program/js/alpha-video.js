@@ -185,6 +185,16 @@ export function createAlphaVideo(el, src, { onEnded } = {}) {
   let destroyed = false;
 
   function compositeFrameGl() {
+    // Guarda agregada (2026-09-04, auditoria de performance pre-transmision):
+    // justo al reproducir, el evento "play" puede disparar el primer tick()
+    // antes de que el <video> tenga un frame real decodificado todavia
+    // (readyState < HAVE_CURRENT_DATA) -- texImage2D con un <video> asi tira
+    // "WebGL: INVALID_VALUE: texImage2D: no video" en consola en CADA TAKE
+    // de CADA modulo con alpha-video, siempre inofensivo (el propio rAF
+    // vuelve a intentarlo el frame siguiente) pero genera ruido repetitivo
+    // que puede tapar un error real durante la operacion. Un solo chequeo
+    // de estado, sin tocar el resto del pipeline/lifecycle/timing.
+    if (video.readyState < video.HAVE_CURRENT_DATA) return;
     const { gl, texture } = glCtx;
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);

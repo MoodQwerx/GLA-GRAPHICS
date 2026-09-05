@@ -4,7 +4,14 @@ import { ARGENTINA_STREAMERS_THEME_ID, getThemeAsset } from '../../shared/themes
 import { mountAdjustControl } from './field-editors.js';
 import { renderCompositionControl } from './composition-control.js';
 
-const STARTER_LIMIT = 6;
+// GLA conserva 6 (asset original, sin cambios). Argentina Streamers pasa a
+// 11 titulares (2026-09-03, pedido explicito: "una formacion de futbol
+// tiene que permitir 11 titulares") -- mismo criterio ya usado en esta
+// funcion para "CAMISETAS / FORMACIÓN EQUIPO" (linea ~153, chequeo directo
+// de "document.body.dataset.theme"), sin depender de recargar la pagina.
+function getStarterLimit() {
+  return document.body.dataset.theme === ARGENTINA_STREAMERS_THEME_ID ? 11 : 6;
+}
 
 const SIDES = [
   { id: 'local', label: 'LOCAL' },
@@ -136,12 +143,13 @@ export function renderFormationListPanel(container, data, scoreboardData, onDirt
       root.appendChild(note);
     }
 
+    const starterLimit = getStarterLimit();
     root.appendChild(buildSection({
       title: 'LISTA FORMACIÓN',
       key: 'starters',
       addLabel: 'Agregar titular',
-      limit: STARTER_LIMIT,
-      limitText: 'El asset dispone de 6 posiciones de titulares.',
+      limit: starterLimit,
+      limitText: `El asset dispone de ${starterLimit} posiciones de titulares.`,
       disabled: transitioning,
     }));
     root.appendChild(buildSection({
@@ -152,8 +160,77 @@ export function renderFormationListPanel(container, data, scoreboardData, onDirt
     }));
     if (document.body.dataset.theme === ARGENTINA_STREAMERS_THEME_ID) {
       root.appendChild(buildFormationKitSection());
+      // "ESCUDO" por equipo (2026-09-04): SOLO Argentina Streamers -- pedido
+      // explicito de esta tarea es puntual a este theme, y la regla
+      // absoluta de la sesion es "no tocar GLA" (ni su interfaz). GLA sigue
+      // exactamente con el acordeon generico de siempre para el escudo
+      // (adjust-registry.js ya no tiene "crest" para este modulo, pero el
+      // acordeon generico de main.js simplemente no muestra nada si no hay
+      // entradas -- GLA no pierde ningun control real: su escudo nunca tuvo
+      // ajuste propio antes de esta tarea tampoco, ver historial del
+      // archivo).
+      root.appendChild(buildCrestSection());
     }
     root.appendChild(buildAdjustSection());
+  }
+
+  // ESCUDO por equipo (2026-09-04, pedido explicito del usuario: "guardar
+  // posicion independiente del escudo segun el equipo seleccionado").
+  // Mismo patron que "buildFormationKitSection" arriba (dataPath por
+  // teamId, sin "local"/"away" -- el modulo solo muestra un equipo a la
+  // vez), pero con una diferencia clave: la posicion actual del escudo
+  // (data.crestOffsetX/Y/Scale, YA acomodada por el usuario) es el
+  // fallback que usa el renderer para cualquier equipo sin entrada propia
+  // (ver program/js/renderers/formacionEquipos.js) -- si esta seccion
+  // sembrara 0/0/1 como "buildFormationKitSection" hace para las
+  // camisetas, guardar sin tocar las flechas correria el escudo a 0/0/1
+  // para ese equipo. Se siembra en cambio desde el valor plano actual, asi
+  // "GUARDAR POSICIÓN" sin mover nada no cambia nada visualmente.
+  function buildCrestSection() {
+    const section = document.createElement('section');
+    section.className = 'formation-list-section';
+    const heading = document.createElement('h2');
+    heading.textContent = 'ESCUDO';
+    section.appendChild(heading);
+
+    if (!teamId) {
+      const pending = document.createElement('p');
+      pending.className = 'formation-limit-note';
+      pending.textContent = 'ESCUDO: sin equipo seleccionado en el Marcador.';
+      section.appendChild(pending);
+      return section;
+    }
+
+    if (!data.crestByTeam || typeof data.crestByTeam !== 'object') {
+      data.crestByTeam = {};
+    }
+    if (!data.crestByTeam[teamId] || typeof data.crestByTeam[teamId] !== 'object') {
+      data.crestByTeam[teamId] = {
+        crestOffsetX: data.crestOffsetX || 0,
+        crestOffsetY: data.crestOffsetY || 0,
+        crestScale: data.crestScale ?? 1,
+      };
+    }
+    const note = document.createElement('p');
+    note.className = 'formation-limit-note';
+    note.textContent = `${activeTeamName} — posición y escala propias por equipo. Mientras no guardes una específica, usa la posición actual del escudo.`;
+    section.appendChild(note);
+    const control = document.createElement('div');
+    section.appendChild(control);
+    renderCompositionControl(control, data.crestByTeam[teamId], onDirty, {
+      title: '',
+      note: '',
+      keys: { xKey: 'crestOffsetX', yKey: 'crestOffsetY', scaleKey: 'crestScale' },
+      ...(side?.saveOptions || {}),
+      elementSpec: {
+        kind: 'composition',
+        dataPath: ['crestByTeam', teamId],
+        xKey: 'crestOffsetX',
+        yKey: 'crestOffsetY',
+        scaleKey: 'crestScale',
+      },
+    });
+    return section;
   }
 
   function buildFormationKitSection() {
@@ -214,14 +291,15 @@ export function renderFormationListPanel(container, data, scoreboardData, onDirt
     const heading = document.createElement('h2');
     heading.textContent = 'AJUSTE DE TEXTOS';
     section.appendChild(heading);
+    const starterLimit = getStarterLimit();
     const note = document.createElement('p');
     note.className = 'formation-limit-note';
-    note.textContent = '"Nombre titular" y "Número" ajustan las 6 posiciones a la vez (comparten la misma clase visual en el asset).';
+    note.textContent = `"Nombre titular" y "Número" ajustan las ${starterLimit} posiciones a la vez (comparten la misma clase visual en el asset).`;
     section.appendChild(note);
 
     for (const { key, label } of [
-      { key: 'playerName', label: 'Nombre titular (las 6 posiciones)' },
-      { key: 'playerNumber', label: 'Número (las 6 posiciones)' },
+      { key: 'playerName', label: `Nombre titular (las ${starterLimit} posiciones)` },
+      { key: 'playerNumber', label: `Número (las ${starterLimit} posiciones)` },
       { key: 'subsTitle', label: 'Título "SUPLENTES"' },
       { key: 'subsList', label: 'Bloque lista de suplentes' },
     ]) {

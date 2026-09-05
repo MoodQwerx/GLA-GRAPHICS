@@ -769,6 +769,27 @@ function renderPenalesArgentinaSections(container, data, onDirty, saveOptions, s
 function resolveCrestTeamTarget(entry, data) {
   if (activeThemeId !== ARGENTINA_STREAMERS_THEME_ID) return null;
 
+  // BUG encontrado y corregido (2026-09-04, "los controles no mueven el
+  // escudo correctamente" en Cronograma Hoy): esta funcion es GENERICA,
+  // compartida por todos los modulos con "crestTeam" (vsPrepartido,
+  // vsResultado, zocaloCompuestoEquipos, etc.) -- todos ellos heredan
+  // LOCAL/VISITANTE del Marcador de verdad, asi que resolvia el teamId
+  // SIEMPRE contra "draft.scoreboard.teamA/teamB". Pero "cronogramaHoy"
+  // dejo de depender del Marcador este mismo dia (seleccion manual propia,
+  // "data.teamLocal"/"data.teamVisitante", ver shared/modules.js) -- esta
+  // funcion nunca se actualizo para ese caso, asi que el editor de
+  // composicion seguia guardando/leyendo bajo el equipo del MARCADOR
+  // (normalmente otro distinto), mientras el renderer (program/js/
+  // renderers/cronogramaHoy.js) ya lee "data.crestByTeam[slot][teamId]"
+  // con el teamId de "teamLocal"/"teamVisitante" -- mover las flechas
+  // escribia en una entrada que el renderer nunca leia, asi que en
+  // pantalla no pasaba nada. "data.teamLocal" (con "!== undefined", no
+  // solo truthy: hay que distinguir "este modulo tiene seleccion manual
+  // propia" de "el campo esta vacio ahora mismo") es una señal exclusiva
+  // de "cronogramaHoy" hoy -- ningun otro modulo con "crestTeam" declara
+  // ese campo.
+  const hasManualTeamSelection = data.teamLocal !== undefined && data.teamVisitante !== undefined;
+
   let slot;
   let teamId;
   if (entry.crestTeam === 'dynamic') {
@@ -777,10 +798,10 @@ function resolveCrestTeamTarget(entry, data) {
     teamId = isVisitante ? draft.scoreboard?.teamB : draft.scoreboard?.teamA;
   } else if (entry.crestTeam === 'B') {
     slot = 'away';
-    teamId = draft.scoreboard?.teamB;
+    teamId = hasManualTeamSelection ? data.teamVisitante : draft.scoreboard?.teamB;
   } else {
     slot = 'local';
-    teamId = draft.scoreboard?.teamA;
+    teamId = hasManualTeamSelection ? data.teamLocal : draft.scoreboard?.teamA;
   }
   if (!teamId) return null;
 
@@ -1476,6 +1497,43 @@ function sendArgentinaPerformanceSelection(type) {
   }
 }
 
+// --- PLACAS DERECHA (grupo exclusivo) ---
+// (2026-09-04, pedido explicito del usuario: "solo UNA de estas placas
+// puede estar al aire a la vez... TOMAR AL AIRE de una tiene que sacar
+// automaticamente a la anterior, sin que yo tenga que apretar SACAR DEL
+// AIRE a mano"). IDs reales, no nombres/strings sueltos -- esta es la
+// definicion central unica que se usa para decidir la exclusion. No
+// incluye ningun modulo que no ocupe fisicamente esa misma zona (Marcador,
+// VAR, Zocalos, Formacion, etc. quedan afuera a proposito).
+const RIGHT_PANEL_EXCLUSIVE_MODULES = [
+  'goleadores', 'asistidores', 'jugadores',
+  'historial', 'cronogramaHoy', 'resultadosParciales', 'sitioWebPromoL',
+];
+// Mismo criterio ya usado (FORMATION_OUT_WAIT_MS/MARCADOR_ENTRETIEMPO_WAIT_MS,
+// mas arriba en este archivo): tiempo real medido para que termine la
+// salida completa de un modulo "sequencedReveal" (fundido de contenido +
+// fundido de asset, ver program/js/main.js) antes de traer el siguiente --
+// reutiliza la MISMA animacion de entrada/salida que cada modulo ya tiene
+// (pedido explicito: "no quiero una placa desaparece seca -> aparece otra
+// seca", "reutilizar la logica/transicion existente"), sin CSS/timer nuevo.
+const RIGHT_PANEL_EXIT_WAIT_MS = 750;
+let rightPanelSwapTimer = null;
+
+function isRightPanelExclusive(id) {
+  return activeThemeId === ARGENTINA_STREAMERS_THEME_ID && RIGHT_PANEL_EXCLUSIVE_MODULES.includes(id);
+}
+
+// Modulo del grupo que esta ON ahora mismo, distinto del que se esta por
+// tomar (puede haber como mucho uno: este mismo mecanismo garantiza esa
+// invariante en cada TAKE). "serverState" es la unica fuente de verdad del
+// status real (lo que ya usa "updatePanelStatus" un poco mas arriba) -- no
+// se inventa un estado paralelo.
+function otherRightPanelModuleOn(id) {
+  return RIGHT_PANEL_EXCLUSIVE_MODULES.find(
+    (other) => other !== id && serverState[other]?.status === MODULE_STATUS.ON
+  );
+}
+
 takeBtn.addEventListener('click', () => {
   const mod = MODULES[activeId];
   // "autoRunClock": al tomar al aire, ese campo de reloj arranca solo desde
@@ -1483,15 +1541,40 @@ takeBtn.addEventListener('click', () => {
   if (mod.autoRunClock) {
     draft[activeId][mod.autoRunClock] = { running: true, accumulatedMs: 0, startedAt: Date.now() };
   }
-  if (usesPerformancePairPlacaL(activeId)) {
-    sendPerformancePair(WS_MSG.TAKE);
+
+  function doTake() {
+    if (usesPerformancePairPlacaL(activeId)) {
+      sendPerformancePair(WS_MSG.TAKE);
+      return;
+    }
+    if (usesArgentinaPerformanceSelection(activeId)) {
+      sendArgentinaPerformanceSelection(WS_MSG.TAKE);
+      return;
+    }
+    ws.send({ type: WS_MSG.TAKE, moduleId: activeId, data: draft[activeId] });
+  }
+
+  // PLACAS DERECHA — grupo exclusivo (2026-09-04, ver definicion arriba):
+  // si otro modulo del grupo ya esta al aire, lo sacamos primero y
+  // esperamos a que termine de salir (misma animacion de siempre) antes
+  // de tomar este -- asi nunca quedan dos "ON" en simultaneo, y el TAKE
+  // en si nunca se pisa con la salida (evita el video/DOM duplicado que
+  // pediste evitar). Un unico timer pendiente por vez: un TAKE nuevo antes
+  // de que venza el anterior lo reemplaza en vez de acumularlo.
+  if (rightPanelSwapTimer) {
+    clearTimeout(rightPanelSwapTimer);
+    rightPanelSwapTimer = null;
+  }
+  const blocker = isRightPanelExclusive(activeId) ? otherRightPanelModuleOn(activeId) : null;
+  if (blocker) {
+    ws.send({ type: WS_MSG.OUT, moduleId: blocker });
+    rightPanelSwapTimer = setTimeout(() => {
+      rightPanelSwapTimer = null;
+      doTake();
+    }, RIGHT_PANEL_EXIT_WAIT_MS);
     return;
   }
-  if (usesArgentinaPerformanceSelection(activeId)) {
-    sendArgentinaPerformanceSelection(WS_MSG.TAKE);
-    return;
-  }
-  ws.send({ type: WS_MSG.TAKE, moduleId: activeId, data: draft[activeId] });
+  doTake();
 });
 updateBtn.addEventListener('click', () => {
   if (usesPerformancePairPlacaL(activeId)) {

@@ -187,7 +187,10 @@ export const MODULES = {
       { key: 'scoreB', label: 'Gol visitante (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
     ],
     defaults: {
-      textAdjust: textAdjustDefaults('nameA', 'nameB', 'scoreA', 'scoreB'),
+      // "separador" (2026-09-04, pedido explicito del usuario, exclusivo
+      // Argentina Streamers -- ver shared/adjust-registry.js "themeOnly"):
+      // editor propio para el "-" entre los goles.
+      textAdjust: textAdjustDefaults('nameA', 'nameB', 'scoreA', 'scoreB', 'separador'),
       // "localCrestOffset*/awayCrestOffset*" (2026-08-31, auditoria
       // completa): los escudos nunca tuvieron ajuste propio, solo src-swap.
       localCrestOffsetX: 0, localCrestOffsetY: 0, localCrestScale: 1,
@@ -1187,14 +1190,23 @@ export const MODULES = {
     // en CSS) se descarto por completo, pedido explicito del usuario ("no
     // reutilizar la placa vertical falsa anterior", "no quiero selector
     // duplicado de equipos"). Ahora hay un PNG real
-    // (cronograma-hoy.png, VS_DEFAULT entregado) con UN solo partido: los
-    // escudos se heredan siempre del Marcador (scoreboard.teamA/teamB, en
-    // vivo), nunca se eligen aca -- por eso no hay "teamA"/"teamB" en
-    // estos defaults. "crestByTeam" seedeado por teamId real (mismo
-    // patron que zocaloCompuestoEquipos), asi la posicion de cada escudo
-    // sobrevive a que cambie el equipo.
+    // (cronograma-hoy.png, VS_DEFAULT entregado) con UN solo partido.
+    // "teamLocal"/"teamVisitante" (2026-09-04, cambio explicito del
+    // usuario: "quiero poder armar manualmente un enfrentamiento" --
+    // reemplaza la herencia automatica de scoreboard.teamA/teamB de
+    // arriba, que ya no se usa) -- seleccion manual desde el panel
+    // dedicado, catalogo Argentina Streamers. "presets" guarda
+    // combinaciones completas (titulo+local+visitante, NO posiciones,
+    // que siguen siendo layout) -- misma filosofia/helper que los presets
+    // de texto de zocalos (ver master-control/js/presets-helper.js).
+    // "crestByTeam" seedeado por teamId real (mismo patron que
+    // zocaloCompuestoEquipos), asi la posicion de cada escudo sobrevive a
+    // que cambie el equipo elegido.
     defaults: {
       titulo: 'PRÓXIMO PARTIDO',
+      teamLocal: '',
+      teamVisitante: '',
+      presets: [],
       textAdjust: textAdjustDefaults('titulo'),
       crestByTeam: { local: {}, away: {} },
     },
@@ -1262,12 +1274,27 @@ export const MODULES = {
       // el operador elige, sin logica de fetch.
       titulo: '',
       tipoHistorial: 'iwc',
+      // "teamBCrestUrl"/"penalLocal"/"penalVisitante" (2026-09-04, pedido
+      // explicito del usuario -- ver server/argentinaStreamersSync.js):
+      // "teamBCrestUrl" es el escudo de un RIVAL HISTORICO sin equipo en
+      // el catalogo local (Colombia/Malasia/etc, ver
+      // server/argentinaStreamersClient.js), solo lo llena la sincro web;
+      // el editor manual (teamB, select del catalogo local) siempre tiene
+      // prioridad en el renderer y lo limpia al elegir un equipo a mano.
+      // "penalLocal/penalVisitante" son SOLO texto (nunca inventados, ver
+      // "wentToPenalties" real de la web) -- vacios = el partido no se
+      // definio por penales, el renderer no dibuja nada debajo del gol.
+      // "fase" (2026-09-04, pedido explicito del usuario): campo REAL de la
+      // web ("stage" en product.matches[]/product.competitions.*[].matches,
+      // ver server/argentinaStreamersSync.js) -- "FASE DE GRUPO IWC",
+      // "SEMIFINAL ICC", "Amistoso", etc. Nunca inferido de la posicion del
+      // partido; vacio si la web no publico fase para ese encuentro.
       partidos: [
-        { teamA: '', golLocal: '', golVisitante: '', teamB: '' },
-        { teamA: '', golLocal: '', golVisitante: '', teamB: '' },
-        { teamA: '', golLocal: '', golVisitante: '', teamB: '' },
-        { teamA: '', golLocal: '', golVisitante: '', teamB: '' },
-        { teamA: '', golLocal: '', golVisitante: '', teamB: '' },
+        { teamA: '', golLocal: '', golVisitante: '', teamB: '', teamBCrestUrl: '', penalLocal: '', penalVisitante: '', fase: '' },
+        { teamA: '', golLocal: '', golVisitante: '', teamB: '', teamBCrestUrl: '', penalLocal: '', penalVisitante: '', fase: '' },
+        { teamA: '', golLocal: '', golVisitante: '', teamB: '', teamBCrestUrl: '', penalLocal: '', penalVisitante: '', fase: '' },
+        { teamA: '', golLocal: '', golVisitante: '', teamB: '', teamBCrestUrl: '', penalLocal: '', penalVisitante: '', fase: '' },
+        { teamA: '', golLocal: '', golVisitante: '', teamB: '', teamBCrestUrl: '', penalLocal: '', penalVisitante: '', fase: '' },
       ],
       // Ajuste POR COLUMNA (2026-09-02, pedido explicito del usuario:
       // "criterio por columna/bloque, no fila individual") -- un unico
@@ -1275,7 +1302,57 @@ export const MODULES = {
       // visitantes, mismo patron que "goleadores/asistidores" mas abajo.
       crestLocalOffsetX: 0, crestLocalOffsetY: 0, crestLocalScale: 1,
       crestVisitanteOffsetX: 0, crestVisitanteOffsetY: 0, crestVisitanteScale: 1,
-      textAdjust: textAdjustDefaults('titulo', 'golLocal', 'golVisitante'),
+      // "tituloCrestOffsetX/Y/Scale" (2026-09-04, pedido explicito del
+      // usuario, item 7: escudo Argentina Streamers masculino a la
+      // izquierda del titulo -- nunca existio para este modulo, se agrega
+      // ahora, mismo patron ya usado en goleadores/asistidores/jugadores).
+      tituloCrestOffsetX: 0, tituloCrestOffsetY: 0, tituloCrestScale: 1,
+      // "tituloByCategoria" (2026-09-04, pedido explicito del usuario:
+      // "no quiero una unica posicion/escala global del titulo, quiero
+      // guardar ajustes INDEPENDIENTES por categoria" -- HISTORIAL - IWC
+      // es mucho mas corto que HISTORIAL - AMISTOSOS OFICIALES). Un
+      // textAdjust {dx,dy,dSize} completo por categoria, misma llave que
+      // "tipoHistorial" -- el renderer/panel eligen cual usar segun la
+      // categoria activa en vez del "textAdjust.titulo" unico de siempre
+      // (que se mantiene igual para el ESCUDO del titulo, item 7 del
+      // pedido: "no separar salvo que haga falta tecnicamente" -- el
+      // escudo NO depende del largo del texto, sigue con un unico ajuste).
+      tituloByCategoria: {
+        iwc: { dx: 0, dy: 0, dSize: 0 },
+        'copa-america': { dx: 0, dy: 0, dSize: 0 },
+        'amistosos-oficiales': { dx: 0, dy: 0, dSize: 0 },
+        amistosos: { dx: 0, dy: 0, dSize: 0 },
+      },
+      // "resultadoNormal"/"resultadoConPenales"/"penalesFino" (2026-09-04,
+      // pedido explicito del usuario: "GOL LOCAL"/"GOL VISITANTE" como dos
+      // controles de columna INDEPENDIENTES quedan eliminados -- "los dos
+      // goles deben moverse juntos", y ademas con geometria propia segun
+      // si la fila tiene penales o no, porque compartian demasiado la
+      // misma logica de posicionamiento). Los 3 son bloques {dx,dy,dSize}
+      // UNICOS (no por columna individual):
+      //  - "resultadoNormal": mueve/escala JUNTOS gol local + gol
+      //    visitante, SOLO en filas sin penales.
+      //  - "resultadoConPenales": mueve/escala JUNTOS gol local + gol
+      //    visitante + penal local + penal visitante, SOLO en filas CON
+      //    penales (nunca toca las filas sin penales -- geometria
+      //    completamente separada).
+      //  - "penalesFino": ajuste ADICIONAL, encima de "resultadoConPenales",
+      //    exclusivo de penal local/penal visitante -- mueve la segunda
+      //    linea "(N) (N)" respecto del score reglamentario sin tocar
+      //    donde esta parado el bloque completo.
+      // Migracion de baseline (item 10 del pedido: "preservar las
+      // posiciones actuales, no desacomodar todo de golpe"): los offsets
+      // YA guardados en las columnas viejas ("textAdjust.golLocal/
+      // golVisitante/penalLocal/penalVisitante", ver
+      // shared/theme-layouts/argentinaStreamers.json) NO se descartan --
+      // se hornean como base FIJA por elemento en
+      // program/js/renderers/historial.js (GOL_LOCAL_BASE_ADJUST, etc.),
+      // asi el look actual queda identico y estos 3 campos nuevos arrancan
+      // en 0/0/0 (el punto de partida correcto para un ajuste ADICIONAL).
+      resultadoNormal: { dx: 0, dy: 0, dSize: 0 },
+      resultadoConPenales: { dx: 0, dy: 0, dSize: 0 },
+      penalesFino: { dx: 0, dy: 0, dSize: 0 },
+      textAdjust: textAdjustDefaults('fase'),
     },
   },
 

@@ -76,6 +76,27 @@
 body[data-theme='argentinaStreamers'] {
   --font-display: 'LIVE Segoe Bold';
   --font-body: 'LIVE Segoe Bold';
+  /* Azul de marca Argentina Streamers (2026-09-03, pedido explicito del
+     usuario: "texto sobre recuadro verde" tiene que usar este azul, no
+     blanco/negro/dorado). No se inventa: es el mismo hex ya definido como
+     "accent"/"azul complementario" del theme en shared/themes.js (palette)
+     y reutilizado en master-control/css/master.css (--gold-dim override) --
+     hasta ahora nunca se habia usado en el overlay real (program/css). */
+  --as-blue: #209DDB;
+  /* Azul NAVY de marca (2026-09-04, pedido explicito del usuario para
+     Estrellas: "--as-blue" le resulta muy verde-azulado, quiere un tono
+     mas intenso/azul, "el azul principal de Argentina Streamers",
+     preferentemente uno ya existente. Este navy (#0A0488) no es una
+     variable nueva inventada: es el mismo azul que ya aparece HORNEADO en
+     practicamente todos los assets reales del theme (zocalitos de nombre
+     de Formacion, placas de Historial/Cronograma/Tablas) -- medido pixel a
+     pixel sobre esas placas (ver comentarios de geometria en este mismo
+     archivo/overlay.css), nunca antes declarado como variable CSS
+     reutilizable. Uso inicial: SOLO titulo de Estrellas (pedido explicito,
+     "no el resto de textos") -- "--as-blue" sigue igual para todo lo demas
+     que ya lo usa (Marcador, Tiempo Adicional, Zocalo Largo Doble,
+     Formacion arquero, Zocalo Compuesto), sin tocar esos usos. */
+  --as-navy: #0A0488;
 }
 
 body[data-theme='argentinaStreamers'] .ov-zfd-texto1,
