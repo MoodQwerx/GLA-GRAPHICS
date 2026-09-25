@@ -1,4 +1,3 @@
-import { MATCH_STATUS_OPTIONS } from '../../../shared/modules.js';
 import { crestFile, teamName } from '../../../shared/teams.js';
 import { sponsorFile } from '../../../shared/sponsors.js';
 import { applyFittedText, fitFontSize, readTextAdjust, toBroadcastUpper } from '../text-fit.js';
@@ -10,8 +9,6 @@ const VIDEO_BY_RENGLON = {
   medio: '/assets/zocalos/zocalo-vs-renglon-medio-alpha.mp4',
   fino: '/assets/zocalos/zocalo-vs-renglon-fino-alpha.mp4',
 };
-
-const STATUS_LABELS = Object.fromEntries(MATCH_STATUS_OPTIONS.map((s) => [s.id, s.label]));
 
 // Anchos reales de ".ov-vs-teamA/B", ".ov-vs-goalA/B" y ".ov-vs-status"
 // (ver overlay.css) — mismo criterio de auto-ajuste que Tarjeta/Cambios.
@@ -48,15 +45,6 @@ const STATUS_BOX_WIDTH = 80;
 const STATUS_SAFETY_MARGIN = 4;
 const STATUS_MAX_WIDTH = STATUS_BOX_WIDTH - STATUS_SAFETY_MARGIN;
 
-// Goleadores: tipografia mas chica y menos pesada que resultado (900) y
-// nombre de equipo (800) a proposito — "legibles pero discretos", pedido
-// explicito del usuario. El ancho/alto reales de ".ov-vs-scorersA/B" los
-// fija el CSS por variante de renglon (ver overlay.css) — se leen en vivo
-// con getBoundingClientRect en vez de repetirlos aca, para no duplicar la
-// geometria en dos lugares.
-const SCORERS_SPEED_PX_PER_SECOND = 24;
-const SCORERS_LOOP_GAP = 48;
-
 function setCrest(imgEl, crestId) {
   const file = crestFile(crestId);
   if (file) {
@@ -84,30 +72,6 @@ async function applyTeamName(el, rawText, adjust = {}) {
   if (el.textContent === text) el.style.fontSize = `${Math.max(1, size + dSize)}px`;
 }
 
-// Ajuste de posicion/tamaño para los bloques de goleadores (2026-08-15,
-// auditoria completa): a diferencia del resto de este archivo, estos dos
-// bloques NUNCA pasan por fitFontSize/applyFittedText -- su tamaño de
-// fuente es un valor FIJO por CSS segun la variante de renglon (ver
-// overlay.css), y su contenido (marquesina opcional) lo arma
-// "renderScorers" mas abajo reemplazando hijos internos -- por eso el
-// ajuste se aplica aparte, sobre el contenedor mismo (mismo mecanismo que
-// "applyPlainTextAdjust" en text-fit.js, sin poder reutilizarlo tal cual
-// porque ese pisa "el.textContent" y aca hay que conservar los hijos que ya
-// arma renderScorers).
-function applyScorersAdjust(el, adjust = {}) {
-  const { dx = 0, dy = 0, dSize = 0 } = adjust;
-  el.style.translate = `${dx}px ${dy}px`;
-  if (dSize) {
-    if (!el.dataset.baseFontSize) {
-      el.dataset.baseFontSize = parseFloat(getComputedStyle(el).fontSize) || 0;
-    }
-    const base = parseFloat(el.dataset.baseFontSize) || 0;
-    el.style.fontSize = `${Math.max(1, base + dSize)}px`;
-  } else if (el.style.fontSize) {
-    el.style.removeProperty('font-size');
-  }
-}
-
 // Sin campos de equipo propios: equipo A/B (nombre completo, abreviatura
 // de 3 letras y escudo) se leen en vivo de "scoreboard" (5to argumento,
 // mismo patron que marcadorPenales/marcadorEntretiempo/tarjeta/cambios) —
@@ -115,19 +79,22 @@ function applyScorersAdjust(el, adjust = {}) {
 // principal, no se vuelve a elegir equipo aca.
 export default function renderVs(contentEl, data, justTaken, onOneShotEnded, allData) {
   const src = VIDEO_BY_RENGLON[data.renglon] || VIDEO_BY_RENGLON.normal;
+  // "renglonChanged" (2026-09-23, mismo bug/fix que tarjeta.js -- ver
+  // comentario ahi): cambiar el renglon CON LA GRAFICA AL AIRE montaba un
+  // video nuevo sin destruir el anterior ni reproducirlo.
+  const renglonChanged = contentEl.dataset.renglon !== undefined && contentEl.dataset.renglon !== data.renglon;
 
-  if (!contentEl._gfxBuilt || contentEl.dataset.renglon !== data.renglon) {
+  if (!contentEl._gfxBuilt || renglonChanged) {
     contentEl.dataset.renglon = data.renglon;
+    if (contentEl._alphaVideo) contentEl._alphaVideo.destroy();
     contentEl.innerHTML = `
       <div class="av-target"></div>
       <div class="gfx-overlay">
         <img class="ov-vs-crestA" data-adjust="localCrest" />
         <div class="ov-vs-teamA"></div>
-        <div class="ov-vs-scorersA"></div>
         <div class="ov-vs-goalA"></div>
         <div class="ov-vs-status"></div>
         <div class="ov-vs-goalB"></div>
-        <div class="ov-vs-scorersB"></div>
         <div class="ov-vs-teamB"></div>
         <img class="ov-vs-crestB" data-adjust="awayCrest" />
         <img class="ov-vs-sponsor" data-adjust="sponsor" />
@@ -137,18 +104,19 @@ export default function renderVs(contentEl, data, justTaken, onOneShotEnded, all
     contentEl._gfxBuilt = true;
   }
 
-  if (justTaken) {
+  if (justTaken || renglonChanged) {
     contentEl._alphaVideo?.playFromStart();
   }
 
   const sb = (allData && allData.scoreboard) || {};
-  const { status } = data;
   const scoreA = sb.scoreA;
   const scoreB = sb.scoreB;
-  // Texto libre del renglon central: si el operador escribio algo en
-  // "statusTexto", reemplaza al estado preseleccionado (que sigue
-  // funcionando igual, sin tocar, cuando el campo libre queda vacio).
-  const statusLabel = (data.statusTexto || '').trim() || STATUS_LABELS[status];
+  // CONTENIDO CENTRAL (2026-09-10, pedido explicito del usuario: "lo que
+  // escriba ahí debe ser exactamente lo que se renderiza en el centro... no
+  // forzar un valor si está vacío") -- reemplaza al viejo mecanismo de
+  // "Estado del encuentro" preseleccionado + texto libre opcional que lo
+  // pisaba: ahora es 100% manual, sin ningun preset de respaldo.
+  const statusLabel = (data.statusTexto || '').trim();
 
   setCrest(contentEl.querySelector('.ov-vs-crestA'), sb.teamA);
   setCrest(contentEl.querySelector('.ov-vs-crestB'), sb.teamB);
@@ -214,60 +182,4 @@ export default function renderVs(contentEl, data, justTaken, onOneShotEnded, all
     }, 320);
   }
 
-  // Goleadores: una lista por equipo, alineada con su propio resultado
-  // (misma columna que ".ov-vs-goalA/B"). Solo hay caja real en las
-  // variantes de renglon mas altas (ver overlay.css) — en "normal" la
-  // caja mide 0 de alto (display:none) y "applyFittedLines" simplemente
-  // no dibuja nada, sin necesidad de repetir esa condicion aca.
-  const scorersAEl = contentEl.querySelector('.ov-vs-scorersA');
-  const scorersBEl = contentEl.querySelector('.ov-vs-scorersB');
-  renderScorers(scorersAEl, data.goleadoresLocal, 'local');
-  renderScorers(scorersBEl, data.goleadoresVisitante, 'visitor');
-  applyScorersAdjust(scorersAEl, readTextAdjust(data.textAdjust, 'scorersLocal'));
-  applyScorersAdjust(scorersBEl, readTextAdjust(data.textAdjust, 'scorersVisitante'));
-}
-
-function renderScorers(el, rawText, side) {
-  const text = toBroadcastUpper(String(rawText || '')
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .join('  •  '));
-  const signature = `${side}:${text}`;
-  const visibleWidth = el.clientWidth;
-  if (
-    visibleWidth > 0
-    && el.dataset.signature === signature
-    && el.dataset.measuredWidth === String(visibleWidth)
-  ) return;
-  el.dataset.signature = signature;
-  el.dataset.measuredWidth = String(visibleWidth);
-  el.classList.remove('is-scrolling');
-  el.innerHTML = '';
-
-  const staticText = document.createElement('span');
-  staticText.className = 'ov-vs-scorers-static';
-  staticText.textContent = text;
-  el.appendChild(staticText);
-  // "offsetWidth" (no "getBoundingClientRect().width"): con el stage
-  // completo escalado via transform (ver program/js/stage-scale.js),
-  // getBoundingClientRect ya devuelve el tamaño PINTADO en pantalla
-  // (afectado por ese scale), mientras que "visibleWidth" (el.clientWidth,
-  // arriba) es el tamaño logico del contenedor -- comparar uno escalado
-  // contra el otro sin escalar rompia la decision de activar el scroll en
-  // cualquier PC con scale != 1. offsetWidth es logico igual que clientWidth.
-  if (!text || visibleWidth === 0 || staticText.offsetWidth <= visibleWidth) return;
-
-  const track = document.createElement('div');
-  track.className = 'ov-vs-scorers-track';
-  const first = document.createElement('span');
-  first.textContent = text;
-  const second = first.cloneNode(true);
-  track.append(first, second);
-  el.replaceChildren(track);
-
-  const distance = first.scrollWidth + SCORERS_LOOP_GAP;
-  track.style.setProperty('--scorers-distance', `${distance}px`);
-  track.style.setProperty('--scorers-duration', `${Math.max(12, distance / SCORERS_SPEED_PX_PER_SECOND)}s`);
-  el.classList.add('is-scrolling');
 }

@@ -128,6 +128,73 @@ export function applyTake(moduleId, data) {
   return effectiveModuleState(moduleId, themeId);
 }
 
+// BRACKETS: ESCUDOS AUTOMATICOS DESDE GRUPO A/B (2026-09-24, pedido
+// explicito del usuario, exclusivo GLA: "automatizar qué ESCUDO aparece en
+// LOCAL y VISITANTE según cómo vaya quedando el sorteo... Grupo A/B debe
+// ser la FUENTE DE VERDAD, no quiero mantener dos listas distintas").
+//
+// "grupos" (shared/modules.js) ya guarda el sorteo: grupo1.filas[0..2] =
+// Grupo A (equipos 1/2/3 = A1/A2/A3), grupo2.filas[0..2] = Grupo B (B1/B2/
+// B3) -- mismo campo "teamId" que ya usa el resto del proyecto para
+// resolver escudo (shared/teams.js, crestFile()), nada nuevo que inventar
+// ahi. "sideTable" (categoria Brackets, "Resultados") ya tiene sus 9
+// encuentros reales cargados a mano por el usuario (horarios, titulos,
+// estado, resultados) -- encuentros[i].teamA/teamB son los mismos teamId
+// que el renderer (program/js/renderers/sideTable.js) ya pasa directo a
+// crestFile(), asi que sincronizar escudo es simplemente escribir el
+// teamId correcto ahi. BRACKET_SLOT_MAP es el mapping EXACTO pedido
+// (partido 1-9, 1-indexado en el pedido -> indice 0-8 en el array real).
+const BRACKET_SLOT_MAP = [
+  { teamA: 'A1', teamB: 'A2' }, // Partido 1
+  { teamA: 'B1', teamB: 'B2' }, // Partido 2
+  { teamA: 'A3', teamB: 'B3' }, // Partido 3
+  { teamA: 'A2', teamB: 'B2' }, // Partido 4
+  { teamA: 'B1', teamB: 'B3' }, // Partido 5
+  { teamA: 'A1', teamB: 'A3' }, // Partido 6
+  { teamA: 'B2', teamB: 'B3' }, // Partido 7
+  { teamA: 'A2', teamB: 'A3' }, // Partido 8
+  { teamA: 'A1', teamB: 'B1' }, // Partido 9
+];
+
+// Resuelve el teamId actual de un slot ("A1".."B3") a partir del sorteo
+// guardado en "grupos" -- "" (sin equipo todavia) si esa fila no tiene
+// nada cargado, NUNCA un fallback de otro equipo (pedido explicito:
+// "no inventar equipos, no usar un crest fallback de otro equipo").
+function resolveSlotTeamId(gruposData, slot) {
+  const grupo = slot[0] === 'A' ? gruposData.grupo1 : gruposData.grupo2;
+  const filaIndex = Number(slot[1]) - 1; // "A1" -> fila 0, "A2" -> fila 1, etc.
+  return grupo?.filas?.[filaIndex]?.teamId || '';
+}
+
+// Actualiza EXCLUSIVAMENTE "encuentros[i].teamA/teamB" de los 9 partidos
+// mapeados -- todo lo demas de cada encuentro (hora, titulo, status,
+// scoreA/B, penales, o cualquier campo futuro) queda exactamente como
+// estaba, nunca se reemplaza el objeto completo (pedido explicito: "no
+// hacer match = {...nuevoMatch} si eso pisa datos existentes"). Devuelve
+// el nuevo "effectiveModuleState('sideTable', ...)" para que el llamador
+// (server/index.js) lo transmita, o "null" si no habia nada que
+// actualizar (sideTable todavia sin sus 9 encuentros cargados -- no
+// fabrica encuentros nuevos).
+export function syncBracketCrestsFromGrupos() {
+  const gruposData = ensureThemeData('grupos', DEFAULT_THEME_ID);
+  const sideTableData = ensureThemeData('sideTable', DEFAULT_THEME_ID);
+  if (!Array.isArray(sideTableData.encuentros) || sideTableData.encuentros.length === 0) return null;
+
+  let changed = false;
+  BRACKET_SLOT_MAP.forEach((slots, index) => {
+    const encuentro = sideTableData.encuentros[index];
+    if (!encuentro) return; // menos de 9 encuentros cargados -- no fabrica el resto
+    const teamA = resolveSlotTeamId(gruposData, slots.teamA);
+    const teamB = resolveSlotTeamId(gruposData, slots.teamB);
+    if (encuentro.teamA !== teamA) { encuentro.teamA = teamA; changed = true; }
+    if (encuentro.teamB !== teamB) { encuentro.teamB = teamB; changed = true; }
+  });
+
+  if (!changed) return null;
+  persist();
+  return effectiveModuleState('sideTable', DEFAULT_THEME_ID);
+}
+
 export function applyOut(moduleId) {
   assertModule(moduleId);
   state[moduleId].status = MODULE_STATUS.OUT;
@@ -235,3 +302,13 @@ export async function applyPositionCommit(moduleId, elementSpec) {
   }
   return effectiveModuleState(moduleId, themeId);
 }
+
+// AUTOCURATIVO AL ARRANCAR (2026-09-24, pedido explicito: "al volver a
+// abrir, Brackets debe reconstruir correctamente los escudos a partir de
+// los equipos guardados en Grupo A/B"). En operacion normal esto es un
+// no-op (los escudos ya quedaron persistidos correctos la ultima vez que
+// se tocó "grupos"), pero si "master-control-state.json" se edita a mano o
+// viene de una version anterior a esta funcion, resincroniza sola al
+// arrancar en vez de mostrar un desfasaje hasta el proximo cambio en
+// Grupos.
+syncBracketCrestsFromGrupos();

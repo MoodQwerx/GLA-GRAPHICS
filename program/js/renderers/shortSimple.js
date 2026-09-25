@@ -3,6 +3,7 @@ import { applyFittedText, updateFittedTextWithTransition, readTextAdjust } from 
 import { resolveTeamTokens } from '../../../shared/text-tokens.js';
 import { getActiveThemeId } from '../theme-client.js';
 import { DEFAULT_THEME_ID } from '../../../shared/themes.js';
+import { GLA_SEGOE_BOLD_FAMILY } from '../program-fonts.js';
 
 const VIDEO_SRC = '/assets/zocalos/zocalo-corto-simple-alpha.mp4';
 
@@ -48,9 +49,12 @@ export default function renderShortSimple(contentEl, data, justTaken, onOneShotE
   const oldText = contentEl._prevText;
   const isArgentinaStreamers = getActiveThemeId() !== DEFAULT_THEME_ID;
   const maxWidth = isArgentinaStreamers ? TEXT_MAX_WIDTH_AS : TEXT_MAX_WIDTH;
+  // "family" (2026-09-24, pedido explicito: "Segoe UI Bold", SOLO GLA) --
+  // ver el mismo criterio en program/js/renderers/longSimple.js.
+  const family = isArgentinaStreamers ? undefined : GLA_SEGOE_BOLD_FAMILY;
 
   updateFittedTextWithTransition(textEl, newText, oldText, {
-    maxFont: TEXT_MAX_FONT, minFont: TEXT_MIN_FONT, maxWidth, weight: 800,
+    maxFont: TEXT_MAX_FONT, minFont: TEXT_MIN_FONT, maxWidth, weight: 800, family,
   }, readTextAdjust(data.textAdjust, 'text'), !justTaken);
 
   contentEl._prevText = newText;

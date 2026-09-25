@@ -26,6 +26,23 @@
   font-display: block;
 }
 
+/* "GLA Segoe Bold" (2026-09-24, pedido explicito del usuario: "Zocalo
+   Largo Simple/Corto Simple/Corto Doble/Compuesto deben usar Segoe UI
+   Bold, exclusivamente en GLA"). Mismo archivo .ttf que "LIVE Segoe Bold"
+   de arriba (no se duplica el asset) bajo un nombre interno propio -- ver
+   program/js/program-fonts.js (GLA_SEGOE_BOLD_FAMILY) para el detalle de
+   por que se declara aparte en vez de reusar el nombre de Argentina
+   Streamers. Aplicada SOLO a esos 4 modulos via
+   "body[data-theme='gla'] #mod-<id>" mas abajo en este mismo archivo --
+   GLA sigue usando "GLA Anton" en cualquier otro lado, sin cambios. */
+@font-face {
+  font-family: 'GLA Segoe Bold';
+  src: url('/assets/themes/argentina-streamers/fonts/Segoe-UI-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+
 :root {
   --gold: #E3B23C;
   --gold-bright: #FFD873;
@@ -83,25 +100,50 @@ body[data-theme='argentinaStreamers'] {
      y reutilizado en master-control/css/master.css (--gold-dim override) --
      hasta ahora nunca se habia usado en el overlay real (program/css). */
   --as-blue: #209DDB;
-  /* Azul NAVY de marca (2026-09-04, pedido explicito del usuario para
-     Estrellas: "--as-blue" le resulta muy verde-azulado, quiere un tono
-     mas intenso/azul, "el azul principal de Argentina Streamers",
-     preferentemente uno ya existente. Este navy (#0A0488) no es una
-     variable nueva inventada: es el mismo azul que ya aparece HORNEADO en
-     practicamente todos los assets reales del theme (zocalitos de nombre
-     de Formacion, placas de Historial/Cronograma/Tablas) -- medido pixel a
-     pixel sobre esas placas (ver comentarios de geometria en este mismo
-     archivo/overlay.css), nunca antes declarado como variable CSS
-     reutilizable. Uso inicial: SOLO titulo de Estrellas (pedido explicito,
-     "no el resto de textos") -- "--as-blue" sigue igual para todo lo demas
-     que ya lo usa (Marcador, Tiempo Adicional, Zocalo Largo Doble,
-     Formacion arquero, Zocalo Compuesto), sin tocar esos usos. */
-  --as-navy: #0A0488;
+  /* AZUL DE REFERENCIA de Argentina Streamers (BLOQUE 1, 2026-09-09,
+     pedido explicito del usuario: unificar "el recuadro azul de Mosca" y
+     "la tipografia azul de Tarjetas" en un unico valor exacto, "no quiero
+     un azul aproximado"). El usuario confirmo el hex real de forma
+     directa: #090f8f. Este valor CORRIGE el "--as-navy" anterior
+     (#0A0488, 2026-09-04) -- misma variable, mismo concepto ("el azul
+     principal de Argentina Streamers", ya usado en el titulo de Estrellas
+     y en el recuadro del reloj de Mosca), solo se ajusta la medicion al
+     valor exacto confirmado. Usos (BLOQUE 1): reloj de Mosca, numero de
+     goles + separador del Marcador, subtitulo de Zocalo Largo Doble,
+     subtitulo de Zocalo Compuesto con Equipos/con Logo, numeros de VS Con
+     Resultado -- ademas del titulo de Estrellas que ya lo usaba.
+     "--as-blue" (#209DDB) sigue igual para todo lo demas que ya lo usa
+     (Formacion arquero, Tablas), sin tocar esos usos. */
+  --as-navy: #090f8f;
 }
 
 body[data-theme='argentinaStreamers'] .ov-zfd-texto1,
 body[data-theme='argentinaStreamers'] .ov-zf-texto1 {
   color: #ffffff !important;
+}
+
+/* SEGOE UI BOLD -- SOLO estos 4 modulos, SOLO GLA (2026-09-24, pedido
+   explicito del usuario). Mismo mecanismo de cascada por variable CSS que
+   ya usa Argentina Streamers arriba (todas las reglas de texto de
+   overlay.css leen "font-family: var(--font-display)", ninguna tiene la
+   familia hardcodeada) -- scoped a "#mod-<id>" en vez de a todo "body" para
+   que el resto de GLA (los otros ~25 modulos) siga en "GLA Anton" sin
+   ningun cambio. No toca tamaño/posicion/color/animacion: SOLO la
+   variable de fuente. La medicion de auto-fit (fitFontSize/measureTextWidth,
+   ver program/js/text-fit.js) NO lee esta variable CSS -- por eso los 4
+   renderers de estos modulos (longSimple/shortSimple/shortDouble/
+   zocaloCompuesto) pasan ademas "family: GLA_SEGOE_BOLD_FAMILY" explicito
+   en sus llamados a applyFittedText/updateFittedTextWithTransition, para
+   que lo que se MIDE coincida exactamente con lo que se PINTA -- sin eso,
+   el auto-ajuste seguiria calculando anchos con las metricas de "GLA
+   Anton" mientras el texto se ve en Segoe, y podria desbordar o quedar
+   con espacio de sobra. */
+body[data-theme='gla'] #mod-longSimple,
+body[data-theme='gla'] #mod-shortSimple,
+body[data-theme='gla'] #mod-shortDouble,
+body[data-theme='gla'] #mod-zocaloCompuesto {
+  --font-display: 'GLA Segoe Bold', 'Segoe UI', Arial, sans-serif;
+  --font-body: 'GLA Segoe Bold', 'Segoe UI', Arial, sans-serif;
 }
 
 * {

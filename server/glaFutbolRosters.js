@@ -1,17 +1,23 @@
+// BLOQUE 3 (2026-09-09, pedido explicito del usuario: "UNA FUENTE CENTRAL
+// DE JUGADORES POR EQUIPO... no construyas un segundo sistema paralelo si
+// ya existe uno"): este archivo deja de mantener su propio snapshot
+// ("gla-futbol-rosters.json", plano por teamId, sin wrapper de theme) y
+// pasa a persistir a traves de server/playerRosters.js (el store central,
+// theme-scoped, que ademas soporta carga/edicion manual). La FUNCION real
+// de este archivo -- scrapear gla.futbol y normalizar el plantel -- no
+// cambia en absoluto; server/playerRosters.js migra una sola vez, al
+// arrancar, cualquier snapshot viejo que ya existiera (ver
+// migrateLegacyGlaRosters() ahi) para no perder datos ya sincronizados.
 import { getTeamCatalog } from './teams.js';
-import { loadPersistentValue, schedulePersistentWrite } from './persistence.js';
 import {
   extractProductData,
   fetchGlaFutbolHtml,
   matchLocalTeam,
   normalizeRosterPlayer,
 } from './glaFutbolClient.js';
+import { getRoster, saveRoster } from './playerRosters.js';
 
-let snapshots = await loadPersistentValue(
-  'gla_futbol_rosters',
-  'gla-futbol-rosters.json',
-  {},
-);
+const THEME_ID = 'gla';
 
 function requireLocalTeam(teamId) {
   const team = getTeamCatalog().find((item) => item.id === teamId);
@@ -26,7 +32,7 @@ function findWebTeam(product, localTeam) {
 
 export function getRosterSnapshot(teamId) {
   requireLocalTeam(teamId);
-  return snapshots[teamId] || null;
+  return getRoster(THEME_ID, teamId);
 }
 
 export async function syncRosterFromWeb(teamId) {
@@ -39,23 +45,21 @@ export async function syncRosterFromWeb(teamId) {
     throw new Error(`gla.futbol no devolvio jugadores para ${webTeam.name}.`);
   }
 
-  const jugadores = webTeam.roster.map((player) => normalizeRosterPlayer(player, {
-    id: webTeam.id,
-    name: webTeam.name,
-  }));
-  const snapshot = {
-    teamId: localTeam.id,
-    teamName: localTeam.name,
-    webTeamId: webTeam.id || null,
-    webTeamName: webTeam.name,
-    jugadores,
-    ultimaActualizacionWeb: new Date().toISOString(),
-  };
-
-  // Reemplazar solo despues de validar el plantel completo. La escritura
-  // central es asincrona: ante una falla cloud el snapshot nuevo sigue en
-  // memoria y en el fallback local, sin resetear al valor por defecto.
-  snapshots = { ...snapshots, [teamId]: snapshot };
-  schedulePersistentWrite('gla_futbol_rosters', snapshots);
-  return snapshot;
+  // Reemplazar solo despues de validar el plantel completo (webTeam.roster
+  // ya se confirmo no vacio arriba) -- ante una falla de red/parseo previa
+  // a este punto, el roster anterior en server/playerRosters.js queda
+  // intacto, nunca se resetea al default.
+  const jugadores = webTeam.roster.map((player) => {
+    const normalized = normalizeRosterPlayer(player, { id: webTeam.id, name: webTeam.name });
+    return {
+      dorsal: normalized.dorsal,
+      nombre: normalized.nombre,
+      apellido: normalized.apellido,
+      apodo: normalized.apodo,
+      nombreCompleto: normalized.nombreOriginal,
+      nombreTV: normalized.nombreTV,
+      webId: normalized.id,
+    };
+  });
+  return saveRoster(THEME_ID, teamId, jugadores, 'gla-futbol');
 }

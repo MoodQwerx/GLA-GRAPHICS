@@ -1,4 +1,5 @@
 import { elapsedMs, formatClock, emptyClock, parseClockLimit } from '../../shared/clock.js';
+import { renderCompositionControl } from './composition-control.js';
 
 // "FIN DEL CONTADOR" (2026-08-15, pedido explicito del usuario): default
 // 15:00 para el reloj del Marcador principal -- ver shared/clock.js
@@ -32,7 +33,7 @@ const PERIOD_PRESETS = [
 //
 // Devuelve una funcion de limpieza que hay que llamar al salir de este panel
 // (cambiar de tab) para frenar el intervalo que refresca el reloj en pantalla.
-export function renderScoreboardClockPanel(container, data, sendPatch, { onGoalPlus, onGoalMinus, onResetGoles } = {}) {
+export function renderScoreboardClockPanel(container, data, sendPatch, { onGoalPlus, onGoalMinus, onResetGoles, onResetLocal, onResetVisitante, golData, golOnDirty, golSaveOptions } = {}) {
   container.innerHTML = '';
 
   if (!data.clockEndText) data.clockEndText = DEFAULT_CLOCK_END_TEXT;
@@ -200,7 +201,18 @@ export function renderScoreboardClockPanel(container, data, sendPatch, { onGoalP
 
   container.appendChild(periodBox);
 
-  // --- Goles: +1 dispara la animacion GOL sincronizada, -1 no ---
+  // --- Goles: [-] N [+] por lado + RESET LOCAL/VISITANTE/GENERAL (BLOQUE 2,
+  // 2026-09-09, pedido explicito del usuario: "eliminar los textbox/input
+  // numéricos manuales actuales para goles... dos controles separados, GOL
+  // LOCAL y GOL VISITANTE, cada uno con su propio RESET, más un RESET
+  // GENERAL"). "+1" sigue disparando la animación de GOL sincronizada
+  // (onGoalPlus, sin cambios de arquitectura); "-1" y los 3 RESET nunca la
+  // disparan (onGoalMinus/onResetLocal/onResetVisitante/onResetGoles, mismo
+  // criterio que ya regía para "-1"/"RESETEAR GOLES" antes de este bloque).
+  // El valor mostrado entre "[-]"/"[+]" se lee de "data.scoreA/scoreB" en
+  // cada render de este panel -- ya se refresca solo porque main.js llama
+  // "renderPanel()" (rearma este panel entero) después de cada click en
+  // scoreGoal/undoGoal/resetGoles* (ver esas funciones).
   if (onGoalPlus && onGoalMinus) {
     const golBox = document.createElement('div');
     golBox.className = 'clock-box';
@@ -209,35 +221,81 @@ export function renderScoreboardClockPanel(container, data, sendPatch, { onGoalP
     golTitle.textContent = 'GOLES (dispara la animación automáticamente)';
     golBox.appendChild(golTitle);
 
-    // "gol-buttons-grid" (2026-08-28, correccion visual explicita del
-    // usuario: la fila de goles quedaba desprolija con flex-wrap comun --
-    // texto de largo muy dispar entre "GOL LOCAL +1" y "-1 local" hacia que
-    // los botones quedaran de anchos incoherentes y con aire disparejo).
-    // Grid 2 columnas fijas (ver overlay CSS "gol-buttons-grid") en vez de
-    // flex-wrap: mismas 2 clases/callbacks de siempre, ningun cambio de
-    // logica, solo layout. Clase nueva y exclusiva de esta seccion -- no
-    // toca ".clock-buttons"/".btn-clock" que usan Periodo, Reloj, VAR, etc.
-    const golRow = document.createElement('div');
-    golRow.className = 'clock-buttons gol-buttons-grid';
-    golRow.append(
-      mkGoalBtn('GOL LOCAL +1', () => onGoalPlus('A'), 'gol-btn'),
-      mkGoalBtn('-1 LOCAL', () => onGoalMinus('A'), 'btn-clock-danger gol-btn'),
-      mkGoalBtn('GOL VISITANTE +1', () => onGoalPlus('B'), 'gol-btn'),
-      mkGoalBtn('-1 VISITANTE', () => onGoalMinus('B'), 'btn-clock-danger gol-btn'),
-    );
-    golBox.appendChild(golRow);
+    function buildGoalCounter(sideLabel, scoreKey, side, onReset, resetLabel) {
+      const group = document.createElement('div');
+      group.className = 'gol-counter-group';
 
-    // "RESETEAR GOLES" (2026-08-16, pedido explicito del usuario): vuelve
-    // 0-0 sin animacion de GOL -- el callback (main.js) NO pasa por
-    // scoreGoal/undoGoal, asi que nunca encola/dispara la pieza de festejo.
+      const label = document.createElement('div');
+      label.className = 'gol-counter-label';
+      label.textContent = sideLabel;
+      group.appendChild(label);
+
+      const row = document.createElement('div');
+      row.className = 'gol-counter-row';
+
+      const minusBtn = mkGoalBtn('−', () => onGoalMinus(side), 'gol-counter-btn gol-counter-minus');
+      const value = document.createElement('span');
+      value.className = 'gol-counter-value';
+      value.textContent = String(parseInt(data[scoreKey], 10) || 0);
+      const plusBtn = mkGoalBtn('+', () => onGoalPlus(side), 'gol-counter-btn gol-counter-plus');
+
+      row.append(minusBtn, value, plusBtn);
+      group.appendChild(row);
+
+      if (onReset) {
+        group.appendChild(mkBtn(resetLabel, onReset, 'btn-clock-danger gol-btn gol-reset-side'));
+      }
+
+      return group;
+    }
+
+    golBox.appendChild(buildGoalCounter('GOL LOCAL', 'scoreA', 'A', onResetLocal, 'RESET LOCAL'));
+    golBox.appendChild(buildGoalCounter('GOL VISITANTE', 'scoreB', 'B', onResetVisitante, 'RESET VISITANTE'));
+
+    // "RESETEAR GOLES" / RESET GENERAL (2026-08-16, ampliado BLOQUE 2): pone
+    // ambos lados en 0 en un unico click -- vuelve a 0 sin animacion de GOL
+    // (el callback en main.js NO pasa por scoreGoal/undoGoal, nunca encola
+    // ni dispara la pieza de festejo).
     if (onResetGoles) {
       const resetRow = document.createElement('div');
       resetRow.className = 'clock-buttons gol-buttons-grid gol-buttons-reset';
-      resetRow.appendChild(mkBtn('RESETEAR GOLES (0-0)', onResetGoles, 'btn-clock-danger gol-btn'));
+      resetRow.appendChild(mkBtn('RESET GENERAL (0-0)', onResetGoles, 'btn-clock-danger gol-btn'));
       golBox.appendChild(resetRow);
     }
 
     container.appendChild(golBox);
+  }
+
+  // --- Ajuste de composición de la animación de GOL (2026-09-10, pedido
+  // explicito del usuario): "gol" es un modulo real del servidor (oneShot,
+  // ver shared/modules.js) pero nunca tuvo tab propia en la navegacion (se
+  // dispara solo, ver "onGoalPlus"/fireNextGolAnimation en main.js) -- este
+  // es el unico lugar del operador para ajustar su posicion/escala, ya que
+  // conceptualmente pertenece al Marcador (quien lo dispara). Mismo
+  // componente universal que cualquier otro modulo (renderCompositionControl,
+  // compositionOffsetX/Y/Scale ya la inyecta cloneDefaults para CUALQUIER
+  // modulo, incluido "gol") -- Program ya aplica ese transform de forma
+  // generica (applyComposition en program/js/main.js) sin que
+  // program/js/renderers/gol.js necesite saber nada de esto. Los cambios se
+  // ven LIVE de inmediato incluso a mitad de la animacion (mismo mecanismo
+  // "applyVisualLive" que ya usa el resto del proyecto), sin tocar la
+  // logica automatica de disparo (scoreGoal/fireNextGolAnimation intactos).
+  if (golData) {
+    const golAdjustBox = document.createElement('div');
+    golAdjustBox.className = 'clock-box';
+    const golAdjustTitle = document.createElement('div');
+    golAdjustTitle.className = 'clock-box-title';
+    golAdjustTitle.textContent = 'AJUSTE DE COMPOSICIÓN — ANIMACIÓN DE GOL';
+    golAdjustBox.appendChild(golAdjustTitle);
+    const golAdjustBody = document.createElement('div');
+    golAdjustBox.appendChild(golAdjustBody);
+    renderCompositionControl(golAdjustBody, golData, golOnDirty || (() => {}), {
+      title: '',
+      note: 'Mueve y escala la animación de GOL como una sola unidad.',
+      ...(golSaveOptions || {}),
+      elementSpec: { kind: 'composition', dataPath: [], xKey: 'compositionOffsetX', yKey: 'compositionOffsetY', scaleKey: 'compositionScale' },
+    });
+    container.appendChild(golAdjustBox);
   }
 
   // --- Color de equipo (2026-08-16, pedido explicito del usuario:

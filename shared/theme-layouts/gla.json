@@ -311,7 +311,7 @@
     "textAdjust": {
       "motivo": {
         "dx": 0,
-        "dy": 0,
+        "dy": -4,
         "dSize": 0
       }
     },
@@ -348,13 +348,13 @@
     "compositionScale": 1,
     "textAdjust": {
       "line1": {
-        "dx": 0,
-        "dy": 0,
+        "dx": -14,
+        "dy": -4,
         "dSize": 0
       },
       "line2": {
-        "dx": 0,
-        "dy": 0,
+        "dx": -14,
+        "dy": -2,
         "dSize": 0
       }
     }
@@ -366,7 +366,7 @@
     "textAdjust": {
       "text": {
         "dx": 0,
-        "dy": 0,
+        "dy": -3,
         "dSize": 0
       }
     }
@@ -518,57 +518,9 @@
     "logoOffsetX": 0,
     "logoOffsetY": 0,
     "logoScale": 1,
-    "sponsor1OffsetX": 0,
-    "sponsor1OffsetY": 0,
-    "sponsor1Scale": 1,
-    "sponsor2OffsetX": 0,
-    "sponsor2OffsetY": 0,
-    "sponsor2Scale": 1
-  },
-  "placaLInfo": {
-    "compositionOffsetX": 0,
-    "compositionOffsetY": 0,
-    "compositionScale": 1,
-    "zocalo1": {
-      "offsetX": -1256,
-      "offsetY": 408,
-      "scale": 1,
-      "textAdjust": {
-        "dx": 0,
-        "dy": 0,
-        "dSize": 0
-      }
-    },
-    "zocalo2": {
-      "offsetX": -296,
-      "offsetY": 408,
-      "scale": 1,
-      "textAdjust": {
-        "dx": 0,
-        "dy": 0,
-        "dSize": 0
-      }
-    },
-    "zocalo3": {
-      "offsetX": -1256,
-      "offsetY": 948,
-      "scale": 1,
-      "textAdjust": {
-        "dx": 0,
-        "dy": 0,
-        "dSize": 0
-      }
-    },
-    "zocalo4": {
-      "offsetX": -296,
-      "offsetY": 948,
-      "scale": 1,
-      "textAdjust": {
-        "dx": 0,
-        "dy": 0,
-        "dSize": 0
-      }
-    }
+    "sponsorsOffsetX": 0,
+    "sponsorsOffsetY": 0,
+    "sponsorsScale": 1
   },
   "grupos": {
     "compositionOffsetX": 0,
@@ -597,8 +549,8 @@
     "textAdjust": {
       "titulo": {
         "dx": 0,
-        "dy": 0,
-        "dSize": 0
+        "dy": -4,
+        "dSize": 7
       },
       "golLocal": {
         "dx": 0,
@@ -617,7 +569,7 @@
       },
       "estadoFullscreen": {
         "dx": 0,
-        "dy": 0,
+        "dy": -6,
         "dSize": 0
       },
       "tituloBracket": {

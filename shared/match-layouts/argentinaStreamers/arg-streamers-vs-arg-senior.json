@@ -9,14 +9,14 @@
       "compositionScale": 1,
       "textAdjust": {
         "scoreA": {
-          "dx": 2,
+          "dx": 4,
           "dy": 0,
-          "dSize": 0
+          "dSize": 4
         },
         "scoreB": {
-          "dx": 2,
+          "dx": -5,
           "dy": 0,
-          "dSize": 0
+          "dSize": 5
         },
         "period": {
           "dx": 88,
@@ -35,8 +35,8 @@
         },
         "clock": {
           "dx": -20,
-          "dy": 4,
-          "dSize": 0
+          "dy": 5,
+          "dSize": -1
         }
       },
       "localCrestOffsetX": -4,
@@ -45,11 +45,11 @@
       "awayCrestOffsetX": 12,
       "awayCrestOffsetY": 8,
       "awayCrestScale": 1.04,
-      "separatorOffsetX": 2,
-      "separatorOffsetY": -2,
+      "separatorOffsetX": 1,
+      "separatorOffsetY": 0,
       "separatorScale": 1,
-      "sponsorOffsetX": 2,
-      "sponsorOffsetY": 2,
+      "sponsorOffsetX": 0,
+      "sponsorOffsetY": 7,
       "sponsorScale": 1,
       "crestByTeam": {
         "away": {
@@ -84,46 +84,51 @@
       }
     },
     "marcadorTiempoAdicional": {
-      "compositionOffsetX": 0,
-      "compositionOffsetY": 0,
-      "compositionScale": 1,
+      "compositionOffsetX": -198,
+      "compositionOffsetY": -170,
+      "compositionScale": 0.69,
       "textAdjust": {
         "addedMinutes": {
-          "dx": 0,
-          "dy": 0,
-          "dSize": 0
+          "dx": 132,
+          "dy": 26,
+          "dSize": 12
         },
         "clock": {
-          "dx": 0,
-          "dy": 0,
-          "dSize": 0
+          "dx": 1,
+          "dy": 27,
+          "dSize": 8
         }
       }
     },
     "marcadorEntretiempo": {
-      "compositionOffsetX": 0,
-      "compositionOffsetY": 0,
-      "compositionScale": 1,
+      "compositionOffsetX": -266,
+      "compositionOffsetY": -124,
+      "compositionScale": 0.75,
       "textAdjust": {
         "nameA": {
-          "dx": 0,
-          "dy": 0,
-          "dSize": 0
+          "dx": 36,
+          "dy": -8,
+          "dSize": 5
         },
         "nameB": {
-          "dx": 0,
+          "dx": 124,
           "dy": 0,
           "dSize": 0
         },
         "scoreA": {
-          "dx": 0,
-          "dy": 0,
-          "dSize": 0
+          "dx": 64,
+          "dy": -8,
+          "dSize": 20
         },
         "scoreB": {
-          "dx": 0,
-          "dy": 0,
-          "dSize": 0
+          "dx": 104,
+          "dy": -8,
+          "dSize": 18
+        },
+        "separador": {
+          "dx": 84,
+          "dy": -6,
+          "dSize": 10
         }
       },
       "localCrestOffsetX": 0,
@@ -135,9 +140,9 @@
       "crestByTeam": {
         "local": {
           "argentina-streamers": {
-            "localCrestOffsetX": 14,
-            "localCrestOffsetY": -12,
-            "localCrestScale": 2.68
+            "localCrestOffsetX": 18,
+            "localCrestOffsetY": -8,
+            "localCrestScale": 2.75
           }
         },
         "away": {
@@ -145,6 +150,11 @@
             "awayCrestOffsetX": 150,
             "awayCrestOffsetY": -14,
             "awayCrestScale": 2.42
+          },
+          "argentina-senior": {
+            "awayCrestOffsetX": 66,
+            "awayCrestOffsetY": 0,
+            "awayCrestScale": 1
           }
         }
       }
@@ -181,12 +191,12 @@
         },
         "nombreLocal": {
           "dx": 14,
-          "dy": 42,
+          "dy": 44,
           "dSize": 0
         },
         "nombreVisitante": {
           "dx": 34,
-          "dy": 40,
+          "dy": 42,
           "dSize": 0
         }
       },
@@ -271,18 +281,18 @@
       }
     },
     "marcadorZocalo": {
-      "compositionOffsetX": 0,
-      "compositionOffsetY": 0,
-      "compositionScale": 1,
+      "compositionOffsetX": 77,
+      "compositionOffsetY": 1000,
+      "compositionScale": 1.15,
       "textAdjust": {
         "titulo": {
-          "dx": 0,
-          "dy": 0,
+          "dx": -14,
+          "dy": -15,
           "dSize": 0
         },
         "clock": {
-          "dx": 0,
-          "dy": 0,
+          "dx": -79,
+          "dy": -13,
           "dSize": 0
         }
       }
@@ -303,13 +313,13 @@
           "dSize": 0
         },
         "subsTitle": {
-          "dx": 0,
-          "dy": 0,
+          "dx": 4,
+          "dy": 246,
           "dSize": 0
         },
         "subsList": {
           "dx": 0,
-          "dy": 0,
+          "dy": 94,
           "dSize": 0
         }
       },
@@ -323,9 +333,9 @@
           "crestScale": 1.45
         },
         "argentina-streamers": {
-          "crestOffsetX": 0,
-          "crestOffsetY": 0,
-          "crestScale": 1
+          "crestOffsetX": 1426,
+          "crestOffsetY": 184,
+          "crestScale": 1.53
         }
       },
       "formationKitByTeam": {
@@ -842,51 +852,6 @@
           "dSize": 0
         },
         "texto2": {
-          "dx": 0,
-          "dy": 0,
-          "dSize": 0
-        }
-      }
-    },
-    "placaLInfo": {
-      "compositionOffsetX": 0,
-      "compositionOffsetY": 0,
-      "compositionScale": 1,
-      "zocalo1": {
-        "offsetX": -1256,
-        "offsetY": 408,
-        "scale": 1,
-        "textAdjust": {
-          "dx": 0,
-          "dy": 0,
-          "dSize": 0
-        }
-      },
-      "zocalo2": {
-        "offsetX": -296,
-        "offsetY": 408,
-        "scale": 1,
-        "textAdjust": {
-          "dx": 0,
-          "dy": 0,
-          "dSize": 0
-        }
-      },
-      "zocalo3": {
-        "offsetX": -1256,
-        "offsetY": 948,
-        "scale": 1,
-        "textAdjust": {
-          "dx": 0,
-          "dy": 0,
-          "dSize": 0
-        }
-      },
-      "zocalo4": {
-        "offsetX": -296,
-        "offsetY": 948,
-        "scale": 1,
-        "textAdjust": {
           "dx": 0,
           "dy": 0,
           "dSize": 0
@@ -1479,19 +1444,19 @@
       "compositionScale": 1,
       "textAdjust": {
         "nombre": {
-          "dx": 0,
-          "dy": 0,
-          "dSize": 0
+          "dx": 42,
+          "dy": -6,
+          "dSize": 10
         },
         "goles": {
           "dx": 0,
-          "dy": 0,
-          "dSize": 0
+          "dy": -14,
+          "dSize": 37
         },
         "asistencias": {
-          "dx": 0,
-          "dy": 0,
-          "dSize": 0
+          "dx": 2,
+          "dy": -12,
+          "dSize": 49
         },
         "gMasA": {
           "dx": 0,
@@ -1500,13 +1465,13 @@
         },
         "presencias": {
           "dx": 0,
-          "dy": 0,
-          "dSize": 0
+          "dy": -8,
+          "dSize": 32
         },
         "mvps": {
-          "dx": 0,
-          "dy": 0,
-          "dSize": 0
+          "dx": 2,
+          "dy": -20,
+          "dSize": 34
         }
       },
       "crestOffsetX": 0,
@@ -1515,5 +1480,5 @@
     }
   },
   "createdAt": "2026-09-05T22:21:09.647Z",
-  "updatedAt": "2026-09-05T22:31:40.770Z"
+  "updatedAt": "2026-09-10T14:14:20.544Z"
 }

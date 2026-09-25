@@ -5,12 +5,14 @@ import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
 
 import { MODULE_IDS } from '../shared/modules.js';
-import { WS_MSG, WS_PATH } from '../shared/constants.js';
+import { WS_MSG, WS_PATH, MODULE_STATUS } from '../shared/constants.js';
+import { elapsedMs, parseClockLimit } from '../shared/clock.js';
 import { formatPlayerName, PLAYER_NAME_FORMAT } from '../shared/player-name-format.js';
 import {
   getSnapshot, getModuleState, applyTake, applyOut, applyUpdate, applyPositionCommit,
   captureCurrentModulesVisualState, applyMatchProfile,
   getActiveMatchProfileSlug, setActiveMatchProfileSlug,
+  syncBracketCrestsFromGrupos,
 } from './state.js';
 import {
   listMatchProfiles, readMatchProfile, createMatchProfile, overwriteMatchProfile, deleteMatchProfile,
@@ -27,7 +29,10 @@ import {
   syncResultadosFromWeb,
   syncEstrellasFromWeb,
 } from './glaFutbolSync.js';
-import { getRosterSnapshot, syncRosterFromWeb } from './glaFutbolRosters.js';
+import { syncRosterFromWeb } from './glaFutbolRosters.js';
+import { syncRosterFromWeb as syncArgentinaStreamersRosterFromWeb } from './argentinaStreamersRosters.js';
+import { getRoster, saveRoster, addPlayer, updatePlayer, findPlayer } from './playerRosters.js';
+import { syncFichaJugadorStats } from './argentinaStreamersPlayerStats.js';
 import {
   syncGoleadoresFromWeb as syncGoleadoresFromArgentinaStreamersWeb,
   syncAsistidoresFromWeb as syncAsistidoresFromArgentinaStreamersWeb,
@@ -35,7 +40,6 @@ import {
   syncHistorialFromWeb as syncHistorialFromArgentinaStreamersWeb,
 } from './argentinaStreamersSync.js';
 import { flushPersistence, getPersistenceStatus } from './persistence.js';
-import { correctLowerThirdText } from './textCorrection.js';
 import { getActiveThemeId, setActiveThemeId } from './theme.js';
 import { listThemes, getTheme, ARGENTINA_STREAMERS_THEME_ID } from '../shared/themes.js';
 
@@ -47,17 +51,37 @@ const HOST = '0.0.0.0';
 const app = express();
 app.use(express.json());
 
-// Disable caching for live broadcast graphics to ensure modifications take effect immediately
-app.use((req, res, next) => {
+// Disable caching for live broadcast graphics to ensure modifications take effect immediately.
+// Cubre HTML/JS/CSS de Master Control y Program (donde SIEMPRE necesitamos
+// el código más nuevo, sin depender de que el operador refresque con cache
+// vaciada) y las respuestas de /api/*, nunca /assets.
+function noStoreMiddleware(req, res, next) {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   next();
-});
+}
 
-app.use('/master-control', express.static(path.join(root, 'master-control')));
-app.use('/program', express.static(path.join(root, 'program')));
-app.use('/shared', express.static(path.join(root, 'shared')));
-app.use('/assets', express.static(path.join(root, 'assets')));
-app.use('/assets/sponsors', express.static(path.join(root, 'assets', 'shared', 'sponsors')));
+app.use('/master-control', noStoreMiddleware, express.static(path.join(root, 'master-control')));
+app.use('/program', noStoreMiddleware, express.static(path.join(root, 'program')));
+app.use('/shared', noStoreMiddleware, express.static(path.join(root, 'shared')));
+app.use('/api', noStoreMiddleware);
+
+// ASSETS (2026-09-23, auditoria de performance: "no-store" forzaba a
+// Program a re-descargar el MISMO .mp4/.png de red en CADA TAKE despues de
+// un rato inactivo, en vez de reutilizar lo ya bajado -- ver informe de
+// auditoria, seccion 5/11/E). Los assets .mp4/.png de este proyecto no
+// cambian de contenido bajo la MISMA ruta salvo un reemplazo manual del
+// archivo; "no-cache" (a diferencia de "no-store") SI permite que el
+// navegador reutilice el body cacheado, pero jamas sin re-preguntarle al
+// server primero -- express.static ya manda "ETag"/"Last-Modified" por
+// default (confirmado con curl), asi que esa revalidacion es un pedido
+// liviano (If-None-Match) que responde 304 sin body si el archivo no
+// cambio, y solo vuelve a bajar el archivo completo si el mtime/hash
+// realmente cambiaron (ej. reemplazaste el .mp4 a mano). Cero riesgo de
+// servir un asset viejo para siempre: la proxima vez que ese archivo
+// cambie, el ETag ya no matchea y el navegador lo vuelve a pedir.
+const noCacheRevalidate = { setHeaders: (res) => res.set('Cache-Control', 'no-cache') };
+app.use('/assets', express.static(path.join(root, 'assets'), noCacheRevalidate));
+app.use('/assets/sponsors', express.static(path.join(root, 'assets', 'shared', 'sponsors'), noCacheRevalidate));
 
 // Catalogo de equipos: se recalcula en cada pedido leyendo assets/crests/
 // directamente (carpeta chica, sin costo real) — asi un escudo agregado
@@ -230,38 +254,82 @@ app.post('/api/argentina-streamers/historial/sync-web', async (req, res) => {
   }
 });
 
+// PLANTELES (BLOQUE 3, 2026-09-09): fuente central de jugadores por
+// equipo, theme-scoped (ver server/playerRosters.js). Estos 4 endpoints
+// reemplazan/extienden al GET+sync-web que ya existían (consumidos sin
+// cambios por Tarjeta/Cambios/Formación) y agregan el CRUD manual que
+// antes no existía -- "GUARDAR LISTA"/"ASIGNAR AL EQUIPO" (PUT, reemplaza
+// la lista completa) y "AGREGAR JUGADOR MANUAL" desde Formación/Estrellas
+// (POST de uno solo, con dedupe -- ver server/playerRosters.js).
 app.get('/api/planteles/:teamId', (req, res) => {
   try {
-    res.json({ ok: true, snapshot: getRosterSnapshot(req.params.teamId) });
+    res.json({ ok: true, snapshot: getRoster(getActiveThemeId(), req.params.teamId) });
   } catch (err) {
     res.status(404).json({ ok: false, error: err.message });
   }
 });
 
-app.post('/api/planteles/:teamId/sync-web', async (req, res) => {
-  if (!requireGlaTheme(res)) return;
+app.put('/api/planteles/:teamId', (req, res) => {
   try {
-    const snapshot = await syncRosterFromWeb(req.params.teamId);
+    const snapshot = saveRoster(getActiveThemeId(), req.params.teamId, req.body?.jugadores, 'manual');
     res.json({ ok: true, snapshot });
   } catch (err) {
-    console.error(`[GLA] Error sincronizando plantel ${req.params.teamId}:`, err.message);
+    res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
+app.post('/api/planteles/:teamId/jugadores', (req, res) => {
+  try {
+    const { roster, jugador, created } = addPlayer(getActiveThemeId(), req.params.teamId, req.body || {}, req.body?.fuente || 'manual');
+    res.json({ ok: true, snapshot: roster, jugador, created });
+  } catch (err) {
+    res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
+// FICHA JUGADOR — "ACTUALIZAR DATOS DE LA WEB" (BLOQUE 4, 2026-09-09):
+// sincroniza UN jugador puntual del plantel central contra
+// argentinastreamers.com (ver server/argentinaStreamersPlayerStats.js).
+// "webId" opcional en el body: lo manda el panel cuando el operador
+// resuelve una asociación ambigua a mano (elige de la lista de
+// "candidates" que devolvió el intento anterior) -- nunca se adivina sola.
+// Si la web falla (red caída, formato cambiado), NO se toca
+// "metadata.stats" ya guardado (el jugador sigue mostrando el último dato
+// válido) -- solo se deja constancia del error en "metadata.statsError"
+// para que el panel lo distinga de un dato real.
+app.post('/api/planteles/:teamId/jugadores/:jugadorId/sync-web', async (req, res) => {
+  const { teamId, jugadorId } = req.params;
+  try {
+    const result = await syncFichaJugadorStats(teamId, jugadorId, req.body?.webId || null);
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    console.error(`[GLA] Error sincronizando Ficha Jugador (${teamId}/${jugadorId}) desde argentinastreamers.com:`, err.message);
+    try {
+      const themeId = getActiveThemeId();
+      const jugador = findPlayer(themeId, teamId, jugadorId);
+      if (jugador) {
+        updatePlayer(themeId, teamId, jugadorId, {
+          metadata: { ...jugador.metadata, statsError: err.message },
+        });
+      }
+    } catch {
+      // No se pudo ni siquiera dejar constancia del error -- se informa
+      // igual la falla original al cliente, sin inventar un estado nuevo.
+    }
     res.status(502).json({ ok: false, error: err.message });
   }
 });
 
-// "CORRECCIÓN DE TEXTOS" (2026-08-19, pedido explícito: reemplaza por
-// completo al GENERADOR DE ZÓCALOS eliminado en esta misma entrega -- ver
-// CHANGELOG). El operador escribe el texto a mano; este endpoint solo
-// corrige ortografía/acentos/tipeo, nunca reescribe estilo ni agrega
-// información (ver server/textCorrection.js). No manda nada al aire por sí
-// solo -- el panel de Master Control solo actualiza los campos del draft.
-app.post('/api/correct-text', (req, res) => {
+app.post('/api/planteles/:teamId/sync-web', async (req, res) => {
   try {
-    const result = correctLowerThirdText({ main: req.body?.main, sub: req.body?.sub });
-    res.json({ ok: true, ...result });
+    const themeId = getActiveThemeId();
+    const snapshot = themeId === ARGENTINA_STREAMERS_THEME_ID
+      ? await syncArgentinaStreamersRosterFromWeb(req.params.teamId)
+      : await syncRosterFromWeb(req.params.teamId);
+    res.json({ ok: true, snapshot });
   } catch (err) {
-    console.error('[GLA] Error corrigiendo texto:', err.message);
-    res.status(500).json({ ok: false, error: err.message });
+    console.error(`[GLA] Error sincronizando plantel ${req.params.teamId}:`, err.message);
+    res.status(502).json({ ok: false, error: err.message });
   }
 });
 
@@ -272,6 +340,11 @@ app.post('/api/grupos/sync-web', async (req, res) => {
     const ultimaActualizacionWeb = new Date().toISOString();
     const moduleState = applyUpdate('grupos', { grupo1: result.grupo1, grupo2: result.grupo2, ultimaActualizacionWeb });
     broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId: 'grupos', moduleState });
+    // BRACKETS: ESCUDOS AUTOMATICOS (2026-09-24, ver syncBracketCrestsFromGrupos
+    // en server/state.js) -- el sorteo tambien puede llegar por sync-web, no
+    // solo por edicion manual del panel; mismo mecanismo en los dos casos.
+    const sideTableState = syncBracketCrestsFromGrupos();
+    if (sideTableState) broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId: 'sideTable', moduleState: sideTableState });
     res.json({ ok: true, ...result, ultimaActualizacionWeb });
   } catch (err) {
     console.error('[GLA] Error sincronizando grupos:', err.message);
@@ -390,6 +463,44 @@ function broadcast(message) {
   }
 }
 
+// TIEMPO ADICIONAL AUTOMATICO (2026-09-10, pedido explicito del usuario):
+// "cuando el reloj del Marcador llega a FIN DEL CONTADOR, TAKE automatico
+// de TIEMPO ADICIONAL, UNA SOLA VEZ por llegada al limite -- rearmable con
+// reset del reloj/cambio de periodo/cambio del limite". El reloj es
+// puramente client-computed (shared/clock.js: sin tick de servidor, cada
+// cliente calcula con Date.now()), asi que esto es un polling PERIODICO
+// del servidor -- unica fuente de verdad, no depende de que un Master
+// Control puntual siga conectado -- en vez de un setTimeout atado a
+// Play/Fijar (que habria que reprogramar a mano en cada uno de esos
+// eventos, mas superficie de bugs). 400ms sobra para "automaticamente" sin
+// sobrecargar nada. "tiempoAdicionalFiredByTheme" es el latch (por theme,
+// nunca persistido -- puramente operativo, se resetea solo al reiniciar el
+// servidor): evita el loop TAKE/OUT/TAKE pedido explicitamente que NO
+// pase -- una vez disparado no vuelve a considerarse hasta que se rearme
+// (ver el handler de WS_MSG.UPDATE mas abajo, reset/periodo/limite).
+const DEFAULT_CLOCK_END_TEXT = '15:00';
+const tiempoAdicionalFiredByTheme = new Map();
+function checkTiempoAdicionalAutoTake() {
+  const themeId = getActiveThemeId();
+  const scoreboardState = getModuleState('scoreboard');
+  if (scoreboardState.status !== MODULE_STATUS.ON) return;
+  if (tiempoAdicionalFiredByTheme.get(themeId)) return;
+  const limitMs = parseClockLimit(scoreboardState.data.clockEndText, parseClockLimit(DEFAULT_CLOCK_END_TEXT, null));
+  if (limitMs == null) return;
+  if (elapsedMs(scoreboardState.data.clock, limitMs) < limitMs) return;
+  tiempoAdicionalFiredByTheme.set(themeId, true);
+  try {
+    const moduleState = applyTake('marcadorTiempoAdicional', {});
+    broadcast({
+      type: WS_MSG.MODULE_UPDATE, moduleId: 'marcadorTiempoAdicional', moduleState,
+      isAutoSave: false, isExplicitUpdate: true,
+    });
+  } catch (err) {
+    console.error('[GLA] Error en TAKE automático de Tiempo Adicional:', err.message);
+  }
+}
+setInterval(checkTiempoAdicionalAutoTake, 400);
+
 wss.on('connection', (socket) => {
   socket.send(JSON.stringify({ type: WS_MSG.STATE_SNAPSHOT, state: getSnapshot(), theme: getActiveThemeId() }));
   socket.send(JSON.stringify({ type: 'TEAM_CATALOG_UPDATE', catalog: getTeamCatalog(getActiveThemeId()) }));
@@ -442,7 +553,18 @@ wss.on('connection', (socket) => {
         const profile = await readMatchProfile(slug);
         applyMatchProfile(profile);
         setActiveMatchProfileSlug(slug);
-        broadcast({ type: WS_MSG.STATE_SNAPSHOT, state: getSnapshot(), theme: getActiveThemeId() });
+        // "forceDraftResync" (auditoria final de perfiles, 2026-09-09): sin
+        // esto, el "draft" editable de cada Master Control conectado (ver
+        // master-control/js/main.js, manejo de STATE_SNAPSHOT) NO se
+        // actualizaba con los valores recien aplicados del perfil -- solo se
+        // resincroniza en la conexion inicial o en un cambio de THEME real.
+        // Resultado (confirmado empiricamente): el panel abierto seguia
+        // mostrando la posicion VIEJA tras "APLICAR PERFIL" hasta cambiar de
+        // theme, con riesgo real de pisar el perfil recien aplicado con ese
+        // dato viejo en el proximo autoguardado. Aplicar un perfil es,
+        // semanticamente, un reemplazo total intencional del estado -- igual
+        // que un cambio de theme -- asi que amerita el mismo resync forzado.
+        broadcast({ type: WS_MSG.STATE_SNAPSHOT, state: getSnapshot(), theme: getActiveThemeId(), forceDraftResync: true });
         broadcast({ type: WS_MSG.ACTIVE_MATCH_PROFILE_UPDATE, slug, name: profile.name });
       } catch (err) {
         console.error('[GLA] Error aplicando perfil de partido:', err.message);
@@ -521,6 +643,20 @@ wss.on('connection', (socket) => {
     const { type, moduleId, data, isAutoSave, isExplicitUpdate } = msg;
     if (!MODULE_IDS.includes(moduleId)) return;
 
+    // TIEMPO ADICIONAL AUTOMATICO: rearma el latch (ver
+    // checkTiempoAdicionalAutoTake arriba) exactamente en los 3 casos que
+    // el pedido explicito del usuario menciona -- reset del reloj, cambio
+    // de periodo, cambio del limite ("FIN DEL CONTADOR") -- para que un
+    // segundo tiempo / un ajuste de horario vuelva a poder disparar el
+    // TAKE automatico. Se resuelve aca (no en server/state.js, generico
+    // para cualquier modulo) por ser logica puntual de un campo puntual.
+    if (moduleId === 'scoreboard' && type === WS_MSG.UPDATE && data && typeof data === 'object') {
+      const isClockReset = data.clock && typeof data.clock === 'object' && !data.clock.running && !data.clock.accumulatedMs;
+      if (isClockReset || 'period' in data || 'clockEndText' in data) {
+        tiempoAdicionalFiredByTheme.delete(getActiveThemeId());
+      }
+    }
+
     let moduleState;
     try {
       if (type === WS_MSG.TAKE) moduleState = applyTake(moduleId, data);
@@ -533,13 +669,33 @@ wss.on('connection', (socket) => {
     }
 
     broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId, moduleState, isAutoSave, isExplicitUpdate });
+
+    // BRACKETS: ESCUDOS AUTOMATICOS (2026-09-24, pedido explicito del
+    // usuario, exclusivo GLA -- ver syncBracketCrestsFromGrupos en
+    // server/state.js): cualquier TAKE/UPDATE manual de "grupos" (edicion
+    // en vivo durante el sorteo, panel de Master Control) dispara la
+    // resincronizacion de escudos de "sideTable" (Brackets) de inmediato,
+    // sin que el operador tenga que entrar a Brackets a mano. Solo GLA
+    // (mismo criterio que "requireGlaTheme" en los endpoints REST de
+    // arriba) -- Argentina Streamers nunca se toca.
+    if (moduleId === 'grupos' && (type === WS_MSG.TAKE || type === WS_MSG.UPDATE) && getActiveThemeId() === 'gla') {
+      const sideTableState = syncBracketCrestsFromGrupos();
+      if (sideTableState) broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId: 'sideTable', moduleState: sideTableState });
+    }
   });
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`[GLA] Servidor activo en http://localhost:${PORT}`);
-  console.log(`[GLA] Master Control:  http://localhost:${PORT}/master`);
-  console.log(`[GLA] Program/Overlay: http://localhost:${PORT}/program`);
+  // "127.0.0.1" en vez de "localhost" (2026-09-23, auditoria de
+  // performance): abrir Program via el hostname "localhost" mostro una
+  // demora real de ~300ms ANTES de que el navegador mande el primer
+  // pedido de red tras un rato inactivo (reproducido 2/2, ausente con
+  // 127.0.0.1 2/2) -- ver informe de auditoria, seccion 5/10/C. Es solo el
+  // texto informativo de esta consola; el bind real sigue en HOST
+  // ("0.0.0.0", sin cambios) asi que Render/otro host no se ve afectado.
+  console.log(`[GLA] Servidor activo en http://127.0.0.1:${PORT}`);
+  console.log(`[GLA] Master Control:  http://127.0.0.1:${PORT}/master`);
+  console.log(`[GLA] Program/Overlay: http://127.0.0.1:${PORT}/program`);
   console.log(`[GLA] Persistencia: ${getPersistenceStatus().activeBackend}`);
 });
 

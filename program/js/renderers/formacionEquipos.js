@@ -91,12 +91,23 @@ export default function renderFormacionEquipos(contentEl, data, justTaken, onOne
   // performanceTable.js -- sin esto, un cambio de theme sin recargar la
   // pagina dejaba el DOM viejo (6 u 11 slots fijos desde el primer render).
   const signature = String(starterLimit);
+  // "signatureChanged" (2026-09-23, mismo bug/fix que tarjeta.js/vs.js/
+  // shortDouble.js -- ver comentario en tarjeta.js): marcar
+  // "_gfxBuilt = false" sin destruir el "_alphaVideo" antes de reconstruir
+  // dejaba el contexto/video anterior huerfano, y como "justTaken" es
+  // false en un cambio de theme en caliente, el video nuevo tampoco se
+  // reproducia. En la practica el cambio de theme YA fuerza un teardown
+  // completo de todos los modulos antes (ver program/js/main.js), asi que
+  // esta rama rara vez llega a ejecutarse con un "_alphaVideo" previo real
+  // -- se corrige de todos modos por prolijidad/consistencia con el resto.
+  const signatureChanged = contentEl.dataset.signature !== undefined && contentEl.dataset.signature !== signature;
   if (contentEl.dataset.signature !== signature) {
     contentEl.dataset.signature = signature;
+    if (signatureChanged && contentEl._alphaVideo) contentEl._alphaVideo.destroy();
     contentEl._gfxBuilt = false;
   }
   if (!contentEl._gfxBuilt) buildStructure(contentEl, starterLimit, isGla);
-  if (justTaken) contentEl._alphaVideo?.playFromStart();
+  if (justTaken || signatureChanged) contentEl._alphaVideo?.playFromStart();
 
   const sb = (allData && allData.scoreboard) || {};
   const isVisitor = data.teamSide === 'visitor';
@@ -160,9 +171,22 @@ export default function renderFormacionEquipos(contentEl, data, justTaken, onOne
   const ta = data.textAdjust;
   const nameAdjust = readTextAdjust(ta, 'playerName');
   const numberAdjust = readTextAdjust(ta, 'playerNumber');
+  // Orden de carga (2026-09-10, pedido explicito del usuario, item 11):
+  // "starters[0]" es SIEMPRE el arquero, seguido de la defensa (derecha a
+  // izquierda), el mediocampo (derecha a izquierda) y el ataque (derecha a
+  // izquierda) -- "de abajo hacia arriba y de derecha a izquierda dentro de
+  // cada linea". El asset de 11 posiciones (Argentina Streamers) dibuja
+  // exactamente esa formacion en el orden INVERSO de indice de slot (medido
+  // por coordenadas reales en overlay.css: slot-10 es el unico solo/abajo
+  // = arquero; slots 6-9 = linea de defensa; slots 2-5 = mediocampo; slots
+  // 0-1 = ataque, arriba) -- por eso "slotIndex = (starterLimit-1)-index"
+  // hace exactamente ese mapeo sin tocar el dato ni el CSS existente. GLA
+  // (6 posiciones, sin arquero dibujado en el asset, ver comentario de
+  // "STARTER_LIMIT_GLA" arriba) conserva el orden directo de siempre.
   const starters = normalizePlayers(data.starters).slice(0, starterLimit);
   for (let index = 0; index < starterLimit; index++) {
-    const slot = contentEl.querySelector(`.ov-formacion-slot-${index}`);
+    const slotIndex = isGla ? index : (starterLimit - 1 - index);
+    const slot = contentEl.querySelector(`.ov-formacion-slot-${slotIndex}`);
     const player = starters[index] || { number: '', name: '' };
     applyPlainTextAdjust(slot.querySelector('.ov-formacion-number'), player.number, numberAdjust);
     applyPlainTextAdjust(slot.querySelector('.ov-formacion-player-name'), player.name, nameAdjust);

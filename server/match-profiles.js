@@ -39,11 +39,30 @@ function isVisualKey(key) {
   return key === 'textAdjust' || /OffsetX$/i.test(key) || /OffsetY$/i.test(key) || /Scale$/i.test(key);
 }
 
+// Auditoría final de perfiles (2026-09-09): además de "textAdjust" (objeto
+// contenedor con clave literal), BLOQUE1 introdujo campos {dx,dy,dSize}
+// SUELTOS al mismo nivel que el resto de la data (ej. "historial":
+// "resultadoNormal"/"resultadoConPenales"/"penalesFino", o por-categoria en
+// "tituloByCategoria.<categoria>") -- ninguno matchea "isVisualKey" ni por
+// nombre ni por sufijo, asi que se perdian en cada perfil guardado
+// (confirmado empiricamente: guardar un perfil tras mover el X del titulo
+// de Historial y verificar que el JSON resultante no tenia esas claves).
+// Se identifican por FORMA (mismas 3 claves numericas que "textAdjust" usa
+// puertas adentro) en vez de por nombre, para no tener que enumerar cada
+// campo nuevo que aparezca en futuros modulos.
+function isTextAdjustShape(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const keys = Object.keys(value);
+  if (!keys.length) return false;
+  const allowed = new Set(['dx', 'dy', 'dSize']);
+  return keys.every((k) => allowed.has(k) && typeof value[k] === 'number');
+}
+
 export function extractVisualSubset(data) {
   if (!data || typeof data !== 'object' || Array.isArray(data)) return {};
   const out = {};
   for (const [key, value] of Object.entries(data)) {
-    if (isVisualKey(key)) {
+    if (isVisualKey(key) || isTextAdjustShape(value)) {
       out[key] = value;
     } else if (value && typeof value === 'object' && !Array.isArray(value)) {
       const nested = extractVisualSubset(value);

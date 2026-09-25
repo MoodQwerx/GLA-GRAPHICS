@@ -40,7 +40,6 @@ import zocaloFinal from './zocaloFinal.js';
 import zocaloCompuesto from './zocaloCompuesto.js';
 import zocaloCompuestoEquipos from './zocaloCompuestoEquipos.js';
 import zocaloCompuestoLogo from './zocaloCompuestoLogo.js';
-import placaLInfo from './placaLInfo.js';
 import sitioWebPromoL from './sitioWebPromoL.js';
 
 // Registro de funciones de render: id de modulo -> (contentEl, data, justTaken, onOneShotEnded) => void
@@ -81,6 +80,5 @@ export const renderers = {
   zocaloCompuesto,
   zocaloCompuestoEquipos,
   zocaloCompuestoLogo,
-  placaLInfo,
   sitioWebPromoL,
 };

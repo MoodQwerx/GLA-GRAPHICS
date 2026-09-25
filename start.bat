@@ -41,17 +41,25 @@ REM ventana libre y mostrar el menu de comandos.
 for /f "usebackq delims=" %%P in (`powershell -NoProfile -Command "$p = Start-Process -FilePath 'node' -ArgumentList 'server/index.js' -WorkingDirectory '%PROJDIR%' -WindowStyle Minimized -PassThru; Write-Output $p.Id"`) do set NODE_PID=%%P
 echo %NODE_PID%>"%PROJDIR%.gla-server.pid"
 
-start "" "http://localhost:%GLA_PORT%/master"
+REM "127.0.0.1" en vez de "localhost" (2026-09-23, auditoria de
+REM performance): el hostname "localhost" mostro una demora real de red de
+REM ~300ms en el primer pedido tras un rato inactivo (ver informe de
+REM auditoria) -- Master Control abre con esta URL, y el Preview Monitor /
+REM boton "Copiar" de adentro arma la URL de Program a partir de ese mismo
+REM origen (location.origin), asi que este es el UNICO lugar que hace
+REM falta tocar para que todo el flujo local (incluida la URL que
+REM eventualmente se pega en OBS/vMix si se usa esta PC) evite esa demora.
+start "" "http://127.0.0.1:%GLA_PORT%/master"
 
 :menu
 cls
 echo ========================================
 echo.
 echo   MASTER CONTROL:
-echo   http://localhost:%GLA_PORT%/master
+echo   http://127.0.0.1:%GLA_PORT%/master
 echo.
 echo   PROGRAM:
-echo   http://localhost:%GLA_PORT%/program
+echo   http://127.0.0.1:%GLA_PORT%/program
 echo.
 echo   IP VMIX BROWSER:
 echo   http://%LAN_IP%:%GLA_PORT%/program
@@ -71,7 +79,7 @@ if errorlevel 1 goto :openmaster
 goto :menu
 
 :openmaster
-start "" "http://localhost:%GLA_PORT%/master"
+start "" "http://127.0.0.1:%GLA_PORT%/master"
 goto :menu
 
 :shutdown

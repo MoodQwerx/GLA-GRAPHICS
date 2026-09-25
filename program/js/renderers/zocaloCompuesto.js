@@ -24,6 +24,9 @@ import { sponsorFile } from '../../../shared/sponsors.js';
 import { updateFittedTextWithTransition, readTextAdjust } from '../text-fit.js';
 import { resolveTeamTokens } from '../../../shared/text-tokens.js';
 import { mountThemedAlphaVideo, resolveImageSrc } from '../theme-assets.js';
+import { getActiveThemeId } from '../theme-client.js';
+import { DEFAULT_THEME_ID } from '../../../shared/themes.js';
+import { GLA_SEGOE_BOLD_FAMILY } from '../program-fonts.js';
 
 const VIDEO_SRC = {
   equipos: '/assets/zocalos/zocalo-final-div-alpha.mp4',
@@ -63,9 +66,20 @@ function buildStructure(el, tipo) {
       ${logoSrc ? `<img class="ov-zf-logo" data-adjust="logo" src="${logoSrc}" alt="logo" />` : ''}
       <div class="ov-zfd-texto ov-zfd-texto1"></div>
       <div class="ov-zfd-texto ov-zfd-texto2"></div>
+      <!-- Los 2 <img> del crossfade interno (ver updateSponsorImage mas
+           abajo -- SIEMPRE hay uno "active" y como maximo uno "exit" mas
+           viejo saliendo) comparten el MISMO "data-adjust" a proposito
+           (2026-09-24, pedido explicito: "un unico ajuste para TODOS los
+           sponsors del rotativo") -- applyElementAdjustRegistry (program/js/
+           main.js) ya aplica un mismo ajuste a TODOS los nodos que
+           coincidan, asi que cualquiera de los dos que le toque mostrar un
+           sponsor sale en la misma posicion/escala. Las clases
+           ".ov-zfd-sponsor-1"/"-2" siguen siendo distintas -- esas las usa
+           SOLO la logica de rotacion (querySelector mas abajo) para saber
+           cual esta activo/inactivo, no tienen relacion con el ajuste. -->
       <div class="ov-zfd-sponsor-box">
-        <img class="ov-zfd-sponsor-img ov-zfd-sponsor-1" data-adjust="sponsor1" alt="" />
-        <img class="ov-zfd-sponsor-img ov-zfd-sponsor-2" data-adjust="sponsor2" alt="" />
+        <img class="ov-zfd-sponsor-img ov-zfd-sponsor-1" data-adjust="sponsors" alt="" />
+        <img class="ov-zfd-sponsor-img ov-zfd-sponsor-2" data-adjust="sponsors" alt="" />
       </div>
     </div>
   `;
@@ -118,14 +132,17 @@ export default function renderZocaloCompuesto(contentEl, data, justTaken, onOneS
   const newT2 = resolveTeamTokens(data.texto2 || '', sb);
   const oldT1 = contentEl._prevTexto1;
   const oldT2 = contentEl._prevTexto2;
+  // "family" (2026-09-24, pedido explicito: "Segoe UI Bold", SOLO GLA) --
+  // mismo criterio que longSimple.js/shortSimple.js/shortDouble.js.
+  const family = getActiveThemeId() === DEFAULT_THEME_ID ? GLA_SEGOE_BOLD_FAMILY : undefined;
 
   updateFittedTextWithTransition(texto1El, newT1, oldT1, {
-    maxFont: TEXTO1_MAX_FONT, minFont: TEXTO1_MIN_FONT, maxWidth: TEXTO1_MAX_WIDTH, weight: 800,
+    maxFont: TEXTO1_MAX_FONT, minFont: TEXTO1_MIN_FONT, maxWidth: TEXTO1_MAX_WIDTH, weight: 800, family,
   }, readTextAdjust(data.textAdjust, 'texto1'), !justTaken && !tipoChanged);
 
   updateFittedTextWithTransition(texto2El, newT2, oldT2, {
     maxFont: TEXTO2_MAX_FONT, minFont: TEXTO2_MIN_FONT, maxWidth: TEXTO2_MAX_WIDTH,
-    weight: 400, letterSpacing: TEXTO2_LETTER_SPACING,
+    weight: 400, letterSpacing: TEXTO2_LETTER_SPACING, family,
   }, readTextAdjust(data.textAdjust, 'texto2'), !justTaken && !tipoChanged);
 
   contentEl._prevTexto1 = newT1;
@@ -138,10 +155,25 @@ export default function renderZocaloCompuesto(contentEl, data, justTaken, onOneS
   const sponsorsList = data.sponsorsRotation || [];
   const listSignature = JSON.stringify(sponsorsList);
 
+  // "classList" en vez de pisar "className" entero (2026-09-24, bug real
+  // reproducido en GLA con Hot Pool activo -- ver comentario de
+  // HOT_MODULE_IDS en program/js/hot-pool.js): "img1"/"img2" se ubican por
+  // sus clases IDENTIFICADORAS propias (".ov-zfd-sponsor-1"/"-2", ver
+  // "querySelector" mas abajo) -- pisar "className" completo con solo
+  // "ov-zfd-sponsor-img" (rama sin sponsors) las borraba para siempre, asi
+  // que el PROXIMO render (ya con el modulo WARM, mismo contentEl) no
+  // volvia a encontrar esos nodos -- "img1"/"img2" quedaban null y
+  // "img1.src = ..." tiraba "Cannot set properties of null". Con un
+  // "className" fijo (nunca destroy) esto pasaba desapercibido antes de
+  // Hot Pool porque CADA Take reconstruia el DOM de cero (clases frescas);
+  // con el modulo WARM persistente el bug se vuelve real. "classList.add/
+  // remove" solo toca los modificadores "active"/"exit", nunca las clases
+  // base -- mismo resultado visual/CSS, ya no se pierde la identidad del
+  // nodo entre renders.
   const updateSponsorImage = (isFirstShow = false) => {
     if (sponsorsList.length === 0) {
-      img1.className = 'ov-zfd-sponsor-img';
-      img2.className = 'ov-zfd-sponsor-img';
+      img1.classList.remove('active', 'exit');
+      img2.classList.remove('active', 'exit');
       img1.removeAttribute('src');
       img2.removeAttribute('src');
       return;
@@ -152,8 +184,9 @@ export default function renderZocaloCompuesto(contentEl, data, justTaken, onOneS
 
     if (isFirstShow || sponsorsList.length === 1) {
       img1.src = file || '';
-      img1.className = 'ov-zfd-sponsor-img active';
-      img2.className = 'ov-zfd-sponsor-img';
+      img1.classList.remove('exit');
+      img1.classList.add('active');
+      img2.classList.remove('active', 'exit');
       img2.removeAttribute('src');
       contentEl._activeImgIdx = 1;
       return;
@@ -163,14 +196,16 @@ export default function renderZocaloCompuesto(contentEl, data, justTaken, onOneS
     const inactiveImg = contentEl._activeImgIdx === 1 ? img2 : img1;
 
     inactiveImg.src = file || '';
-    activeImg.className = 'ov-zfd-sponsor-img exit';
-    inactiveImg.className = 'ov-zfd-sponsor-img active';
+    activeImg.classList.remove('active');
+    activeImg.classList.add('exit');
+    inactiveImg.classList.remove('exit');
+    inactiveImg.classList.add('active');
     contentEl._activeImgIdx = contentEl._activeImgIdx === 1 ? 2 : 1;
 
     const prevImg = activeImg;
     setTimeout(() => {
-      if (prevImg.className.includes('exit')) {
-        prevImg.className = 'ov-zfd-sponsor-img';
+      if (prevImg.classList.contains('exit')) {
+        prevImg.classList.remove('exit');
         prevImg.removeAttribute('src');
       }
     }, 600);

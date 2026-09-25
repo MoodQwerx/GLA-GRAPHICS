@@ -7,16 +7,26 @@ import { resolveImageSrc } from '../theme-assets.js';
 // (confirmado visualmente: es una composicion fija de foto+mockup de
 // telefono+boton, sin recuadros vacios ni placeholders) -- primera
 // version es solo asset + "COMPOSICIÓN COMPLETA", tal como se pidio.
-function buildStructure(el) {
-  const imgSrc = resolveImageSrc('sitioWebPromoL');
+//
+// "asset" (2026-09-14, RESTAURADO -- ver shared/modules.js para la causa
+// raiz del desplegable perdido): selector ARGENTINA STREAMERS | PUNCH,
+// resuelto via "variant" contra shared/themes.js. Se reconstruye el <img>
+// cada vez que cambia "data.asset" (antes esta funcion ni siquiera recibia
+// "data" -- solo existia una imagen fija, nunca reaccionaba a nada).
+function buildStructure(el, asset) {
+  const imgSrc = resolveImageSrc('sitioWebPromoL', undefined, asset);
   el.innerHTML = `
     <div class="gfx-overlay">
       ${imgSrc ? `<img class="ov-promo-l-bg" src="${imgSrc}" style="position:absolute; left:0; top:0; width:1920px; height:1080px;" />` : ''}
     </div>
   `;
+  el.dataset.asset = asset;
   el._gfxBuilt = true;
 }
 
-export default function renderSitioWebPromoL(contentEl) {
-  if (!contentEl._gfxBuilt) buildStructure(contentEl);
+export default function renderSitioWebPromoL(contentEl, data) {
+  const asset = data?.asset === 'punch' ? 'punch' : 'argentina-streamers';
+  if (!contentEl._gfxBuilt || contentEl.dataset.asset !== asset) {
+    buildStructure(contentEl, asset);
+  }
 }

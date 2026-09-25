@@ -93,9 +93,25 @@ function setCrest(imgEl, crestId) {
 // vuelve a cargar el escudo a mano en este panel.
 export default function renderTarjeta(contentEl, data, justTaken, onOneShotEnded, allData) {
   const src = VIDEO_BY_TIPO[data.tipo] || VIDEO_BY_TIPO.amarilla;
+  // "tipoChanged" (2026-09-23, bug real encontrado en la auditoria de
+  // performance: cambiar el color de tarjeta CON LA GRAFICA AL AIRE
+  // montaba un video nuevo pero nunca lo destruia ni lo reproducia --
+  // quedaba pausado en el frame 0, la grafica se veia sin asset hasta el
+  // proximo Take). "!== undefined" (mismo criterio que zocaloCompuesto.js,
+  // la unica variante que ya andaba bien): en el PRIMER build (incluido un
+  // pre-montaje en frio del hot pool, ver program/js/main.js) todavia no
+  // hay "dataset.tipo" previo, asi que esto da false a proposito -- ese
+  // primer build nunca debe autoreproducirse solo por existir.
+  const tipoChanged = contentEl.dataset.tipo !== undefined && contentEl.dataset.tipo !== data.tipo;
 
-  if (!contentEl._gfxBuilt || contentEl.dataset.tipo !== data.tipo) {
+  if (!contentEl._gfxBuilt || tipoChanged) {
     contentEl.dataset.tipo = data.tipo;
+    // Destruye la instancia vieja ANTES de crear la nueva (mismo orden que
+    // zocaloCompuesto.js): sin esto, el contexto WebGL/video anterior queda
+    // huerfano (nunca se libera hasta que el modulo completo se saca del
+    // aire), y con el Hot Pool activo ese contexto viejo ni siquiera se
+    // liberaria nunca solo (el modulo puede quedar WARM indefinidamente).
+    if (contentEl._alphaVideo) contentEl._alphaVideo.destroy();
     contentEl.innerHTML = `
       <div class="av-target"></div>
       <div class="gfx-overlay">
@@ -107,7 +123,7 @@ export default function renderTarjeta(contentEl, data, justTaken, onOneShotEnded
     contentEl._gfxBuilt = true;
   }
 
-  if (justTaken) {
+  if (justTaken || tipoChanged) {
     contentEl._alphaVideo?.playFromStart();
   }
 

@@ -1,10 +1,34 @@
-import { mountThemedAlphaVideo } from '../theme-assets.js';
+// Zócalo Compuesto (Argentina Streamers) unificado (2026-09-10, pedido
+// explicito del usuario: "es todo lo mismo, solo cambia el asset... un
+// solo módulo, con la opción de menú desplegable CON LOGO LOCALSTRIKE |
+// CON EQUIPOS"). Reemplaza en la navegación a "zocaloCompuestoLogo", que
+// queda registrado sin cambios (ver shared/modules.js) solo para no perder
+// datos/presets ya persistidos -- este renderer es el único que se usa
+// desde ahora para ambos tipos.
+//
+// "tipo" ('equipos' | 'logo') decide qué asset .mov reproducir y si se
+// pintan escudos en vivo (con línea separadora, ya horneada en ESE asset)
+// o el logo LocalStrike fijo (sin línea, horneada distinto en el otro
+// asset) -- el resto (texto1/texto2/subColor/sponsor) es UNA sola copia de
+// datos compartida. Transición segura al cambiar TIPO estando al aire:
+// mismo patrón que program/js/renderers/zocaloCompuesto.js (el módulo de
+// GLA, sin relación con este -- assets completamente distintos): destruye
+// el video viejo y crea uno nuevo de forma SINCRÓNICA antes de seguir, y
+// relanza playFromStart() aunque no sea un TAKE nuevo para que el cambio
+// de tipo se vea como una entrada real.
+import { mountThemedAlphaVideo, resolveImageSrc } from '../theme-assets.js';
 import { crestFile, teamName } from '../../../shared/teams.js';
 import { sponsorFile } from '../../../shared/sponsors.js';
 import { updateFittedTextWithTransition, readTextAdjust } from '../text-fit.js';
 import { resolveTeamTokens } from '../../../shared/text-tokens.js';
+import { getActiveThemeId } from '../theme-client.js';
+import { ARGENTINA_STREAMERS_THEME_ID } from '../../../shared/themes.js';
 
-const VIDEO_SRC = '/assets/themes/argentina-streamers/zocalos/zocalo-compuesto-equipos-alpha.mp4';
+const VIDEO_SRC = {
+  equipos: '/assets/themes/argentina-streamers/zocalos/zocalo-compuesto-equipos-alpha.mp4',
+  logo: '/assets/themes/argentina-streamers/zocalos/zocalo-compuesto-logo-alpha.mp4',
+};
+const LOGO_SRC = '/assets/themes/argentina-streamers/zocalos/logo-localstrike.png';
 
 const TEXTO1_MAX_FONT = 50;
 const TEXTO1_MIN_FONT = 22;
@@ -37,12 +61,39 @@ function setCrest(imgEl, teamId, adjustObj) {
   }
 }
 
-function buildStructure(el) {
+// "videoModuleId" (2026-09-14, causa raiz REAL encontrada y corregida --
+// pedido explicito del usuario: "no importa si elijo CON EQUIPOS o CON
+// LOGO, el asset gráfico no aparece"). "mountThemedAlphaVideo"/
+// "resolveImageSrc" (ver program/js/theme-assets.js) resuelven un 5to
+// parametro "variant" como "asset.variants?.[variant]" -- pero el manifest
+// real de Argentina Streamers (shared/themes.js) NUNCA tuvo un objeto
+// "variants" para este modulo: tiene DOS ENTRADAS PLANAS separadas,
+// "zocaloCompuestoEquipos: {video:...}" y "zocaloCompuestoLogo:
+// {video:..., image:...}" (asi vivian ANTES de unificar el panel en un
+// solo modulo con selector "tipo", ver historial). Al unificar el
+// renderer se paso "tipo" como variant (`mountThemedAlphaVideo(..., 'zocaloCompuestoEquipos', ..., tipo)`)
+// asumiendo una estructura "variants" que jamas se creo en el manifest --
+// "asset.variants" siempre daba "undefined", asi que SIEMPRE resolvia a
+// null sin importar el tipo elegido (nunca se vio ningun asset, ni
+// EQUIPOS ni LOGO). Fix: en vez de inventar una estructura "variants"
+// nueva en el manifest (mas riesgo, toca datos ya persistidos), se
+// consulta CADA "tipo" por su PROPIO moduleId real ya existente en el
+// manifest -- sin pasar "variant" nunca.
+function resolveVideoModuleId(tipo) {
+  return tipo === 'logo' ? 'zocaloCompuestoLogo' : 'zocaloCompuestoEquipos';
+}
+
+function buildStructure(el, tipo) {
+  // Mismo criterio: el logo real vive en el manifest bajo la entrada
+  // "zocaloCompuestoLogo" (unica que declara "image"), no bajo
+  // "zocaloCompuestoEquipos" (que nunca tuvo "image" propio).
+  const logoSrc = resolveImageSrc('zocaloCompuestoLogo', LOGO_SRC) || LOGO_SRC;
   el.innerHTML = `
     <div class="av-target"></div>
     <div class="gfx-overlay">
       <img class="ov-zfd-crest ov-zfd-crest-local" alt="local crest" />
       <img class="ov-zfd-crest ov-zfd-crest-visitante" alt="visitante crest" />
+      <img class="ov-zf-logo" src="${logoSrc}" alt="logo" style="position: absolute; left: 100px; top: 951.5px; width: 110px; height: 110px; object-fit: contain; z-index: 10;" />
       <div class="ov-zfd-texto ov-zfd-texto1" style="color: #ffffff !important;"></div>
       <div class="ov-zfd-texto ov-zfd-texto2"></div>
       <div class="ov-zfd-sponsor-box">
@@ -51,35 +102,61 @@ function buildStructure(el) {
       </div>
     </div>
   `;
-  el._alphaVideo = mountThemedAlphaVideo(el.querySelector('.av-target'), 'zocaloCompuestoEquipos', VIDEO_SRC);
+  el.dataset.tipo = tipo;
+  el._alphaVideo = mountThemedAlphaVideo(el.querySelector('.av-target'), resolveVideoModuleId(tipo), VIDEO_SRC[tipo]);
   el._gfxBuilt = true;
 }
 
 export default function renderZocaloCompuestoEquipos(contentEl, data, justTaken, onOneShotEnded, allData) {
-  if (!contentEl._gfxBuilt) buildStructure(contentEl);
-  if (justTaken) contentEl._alphaVideo?.playFromStart();
+  const tipo = data.tipo === 'logo' ? 'logo' : 'equipos';
+  const tipoChanged = contentEl.dataset.tipo !== undefined && contentEl.dataset.tipo !== tipo;
+
+  if (!contentEl._gfxBuilt || tipoChanged) {
+    if (contentEl._alphaVideo) contentEl._alphaVideo.destroy();
+    buildStructure(contentEl, tipo);
+    // Fuerza que el texto se pinte de una sin fundido (el "oldText" de la
+    // variante anterior no aplica a esta estructura nueva).
+    contentEl._prevTexto1 = undefined;
+    contentEl._prevTexto2 = undefined;
+  }
+
+  if (justTaken || tipoChanged) {
+    contentEl._alphaVideo?.playFromStart();
+  }
 
   const sb = (allData && allData.scoreboard) || {};
   const teamA = sb.teamA || 'argentina-streamers';
   const teamB = sb.teamB || 'oxen';
 
-  const localAdjust = data.crestByTeam?.local?.[teamA] || {};
-  const awayAdjust = data.crestByTeam?.away?.[teamB] || {};
-
   const crestLocalEl = contentEl.querySelector('.ov-zfd-crest-local');
   const crestVisitanteEl = contentEl.querySelector('.ov-zfd-crest-visitante');
+  const logoEl = contentEl.querySelector('.ov-zf-logo');
 
-  setCrest(crestLocalEl, teamA, {
-    offsetX: localAdjust.localCrestOffsetX || 0,
-    offsetY: localAdjust.localCrestOffsetY || 0,
-    scale: localAdjust.localCrestScale,
-  });
-
-  setCrest(crestVisitanteEl, teamB, {
-    offsetX: awayAdjust.awayCrestOffsetX || 0,
-    offsetY: awayAdjust.awayCrestOffsetY || 0,
-    scale: awayAdjust.awayCrestScale,
-  });
+  if (tipo === 'equipos') {
+    const localAdjust = data.crestByTeam?.local?.[teamA] || {};
+    const awayAdjust = data.crestByTeam?.away?.[teamB] || {};
+    setCrest(crestLocalEl, teamA, {
+      offsetX: localAdjust.localCrestOffsetX || 0,
+      offsetY: localAdjust.localCrestOffsetY || 0,
+      scale: localAdjust.localCrestScale,
+    });
+    setCrest(crestVisitanteEl, teamB, {
+      offsetX: awayAdjust.awayCrestOffsetX || 0,
+      offsetY: awayAdjust.awayCrestOffsetY || 0,
+      scale: awayAdjust.awayCrestScale,
+    });
+    if (logoEl) logoEl.style.display = 'none';
+  } else {
+    crestLocalEl.style.display = 'none';
+    crestVisitanteEl.style.display = 'none';
+    if (logoEl) {
+      logoEl.style.display = 'block';
+      const dx = data.logoOffsetX || 0;
+      const dy = data.logoOffsetY || 0;
+      const sc = data.logoScale !== undefined ? data.logoScale : 1;
+      logoEl.style.transform = `translate(${dx}px, ${dy}px) scale(${sc})`;
+    }
+  }
 
   const texto1El = contentEl.querySelector('.ov-zfd-texto1');
   const texto2El = contentEl.querySelector('.ov-zfd-texto2');
@@ -87,18 +164,24 @@ export default function renderZocaloCompuestoEquipos(contentEl, data, justTaken,
   // "subColor" (2026-09-02, pedido explicito del usuario): MAIN siempre
   // blanco fijo (arriba); SUBTEXTO configurable NEGRO/BLANCO desde Master
   // Control, sin depender de ninguna clase/color heredado de GLA.
-  texto2El.style.color = data.subColor === 'blanco' ? '#ffffff' : '#000000';
+  // BLOQUE 1 (2026-09-09, pedido explicito): en Argentina Streamers el
+  // SUBTEXTO pasa a AZUL DE REFERENCIA fijo ("--as-navy", ver theme.css),
+  // sin depender de "subColor" -- GLA conserva el toggle negro/blanco
+  // exactamente igual que antes (modulo distinto, ver zocaloCompuesto.js).
+  texto2El.style.color = getActiveThemeId() === ARGENTINA_STREAMERS_THEME_ID
+    ? 'var(--as-navy)'
+    : (data.subColor === 'blanco' ? '#ffffff' : '#000000');
 
   const newT1 = resolveTeamTokens(data.texto1 || '', sb);
   const newT2 = resolveTeamTokens(data.texto2 || '', sb);
 
   updateFittedTextWithTransition(texto1El, newT1, contentEl._prevTexto1, {
     maxFont: TEXTO1_MAX_FONT, minFont: TEXTO1_MIN_FONT, maxWidth: TEXTO1_MAX_WIDTH, weight: 800,
-  }, readTextAdjust(data.textAdjust, 'texto1'), !justTaken);
+  }, readTextAdjust(data.textAdjust, 'texto1'), !justTaken && !tipoChanged);
 
   updateFittedTextWithTransition(texto2El, newT2, contentEl._prevTexto2, {
     maxFont: TEXTO2_MAX_FONT, minFont: TEXTO2_MIN_FONT, maxWidth: TEXTO2_MAX_WIDTH, weight: 700,
-  }, readTextAdjust(data.textAdjust, 'texto2'), !justTaken);
+  }, readTextAdjust(data.textAdjust, 'texto2'), !justTaken && !tipoChanged);
 
   contentEl._prevTexto1 = newT1;
   contentEl._prevTexto2 = newT2;
@@ -124,18 +207,9 @@ export default function renderZocaloCompuestoEquipos(contentEl, data, justTaken,
   const listSignature = JSON.stringify(sponsorsList);
 
   // "setSponsorState" (2026-09-05, correccion de raiz del freeze reportado):
-  // el codigo anterior hacia "imgX.className = 'ov-zfd-sponsor-img active'"
-  // -- eso BORRA la clase identificadora ".ov-zfd-sponsor-1"/"-2" del propio
-  // <img> (el className se REEMPLAZA entero, no se le agrega nada). Al
-  // primer tick de rotacion esa clase ya desaparecia del DOM; el siguiente
-  // render completo del modulo (un nudge de composicion, o ACTUALIZAR tras
-  // cambiar la lista) volvia a hacer "contentEl.querySelector('.ov-zfd-sponsor-1')"
-  // y encontraba null -- el siguiente "img1.className = ..." tiraba
-  // TypeError ANTES de llegar a crear el nuevo setInterval, dejando la
-  // rotacion muerta y el ultimo logo mostrado pegado en pantalla para
-  // siempre (exactamente el sintoma reportado). Fix: nunca tocar el
-  // className entero, solo alternar "active"/"exit" via classList --  la
-  // clase identificadora nunca se pierde.
+  // nunca reemplazar el className entero (borraba la clase identificadora
+  // ".ov-zfd-sponsor-1"/"-2", provocando querySelector->null->TypeError en
+  // el siguiente render y la rotacion muerta/logo pegado). Solo classList.
   function setSponsorState(img, state) {
     img.classList.remove('active', 'exit');
     if (state) img.classList.add(state);
@@ -179,7 +253,7 @@ export default function renderZocaloCompuestoEquipos(contentEl, data, justTaken,
     }, 600);
   };
 
-  if (justTaken || contentEl._lastSponsorsSignature !== listSignature) {
+  if (justTaken || tipoChanged || contentEl._lastSponsorsSignature !== listSignature) {
     if (contentEl._sponsorRotationInterval) {
       clearInterval(contentEl._sponsorRotationInterval);
       contentEl._sponsorRotationInterval = null;
@@ -188,7 +262,7 @@ export default function renderZocaloCompuestoEquipos(contentEl, data, justTaken,
     contentEl._currentSponsorIndex = 0;
     contentEl._lastSponsorsSignature = listSignature;
 
-    updateSponsorImage(justTaken);
+    updateSponsorImage(justTaken || tipoChanged);
 
     if (sponsorsList.length > 1) {
       contentEl._sponsorRotationInterval = setInterval(() => {

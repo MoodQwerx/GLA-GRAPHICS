@@ -26,14 +26,39 @@ function buildStructure(el) {
   el._gfxBuilt = true;
 }
 
-export default function renderMarcadorTiempoAdicional(contentEl, data) {
-  if (!contentEl._gfxBuilt) {
-    buildStructure(contentEl);
-  }
+// "+300ms" (2026-09-10, pedido explicito del usuario): el numero de
+// MINUTOS AGREGADOS y el RELOJ deben aparecer 300ms mas tarde que antes,
+// sin tocar la animacion del asset (el fondo/PNG no pasa por aca, ver
+// program/js/main.js -- esto solo retrasa CUANDO este renderer pinta su
+// propio contenido dinamico). Antes se pintaba sincronico en cada llamada
+// (0ms de demora); ahora, solo en el momento del TAKE ("justTaken"), se
+// demora el primer pintado 300ms -- llamadas posteriores (tick del reloj
+// cada 500ms, ajustes en vivo) siguen pintando al instante, como siempre,
+// para no introducir un lag continuo en el reloj corriendo.
+const CONTENT_REVEAL_DELAY_MS = 300;
+
+function paintContent(contentEl, data) {
   const rawAdded = (data.addedMinutes || '').trim();
   const labelText = rawAdded ? (rawAdded.startsWith('+') ? rawAdded : `+${rawAdded}`) : '';
   applyFittedText(contentEl.querySelector('.ov-added-label'), labelText, {
     maxFont: LABEL_MAX_FONT, minFont: LABEL_MIN_FONT, maxWidth: LABEL_MAX_WIDTH, weight: 800,
   }, readTextAdjust(data.textAdjust, 'addedMinutes'));
   applyPlainTextAdjust(contentEl.querySelector('.ov-added-clock'), formatClock(elapsedMs(data.clock)), readTextAdjust(data.textAdjust, 'clock'));
+}
+
+export default function renderMarcadorTiempoAdicional(contentEl, data, justTaken) {
+  if (!contentEl._gfxBuilt) {
+    buildStructure(contentEl);
+  }
+  if (justTaken) {
+    clearTimeout(contentEl._contentRevealTimer);
+    // Vacia el contenido YA (evita un flash del numero/reloj de la vez
+    // anterior mientras se espera el delay) -- el pintado real llega en
+    // el timeout de abajo.
+    contentEl.querySelector('.ov-added-label').textContent = '';
+    contentEl.querySelector('.ov-added-clock').textContent = '';
+    contentEl._contentRevealTimer = setTimeout(() => paintContent(contentEl, data), CONTENT_REVEAL_DELAY_MS);
+    return;
+  }
+  paintContent(contentEl, data);
 }

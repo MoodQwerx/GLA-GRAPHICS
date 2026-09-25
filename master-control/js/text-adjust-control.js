@@ -22,6 +22,11 @@
 import { renderSavePositionControl } from './save-position-control.js';
 
 const STEP_PX = 2;
+// Intensidad "0.5" (BLOQUE 1, 2026-09-09, pedido explicito del usuario):
+// exactamente la mitad del paso normal ("1.0" = STEP_PX), respetando la
+// unidad que ya use el modulo -- NO un valor fijo de 1px. Si algun dia
+// STEP_PX cambia, HALF_STEP_PX se recalcula solo.
+const HALF_STEP_PX = STEP_PX / 2;
 const STEP_SIZE = 1;
 const REPEAT_DELAY_MS = 400;
 const REPEAT_INTERVAL_MS = 80;
@@ -85,20 +90,20 @@ export function renderTextAdjustControl(container, adjust, onDirty, { label, onR
   const root = document.createElement('div');
   root.className = 'text-adjust';
 
-  // "baseline" (2026-09-01, layout base versionado, mismo criterio que
-  // composition-control.js): referencia LOCAL de "ya confirmado" -- arranca
-  // en {0,0,0} (el default de diseño de siempre para un ajuste de texto) y
-  // se actualiza al valor absoluto actual cada GUARDAR POSICIÓN exitoso. El
-  // dato real ("adjust.dx/dy/dSize", lo que YA lee Program) nunca se toca.
-  // "initialBaseline" (2026-09-04, opcional, retrocompatible -- sin pasarlo
-  // el comportamiento es EXACTAMENTE el de siempre): un caller que
-  // reconstruye este control repetidas veces sobre el MISMO "adjust" ya
-  // comprometido (ver "TÍTULO — POSICIÓN/ESCALA" por categoria en
-  // historial-panel.js, que rearma el control entero cada vez que cambia
-  // la categoria) puede pasar un snapshot del valor YA confirmado para que
-  // RESET vuelva ahi -- sin esto, cada reconstruccion olvidaba la base real
-  // y RESET volvia a 0/0/0 en vez de a la ultima posicion guardada.
-  const baseline = initialBaseline ? { ...initialBaseline } : { dx: 0, dy: 0, dSize: 0 };
+  // "baseline" (2026-09-01, layout base versionado; corregido 2026-09-10,
+  // auditoria de GUARDAR POSICIÓN pedida por el usuario, mismo criterio que
+  // composition-control.js): referencia LOCAL de "ya confirmado". ANTES
+  // arrancaba en {0,0,0} salvo que el caller pasara "initialBaseline" a
+  // mano (solo historial-panel.js lo hacia) -- cualquier otro campo, al
+  // remontarse (cambiar de tab, refresh, restart), mostraba como pendiente
+  // un ajuste que en realidad ya era la base confirmada, y RESET lo hubiera
+  // borrado por completo. Ahora arranca en el valor ABSOLUTO actual de
+  // "adjust.dx/dy/dSize" (ya resuelto: GUARDAR POSICIÓN/theme-layout/perfil
+  // antes de llegar aca) -- "initialBaseline" se conserva como override
+  // explicito opcional para el caso de historial-panel.js (varios objetos
+  // "adjust" distintos comparten un unico control reconstruido), pero deja
+  // de ser necesario para el resto de los llamadores.
+  const baseline = initialBaseline ? { ...initialBaseline } : { dx: adjust.dx, dy: adjust.dy, dSize: adjust.dSize };
 
   if (label) {
     const labelEl = document.createElement('span');
@@ -134,12 +139,24 @@ export function renderTextAdjustControl(container, adjust, onDirty, { label, onR
     saveControl?.markDirty();
   }
 
-  row.appendChild(repeatButton('←', 'Mover izquierda', () => bump('dx', -STEP_PX)));
-  row.appendChild(repeatButton('↑', 'Subir', () => bump('dy', -STEP_PX)));
-  row.appendChild(repeatButton('↓', 'Bajar', () => bump('dy', STEP_PX)));
-  row.appendChild(repeatButton('→', 'Mover derecha', () => bump('dx', STEP_PX)));
+  row.appendChild(repeatButton('←', `Mover izquierda (${STEP_PX}px)`, () => bump('dx', -STEP_PX)));
+  row.appendChild(repeatButton('↑', `Subir (${STEP_PX}px)`, () => bump('dy', -STEP_PX)));
+  row.appendChild(repeatButton('↓', `Bajar (${STEP_PX}px)`, () => bump('dy', STEP_PX)));
+  row.appendChild(repeatButton('→', `Mover derecha (${STEP_PX}px)`, () => bump('dx', STEP_PX)));
   row.appendChild(repeatButton('−', 'Achicar', () => bump('dSize', -STEP_SIZE)));
   row.appendChild(repeatButton('+', 'Agrandar', () => bump('dSize', STEP_SIZE)));
+
+  // Segunda fila: intensidad "0.5" (BLOQUE 1, pedido explicito del
+  // usuario) -- mismas 4 direcciones, exactamente la mitad del paso de
+  // arriba. Mismo boton con auto-repeat, misma mutacion in-place de
+  // "adjust", mismo "onDirty"/"markDirty" -- ningun mecanismo nuevo,
+  // solo un delta mas chico.
+  const halfRow = document.createElement('div');
+  halfRow.className = 'text-adjust-row text-adjust-row-half';
+  halfRow.appendChild(repeatButton('←½', `Mover izquierda (${HALF_STEP_PX}px)`, () => bump('dx', -HALF_STEP_PX)));
+  halfRow.appendChild(repeatButton('↑½', `Subir (${HALF_STEP_PX}px)`, () => bump('dy', -HALF_STEP_PX)));
+  halfRow.appendChild(repeatButton('↓½', `Bajar (${HALF_STEP_PX}px)`, () => bump('dy', HALF_STEP_PX)));
+  halfRow.appendChild(repeatButton('→½', `Mover derecha (${HALF_STEP_PX}px)`, () => bump('dx', HALF_STEP_PX)));
 
   const resetBtn = document.createElement('button');
   resetBtn.type = 'button';
@@ -162,6 +179,7 @@ export function renderTextAdjustControl(container, adjust, onDirty, { label, onR
   row.appendChild(readout);
 
   root.appendChild(row);
+  root.appendChild(halfRow);
 
   // Fila propia (no adentro de "row", que es un grid de columnas fijas
   // pensado para los 8 controles de siempre) -- así no desalinea ni

@@ -1,6 +1,6 @@
 import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { crestFile } from '../../../shared/teams.js';
-import { applyFittedText, readTextAdjust } from '../text-fit.js';
+import { updateFittedTextWithTransition, readTextAdjust } from '../text-fit.js';
 
 const VIDEO_SRC = '/assets/eventos/cambios-alpha.mp4';
 
@@ -65,11 +65,17 @@ export default function renderCambios(contentEl, data, justTaken, onOneShotEnded
   const entraEl = contentEl.querySelector('.ov-cambio-entra');
   const saleEl = contentEl.querySelector('.ov-cambio-sale');
 
-  applyFittedText(entraEl, data.entra || '', {
+  // "updateFittedTextWithTransition" (2026-09-10, pedido explicito del
+  // usuario: fade en vez de corte duro en ACTUALIZAR) -- Cambios no es un
+  // modulo LIVE, su contenido solo cambia via TAKE/ACTUALIZAR.
+  const entra = data.entra || '';
+  const sale = data.sale || '';
+  updateFittedTextWithTransition(entraEl, entra, contentEl._prevEntra, {
     maxFont: TEXT_MAX_FONT, minFont: TEXT_MIN_FONT, maxWidth: TEXT_MAX_WIDTH, weight: 700,
-  }, readTextAdjust(ta, 'entra'));
-
-  applyFittedText(saleEl, data.sale || '', {
+  }, readTextAdjust(ta, 'entra'), !justTaken);
+  updateFittedTextWithTransition(saleEl, sale, contentEl._prevSale, {
     maxFont: TEXT_MAX_FONT, minFont: TEXT_MIN_FONT, maxWidth: TEXT_MAX_WIDTH, weight: 700,
-  }, readTextAdjust(ta, 'sale'));
+  }, readTextAdjust(ta, 'sale'), !justTaken);
+  contentEl._prevEntra = entra;
+  contentEl._prevSale = sale;
 }

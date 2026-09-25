@@ -1,5 +1,8 @@
 import { createAlphaVideo } from '../alpha-video.js';
 import { applyFittedText } from '../text-fit.js';
+import { getActiveThemeId } from '../theme-client.js';
+import { DEFAULT_THEME_ID } from '../../../shared/themes.js';
+import { GLA_SEGOE_BOLD_FAMILY } from '../program-fonts.js';
 
 const VIDEO_SRC = '/assets/zocalos/zocalo-largo-simple-alpha.mp4';
 
@@ -29,7 +32,11 @@ export default function renderLongSimple(contentEl, data, justTaken) {
   if (justTaken) {
     contentEl._alphaVideo.playFromStart();
   }
+  // "family" (2026-09-24, pedido explicito: "Segoe UI Bold", SOLO GLA --
+  // ver GLA_SEGOE_BOLD_FAMILY en program/js/program-fonts.js y el override
+  // de "--font-display" en program/css/theme.css, scoped a "#mod-longSimple").
+  const family = getActiveThemeId() === DEFAULT_THEME_ID ? GLA_SEGOE_BOLD_FAMILY : undefined;
   applyFittedText(contentEl.querySelector('.ov-long-simple-text'), data.text || '', {
-    maxFont: TEXT_MAX_FONT, minFont: TEXT_MIN_FONT, maxWidth: TEXT_MAX_WIDTH, weight: 800,
+    maxFont: TEXT_MAX_FONT, minFont: TEXT_MIN_FONT, maxWidth: TEXT_MAX_WIDTH, weight: 800, family,
   });
 }

@@ -210,8 +210,13 @@
 }
 #mod-vsPrepartido {
   /* ~2.2s — placa fullscreen grande, puede tardar un poco mas que un
-     zocalo sin sentirse pesada. */
-  --dur-content-delay: 2200ms;
+     zocalo sin sentirse pesada. Adelantado 300ms (BLOQUE 1, 2026-09-09,
+     pedido explicito del usuario: "las letras y escudos deben aparecer
+     300ms antes de lo que aparecen actualmente"): de 2200ms a 1900ms.
+     Unico cambio es CUANDO se agrega ".content-in" (revela el contenido
+     dinamico) -- la animacion horneada del asset y "--dur-content" (la
+     velocidad del propio fundido) no se tocan. */
+  --dur-content-delay: 1900ms;
 }
 #mod-vsResultado {
   /* ~2.3s, mismo criterio que VS Prepartido. */
@@ -492,15 +497,14 @@ body[data-theme='argentinaStreamers'] #mod-scoreboard .ov-score-b {
   align-items: center;
   justify-content: center;
 }
-/* Color de los goles (2026-09-04, pedido explicito del usuario, revierte el
-   "--as-blue" de la regla global de 2026-09-03): quiere negro puro
-   "#000000" especificamente aca, no el azul del theme -- prioridad de
-   configuracion manual del operador sobre la regla general. Unico cambio
-   es el color, tamaño/posicion/logica de los goles sin tocar. */
+/* Color de los goles y el separador (BLOQUE 1, 2026-09-09, pedido
+   explicito del usuario): pasan a AZUL DE REFERENCIA ("--as-navy", ver
+   theme.css), reemplazando el negro puro fijado el 2026-09-04. Unico
+   cambio es el color, tamaño/posicion/logica de los goles sin tocar. */
 body[data-theme='argentinaStreamers'] #mod-scoreboard .ov-score-a,
 body[data-theme='argentinaStreamers'] #mod-scoreboard .ov-score-sep,
 body[data-theme='argentinaStreamers'] #mod-scoreboard .ov-score-b {
-  color: #000000;
+  color: var(--as-navy);
 }
 
 /* "CONTADOR" del Marcador en blanco (2026-08-28, pedido explicito del
@@ -665,16 +669,20 @@ body[data-theme='argentinaStreamers'] #mod-scoreboard .ov-dot {
      separacion. */
   transform: translateY(1px);
 }
-/* ARGENTINA STREAMERS (2026-09-03, auditoria de colores): este modulo
-   nunca habia recibido un pase de color propio -- seguia heredando
-   "var(--black)" de GLA. Medido pixel a pixel sobre
-   "marcador-entretiempo.png" (assets/themes/argentina-streamers/marcador/):
-   el recuadro de goles es NAVY solido (17,12,132), no verde ni dorado, asi
-   que corresponde blanco (regla: texto sobre azul -> blanco, salvo diseño
-   ya aprobado -- no hay ninguno aca). Solo color, geometria/logica/GLA sin
-   tocar. */
+/* ARGENTINA STREAMERS: color CORREGIDO 2026-09-14 (pedido explicito del
+   usuario: "el resultado de ENTRETIEMPO -- goles y guión -- debe usar
+   EXACTAMENTE el mismo color que el resultado del MARCADOR principal, no
+   un azul parecido ni un valor hardcodeado distinto"). El pase de color
+   anterior (2026-09-03) habia elegido "var(--white)" mirando SOLO el fondo
+   propio de este asset (navy solido) sin comparar contra el token real que
+   ya usa el Marcador (".ov-score-a/-sep/-b", ver mas arriba en este mismo
+   archivo) -- "var(--as-navy)", NO blanco. Mismo token reusado tal cual
+   (nunca un valor nuevo), asi que un cambio futuro de esa variable de
+   marca actualiza ambos marcadores por igual. Solo color, geometria/logica/
+   GLA sin tocar (GLA nunca entra en esta regla, sigue con var(--black)
+   heredado de ".ov-ent-score" de siempre, sin cambios). */
 body[data-theme='argentinaStreamers'] #mod-marcadorEntretiempo .ov-ent-score {
-  color: var(--white);
+  color: var(--as-navy);
 }
 
 /* ============================================================
@@ -1336,6 +1344,16 @@ body[data-theme='argentinaStreamers'] #mod-marcadorPenales .ov-pen-nombre-visita
   color: var(--black);
 }
 
+/* Reloj de MARCADOR ZÓCALO en blanco (2026-09-10, pedido explicito del
+   usuario): mismo #ffffff exacto que ya usa el reloj de MARCADOR PRINCIPAL
+   para Argentina Streamers (ver "body[data-theme='argentinaStreamers']
+   #mod-scoreboard .ov-clock" mas abajo) -- GLA conserva su negro de
+   siempre, sin cambios, mismo criterio de aislamiento por theme que esa
+   regla. */
+body[data-theme='argentinaStreamers'] #mod-marcadorZocalo .ov-zocalo-clock {
+  color: #ffffff;
+}
+
 /* ============================================================
    PLACAS (fullscreen / mid-full)
    ============================================================ */
@@ -1765,6 +1783,30 @@ body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-subs-v
 .ov-vsfull-scoreA { left: 794px; width: 136px; }
 .ov-vsfull-scoreB { left: 1000px; width: 136px; }
 
+/* Guión entre los goles del resultado (2026-09-10, pedido explicito del
+   usuario) -- centrado en el hueco real entre scoreA (termina en x930) y
+   scoreB (arranca en x1000), mismas top/height/color que ".ov-vsfull-score"
+   para quedar alineado con los numeros. Texto estatico ("-"), sin pasar
+   por fitFontSize -- no hay riesgo de desborde. */
+.ov-vsfull-score-dash {
+  position: absolute;
+  left: 930px;
+  width: 70px;
+  top: 743px;
+  height: 123px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 58px;
+  font-weight: 900;
+  /* Mismo color base que ".ov-vsfull-score" (--white para GLA). */
+  color: var(--white);
+}
+body[data-theme='argentinaStreamers'] #mod-vsResultado .ov-vsfull-score-dash {
+  color: var(--as-navy);
+}
+
 /* ARGENTINA STREAMERS — VS Con Resultado: el override vertical (geometria
    de VS_RESULTADO.png) que vivia aca se retiro (2026-09-04, revert
    explicito del usuario) junto con el cambio de asset en shared/themes.js
@@ -1775,6 +1817,13 @@ body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-subs-v
    (el mismo que ya usa GLA para este modulo, calibrado para ese video) --
    exactamente como funcionaba antes del cambio a PNG. No volver a agregar
    geometria vertical aca salvo que el asset vuelva a ser ese PNG. */
+/* AZUL DE REFERENCIA en los numeros de resultado (BLOQUE 1, 2026-09-09,
+   pedido explicito del usuario) -- SOLO Argentina Streamers, GLA conserva
+   "--white" de la regla base sin tocar. Unico cambio es el color, sin
+   tocar tamaño/posicion/logica. */
+body[data-theme='argentinaStreamers'] #mod-vsResultado .ov-vsfull-score {
+  color: var(--as-navy);
+}
 
 /* ============================================================
    EVENTOS
@@ -2151,6 +2200,20 @@ body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-subs-v
      formato/logica. */
   font-size: 25px;
   font-weight: 800;
+  /* BOLD real (2026-09-10, pedido explicito del usuario). Investigado antes
+     de tocar esto: "font-weight" por si solo NO alcanza aca -- tanto "GLA
+     Anton" (GLA) como "LIVE Segoe Bold" (Argentina Streamers, ver
+     theme.css) estan registrados con un UNICO @font-face de un solo peso
+     estatico (400 y 700 respectivamente, sin variantes 800/900), asi que
+     CUALQUIER valor de "font-weight" que se pida cae siempre en esa misma
+     unica variante -- visualmente identico sin importar el numero. El
+     efecto real de "mas grueso" se logra con "-webkit-text-stroke", que
+     agrega un trazo fino del mismo color por fuera de cada letra (soportado
+     por cualquier motor Chromium -- Chrome, OBS Browser Source, vMix
+     Browser Input, todos Chromium por debajo). "currentColor" sigue el
+     color real de este elemento (blanco en GLA, azul de marca en Argentina
+     Streamers) sin necesidad de un valor fijo. */
+  -webkit-text-stroke: 0.6px currentColor;
   letter-spacing: 0.5px;
   color: var(--black);
   overflow: hidden;
@@ -2173,23 +2236,14 @@ body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-subs-v
 body[data-theme='argentinaStreamers'] #mod-bug .ov-mosca-clock {
   right: 126.5px;
   top: 88.5px;
-  /* Regla global de color (2026-09-03, pedido explicito): texto sobre
-     recuadro verde usa "--as-blue" -- el comentario de arriba ya confirma
-     por escaneo de color que este "recuadrito" es verde. GLA sigue con
-     "--black" (franja dorada, sin tocar). */
-  color: var(--as-blue);
-  /* Fondo de la hora (2026-09-05, pedido explicito del usuario: "el fondo
-     de la hora tiene que ser un azul MAS OSCURO, el mismo azul nuevo que ya
-     se usa en el resto de piezas recientes, no el celeste/verde viejo").
-     El "casillero" real esta HORNEADO en el video (mosca-localstrike-alpha.mp4,
-     ver medicion de arriba) -- no se puede recolorear el pixel del video
-     desde CSS/JS. Se cubre ese rectangulo exacto (mismas coordenadas ya
-     medidas por escaneo de color, sin volver a medir) con un box solido
-     "--as-navy" (2026-09-04, el mismo azul horneado en Formacion/Historial/
-     Cronograma/Tablas -- ver definicion en theme.css) por ENCIMA del video,
-     debajo del texto de la hora: tapa el recuadro viejo sin tocar el
-     archivo de video. */
-  background-color: var(--as-navy);
+  /* AZUL DE REFERENCIA (BLOQUE 1, 2026-09-09, pedido explicito del
+     usuario): la HORA pasa a usar el azul unico de marca ("--as-navy",
+     ver theme.css) en vez de "--as-blue". El recuadro solido que tapaba
+     el casillero horneado del video (background-color, agregado 2026-09-04)
+     se ELIMINA por pedido explicito -- se mantiene el resto del diseño
+     (posicion, tamaño, fuente, formato, logica del reloj) sin tocar. GLA
+     sigue con "--black" (franja dorada, sin tocar). */
+  color: var(--as-navy);
 }
 
 /* ============================================================
@@ -2325,7 +2379,10 @@ body[data-theme='argentinaStreamers'] #mod-shortDouble {
      ".ov-estrellas-titulo"). Sin cambios en tamaño, fuente, color, X ni
      en la fila 2 (texto inferior). */
   top: 893px;
-  width: 760px;
+  /* Ensanchado de 760 a 790 (2026-09-10, pedido explicito del usuario,
+     mismo motivo que LINE_BOX_WIDTH en program/js/renderers/longDouble.js)
+     -- bbox real del zocalo hasta x1408, deja ~8px de margen real. */
+  width: 790px;
   height: 70px;
   display: flex;
   align-items: center;
@@ -2357,7 +2414,10 @@ body[data-theme='argentinaStreamers'] #mod-shortDouble {
      ".ov-estrellas-titulo" mas arriba. No se toca tamaño, fuente, color,
      X, la fila 1 (texto superior), el asset ni la animacion. */
   top: 981px;
-  width: 760px;
+  /* Ensanchado a 790 junto con la fila 1 (2026-09-10, ver comentario ahi
+     arriba) -- mismo bbox real compartido, sin motivo para dejarla angosta
+     mientras la de arriba se ensancha. */
+  width: 790px;
   height: 36px;
   display: flex;
   align-items: center;
@@ -2367,44 +2427,12 @@ body[data-theme='argentinaStreamers'] #mod-shortDouble {
   color: var(--gold-bright);
   text-align: center;
 }
-/* ARGENTINA STREAMERS: el dorado es color de marca de GLA, no se usa aca.
-   Corregido a "--as-blue" (2026-09-03, auditoria de colores): esta linea
-   (subtitulo/bajada) cae sobre la tira VERDE del asset -- confirmado por
-   TAKE real, no por lectura de codigo -- asi que blanco tampoco corresponde
-   (regla global: texto sobre verde usa el azul del theme). Solo color,
-   tamaño/posicion/fuente/logica sin tocar. */
+/* ARGENTINA STREAMERS — subtitulo (fila 2): AZUL DE REFERENCIA
+   ("--as-navy", ver theme.css; BLOQUE 1, 2026-09-09, corrige el "--as-blue"
+   usado desde 2026-09-03). Solo color, tamaño/posicion/fuente/logica sin
+   tocar. */
 body[data-theme='argentinaStreamers'] #mod-longDouble .ov-long-double-line2 {
-  color: var(--as-blue);
-}
-
-/* "ov-long-double-strip2" (2026-09-05, pedido explicito del usuario: "la
-   franja inferior asociada al texto tambien tiene que usar el azul nuevo
-   mas oscuro"). La franja verde de la fila 2 esta HORNEADA en el video
-   (zocalo-largo-doble-alpha.mp4) -- no se puede recolorear el pixel del
-   asset desde CSS. Se agrega un div nuevo (neutro/transparente por
-   default, sin efecto en GLA) que TAPA esa franja exacta con un box solido
-   "--as-navy" SOLO en Argentina Streamers, por encima del video y por
-   debajo del texto (orden en el DOM, ver buildStructure en longDouble.js).
-   Coordenadas: medidas en vivo con canvas + scan de color sobre el frame
-   real del propio <video> (no a ojo, no reusando el bbox de otro
-   comentario): franja verde nativa x455-1462 / y949-1008 (1920x1080 real,
-   1:1 con el sistema de coordenadas LOCAL de ".content", el mismo que usan
-   ".ov-long-double-line1/2" -- confirmado con doble scan, horizontal en
-   varias Y y vertical en X=700). +-2px de margen de seguridad hacia afuera
-   para no dejar ningun borde verde visible. No se toca ninguna posicion ya
-   ajustada (fila 1, fila 2, ancho/alto del texto, tx/ty del modulo): esto
-   es un elemento nuevo, puramente visual, sin logica ni offset propio
-   ajustable. */
-.ov-long-double-strip2 {
-  position: absolute;
-  left: 453px;
-  top: 947px;
-  width: 1011px;
-  height: 64px;
-  pointer-events: none;
-}
-body[data-theme='argentinaStreamers'] #mod-longDouble .ov-long-double-strip2 {
-  background-color: var(--as-navy);
+  color: var(--as-navy);
 }
 
 /* Zocalo corto simple: bbox real x590-1374,y880-978 (centro real 982,929
@@ -4120,12 +4148,18 @@ body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-solo .ov-perf
    correcto ahora que comparten el mismo fondo claro. */
 
 /* ============================================================
-   FICHA JUGADOR (2026-09-02, pedido explicito del usuario) — placa
-   vertical individual, Argentina Streamers. Sin asset real todavia:
-   misma zona vertical real (x1560, ancho ~300px) que ya usan Goleadores/
-   Asistidores/Participaciones arriba, en vez de inventar una nueva —
-   posiciones PROVISORIAS, a re-medir cuando llegue el asset definitivo.
-   ============================================================ */
+   FICHA JUGADOR (BLOQUE 4, 2026-09-09) — placa vertical individual,
+   Argentina Streamers. PNG real (ver assets/themes/argentina-streamers/
+   tablas/ficha-jugador.png), geometria medida en vivo (canvas 2D, scan de
+   pixeles reales del PNG a 1920x1080 -- confirmado visualmente superponiendo
+   los 5 recuadros medidos sobre el asset real, ver informe entregado al
+   usuario): zócalo superior x1501-1818/y37-112 (nombre) + 4 recuadros de
+   valor en columna x1618-1787 (GOLES y179-320, ASISTENCIAS y378-520,
+   PRESENCIAS y578-720, MVPS y778-941). Los labels ("GOLES"/etc) ya estan
+   horneados en el PNG -- estas reglas solo posicionan el VALOR dinamico.
+   Posicion/tamaño de cada recuadro van INLINE (ver program/js/renderers/
+   fichaJugador.js) -- aca solo tipografia/color, igual criterio que el
+   resto de "Tablas". Sin escudo: el diseño real no tiene ese recuadro. */
 #mod-fichaJugador {
   width: 1920px;
   height: 1080px;
@@ -4136,121 +4170,19 @@ body[data-theme='argentinaStreamers'] .ov-performance-card--placaL-solo .ov-perf
   width: 1920px;
   height: 1080px;
 }
-.ov-ficha-header {
-  position: absolute;
-  left: 1560px;
-  top: 100px;
-  width: 300px;
-  height: 70px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.ov-ficha-crest {
-  width: 56px;
-  height: 56px;
-  object-fit: contain;
-}
-.ov-ficha-name {
-  flex: 1;
+.ov-ficha-nombre {
   font-family: var(--font-display);
   font-weight: 800;
   color: var(--white);
   text-transform: uppercase;
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
 }
-.ov-ficha-stat-row {
-  position: absolute;
-  left: 1560px;
-  width: 300px;
-  height: 54px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-family: var(--font-display);
-}
-.ov-ficha-stat-row[data-stat-row="goles"] { top: 200px; }
-.ov-ficha-stat-row[data-stat-row="asistencias"] { top: 264px; }
-.ov-ficha-stat-row[data-stat-row="gMasA"] { top: 328px; }
-.ov-ficha-stat-row[data-stat-row="presencias"] { top: 392px; }
-.ov-ficha-stat-row[data-stat-row="mvps"] { top: 456px; }
-.ov-ficha-stat-label {
-  font-weight: 700;
-  color: var(--grey);
-  letter-spacing: 0.5px;
-}
 .ov-ficha-stat-value {
+  font-family: var(--font-display);
   font-weight: 900;
-  color: var(--gold-bright);
-}
-/* ARGENTINA STREAMERS: el dorado es color de marca de GLA, no se usa aca
-   (Ficha Jugador ya es un modulo exclusivo del theme, pero se escopea
-   igual por consistencia con el resto de la auditoria). */
-body[data-theme='argentinaStreamers'] #mod-fichaJugador .ov-ficha-stat-value {
   color: var(--white);
-}
-.ov-ficha-stat-row.is-empty {
-  visibility: hidden;
-}
-
-/* ============================================================
-   PLACA L INFO
-   ============================================================ */
-#mod-placaLInfo {
-  left: 0;
-  top: 0;
-}
-
-.pli-container {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 1920px;
-  height: 1080px;
-}
-
-.pli-zocalo-item {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 1920px;
-  height: 1080px;
-  transform-origin: 1706px 62px;
-  transition: opacity 0.25s ease-out;
-}
-
-.pli-zocalo-bg {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 1920px;
-  height: 1080px;
-  pointer-events: none;
-}
-
-.pli-zocalo-item .gfx-overlay {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 1920px;
-  height: 1080px;
-  pointer-events: none;
-}
-
-.pli-zocalo-item .ov-short-simple-text {
-  position: absolute;
-  left: 1522px;
-  top: 35px;
-  width: 368px;
-  height: 54px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-family: 'Anton', sans-serif;
-  font-weight: 800;
-  text-transform: uppercase;
   text-align: center;
 }
 

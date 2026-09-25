@@ -258,6 +258,14 @@ export const ADJUST_REGISTRY = {
       { id: 'nameA', label: 'NOMBRE EQUIPO LOCAL', kind: 'text', textKey: 'nameA' },
       { id: 'scoreA', label: 'GOL LOCAL', kind: 'text', textKey: 'scoreA' },
       { id: 'scoreB', label: 'GOL VISITANTE', kind: 'text', textKey: 'scoreB' },
+      // "scoreSep" (2026-09-14, pedido explicito del usuario: ajuste de
+      // posicion/tamaño para el guion del resultado, con persistencia via
+      // GUARDAR POSICIÓN) -- registrado aca (mismo patron EXACTO que
+      // scoreA/scoreB) para que use el acordeon "AJUSTE DE COMPOSICIÓN"
+      // (con guardado real) en vez del field-list generico de
+      // field-editors.js, que NUNCA pasa "saveOptions" a
+      // mountAdjustControl y por eso nunca renderiza el boton de guardado.
+      { id: 'scoreSep', label: 'GUIÓN / SEPARADOR', kind: 'text', textKey: 'scoreSep' },
       { id: 'nameB', label: 'NOMBRE EQUIPO VISITANTE', kind: 'text', textKey: 'nameB' },
       { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale', crestTeam: 'B' },
     ],
@@ -299,9 +307,11 @@ export const ADJUST_REGISTRY = {
       { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale', crestTeam: 'A' },
       { id: 'nameA', label: 'NOMBRE EQUIPO LOCAL', kind: 'text', textKey: 'nameA' },
       { id: 'goalA', label: 'GOL LOCAL', kind: 'text', textKey: 'goalA' },
-      { id: 'scorersLocal', label: 'BLOQUE GOLEADORES LOCAL', kind: 'text', textKey: 'scorersLocal' },
-      { id: 'statusTexto', label: 'TEXTO LIBRE RENGLÓN CENTRAL', kind: 'text', textKey: 'statusTexto' },
-      { id: 'scorersVisitante', label: 'BLOQUE GOLEADORES VISITANTE', kind: 'text', textKey: 'scorersVisitante' },
+      // "scorersLocal"/"scorersVisitante" (2026-09-10, VS COMPACTO
+      // simplificado, pedido explicito del usuario: "eliminar
+      // GOLEADORES LOCAL/VISITANTE") -- eliminadas junto con los campos
+      // que ajustaban.
+      { id: 'statusTexto', label: 'CONTENIDO CENTRAL', kind: 'text', textKey: 'statusTexto' },
       { id: 'goalB', label: 'GOL VISITANTE', kind: 'text', textKey: 'goalB' },
       { id: 'nameB', label: 'NOMBRE EQUIPO VISITANTE', kind: 'text', textKey: 'nameB' },
       { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale', crestTeam: 'B' },
@@ -315,8 +325,15 @@ export const ADJUST_REGISTRY = {
       { id: 'logo', label: 'LOGO GLA', kind: 'composition', xKey: 'logoOffsetX', yKey: 'logoOffsetY', scaleKey: 'logoScale' },
       { id: 'texto1', label: 'TEXTO 1', kind: 'text', textKey: 'texto1' },
       { id: 'texto2', label: 'TEXTO 2', kind: 'text', textKey: 'texto2' },
-      { id: 'sponsor1', label: 'SPONSOR 1', kind: 'composition', xKey: 'sponsor1OffsetX', yKey: 'sponsor1OffsetY', scaleKey: 'sponsor1Scale' },
-      { id: 'sponsor2', label: 'SPONSOR 2', kind: 'composition', xKey: 'sponsor2OffsetX', yKey: 'sponsor2OffsetY', scaleKey: 'sponsor2Scale' },
+      // "sponsors" (2026-09-24, pedido explicito: "un unico ajuste de
+      // composicion para TODOS los sponsors del rotativo", ver comentario
+      // completo en shared/modules.js) -- UNA sola entrada en vez de
+      // "sponsor1"/"sponsor2": aplicarModuleAdjustRegistry (program/js/
+      // main.js) ya soporta un mismo "data-adjust" marcando VARIOS nodos
+      // (mismo mecanismo que "crest" de columna en grupos/sideTable), asi
+      // que alcanza con que los 2 <img> del rotativo compartan este mismo
+      // id (ver program/js/renderers/zocaloCompuesto.js).
+      { id: 'sponsors', label: 'SPONSORS', kind: 'composition', xKey: 'sponsorsOffsetX', yKey: 'sponsorsOffsetY', scaleKey: 'sponsorsScale' },
     ],
   },
   // Unica entrada de cada uno (2026-09-02, auditoria de wiring): habia una
@@ -325,23 +342,22 @@ export const ADJUST_REGISTRY = {
   // version incompleta (sin editor de posicion de sponsor en el acordeon
   // generico) era la que realmente terminaba en ADJUST_REGISTRY, no esta.
   // Se elimino el duplicado.
+  // Unificado con "zocaloCompuestoLogo" (2026-09-10, ver shared/modules.js)
+  // -- lleva las entradas de AMBOS tipos a la vez (escudos Y logo), asi el
+  // operador puede dejar las dos posiciones configuradas de antemano sin
+  // importar con cual "tipo" este trabajando en un momento dado.
   zocaloCompuestoEquipos: {
     elements: [
       { id: 'localCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'localCrestOffsetX', yKey: 'localCrestOffsetY', scaleKey: 'localCrestScale', crestTeam: 'A' },
       { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale', crestTeam: 'B' },
+      { id: 'logo', label: 'LOGO LOCALSTRIKE', kind: 'composition', xKey: 'logoOffsetX', yKey: 'logoOffsetY', scaleKey: 'logoScale' },
       { id: 'texto1', label: 'TEXTO MAIN (TIRA AZUL)', kind: 'text', textKey: 'texto1' },
       { id: 'texto2', label: 'SUBTEXTO (TIRA VERDE)', kind: 'text', textKey: 'texto2' },
       { id: 'sponsor', label: 'SPONSOR', kind: 'composition', xKey: 'sponsorOffsetX', yKey: 'sponsorOffsetY', scaleKey: 'sponsorScale' },
     ],
   },
-  zocaloCompuestoLogo: {
-    elements: [
-      { id: 'logo', label: 'LOGO', kind: 'composition', xKey: 'logoOffsetX', yKey: 'logoOffsetY', scaleKey: 'logoScale' },
-      { id: 'texto1', label: 'TEXTO MAIN (TIRA AZUL)', kind: 'text', textKey: 'texto1' },
-      { id: 'texto2', label: 'SUBTEXTO (TIRA VERDE)', kind: 'text', textKey: 'texto2' },
-      { id: 'sponsor', label: 'SPONSOR', kind: 'composition', xKey: 'sponsorOffsetX', yKey: 'sponsorOffsetY', scaleKey: 'sponsorScale' },
-    ],
-  },
+  // LEGACY -- ver "zocaloCompuestoLogo" en shared/modules.js. Sin entrada
+  // propia: modulo oculto de toda navegacion, ya no editable.
   // "zocaloFinal"/"zocaloFinalDiv" (2026-08-31): sin entrada de registro.
   // HIDDEN_FROM_NAV_IDS (ver master-control/js/main.js) -- reemplazados
   // por "zocaloCompuesto" (2026-08-16), sin panel propio en Master Control
@@ -403,16 +419,22 @@ export const ADJUST_REGISTRY = {
       { id: 'tituloCrest', label: 'ESCUDO TÍTULO', kind: 'composition', xKey: 'tituloCrestOffsetX', yKey: 'tituloCrestOffsetY', scaleKey: 'tituloCrestScale', themeOnly: 'argentinaStreamers' },
     ],
   },
-  // "fichaJugador" (2026-09-02, pedido explicito del usuario, Argentina
-  // Streamers): un unico escudo (el del jugador seleccionado), mismo
-  // criterio "column-level" que arriba aunque solo haya una fila -- no es
-  // "crestTeam" (ver esa docstring mas arriba) porque no depende de
-  // LOCAL/VISITANTE del Marcador, depende del jugador elegido en el
-  // propio modulo.
+  // "fichaJugador" (rehecho en BLOQUE 4, 2026-09-09, sobre el asset real
+  // -- ver assets/themes/argentina-streamers/tablas/ficha-jugador.png):
+  // el diseño real NO tiene recuadro de escudo (solo zócalo con nombre +
+  // 4 recuadros de estadística), asi que no hay entrada "kind:composition"
+  // aca -- la unica composicion editable es la generica del modulo entero
+  // ("COMPOSICIÓN COMPLETA", agregada automaticamente por
+  // renderModuleAdjustAccordion sin declararla aca). Los 5 textos (nombre
+  // + 4 stats) ya tienen su propio ajuste via "textAdjust" (ver
+  // shared/modules.js), mostrado por el mismo acordeon sin necesitar una
+  // entrada "kind:text" -- ese camino ya es generico para cualquier modulo
+  // con "textAdjust" no vacio via los campos ADJUST_ONLY/adjustable de
+  // "fields" en shared/modules.js; "fichaJugador" no usa "fields" (panel
+  // dedicado, ver ficha-jugador-panel.js), asi que sus ajustes de texto se
+  // muestran directo desde ese panel, no desde este registro.
   fichaJugador: {
-    elements: [
-      { id: 'crest', label: 'ESCUDO', kind: 'composition', xKey: 'crestOffsetX', yKey: 'crestOffsetY', scaleKey: 'crestScale' },
-    ],
+    elements: [],
   },
   // "historial" (2026-09-02, reconstruido desde cero sobre el PNG real --
   // ver informe): sin panel dedicado de composicion propio, el acordeon
@@ -486,14 +508,4 @@ export const ADJUST_REGISTRY = {
       { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale', crestTeam: 'B' },
     ],
   },
-  // "placaLInfo" (2026-08-31): sin entrada de registro aca a proposito --
-  // ya tiene un panel dedicado propio (master-control/js/placa-l-info-panel.js)
-  // con 4 zocalos independientes, cada uno con su propia composicion
-  // (offsetX/Y/scale) y ajuste de texto (textAdjust), montados directo
-  // sobre el sub-objeto de cada zocalo (no sobre el "data" del modulo
-  // completo, que es lo unico que ADJUST_REGISTRY/renderModuleAdjustAccordion
-  // saben resolver) -- agregar una entrada aca duplicaria controles ya
-  // existentes y funcionando. "COMPOSICIÓN COMPLETA" (mueve los 4 zocalos
-  // juntos) se sigue mostrando igual, es universal y no depende del
-  // registro.
 };

@@ -47,5 +47,10 @@ export function resolveImageSrc(moduleId, fallbackForGla, variant) {
 export function mountThemedAlphaVideo(targetEl, moduleId, fallbackForGla, opts, variant) {
   const src = resolveVideoSrc(moduleId, fallbackForGla, variant);
   if (!src) return null;
-  return createAlphaVideo(targetEl, src, opts);
+  // "moduleId" (2026-09-25, Burst/Take Scheduler -- ver program/js/
+  // take-scheduler.js): createAlphaVideo lo necesita para decidir
+  // prioridad/escalonado de su propio "play()" sin que cada renderer
+  // tenga que saber nada de esto -- todos ya llaman a esta funcion con su
+  // moduleId real, asi que alcanza con reenviarlo dentro de "opts".
+  return createAlphaVideo(targetEl, src, { ...opts, moduleId });
 }

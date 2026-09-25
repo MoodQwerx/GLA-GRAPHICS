@@ -1,6 +1,9 @@
 import { applyFittedText, updateFittedTextWithTransition, readTextAdjust } from '../text-fit.js';
 import { resolveTeamTokens } from '../../../shared/text-tokens.js';
 import { mountThemedAlphaVideo } from '../theme-assets.js';
+import { getActiveThemeId } from '../theme-client.js';
+import { DEFAULT_THEME_ID } from '../../../shared/themes.js';
+import { GLA_SEGOE_BOLD_FAMILY } from '../program-fonts.js';
 
 const VIDEO_SRC = '/assets/zocalos/zocalo-corto-doble-alpha.mp4';
 
@@ -45,6 +48,8 @@ function buildDoubleStructure(el) {
   el._gfxBuilt = true;
 }
 
+// "family" (2026-09-24, pedido explicito: "Segoe UI Bold", SOLO GLA) --
+// mismo criterio que longSimple.js/shortSimple.js.
 function fillPair(root, name, role, textAdjust, nameKey, roleKey, isExplicitUpdate, prevStore, sb) {
   const nameEl = root.querySelector('.ov-short-double-name');
   const roleEl = root.querySelector('.ov-short-double-role');
@@ -52,13 +57,14 @@ function fillPair(root, name, role, textAdjust, nameKey, roleKey, isExplicitUpda
   const newRole = resolveTeamTokens(role || '', sb);
   const oldName = prevStore[nameKey];
   const oldRole = prevStore[roleKey];
+  const family = getActiveThemeId() === DEFAULT_THEME_ID ? GLA_SEGOE_BOLD_FAMILY : undefined;
 
   updateFittedTextWithTransition(nameEl, newName, oldName, {
-    maxFont: NAME_MAX_FONT, minFont: NAME_MIN_FONT, maxWidth: MAX_WIDTH, weight: 800,
+    maxFont: NAME_MAX_FONT, minFont: NAME_MIN_FONT, maxWidth: MAX_WIDTH, weight: 800, family,
   }, readTextAdjust(textAdjust, nameKey), isExplicitUpdate);
 
   updateFittedTextWithTransition(roleEl, newRole, oldRole, {
-    maxFont: ROLE_MAX_FONT, minFont: ROLE_MIN_FONT, maxWidth: MAX_WIDTH, weight: 600, letterSpacing: 1,
+    maxFont: ROLE_MAX_FONT, minFont: ROLE_MIN_FONT, maxWidth: MAX_WIDTH, weight: 600, letterSpacing: 1, family,
   }, readTextAdjust(textAdjust, roleKey), isExplicitUpdate);
 
   prevStore[nameKey] = newName;
@@ -68,19 +74,30 @@ function fillPair(root, name, role, textAdjust, nameKey, roleKey, isExplicitUpda
 export default function renderShortDouble(contentEl, data, justTaken, onOneShotEnded, allData) {
   const mode = data.airMode === 'double' ? 'double' : 'single';
   const sb = allData && allData.scoreboard;
+  // "modeChanged" (2026-09-23, mismo bug/fix que tarjeta.js/vs.js -- ver
+  // comentario en tarjeta.js): pasar de individual a doble (o viceversa)
+  // CON LA GRAFICA AL AIRE armaba la estructura nueva sin destruir la
+  // vieja (huerfana) ni reproducir el/los video(s) nuevos.
+  const modeChanged = contentEl.dataset.airMode !== undefined && contentEl.dataset.airMode !== mode;
 
-  if (!contentEl._gfxBuilt || contentEl.dataset.airMode !== mode) {
+  if (!contentEl._gfxBuilt || modeChanged) {
+    if (contentEl._alphaVideo) contentEl._alphaVideo.destroy();
     if (mode === 'double') buildDoubleStructure(contentEl); else buildSingleStructure(contentEl);
     contentEl.dataset.airMode = mode;
   }
-  if (justTaken) contentEl._alphaVideo?.playFromStart();
+  if (justTaken || modeChanged) contentEl._alphaVideo?.playFromStart();
 
   if (!contentEl._prevStore) contentEl._prevStore = {};
   const isExplicitUpdate = !justTaken;
 
   const adjust = data.textAdjust;
   if (mode === 'single') {
-    fillPair(contentEl, data.name, data.role, adjust, 'name', 'role', isExplicitUpdate, contentEl._prevStore, sb);
+    // "double1" es LA fuente para el modo individual (2026-09-10, pedido
+    // explicito del usuario: "que el zócalo doble 1 sea el zócalo
+    // individual") -- ya no existe un "data.name/role" aparte, mandar un
+    // solo zocalo y mandar dos siempre leen del mismo lugar.
+    const double1 = data.double1 || {};
+    fillPair(contentEl, double1.name, double1.role, adjust, 'double1.name', 'double1.role', isExplicitUpdate, contentEl._prevStore, sb);
   } else {
     const double1 = data.double1 || {};
     const double2 = data.double2 || {};

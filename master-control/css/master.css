@@ -292,7 +292,36 @@ body {
 }
 .tab-category:first-child { padding-top: 4px; }
 
+/* "tab-row"/"tab-drag-handle" (2026-09-10, pedido explicito del usuario:
+   reordenar los módulos de la navegación "a mi comodidad", mismo patron de
+   handle + drag & drop nativo que Formación -- ver formation-list-panel.js
+   "formation-drag-handle"). Cada tab ahora vive dentro de esta fila
+   (handle + boton); ".tab" pasa a "flex:1" para seguir ocupando el resto
+   del ancho tal cual antes. */
+.tab-row {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+}
+.tab-row.is-dragging { opacity: 0.4; }
+.tab-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  flex-shrink: 0;
+  cursor: grab;
+  color: var(--grey-dim);
+  font-size: 13px;
+  user-select: none;
+  touch-action: none;
+}
+.tab-drag-handle:active { cursor: grabbing; }
+.tab-drag-handle:hover { color: var(--grey); }
+
 .tab {
+  flex: 1;
+  min-width: 0;
   text-align: left;
   background: transparent;
   border: 1px solid transparent;
@@ -693,6 +722,53 @@ body {
   white-space: nowrap;
 }
 
+/* Contador de goles "[-] N [+]" por lado (BLOQUE 2, 2026-09-09, pedido
+   explicito del usuario: reemplaza el textbox numerico manual). Cada grupo
+   (LOCAL/VISITANTE) es su propia caja vertical: label, fila -/valor/+, y
+   su RESET puntual debajo -- ver scoreboard-clock-panel.js. */
+.gol-counter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.gol-counter-group + .gol-counter-group { margin-top: 14px; }
+.gol-counter-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.7px;
+  color: var(--grey);
+  text-transform: uppercase;
+}
+.gol-counter-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.gol-counter-btn {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.gol-counter-minus { border-color: #4a2323; color: #e39a9a; }
+.gol-counter-plus { border-color: var(--gold-dim); color: var(--gold-bright); }
+.gol-counter-value {
+  min-width: 48px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--white);
+}
+.gol-reset-side {
+  width: auto;
+  align-self: flex-start;
+  padding: 0 14px;
+}
+
 /* Ocultar controles de color de camiseta/equipo del panel de MARCADOR
    (2026-08-28, pedido explicito del usuario) -- SOLO Argentina Streamers,
    GLA sigue viendo estos mismos controles sin cambios. Nada se borra: el
@@ -760,8 +836,10 @@ body[data-theme='argentinaStreamers'] .clock-box-team-color {
 }
 .formation-player-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 34px 34px 34px;
+  grid-template-columns: 24px minmax(0, 1fr) 34px;
+  align-items: start;
   gap: 6px;
+  position: relative;
 }
 .formation-player-row input {
   min-width: 0;
@@ -780,6 +858,111 @@ body[data-theme='argentinaStreamers'] .clock-box-team-color {
 .formation-row-action:disabled {
   opacity: 0.35;
   cursor: default;
+}
+
+/* Handle de arrastre + reordenamiento (2026-09-10, pedido explicito del
+   usuario, item 15: reemplaza las flechas ↑/↓). Drag & drop nativo HTML5
+   -- "draggable" vive SOLO en el handle (no en toda la fila) para no
+   interferir con clicks normales sobre el desplegable/boton de esa misma
+   fila. */
+.formation-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  cursor: grab;
+  color: var(--grey);
+  font-size: 16px;
+  user-select: none;
+  touch-action: none;
+}
+.formation-drag-handle:active { cursor: grabbing; }
+.formation-player-row.is-dragging { opacity: 0.4; }
+.formation-player-row.is-drop-target {
+  outline: 2px dashed var(--gold-dim);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Selector custom de jugador (2026-09-10, pedido explicito del usuario,
+   items 12/13/14): reemplaza <select><option> -- el color de un <option>
+   nativo no se puede garantizar de forma consistente entre Chrome/OBS
+   Browser Source/vMix Browser Input (el popup lo dibuja el sistema
+   operativo, ignorando el CSS del documento en varios de esos casos), asi
+   que este es un boton + panel con <div> reales, con control total de
+   color/disabled por fila. Sigue siendo SIEMPRE el mismo control por
+   posicion (nunca se transforma en texto fijo tras elegir, item 12) --
+   "formation-dropdown-container" es el contenedor estable que se
+   reconstruye en cada render con el jugador actual.*/
+.formation-dropdown-container {
+  position: relative;
+  min-width: 0;
+}
+.player-dropdown-trigger {
+  width: 100%;
+  min-height: 34px;
+  text-align: left;
+  padding: 0 10px;
+  border: 1px solid var(--border-3);
+  border-radius: 4px;
+  background: var(--surface-input);
+  color: var(--white);
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.player-dropdown-trigger:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.player-dropdown-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  max-height: 260px;
+  overflow-y: auto;
+  background: #1a1d22;
+  border: 1px solid var(--border-2);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+.player-dropdown-item {
+  padding: 9px 12px;
+  color: var(--white);
+  cursor: pointer;
+  font-size: 13px;
+}
+.player-dropdown-item:hover:not(.is-used) {
+  background: var(--hover-bg);
+}
+.player-dropdown-empty {
+  color: var(--grey);
+  border-bottom: 1px solid var(--border-3);
+}
+/* "is-used" (item 14, "mostrarlo EN ROJO... deshabilitado/no
+   seleccionable"): rojo consistente con el resto del lenguaje visual del
+   panel (mismo par que ".gol-counter-minus"/".btn-clock-danger"). */
+.player-dropdown-item.is-used {
+  color: #e88;
+  cursor: default;
+  opacity: 0.75;
+}
+.player-dropdown-custom {
+  padding: 6px;
+  border-top: 1px solid var(--border-3);
+  cursor: default;
+}
+.player-dropdown-custom input {
+  width: 100%;
+  background: var(--surface-input);
+  border: 1px solid var(--border-2);
+  border-radius: 4px;
+  color: var(--white);
+  padding: 8px 10px;
+  font-family: var(--font-body);
 }
 .formation-add {
   justify-self: start;
@@ -855,36 +1038,6 @@ body[data-theme='argentinaStreamers'] .clock-box-team-color {
   letter-spacing: 0.7px;
   color: var(--grey);
 }
-.short-double-air {
-  display: grid;
-  gap: 10px;
-}
-.short-double-air-buttons {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 6px;
-}
-.short-double-air-btn {
-  min-height: 38px;
-  border: 1px solid var(--border-3);
-  border-radius: 4px;
-  background: #20242b;
-  color: var(--grey);
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-.short-double-air-btn.active {
-  background: var(--gold-dim);
-  border-color: var(--gold-bright);
-  color: var(--black);
-}
-.short-double-air-btn--out.active {
-  background: #2c1717;
-  border-color: #7a2222;
-  color: #f0a5a5;
-}
 
 /* Control de edicion manual de posicion/tamaño por campo de texto
    (2026-08-14, pedido explicito del usuario) -- ver
@@ -957,6 +1110,16 @@ body[data-theme='argentinaStreamers'] .clock-box-team-color {
 }
 .text-adjust-readout.is-zero {
   color: var(--grey-dim);
+}
+/* Fila de intensidad "0.5" (BLOQUE 1, 2026-09-09, pedido explicito del
+   usuario): mismas 4 direcciones que la fila de arriba, mitad de paso --
+   ver text-adjust-control.js/composition-control.js. Selector compuesto
+   (".text-adjust-row.text-adjust-row-half") para ganarle en especificidad
+   a ".composition-adjust-row" cuando esta fila se monta dentro de
+   AJUSTE DE COMPOSICIÓN (mismas 3 clases en ese caso). */
+.text-adjust-row.text-adjust-row-half {
+  grid-template-columns: repeat(4, 30px);
+  margin-top: -2px;
 }
 
 /* "AJUSTE DE COMPOSICIÓN" (2026-08-14, pedido explicito del usuario):
@@ -1184,6 +1347,9 @@ body[data-theme='argentinaStreamers'] .clock-box-team-color {
 }
 .performance-sync-status.success { color: var(--gold-bright); }
 .performance-sync-status.error { color: #e39a9a; }
+/* "info" (BLOQUE 4, Ficha Jugador): asociación ambigua con la web -- ni
+   éxito ni error, requiere que el operador elija un candidato. */
+.performance-sync-status.info { color: #7ec8e3; }
 .performance-sync-updated-at {
   color: var(--grey);
   font-size: 10px;

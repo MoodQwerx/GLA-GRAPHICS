@@ -1,14 +1,29 @@
 // Panel dedicado de Zocalo corto doble (2026-08-06, pedido explicito del
 // usuario). Reemplaza al editor generico de campos (ver "fields: []" en
-// shared/modules.js) porque ahora hay tres bloques de datos (individual +
-// doble 1 + doble 2) y controles de aire de tres estados (fuera / un
-// zocalo / dos zocalos) en vez del Tomar/Sacar binario de siempre -- mismo
-// criterio que el panel de Formacion (formation-list-panel.js), que
-// tambien tiene su propio control especial de estado.
+// shared/modules.js) porque hay dos operaciones independientes (ZÓCALO
+// INDIVIDUAL: 1 instancia, solo nombre; ZÓCALO DOBLE: 2 instancias,
+// nombre+sub texto cada una) -- mismo criterio que el panel de Formacion
+// (formation-list-panel.js), que tambien tiene su propio control especial.
 //
-// Los tres botones de aire ("air") disparan directo TAKE/OUT via el
-// callback "air" que pasa main.js (que es quien tiene "ws"); este panel
-// solo arma la UI y lee/escribe sobre "data" (el draft del operador).
+// "MODO" (BLOQUE 1, 2026-09-09, pedido explicito del usuario: "hacer que
+// la operacion sea coherente con el resto de LIVE GRAPHICS"): reemplaza a
+// la fila de 3 botones FUERA/AIRE 1 ZÓCALO/AIRE DOBLE que antes disparaba
+// TAKE/OUT directo -- ahora es un campo de configuracion mas (igual
+// criterio que "tipo" en zocaloCompuesto: EQUIPOS/LOGO), que solo decide
+// que variante toma el boton ESTÁNDAR "TOMAR AL AIRE" del header (ya
+// funcionaba para este modulo -- ver "doTake()" en main.js, que siempre
+// mando "draft.shortDouble" completo, "airMode" incluido). Sin logica de
+// TAKE/OUT propia en este panel: mismo patron que el resto de LIVE
+// GRAPHICS (elegis el campo, apretas TOMAR AL AIRE/ACTUALIZAR arriba).
+//
+// "TALENTOS" (BLOQUE 1, pedido explicito del usuario: "el textbox que dice
+// talentos, que solo me deje modificar 1 renglon, que es el de nombre"):
+// se elimina el campo "Rol/Talento" de la seccion INDIVIDUAL -- esa
+// seccion pasa a editar UN solo renglon (Nombre). Los dos pares de ZÓCALO
+// DOBLE (que si son 2 renglones reales, nombre+sub texto) no cambian.
+// "data.role"/sus presets ("GUARDAR SUB TEXTO" en main.js) se dejan
+// intactos sin tocar -- solo se quita el INPUT de edicion, no el dato ni
+// los presets existentes.
 //
 // "textField" ahora acepta un "adjustKey" opcional (2026-08-14, pedido
 // explicito del usuario) que muestra el mismo control de ajuste
@@ -26,7 +41,7 @@ function ensureTextAdjust(data, key) {
   return data.textAdjust[key];
 }
 
-export function renderShortDoublePanel(container, data, onDirty, air, saveOptions) {
+export function renderShortDoublePanel(container, data, onDirty, saveOptions) {
   if (!data.double1 || typeof data.double1 !== 'object') data.double1 = { name: '', role: '' };
   if (!data.double2 || typeof data.double2 !== 'object') data.double2 = { name: '', role: '' };
 
@@ -57,75 +72,57 @@ export function renderShortDoublePanel(container, data, onDirty, air, saveOption
   function render() {
     root.innerHTML = '';
 
-    // --- PRIMERO: ZOCALO CORTO DOBLE INDIVIDUAL (logica actual, sin cambios) ---
-    const individualSection = document.createElement('section');
-    individualSection.className = 'short-double-section';
-    const individualHeading = document.createElement('h2');
-    individualHeading.textContent = 'ZÓCALO CORTO DOBLE INDIVIDUAL';
-    individualSection.appendChild(individualHeading);
-    individualSection.appendChild(textField('Nombre', data.name, (v) => { data.name = v; onDirty(); }, 'name'));
-    individualSection.appendChild(textField('Talento / Rol / Cargo', data.role, (v) => { data.role = v; onDirty(); }, 'role'));
-    root.appendChild(individualSection);
+    // --- MODO: decide que variante toma el boton estandar TOMAR AL AIRE ---
+    const modeSection = document.createElement('section');
+    modeSection.className = 'short-double-section';
+    const modeHeading = document.createElement('h2');
+    modeHeading.textContent = 'MODO';
+    modeSection.appendChild(modeHeading);
+    const modeWrap = document.createElement('div');
+    modeWrap.className = 'field';
+    const modeLabel = document.createElement('label');
+    modeLabel.textContent = 'Qué toma "TOMAR AL AIRE"';
+    modeWrap.appendChild(modeLabel);
+    const modeSelect = document.createElement('select');
+    for (const opt of [
+      { id: 'single', label: 'ZÓCALO INDIVIDUAL' },
+      { id: 'double', label: 'ZÓCALO DOBLE' },
+    ]) {
+      const option = document.createElement('option');
+      option.value = opt.id;
+      option.textContent = opt.label;
+      modeSelect.appendChild(option);
+    }
+    modeSelect.value = data.airMode === 'double' ? 'double' : 'single';
+    modeSelect.addEventListener('change', () => { data.airMode = modeSelect.value; onDirty(); });
+    modeWrap.appendChild(modeSelect);
+    modeSection.appendChild(modeWrap);
+    root.appendChild(modeSection);
 
-    // --- DESPUES: DOBLE ZOCALO CORTO ---
+    // --- ZÓCALO 1 / ZÓCALO 2 (2026-09-10, pedido explicito del usuario:
+    // "que el zócalo doble 1 sea el zócalo individual... que en el panel no
+    // me muestre 3 opciones de zócalo"). Ya no hay una seccion
+    // "INDIVIDUAL" con su propio dato aparte -- "ZÓCALO 1" (antes "ZÓCALO
+    // DOBLE 1", ver "double1") ES el zocalo individual: si el MODO de
+    // arriba es ZÓCALO INDIVIDUAL, TOMAR AL AIRE manda solo esto (ver
+    // program/js/renderers/shortDouble.js); si es ZÓCALO DOBLE, manda esto
+    // + ZÓCALO 2 juntos. "Sub texto" (mismo pedido: "borrame ese textbox")
+    // se elimina de las dos secciones -- el dato/render de "role" sigue
+    // existiendo por si el operador ya tenia algo cargado, pero deja de
+    // ser editable desde aca. ---
     const doubleGroup = document.createElement('div');
     doubleGroup.className = 'short-double-group';
-    const doubleGroupHeading = document.createElement('h2');
-    doubleGroupHeading.className = 'short-double-group-heading';
-    doubleGroupHeading.textContent = 'DOBLE ZÓCALO CORTO';
-    doubleGroup.appendChild(doubleGroupHeading);
 
-    for (const [key, title] of [['double1', 'ZÓCALO DOBLE 1'], ['double2', 'ZÓCALO DOBLE 2']]) {
+    for (const [key, title] of [['double1', 'ZÓCALO 1'], ['double2', 'ZÓCALO 2']]) {
       const section = document.createElement('section');
       section.className = 'short-double-section';
       const heading = document.createElement('h3');
       heading.textContent = title;
       section.appendChild(heading);
       section.appendChild(textField('Texto', data[key].name, (v) => { data[key].name = v; onDirty(); }, `${key}.name`));
-      section.appendChild(textField('Sub texto', data[key].role, (v) => { data[key].role = v; onDirty(); }, `${key}.role`));
       doubleGroup.appendChild(section);
     }
     root.appendChild(doubleGroup);
-
-    // --- Controles de aire ---
-    const airSection = document.createElement('section');
-    airSection.className = 'short-double-air';
-    const airHeading = document.createElement('h2');
-    airHeading.textContent = 'AIRE';
-    airSection.appendChild(airHeading);
-
-    const airButtons = document.createElement('div');
-    airButtons.className = 'short-double-air-buttons';
-
-    const isOn = air.isOn();
-    const currentMode = isOn ? (data.airMode === 'double' ? 'double' : 'single') : null;
-
-    const outBtn = document.createElement('button');
-    outBtn.type = 'button';
-    outBtn.className = 'short-double-air-btn short-double-air-btn--out';
-    outBtn.textContent = 'FUERA AIRE';
-    outBtn.classList.toggle('active', !isOn);
-    outBtn.addEventListener('click', () => air.out());
-    airButtons.appendChild(outBtn);
-
-    const singleBtn = document.createElement('button');
-    singleBtn.type = 'button';
-    singleBtn.className = 'short-double-air-btn';
-    singleBtn.textContent = 'AIRE 1 ZÓCALO';
-    singleBtn.classList.toggle('active', currentMode === 'single');
-    singleBtn.addEventListener('click', () => air.take('single'));
-    airButtons.appendChild(singleBtn);
-
-    const doubleBtn = document.createElement('button');
-    doubleBtn.type = 'button';
-    doubleBtn.className = 'short-double-air-btn';
-    doubleBtn.textContent = 'AIRE DOBLE';
-    doubleBtn.classList.toggle('active', currentMode === 'double');
-    doubleBtn.addEventListener('click', () => air.take('double'));
-    airButtons.appendChild(doubleBtn);
-
-    airSection.appendChild(airButtons);
-    root.appendChild(airSection);
   }
 
   render();

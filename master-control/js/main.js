@@ -19,16 +19,14 @@ import { renderFichaJugadorPanel } from './ficha-jugador-panel.js';
 import { renderCronogramaHoyPanel } from './cronograma-hoy-panel.js';
 import { renderResultadosParcialesPanel } from './resultados-parciales-panel.js';
 import { renderHistorialPanel } from './historial-panel.js';
-import { renderZocaloCompuestoEquiposPanel } from './zocalo-compuesto-equipos-panel.js';
-import { renderZocaloCompuestoLogoPanel } from './zocalo-compuesto-logo-panel.js';
+import { renderZocaloCompuestoPanel } from './zocalo-compuesto-panel.js';
 import { renderZocaloSponsorsPanel } from './zocalo-sponsors-panel.js';
 import { renderCompositionControl } from './composition-control.js';
 import { renderPresetsControl, savePresetEntry } from './presets-helper.js';
 import { renderAbreviaturasPanel } from './abreviaturas-panel.js';
-import { renderPlacaLInfoPanel } from './placa-l-info-panel.js';
+import { renderJugadoresPanel } from './jugadores-panel.js';
 import { renderZocaloEscudosPanel } from './zocalo-escudos-panel.js';
 import { renderPenalesPanel } from './penales-panel.js';
-import { renderTextCorrection } from './text-correction-panel.js';
 import { updateLocalTeamCatalog, teamName } from '../../shared/teams.js';
 import { listThemes, isThemeReady, getTheme, getModuleAssetStatus, DEFAULT_THEME_ID, ARGENTINA_STREAMERS_THEME_ID } from '../../shared/themes.js';
 import { ADJUST_REGISTRY } from '../../shared/adjust-registry.js';
@@ -206,6 +204,12 @@ for (const id of MODULE_IDS) {
   serverState[id] = { status: MODULE_STATUS.OUT, data: cloneDefaults(id) };
 }
 serverState['abreviaturas'] = { status: MODULE_STATUS.OUT, data: {} };
+// "jugadoresAdmin" (BLOQUE 3, 2026-09-09): pseudo-módulo de administración
+// de planteles, mismo criterio que "abreviaturas" -- nunca sale a Program,
+// no tiene TAKE/OUT/ACTUALIZAR, no vive en shared/modules.js ni en el
+// sistema de draft/autosave (lee/escribe directo contra /api/planteles/,
+// ver jugadores-panel.js).
+serverState['jugadoresAdmin'] = { status: MODULE_STATUS.OUT, data: {} };
 
 // Orden de categorias en el panel (broadcast: lo mas usado en vivo primero).
 // Orden pedido explicitamente: Mosca arriba de todo, Marcador justo
@@ -236,6 +240,14 @@ const MARCADOR_SUBSECTIONS = [
 const MARCADOR_SUBSECTION_IDS = new Set(MARCADOR_SUBSECTIONS.map((s) => s.id));
 let lastMarcadorSubId = 'scoreboard';
 
+// "ALWAYS_LIVE_MODULE_IDS" (2026-09-10, pedido explicito del usuario:
+// "VAR CHEQUEO... que se actualice en vivo apenas lo cambio" / "REPLAY...
+// sacale la logica de ACTUALIZAR") -- mismo mecanismo que ya usan MARCADOR
+// y FORMACIÓN (ver "sendMarcadorSubsectionLive" mas abajo), scoped
+// puntualmente a estos 2 modulos -- "no convertir globalmente todo a
+// live-edit" sigue siendo la regla.
+const ALWAYS_LIVE_MODULE_IDS = new Set(['varCheck', 'replay']);
+
 // "GOL ya no es un modulo operable a mano" (2026-08-15, pedido explicito
 // del usuario): se saca de la navegacion (ver buildTabs) pero sigue
 // existiendo como modulo real del servidor -- lo dispara unicamente
@@ -244,7 +256,13 @@ let lastMarcadorSubId = 'scoreboard';
 // -- ver shared/modules.js): quedan registrados intactos (mismo id, mismo
 // renderer, mismos datos ya persistidos) para no perder presets/datos
 // viejos, pero sin tab propia, mismo patron que "gol".
-const HIDDEN_FROM_NAV_IDS = new Set(['gol', 'zocaloFinal', 'zocaloFinalDiv']);
+// "zocaloCompuestoLogo" (2026-09-10, unificado en "zocaloCompuestoEquipos"
+// -- pedido explicito del usuario: "un solo módulo" con selector de tipo):
+// mismo criterio exacto, queda registrado solo para no perder datos ya
+// persistidos, oculto de toda navegacion (antes solo se ocultaba para GLA,
+// ver GLA_HIDDEN_MODULES mas abajo -- ahora se oculta siempre, para
+// cualquier theme).
+const HIDDEN_FROM_NAV_IDS = new Set(['gol', 'zocaloFinal', 'zocaloFinalDiv', 'zocaloCompuestoLogo']);
 
 // VAR: textos predefinidos para "Texto Motivo" (2026-08-15, pedido
 // explicito del usuario). Las claves matchean los "id" de las opciones de
@@ -303,7 +321,7 @@ const stopAllBtn = document.getElementById('btn-stop-all');
 // mandando el draft equivocado.
 const saveTimers = {};
 function scheduleAutoSave(moduleId) {
-  if (moduleId === 'abreviaturas') return;
+  if (moduleId === 'abreviaturas' || moduleId === 'jugadoresAdmin') return;
   clearTimeout(saveTimers[moduleId]);
   // 350ms -> 80ms (2026-08-19, auditoría de AJUSTES VISUALES pedida por el
   // usuario): con 350ms, mantener apretada una flecha de posición (que ya
@@ -323,7 +341,7 @@ function scheduleAutoSave(moduleId) {
 }
 function flushPendingSaves() {
   for (const moduleId of Object.keys(saveTimers)) {
-    if (moduleId === 'abreviaturas') continue;
+    if (moduleId === 'abreviaturas' || moduleId === 'jugadoresAdmin') continue;
     clearTimeout(saveTimers[moduleId]);
     delete saveTimers[moduleId];
     ws.send({ type: WS_MSG.UPDATE, moduleId, data: draft[moduleId], isAutoSave: true });
@@ -534,11 +552,43 @@ function fireNextGolAnimation() {
   ws.send({ type: WS_MSG.TAKE, moduleId: 'gol', data: {} });
 }
 
+// "sendScoreboardLive" (BLOQUE 2, 2026-09-09, pedido explicito del
+// usuario: "todo el Marcador debe operarse LIVE... no depender de
+// ACTUALIZAR"): unico punto de envio para CUALQUIER cambio de contenido
+// del Marcador (goles, equipos, colores, sponsor) -- "isExplicitUpdate:
+// true" es la misma señal que ya usaba "scoreGoal" desde antes de este
+// bloque (ver "applyModuleState" en program/js/main.js: un UPDATE con
+// esta marca se aplica de inmediato aunque el modulo ya este al aire, en
+// vez de quedar congelado esperando Take/ACTUALIZAR). Manda el objeto
+// COMPLETO de "draft.scoreboard" (no un patch parcial) para que equipo +
+// color + escudo lleguen siempre en el MISMO mensaje -- evita la mezcla
+// temporal equipo viejo/nombre nuevo que pedia evitar el usuario.
+function sendScoreboardLive() {
+  ws.send({ type: WS_MSG.UPDATE, moduleId: 'scoreboard', data: draft.scoreboard, isExplicitUpdate: true });
+}
+
+// "sendMarcadorSubsectionLive" (2026-09-10, pedido explicito del usuario:
+// "todas las subsecciones de MARCADOR deben ser LIVE, no depender de
+// ACTUALIZAR") -- mismo patron exacto que "sendScoreboardLive" (arriba,
+// BLOQUE 2, ya probado para MARCADOR PRINCIPAL), generalizado a
+// CUALQUIERA de las otras 4 subsecciones agrupadas (ver
+// MARCADOR_SUBSECTION_IDS): manda el draft COMPLETO del modulo con
+// "isExplicitUpdate:true" -- la misma señal que ya usa el boton ACTUALIZAR
+// de siempre -- asi que Program lo aplica de inmediato aunque el modulo ya
+// este al aire (ver "applyModuleState" en program/js/main.js), sin
+// necesidad de que el operador confirme nada. A proposito NO se usa fuera
+// de MARCADOR: el resto de los modulos de LIVE GRAPHICS sigue con
+// "scheduleAutoSave" + ACTUALIZAR de siempre (pedido explicito: "no
+// convertir globalmente todo a live-edit").
+function sendMarcadorSubsectionLive(moduleId) {
+  ws.send({ type: WS_MSG.UPDATE, moduleId, data: draft[moduleId], isExplicitUpdate: true });
+}
+
 function scoreGoal(side) {
   const key = side === 'A' ? 'scoreA' : 'scoreB';
   const current = parseInt(draft.scoreboard[key], 10) || 0;
   draft.scoreboard[key] = String(current + 1);
-  ws.send({ type: WS_MSG.UPDATE, moduleId: 'scoreboard', data: draft.scoreboard, isExplicitUpdate: true });
+  sendScoreboardLive();
   if (activeId === 'scoreboard') renderPanel();
   golQueue.push(side);
   fireNextGolAnimation();
@@ -548,7 +598,7 @@ function undoGoal(side) {
   const key = side === 'A' ? 'scoreA' : 'scoreB';
   const current = parseInt(draft.scoreboard[key], 10) || 0;
   draft.scoreboard[key] = String(Math.max(0, current - 1));
-  ws.send({ type: WS_MSG.UPDATE, moduleId: 'scoreboard', data: draft.scoreboard, isExplicitUpdate: true });
+  sendScoreboardLive();
   if (activeId === 'scoreboard') renderPanel();
 }
 
@@ -559,8 +609,66 @@ function undoGoal(side) {
 function resetGoles() {
   draft.scoreboard.scoreA = '0';
   draft.scoreboard.scoreB = '0';
-  ws.send({ type: WS_MSG.UPDATE, moduleId: 'scoreboard', data: draft.scoreboard, isExplicitUpdate: true });
+  sendScoreboardLive();
   if (activeId === 'scoreboard') renderPanel();
+}
+
+// "RESET LOCAL"/"RESET VISITANTE" (BLOQUE 2, 2026-09-09, pedido explicito
+// del usuario): mismo criterio que "resetGoles" de arriba (sin animacion
+// de GOL, un unico lado a la vez, sin tocar equipos/colores/reloj/periodo).
+function resetGolesLocal() {
+  draft.scoreboard.scoreA = '0';
+  sendScoreboardLive();
+  if (activeId === 'scoreboard') renderPanel();
+}
+
+function resetGolesVisitante() {
+  draft.scoreboard.scoreB = '0';
+  sendScoreboardLive();
+  if (activeId === 'scoreboard') renderPanel();
+}
+
+// ORDEN PERSONALIZADO DE LA NAVEGACIÓN (2026-09-10, pedido explicito del
+// usuario: "agregale a la lista de módulos la misma lógica del cosito a la
+// izquierda para mover y cambiar de posición el orden de los módulos a mi
+// comodidad" -- mismo patron de drag & drop con handle que Formación, ver
+// formation-list-panel.js). Es una preferencia de ESTE operador/esta
+// maquina (como el orden de las pestañas de un navegador), no contenido de
+// transmision -- se guarda en localStorage, nunca en el servidor/estado
+// compartido, para no mezclarla con nada que viaje a Program ni con los
+// perfiles de partido. Estructura: { [categoria]: [moduleId en el orden
+// elegido, ...] } -- una categoria sin entrada guardada usa el orden
+// natural de siempre (MODULE_IDS).
+const NAV_ORDER_STORAGE_KEY = 'gla-nav-order';
+function loadNavOrder() {
+  try {
+    return JSON.parse(localStorage.getItem(NAV_ORDER_STORAGE_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+function saveNavOrder(order) {
+  try {
+    localStorage.setItem(NAV_ORDER_STORAGE_KEY, JSON.stringify(order));
+  } catch {
+    // Sin localStorage disponible (modo privado, cuota agotada): el orden
+    // personalizado simplemente no persiste, la navegacion sigue operable
+    // con el orden de esta sesion.
+  }
+}
+// Aplica el orden guardado para una categoria puntual: los ids guardados
+// van primero (en ese orden, salteando cualquiera que ya no exista en esta
+// sesion/theme), el resto de "ids" (modulos nuevos o de otro theme) se
+// agrega despues en su orden natural -- nunca se pierde un modulo real por
+// no estar en un orden guardado viejo.
+function applyNavOrder(cat, ids) {
+  const saved = loadNavOrder()[cat];
+  if (!saved || !saved.length) return ids;
+  const idsSet = new Set(ids);
+  const ordered = saved.filter((id) => idsSet.has(id));
+  const orderedSet = new Set(ordered);
+  for (const id of ids) if (!orderedSet.has(id)) ordered.push(id);
+  return ordered;
 }
 
 function buildTabs() {
@@ -582,25 +690,28 @@ function buildTabs() {
   const ARGENTINA_STREAMERS_HIDDEN_MODULES = new Set([
     'sideTable', 'posiciones', 'posicionesTorneo',
     'grupos', 'zocaloCompuesto',
-    // "placaLInfo" (2026-09-05, pedido explicito del usuario: "sacar Placa
-    // L Info de Argentina Streamers por completo, sin romper GLA que sigue
-    // dependiendo de el") -- mismo mecanismo ya usado arriba, el modulo
-    // sigue registrado igual para los dos themes (shared/modules.js sin
-    // tocar), solo la navegacion de Argentina Streamers deja de mostrarlo.
-    'placaLInfo',
   ]);
   // "fichaJugador" (2026-09-02, pedido explicito del usuario: "GLA debe
   // conservar exactamente sus modulos, navegacion y comportamiento") --
   // GLA no tiene pedido ningun uso de este modulo, asi que no le agrega
   // una tab nueva a su navegacion (el modulo sigue registrado igual para
   // los dos themes, solo la navegacion lo oculta para GLA).
-  // "zocaloCompuestoEquipos"/"zocaloCompuestoLogo" (2026-09-02, regresion
-  // real encontrada y corregida durante esta auditoria): faltaban aca --
-  // GLA veia 3 zocalos compuestos en su navegacion (el suyo + los 2
-  // exclusivos de Argentina Streamers) en vez de solo el suyo.
+  // "zocaloCompuestoEquipos" (2026-09-02, regresion real encontrada y
+  // corregida durante esta auditoria; unificado con "zocaloCompuestoLogo"
+  // 2026-09-10, ver HIDDEN_FROM_NAV_IDS para ese): exclusivo de Argentina
+  // Streamers, GLA no lo ve.
+  // "cronogramaHoy"/"resultadosParciales"/"historial" (2026-09-24, pedido
+  // urgente del usuario: "necesito BRACKETS disponible en GLA hoy") --
+  // sacados de aca. Estaban ocultos para GLA desde que se integraron
+  // (2026-09-02, ver comentario de ARGENTINA_STREAMERS_HIDDEN_MODULES mas
+  // arriba), pero GLA los necesita: son modulos reales y funcionales
+  // (renderer + panel ya existian y cargan sin error), no exclusivos de
+  // Argentina Streamers -- no hay ninguna razon tecnica para que GLA no
+  // los vea. Categoria 'Brackets' (ver CATEGORY_ORDER arriba) vuelve a
+  // aparecer en la navegacion de GLA con estos 3 modulos.
   const GLA_HIDDEN_MODULES = new Set([
-    'cronogramaHoy', 'resultadosParciales', 'historial', 'fichaJugador',
-    'zocaloCompuestoEquipos', 'zocaloCompuestoLogo', 'sitioWebPromoL',
+    'fichaJugador',
+    'zocaloCompuestoEquipos', 'sitioWebPromoL',
   ]);
 
   const byCategory = new Map();
@@ -618,6 +729,7 @@ function buildTabs() {
 
   if (!byCategory.has('General')) byCategory.set('General', []);
   byCategory.get('General').push('abreviaturas');
+  byCategory.get('General').push('jugadoresAdmin');
 
   const orderedCategories = [
     ...CATEGORY_ORDER.filter((c) => byCategory.has(c)),
@@ -644,14 +756,67 @@ function buildTabs() {
       tabBar.appendChild(groupTab);
     }
 
-    for (const id of byCategory.get(cat)) {
+    for (const id of applyNavOrder(cat, byCategory.get(cat))) {
+      // "tab-row" + "tab-drag-handle" (2026-09-10, pedido explicito del
+      // usuario, mismo patron de Formación -- ver formation-list-panel.js
+      // "formation-drag-handle"): el handle es el UNICO elemento
+      // "draggable", nunca la fila entera, para no interferir con el click
+      // normal sobre el boton de la tab.
+      const row = document.createElement('div');
+      row.className = 'tab-row';
+      row.dataset.id = id;
+      row.dataset.category = cat;
+
+      const handle = document.createElement('span');
+      handle.className = 'tab-drag-handle';
+      handle.textContent = '☰';
+      handle.title = 'Arrastrar para reordenar';
+      handle.draggable = true;
+      row.appendChild(handle);
+
       const tab = document.createElement('button');
       tab.type = 'button';
       tab.className = 'tab';
       tab.dataset.id = id;
-      tab.textContent = id === 'abreviaturas' ? 'Abreviaturas' : moduleDisplayLabel(id);
+      // "Planteles" (no "Jugadores") en la tab -- GLA ya tiene un modulo
+      // real llamado "Jugadores" (tabla de participaciones, categoria
+      // TABLAS); el panel nuevo se identifica igual por su titulo interno
+      // ("JUGADORES — Administración de planteles", ver jugadores-panel.js)
+      // pero la tab evita la ambiguedad de dos tabs con el mismo texto.
+      tab.textContent = id === 'abreviaturas' ? 'Abreviaturas' : id === 'jugadoresAdmin' ? 'Planteles' : moduleDisplayLabel(id);
       tab.addEventListener('click', () => selectModule(id));
-      tabBar.appendChild(tab);
+      row.appendChild(tab);
+
+      handle.addEventListener('dragstart', (e) => {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', id);
+        row.classList.add('is-dragging');
+      });
+      handle.addEventListener('dragend', () => row.classList.remove('is-dragging'));
+      row.addEventListener('dragover', (e) => {
+        // Solo reordena DENTRO de la misma categoria -- arrastrar entre
+        // categorias distintas no tiene un "orden" compartido que tenga
+        // sentido guardar.
+        if (e.dataTransfer.types.includes('text/plain')) e.preventDefault();
+      });
+      row.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const fromId = e.dataTransfer.getData('text/plain');
+        if (!fromId || fromId === id) return;
+        const fromRow = tabBar.querySelector(`.tab-row[data-id="${CSS.escape(fromId)}"]`);
+        if (!fromRow || fromRow.dataset.category !== cat) return;
+        const currentIds = [...tabBar.querySelectorAll(`.tab-row[data-category="${CSS.escape(cat)}"]`)].map((r) => r.dataset.id);
+        const fromIndex = currentIds.indexOf(fromId);
+        const toIndex = currentIds.indexOf(id);
+        if (fromIndex === -1 || toIndex === -1) return;
+        currentIds.splice(toIndex, 0, currentIds.splice(fromIndex, 1)[0]);
+        const order = loadNavOrder();
+        order[cat] = currentIds;
+        saveNavOrder(order);
+        buildTabs();
+      });
+
+      tabBar.appendChild(row);
     }
   }
 
@@ -958,6 +1123,13 @@ function renderPanel() {
   mcPanel.scrollTop = 0;
 
   if (activeId === 'abreviaturas') {
+    // "marcadorSubnav" (bug preexistente encontrado durante BLOQUE 3, se
+    // corrige de paso por ser identico al que afecta a "jugadoresAdmin"
+    // mas abajo): si el operador viene de MARCADOR/alguna de sus
+    // subsecciones, el sub-nav quedaba visible encima de este panel porque
+    // el bloque que lo oculta (mas abajo en esta funcion) nunca se
+    // alcanzaba con un "return" temprano.
+    if (marcadorSubnav) marcadorSubnav.style.display = 'none';
     panelTitle.textContent = 'Abreviaturas Generales de Equipos';
     if (panelAssetBadge) panelAssetBadge.hidden = true;
     fieldsContainer.innerHTML = '';
@@ -971,9 +1143,40 @@ function renderPanel() {
     return;
   }
 
+  if (activeId === 'jugadoresAdmin') {
+    if (marcadorSubnav) marcadorSubnav.style.display = 'none';
+    panelTitle.textContent = 'Jugadores — Administración de planteles';
+    if (panelAssetBadge) panelAssetBadge.hidden = true;
+    fieldsContainer.innerHTML = '';
+    extraContainer.innerHTML = '';
+    compositionContainer.innerHTML = '';
+    takeBtn.style.display = 'none';
+    updateBtn.style.display = 'none';
+    outBtn.style.display = 'none';
+    panelCleanup = renderJugadoresPanel(extraContainer, draft.scoreboard);
+    updatePanelStatus();
+    return;
+  }
+
   takeBtn.style.display = '';
   updateBtn.style.display = '';
   outBtn.style.display = '';
+  // "ACTUALIZAR" eliminado de TODAS las subsecciones de MARCADOR
+  // (BLOQUE 2 para "scoreboard"; ampliado 2026-09-10 al resto -- pedido
+  // explicito del usuario: "todas las subsecciones de MARCADOR deben ser
+  // LIVE, no solo el Marcador Principal"). Confirmado que TODO lo que antes
+  // dependia de este boton en estas 5 subsecciones ya opera LIVE sin el
+  // (ver "sendMarcadorSubsectionLive" mas abajo) -- queda redundante solo
+  // aca. TOMAR AL AIRE/SACAR DEL AIRE siguen intactos, y el resto de los
+  // modulos de LIVE GRAPHICS (fuera de MARCADOR) conserva ACTUALIZAR sin
+  // cambios, a proposito -- "no convertir globalmente todo a live-edit".
+  // "formacionEquipos" (2026-09-10, pedido explicito del usuario, mismo
+  // criterio que MARCADOR): ACTUALIZAR queda redundante ahi tambien, ver
+  // "sendFormacionLive" mas abajo. "ALWAYS_LIVE_MODULE_IDS" (mismo dia,
+  // ronda de correcciones siguiente): VAR Chequeo y Replay, mismo criterio.
+  if (MARCADOR_SUBSECTION_IDS.has(activeId) || activeId === 'formacionEquipos' || ALWAYS_LIVE_MODULE_IDS.has(activeId)) {
+    updateBtn.style.display = 'none';
+  }
 
   const mod = MODULES[activeId];
   const idForThisRender = activeId;
@@ -1092,9 +1295,17 @@ function renderPanel() {
   const isZocaloCompuesto = activeId === 'zocaloCompuesto';
   let renderedTipo = isZocaloCompuesto ? draft.zocaloCompuesto.tipo : null;
   renderFields(fieldsContainer, fields, draft[activeId], () => {
-    scheduleAutoSave(idForThisRender);
     if (isRosterEvent && renderedTeamSide !== draft[activeId].equipo) renderPanel();
     if (isScoreboard) {
+      // BLOQUE 2 (2026-09-09, pedido explicito del usuario: "Seleccionar un
+      // nuevo equipo debe actualizar inmediatamente nombre/abreviatura/
+      // escudo... no quiero que quede una mezcla temporal entre equipo
+      // viejo/nuevo"): "sendScoreboardLive()" reemplaza a "scheduleAutoSave"
+      // para TODOS los campos genericos del Marcador (equipos, colores,
+      // sponsor) -- un unico mensaje "isExplicitUpdate" con el draft YA
+      // actualizado (equipo + color recalculado, mas abajo, en el MISMO
+      // tick sincronico) en vez de dos autosaves separados que podian
+      // llegar a Program en momentos distintos.
       let colorChanged = false;
       if (renderedTeamA !== draft.scoreboard.teamA) {
         draft.scoreboard.teamAColor = draft.scoreboard.teamColorAssignments?.[draft.scoreboard.teamA] || 'gris';
@@ -1104,22 +1315,33 @@ function renderPanel() {
         draft.scoreboard.teamBColor = draft.scoreboard.teamColorAssignments?.[draft.scoreboard.teamB] || 'gris';
         colorChanged = true;
       }
-      if (colorChanged) {
-        scheduleAutoSave('scoreboard');
-        renderPanel();
+      sendScoreboardLive();
+      if (colorChanged) renderPanel();
+    } else {
+      // "motivoPreset" (2026-08-15, pedido explicito del usuario): elegir
+      // uno de los 3 presets autocompleta "motivo" -- PERSONALIZADO deja el
+      // texto tal cual esta para que el operador lo tipee a mano. Mismo
+      // patron que el auto-completado de nombre de equipo en Tarjetas/
+      // Cambios arriba. Se resuelve ANTES de mandar el live/autosave de
+      // abajo (no despues, como quedaba antes de volver "varCheck" LIVE) --
+      // sin este orden, el mensaje en vivo salia con el "motivo" viejo (sin
+      // autocompletar todavia) y el texto correcto recien llegaba a Program
+      // en la proxima edicion del operador.
+      let motivoPresetChanged = false;
+      if (isVarCheck && renderedMotivoPreset !== draft.varCheck.motivoPreset) {
+        if (MOTIVO_PRESET_TEXT[draft.varCheck.motivoPreset]) {
+          draft.varCheck.motivo = MOTIVO_PRESET_TEXT[draft.varCheck.motivoPreset];
+        }
+        motivoPresetChanged = true;
       }
+      if (MARCADOR_SUBSECTION_IDS.has(idForThisRender) || ALWAYS_LIVE_MODULE_IDS.has(idForThisRender)) {
+        sendMarcadorSubsectionLive(idForThisRender);
+      } else {
+        scheduleAutoSave(idForThisRender);
+      }
+      if (motivoPresetChanged) renderPanel();
     }
     if (isZocaloCompuesto && renderedTipo !== draft.zocaloCompuesto.tipo) renderPanel();
-    // "motivoPreset" (2026-08-15, pedido explicito del usuario): elegir uno
-    // de los 3 presets autocompleta "motivo" -- PERSONALIZADO deja el texto
-    // tal cual esta para que el operador lo tipee a mano. Mismo patron que
-    // el auto-completado de nombre de equipo en Tarjetas/Cambios arriba.
-    if (isVarCheck && renderedMotivoPreset !== draft.varCheck.motivoPreset) {
-      if (MOTIVO_PRESET_TEXT[draft.varCheck.motivoPreset]) {
-        draft.varCheck.motivo = MOTIVO_PRESET_TEXT[draft.varCheck.motivoPreset];
-      }
-      renderPanel();
-    }
   }, (() => {
     // Evita duplicar en la lista generica de campos el control de ajuste
     // de un campo de texto que YA vive en el acordeon "AJUSTE DE
@@ -1143,10 +1365,25 @@ function renderPanel() {
   if (activeId === 'scoreboard') {
     panelCleanup = renderScoreboardClockPanel(extraContainer, draft[activeId], (patch) => {
       ws.send({ type: WS_MSG.UPDATE, moduleId: activeId, data: patch });
-    }, { onGoalPlus: scoreGoal, onGoalMinus: undoGoal, onResetGoles: resetGoles });
+    }, {
+      onGoalPlus: scoreGoal,
+      onGoalMinus: undoGoal,
+      onResetGoles: resetGoles,
+      onResetLocal: resetGolesLocal,
+      onResetVisitante: resetGolesVisitante,
+      golData: draft.gol,
+      golOnDirty: () => scheduleAutoSave('gol'),
+      golSaveOptions: buildSaveOptions('gol'),
+    });
   } else if (activeId === 'formacionEquipos') {
+    // "sendFormacionLive" (2026-09-10, pedido explicito del usuario: "en
+    // FORMACIÓN tampoco quiero depender de ACTUALIZAR... si está al aire,
+    // los cambios deben reflejarse inmediatamente"), mismo patron exacto
+    // que "sendMarcadorSubsectionLive" -- manda el draft completo con
+    // "isExplicitUpdate:true" en vez de esperar el debounce+freeze de
+    // "scheduleAutoSave". Scoped a este unico modulo (no toca el resto).
     panelCleanup = renderFormationListPanel(extraContainer, draft[activeId], draft.scoreboard, () => {
-      scheduleAutoSave(idForThisRender);
+      ws.send({ type: WS_MSG.UPDATE, moduleId: idForThisRender, data: draft[idForThisRender], isExplicitUpdate: true });
     }, {
       transitioning: formationTransitioning,
       pendingSide: formationPendingSide,
@@ -1154,12 +1391,6 @@ function renderPanel() {
       saveOptions: buildSaveOptions(activeId),
     });
   } else if (activeId === 'shortSimple') {
-    renderTextCorrection(extraContainer, {
-      getMain: () => draft.shortSimple.text,
-      setMain: (value) => { draft.shortSimple.text = value; renderPanel(); },
-      hasSub: false,
-      onDirty: () => scheduleAutoSave('shortSimple'),
-    });
     renderPresetsControl(extraContainer, draft.shortSimple, {
       presetKey: 'textPresets',
       title: 'PRESETS DE TEXTO (ZÓCALO CORTO SIMPLE)',
@@ -1175,21 +1406,7 @@ function renderPanel() {
   } else if (activeId === 'shortDouble') {
     panelCleanup = renderShortDoublePanel(extraContainer, draft[activeId], () => {
       scheduleAutoSave(idForThisRender);
-    }, {
-      isOn: () => serverState.shortDouble.status === MODULE_STATUS.ON,
-      out: () => ws.send({ type: WS_MSG.OUT, moduleId: 'shortDouble' }),
-      take: (mode) => {
-        draft.shortDouble.airMode = mode;
-        ws.send({ type: WS_MSG.TAKE, moduleId: 'shortDouble', data: draft.shortDouble });
-      },
     }, buildSaveOptions('shortDouble'));
-    renderTextCorrection(extraContainer, {
-      getMain: () => draft.shortDouble.name,
-      getSub: () => draft.shortDouble.role,
-      setMain: (value) => { draft.shortDouble.name = value; renderPanel(); },
-      setSub: (value) => { draft.shortDouble.role = value; renderPanel(); },
-      onDirty: () => scheduleAutoSave('shortDouble'),
-    });
     renderPresetsControl(extraContainer, draft.shortDouble, {
       presetKey: 'textPresets',
       title: 'PRESETS DE TEXTO (ZÓCALO CORTO DOBLE)',
@@ -1206,13 +1423,6 @@ function renderPanel() {
       onDirty: () => scheduleAutoSave('shortDouble'),
     });
   } else if (activeId === 'longDouble') {
-    renderTextCorrection(extraContainer, {
-      getMain: () => draft.longDouble.line1,
-      getSub: () => draft.longDouble.line2,
-      setMain: (value) => { draft.longDouble.line1 = value; renderPanel(); },
-      setSub: (value) => { draft.longDouble.line2 = value; renderPanel(); },
-      onDirty: () => scheduleAutoSave('longDouble'),
-    });
     renderPresetsControl(extraContainer, draft.longDouble, {
       presetKey: 'textPresets',
       title: 'PRESETS DE TEXTO (ZÓCALO LARGO DOBLE)',
@@ -1271,13 +1481,6 @@ function renderPanel() {
     if (draft.zocaloCompuesto.tipo !== 'logo') {
       renderZocaloEscudosPanel(extraContainer, draft.zocaloCompuesto, () => scheduleAutoSave('zocaloCompuesto'));
     }
-    renderTextCorrection(extraContainer, {
-      getMain: () => draft.zocaloCompuesto.texto1,
-      getSub: () => draft.zocaloCompuesto.texto2,
-      setMain: (value) => { draft.zocaloCompuesto.texto1 = value; renderPanel(); },
-      setSub: (value) => { draft.zocaloCompuesto.texto2 = value; renderPanel(); },
-      onDirty: () => scheduleAutoSave('zocaloCompuesto'),
-    });
     renderPresetsControl(extraContainer, draft.zocaloCompuesto, {
       presetKey: 'textPresets',
       title: 'PRESETS DE TEXTO (ZÓCALO COMPUESTO)',
@@ -1320,20 +1523,6 @@ function renderPanel() {
       },
       onDirty: () => scheduleAutoSave('vsResultado'),
     });
-  } else if (activeId === 'placaLInfo') {
-    const generatorHost = document.createElement('div');
-    const placaEditorHost = document.createElement('div');
-    extraContainer.append(generatorHost, placaEditorHost);
-    // Placa L Info tiene 4 zócalos independientes -- CORRECCIÓN DE TEXTOS
-    // opera sobre el ZÓCALO 1 (mismo criterio que ya usaba el generador
-    // eliminado; los otros 3 se corrigen editándolos directo, texto corto).
-    renderTextCorrection(generatorHost, {
-      getMain: () => draft.placaLInfo.zocalo1?.text || '',
-      setMain: (value) => { if (draft.placaLInfo.zocalo1) draft.placaLInfo.zocalo1.text = value; renderPanel(); },
-      hasSub: false,
-      onDirty: () => scheduleAutoSave('placaLInfo'),
-    });
-    panelCleanup = renderPlacaLInfoPanel(placaEditorHost, draft[activeId], () => scheduleAutoSave(idForThisRender), buildSaveOptions(activeId));
   } else if (activeId === 'marcadorPenales') {
     renderPenalesPanel(extraContainer, draft[activeId], () => scheduleAutoSave(idForThisRender));
   } else if (activeId === 'grupos') {
@@ -1374,7 +1563,7 @@ function renderPanel() {
       scheduleAutoSave(idForThisRender);
     }, buildSaveOptions(activeId), argentinaCtx);
   } else if (activeId === 'fichaJugador') {
-    panelCleanup = renderFichaJugadorPanel(extraContainer, draft[activeId], () => {
+    panelCleanup = renderFichaJugadorPanel(extraContainer, draft[activeId], draft.scoreboard, () => {
       scheduleAutoSave(idForThisRender);
     }, buildSaveOptions(activeId));
   } else if (activeId === 'cronogramaHoy') {
@@ -1390,11 +1579,7 @@ function renderPanel() {
       scheduleAutoSave(idForThisRender);
     }, buildSaveOptions(activeId)) || (() => {});
   } else if (activeId === 'zocaloCompuestoEquipos') {
-    panelCleanup = renderZocaloCompuestoEquiposPanel(extraContainer, draft[activeId], draft.scoreboard, () => {
-      scheduleAutoSave(idForThisRender);
-    }, buildSaveOptions(activeId));
-  } else if (activeId === 'zocaloCompuestoLogo') {
-    panelCleanup = renderZocaloCompuestoLogoPanel(extraContainer, draft[activeId], () => {
+    panelCleanup = renderZocaloCompuestoPanel(extraContainer, draft[activeId], draft.scoreboard, () => {
       scheduleAutoSave(idForThisRender);
     }, buildSaveOptions(activeId));
   } else if (mod.autoRunClock) {
@@ -1429,7 +1614,7 @@ function renderPanel() {
 }
 
 function updatePanelStatus() {
-  if (activeId === 'abreviaturas') {
+  if (activeId === 'abreviaturas' || activeId === 'jugadoresAdmin') {
     panelStatus.textContent = 'CONFIG';
     panelStatus.className = 'status-pill off';
     return;
@@ -1458,7 +1643,7 @@ const ws = connect({
       // SELECT (ver TEAM_OPTIONS en shared/modules.js) -- sin esto, elegir
       // ARGENTINA STREAMERS seguía mostrando el desplegable de equipos de
       // GLA hasta cambiar de tab y volver.
-      if (activeId === 'abreviaturas' || activeId === 'zocaloFinalDiv' || activeId === 'zocaloCompuesto' || activeId === 'scoreboard') {
+      if (activeId === 'abreviaturas' || activeId === 'jugadoresAdmin' || activeId === 'zocaloFinalDiv' || activeId === 'zocaloCompuesto' || activeId === 'scoreboard') {
         renderPanel();
       }
     } else if (msg.type === WS_MSG.THEME_UPDATE) {
@@ -1477,10 +1662,18 @@ const ws = connect({
       // se pierde nada persistido).
       const isThemeSwitch = msg.theme && draftThemeId !== null && msg.theme !== draftThemeId;
       if (msg.theme) draftThemeId = msg.theme;
+      // "forceDraftResync" (auditoria final de perfiles, 2026-09-09): lo
+      // manda el servidor tras APLICAR PERFIL -- un reemplazo total e
+      // intencional del estado, igual que un cambio de theme -- para que el
+      // panel abierto muestre YA los valores del perfil recien aplicado en
+      // vez de la posicion vieja que tenia este "draft" (ver server/
+      // index.js, handler de APPLY_MATCH_PROFILE, para el bug que esto
+      // corrige: sin este flag el operador podia pisar el perfil recien
+      // aplicado con su propio dato viejo en el proximo autoguardado).
       for (const id of MODULE_IDS) {
         if (msg.state[id]) {
           serverState[id] = msg.state[id];
-          if (!snapshotLoaded || isThemeSwitch) draft[id] = JSON.parse(JSON.stringify(msg.state[id].data));
+          if (!snapshotLoaded || isThemeSwitch || msg.forceDraftResync) draft[id] = JSON.parse(JSON.stringify(msg.state[id].data));
         } else {
           console.warn(`[GLA] Módulo faltante en el snapshot del servidor: ${id}. Inicializando fallback local.`);
           serverState[id] = { status: MODULE_STATUS.OUT, data: cloneDefaults(id) };
@@ -1635,10 +1828,32 @@ function sendArgentinaPerformanceSelection(type) {
 // definicion central unica que se usa para decidir la exclusion. No
 // incluye ningun modulo que no ocupe fisicamente esa misma zona (Marcador,
 // VAR, Zocalos, Formacion, etc. quedan afuera a proposito).
-const RIGHT_PANEL_EXCLUSIVE_MODULES = [
-  'goleadores', 'asistidores', 'jugadores',
-  'historial', 'cronogramaHoy', 'resultadosParciales', 'sitioWebPromoL',
-];
+//
+// POR THEME (2026-09-24, pedido explicito del usuario: "quiero esta MISMA
+// logica para el grupo derecho tipo L de GLA -- Grupos/Resultados/
+// Goleadores/Asistidores/Jugadores"). Hasta ahora esta exclusion SOLO
+// corria para Argentina Streamers ("isRightPanelExclusive" comparaba
+// "activeThemeId === ARGENTINA_STREAMERS_THEME_ID" a mano) -- ni un solo
+// modulo de GLA quedaba cubierto, aunque comparta exactamente la misma
+// zona fisica (goleadores/asistidores/jugadores ya estaban en la lista
+// vieja, pero la funcion los ignoraba por completo mientras el theme
+// activo fuera GLA). Un objeto por theme reemplaza esa comparacion
+// hardcodeada: cada theme declara SU propio grupo, sin pisarse entre si.
+// "grupos"/"sideTable" (Grupos/Resultados) son EXCLUSIVOS de GLA -- ni
+// siquiera son seleccionables desde la navegacion de Argentina Streamers
+// (ver ARGENTINA_STREAMERS_HIDDEN_MODULES mas abajo en este archivo), asi
+// que no tiene sentido que aparezcan en su lista. El grupo de Argentina
+// Streamers queda EXACTAMENTE igual que antes -- ninguno de sus 7 modulos
+// se toco.
+const RIGHT_PANEL_EXCLUSIVE_MODULES_BY_THEME = {
+  [ARGENTINA_STREAMERS_THEME_ID]: [
+    'goleadores', 'asistidores', 'jugadores',
+    'historial', 'cronogramaHoy', 'resultadosParciales', 'sitioWebPromoL',
+  ],
+  [DEFAULT_THEME_ID]: [
+    'grupos', 'sideTable', 'goleadores', 'asistidores', 'jugadores',
+  ],
+};
 // Mismo criterio ya usado (FORMATION_OUT_WAIT_MS/MARCADOR_ENTRETIEMPO_WAIT_MS,
 // mas arriba en este archivo): tiempo real medido para que termine la
 // salida completa de un modulo "sequencedReveal" (fundido de contenido +
@@ -1646,11 +1861,21 @@ const RIGHT_PANEL_EXCLUSIVE_MODULES = [
 // reutiliza la MISMA animacion de entrada/salida que cada modulo ya tiene
 // (pedido explicito: "no quiero una placa desaparece seca -> aparece otra
 // seca", "reutilizar la logica/transicion existente"), sin CSS/timer nuevo.
+// Valido para los dos grupos: "grupos"/"sideTable" (nuevos, GLA) tambien
+// son "sequencedReveal:true" (mismo perfil de salida que
+// historial/cronogramaHoy/resultadosParciales/sitioWebPromoL, que ya
+// usaban este mismo numero), y "goleadores"/"asistidores"/"jugadores" (sin
+// "sequencedReveal", salida mas corta) ya venian cubiertos de sobra por
+// este mismo valor -- no hace falta un numero distinto por theme.
 const RIGHT_PANEL_EXIT_WAIT_MS = 750;
 let rightPanelSwapTimer = null;
 
+function currentRightPanelGroup() {
+  return RIGHT_PANEL_EXCLUSIVE_MODULES_BY_THEME[activeThemeId] || [];
+}
+
 function isRightPanelExclusive(id) {
-  return activeThemeId === ARGENTINA_STREAMERS_THEME_ID && RIGHT_PANEL_EXCLUSIVE_MODULES.includes(id);
+  return currentRightPanelGroup().includes(id);
 }
 
 // Modulo del grupo que esta ON ahora mismo, distinto del que se esta por
@@ -1658,10 +1883,37 @@ function isRightPanelExclusive(id) {
 // invariante en cada TAKE). "serverState" es la unica fuente de verdad del
 // status real (lo que ya usa "updatePanelStatus" un poco mas arriba) -- no
 // se inventa un estado paralelo.
+//
+// "equivalentIds" (2026-09-24, bug real encontrado probando el grupo nuevo
+// de GLA): "goleadores"/"asistidores" en GLA son SIEMPRE el mismo par
+// combinado en una unica placa (ver "usesPerformancePairPlacaL" mas arriba
+// -- Tomar cualquiera de los dos ya manda TAKE a los dos). Sin este
+// chequeo, tomar "asistidores" mientras "goleadores" (su propio par) ya
+// esta al aire se detectaba a si mismo como "otro modulo bloqueando" y le
+// mandaba OUT innecesariamente -- microsegundos despues el propio
+// "sendPerformancePair" lo volvia a prender, pero de pura casualidad de
+// timing (dos TAKE/OUT del mismo par cruzandose) podia dejar la mitad del
+// par apagada. Cuando "id" es del par, su propio companero NUNCA cuenta
+// como bloqueador -- son la misma placa, no dos superpuestas.
 function otherRightPanelModuleOn(id) {
-  return RIGHT_PANEL_EXCLUSIVE_MODULES.find(
-    (other) => other !== id && serverState[other]?.status === MODULE_STATUS.ON
+  const equivalentIds = usesPerformancePairPlacaL(id) ? PERFORMANCE_PAIR_IDS : [id];
+  return currentRightPanelGroup().find(
+    (other) => !equivalentIds.includes(other) && serverState[other]?.status === MODULE_STATUS.ON
   );
+}
+
+// Saca del aire el modulo bloqueador detectado arriba. Si ese bloqueador
+// es parte del par Goleadores/Asistidores (2026-09-24, mismo caso que el
+// comentario de arriba), hay que sacar LOS DOS -- son una unica placa
+// fisica, sacar solo la mitad dejaria la otra mitad huerfana al aire
+// mientras entra el modulo nuevo. Mismo criterio que ya usa el boton
+// SACAR DEL AIRE manual para este mismo par, mas abajo en este archivo.
+function outRightPanelModule(blockerId) {
+  if (usesPerformancePairPlacaL(blockerId)) {
+    for (const pairId of PERFORMANCE_PAIR_IDS) ws.send({ type: WS_MSG.OUT, moduleId: pairId });
+  } else {
+    ws.send({ type: WS_MSG.OUT, moduleId: blockerId });
+  }
 }
 
 takeBtn.addEventListener('click', () => {
@@ -1697,7 +1949,7 @@ takeBtn.addEventListener('click', () => {
   }
   const blocker = isRightPanelExclusive(activeId) ? otherRightPanelModuleOn(activeId) : null;
   if (blocker) {
-    ws.send({ type: WS_MSG.OUT, moduleId: blocker });
+    outRightPanelModule(blocker);
     rightPanelSwapTimer = setTimeout(() => {
       rightPanelSwapTimer = null;
       doTake();

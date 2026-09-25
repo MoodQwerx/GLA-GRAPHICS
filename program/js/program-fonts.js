@@ -16,6 +16,24 @@ const THEME_FONTS = {
 
 const DEFAULT_FONT = THEME_FONTS.gla;
 
+// "GLA_SEGOE_BOLD" (2026-09-24, pedido explicito del usuario: "Zocalo
+// Largo Simple/Corto Simple/Corto Doble/Compuesto deben usar Segoe UI
+// Bold, exclusivamente en GLA"). Reutiliza el MISMO archivo .ttf ya
+// cargado para Argentina Streamers (assets/themes/argentina-streamers/
+// fonts/Segoe-UI-Bold.ttf, ver @font-face en program/css/theme.css) bajo
+// un nombre interno DISTINTO -- no se duplica el archivo (pedido
+// explicito: "no cambiar assets"), solo se declara una segunda vez con un
+// nombre propio para que este cambio quede conceptualmente separado de
+// "la fuente de Argentina Streamers" (que sigue siendo 100% independiente,
+// puede cambiar sin afectar esto y viceversa) aunque el byte a byte sea
+// igual hoy. "GLA_SEGOE_BOLD_FACE" es el nombre pelado (para precargar
+// con document.fonts.load, ver waitForProgramFonts) y
+// "GLA_SEGOE_BOLD_FAMILY" el stack completo pedido por el usuario (con
+// fallback a la Segoe UI del sistema operativo y despues Arial/sans-serif)
+// para usar en CSS/medicion de texto.
+export const GLA_SEGOE_BOLD_FACE = '"GLA Segoe Bold"';
+export const GLA_SEGOE_BOLD_FAMILY = `${GLA_SEGOE_BOLD_FACE}, "Segoe UI", Arial, sans-serif`;
+
 // Reemplaza al viejo export estatico "PROGRAM_FONT_FAMILY" (2026-09-01,
 // integracion de fuente propia para Argentina Streamers): Program puede
 // cambiar de theme en caliente (WS THEME_UPDATE/STATE_SNAPSHOT, sin
@@ -37,6 +55,11 @@ export async function waitForProgramFonts() {
   const specs = Object.entries(THEME_FONTS).flatMap(([themeId, { family, weights }]) =>
     weights.map((weight) => ({ themeId, family, weight }))
   );
+  // "GLA Segoe Bold" (ver mas arriba) no es la fuente de NINGUN theme
+  // completo -- se precarga aparte, una sola vez, al unico peso real que
+  // declara su @font-face (700), mismo criterio que ya vale para "GLA
+  // Anton"/"LIVE Segoe Bold" (un unico archivo real detras).
+  specs.push({ themeId: 'gla (modulos Segoe Bold)', family: GLA_SEGOE_BOLD_FACE, weight: 700 });
   const loadedFaces = await Promise.all(
     specs.map(({ family, weight }) => document.fonts.load(`${weight} 32px ${family}`, FONT_PROBE))
   );

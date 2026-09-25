@@ -2,6 +2,8 @@ import { mountThemedAlphaVideo, resolveImageSrc } from '../theme-assets.js';
 import { sponsorFile } from '../../../shared/sponsors.js';
 import { updateFittedTextWithTransition, readTextAdjust } from '../text-fit.js';
 import { resolveTeamTokens } from '../../../shared/text-tokens.js';
+import { getActiveThemeId } from '../theme-client.js';
+import { ARGENTINA_STREAMERS_THEME_ID } from '../../../shared/themes.js';
 
 const VIDEO_SRC = '/assets/themes/argentina-streamers/zocalos/zocalo-compuesto-logo-alpha.mp4';
 const LOGO_SRC = '/assets/themes/argentina-streamers/zocalos/logo-localstrike.png';
@@ -51,7 +53,13 @@ export default function renderZocaloCompuestoLogo(contentEl, data, justTaken, on
   // "subColor" (2026-09-02, pedido explicito del usuario): MAIN siempre
   // blanco fijo (arriba); SUBTEXTO configurable NEGRO/BLANCO desde Master
   // Control, sin depender de ninguna clase/color heredado de GLA.
-  texto2El.style.color = data.subColor === 'blanco' ? '#ffffff' : '#000000';
+  // BLOQUE 1 (2026-09-09, pedido explicito): en Argentina Streamers el
+  // SUBTEXTO pasa a AZUL DE REFERENCIA fijo ("--as-navy", ver theme.css),
+  // sin depender de "subColor" -- GLA conserva el toggle negro/blanco
+  // exactamente igual que antes.
+  texto2El.style.color = getActiveThemeId() === ARGENTINA_STREAMERS_THEME_ID
+    ? 'var(--as-navy)'
+    : (data.subColor === 'blanco' ? '#ffffff' : '#000000');
 
   const newT1 = resolveTeamTokens(data.texto1 || '', sb);
   const newT2 = resolveTeamTokens(data.texto2 || '', sb);

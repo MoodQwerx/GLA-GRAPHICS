@@ -32,27 +32,39 @@ function getCtx() {
   return measureCtx;
 }
 
-function setFont(fontPx, weight, letterSpacing) {
+// "family" (2026-09-24, pedido explicito del usuario: "Segoe UI Bold" en
+// 4 modulos puntuales, NO en el resto de GLA): override OPCIONAL de la
+// familia a usar para ESTA medicion puntual -- sin pasarlo (la inmensa
+// mayoria de los ~25 call sites del proyecto), sigue resolviendo
+// exactamente igual que siempre via getProgramFontFamily() (la fuente del
+// theme activo completo), cero cambio de comportamiento. Los 4 renderers
+// afectados (longSimple/shortSimple/shortDouble/zocaloCompuesto) pasan
+// GLA_SEGOE_BOLD_FAMILY (program/js/program-fonts.js) aca para que lo que
+// se MIDE coincida con lo que el CSS de esos modulos pinta de verdad (ver
+// override de "--font-display" en program/css/theme.css) -- si no
+// coincidieran, el auto-ajuste de tamaño calcularia anchos con la fuente
+// equivocada.
+function setFont(fontPx, weight, letterSpacing, family) {
   const ctx = getCtx();
-  ctx.font = `${weight} ${fontPx}px ${getProgramFontFamily()}`;
+  ctx.font = `${weight} ${fontPx}px ${family || getProgramFontFamily()}`;
   ctx.letterSpacing = `${letterSpacing || 0}px`;
   return ctx;
 }
 
-export function measureTextWidth(text, fontPx, { weight = 700, letterSpacing = 0 } = {}) {
-  const ctx = setFont(fontPx, weight, letterSpacing);
+export function measureTextWidth(text, fontPx, { weight = 700, letterSpacing = 0, family } = {}) {
+  const ctx = setFont(fontPx, weight, letterSpacing, family);
   return ctx.measureText(text).width;
 }
 
 // maxFont/minFont/maxWidth en px; weight/letterSpacing deben coincidir con
 // el CSS real del elemento o la medicion queda mal.
-export async function fitFontSize(text, { maxFont, minFont, maxWidth, weight = 700, letterSpacing = 0 }) {
-  await document.fonts.load(`${weight} ${maxFont}px ${getProgramFontFamily()}`);
-  const widthAtMax = measureTextWidth(text, maxFont, { weight, letterSpacing });
+export async function fitFontSize(text, { maxFont, minFont, maxWidth, weight = 700, letterSpacing = 0, family }) {
+  await document.fonts.load(`${weight} ${maxFont}px ${family || getProgramFontFamily()}`);
+  const widthAtMax = measureTextWidth(text, maxFont, { weight, letterSpacing, family });
   if (widthAtMax <= maxWidth) return maxFont;
   let size = Math.floor(maxFont * (maxWidth / widthAtMax));
   size = Math.max(minFont, size);
-  while (size > minFont && measureTextWidth(text, size, { weight, letterSpacing }) > maxWidth) {
+  while (size > minFont && measureTextWidth(text, size, { weight, letterSpacing, family }) > maxWidth) {
     size -= 1;
   }
   return size;
@@ -85,8 +97,8 @@ export async function fitFontSize(text, { maxFont, minFont, maxWidth, weight = 7
 // resto en vez de un offset propio.
 const VCORRECTION_REFERENCE = 'HOXÁÉÍÓÚÑ';
 
-export function verticalCorrection(text, fontPx, { weight = 700, letterSpacing = 0 } = {}) {
-  const ctx = setFont(fontPx, weight, letterSpacing);
+export function verticalCorrection(text, fontPx, { weight = 700, letterSpacing = 0, family } = {}) {
+  const ctx = setFont(fontPx, weight, letterSpacing, family);
   const m = ctx.measureText(VCORRECTION_REFERENCE);
   const lineBoxAscent = m.fontBoundingBoxAscent;
   const lineBoxDescent = m.fontBoundingBoxDescent;

@@ -13,6 +13,11 @@
 import { renderSavePositionControl } from './save-position-control.js';
 
 const STEP_PX = 2;
+// Intensidad "0.5" (BLOQUE 1, 2026-09-09, pedido explicito del usuario):
+// exactamente la mitad del paso normal ("1.0" = STEP_PX), respetando la
+// unidad existente. Solo aplica a Offset X/Y (el pedido es "por
+// direccion") -- Escala sigue con un unico paso (STEP_SCALE), sin tocar.
+const HALF_STEP_PX = STEP_PX / 2;
 const STEP_SCALE = 0.01;
 const REPEAT_DELAY_MS = 400;
 const REPEAT_INTERVAL_MS = 80;
@@ -82,16 +87,24 @@ export function renderCompositionControl(container, data, onDirty, options = {})
   ensureShape(data, xKey, yKey, scaleKey, defaultX, defaultY, defaultScale);
   container.innerHTML = '';
 
-  // "baseline" (2026-09-01, layout base versionado): referencia LOCAL de
-  // "posición ya confirmada" -- arranca en el default de diseño de
-  // siempre, y se actualiza al valor absoluto actual cada vez que se
-  // confirma un GUARDAR POSICIÓN (ver saveBtn mas abajo). El dato real
-  // ("data[xKey]" etc, lo que YA lee Program) NUNCA se toca aca -- el
-  // readout/RESET pasan a leer relativo a esta referencia, para que el
-  // operador vea "X:0 Y:0 Escala:1.00" despues de guardar sin que el
-  // elemento se mueva ni un pixel (decision confirmada explicitamente por
-  // el usuario: "solo visual en Master Control").
-  const baseline = { x: defaultX, y: defaultY, scale: defaultScale };
+  // "baseline" (2026-09-01, layout base versionado; corregido 2026-09-10,
+  // auditoria de GUARDAR POSICIÓN pedida por el usuario): referencia LOCAL
+  // de "posición ya confirmada". ANTES arrancaba siempre en el default de
+  // diseño (defaultX/Y/Scale, normalmente 0/0/1) sin importar si el modulo
+  // ya tenia una base distinta guardada -- asi que cada vez que este
+  // control se volvia a montar (cambiar de tab y volver, refresh, restart)
+  // el readout mostraba como "pendiente" una posicion que en realidad YA
+  // estaba consolidada, y RESET la revertia por completo al diseño
+  // original en vez de a la ultima base guardada (justo el bug que el
+  // usuario pidio auditar: "GUARDAR POSICIÓN solamente guarda un offset
+  // temporal y no consolida una nueva base real"). Ahora arranca en el
+  // valor ABSOLUTO actual de "data[xKey/yKey/scaleKey]" -- que YA es la
+  // ultima base confirmada (GUARDAR POSICIÓN, theme-layout o perfil,
+  // resueltos todos antes de llegar aca) salvo que haya un ajuste sin
+  // guardar de ESTA MISMA sesion, en cuyo caso ese es el punto de partida
+  // correcto igual. El dato real nunca se toca aca -- el readout/RESET
+  // siguen siendo puramente visuales en Master Control.
+  const baseline = { x: data[xKey], y: data[yKey], scale: data[scaleKey] };
 
   const root = document.createElement('section');
   root.className = 'composition-adjust';
@@ -138,12 +151,23 @@ export function renderCompositionControl(container, data, onDirty, options = {})
     saveControl?.markDirty();
   }
 
-  row.appendChild(repeatButton('←', 'Mover a la izquierda', () => bumpOffset(xKey, -STEP_PX)));
-  row.appendChild(repeatButton('↑', 'Subir', () => bumpOffset(yKey, -STEP_PX)));
-  row.appendChild(repeatButton('↓', 'Bajar', () => bumpOffset(yKey, STEP_PX)));
-  row.appendChild(repeatButton('→', 'Mover a la derecha', () => bumpOffset(xKey, STEP_PX)));
+  row.appendChild(repeatButton('←', `Mover a la izquierda (${STEP_PX}px)`, () => bumpOffset(xKey, -STEP_PX)));
+  row.appendChild(repeatButton('↑', `Subir (${STEP_PX}px)`, () => bumpOffset(yKey, -STEP_PX)));
+  row.appendChild(repeatButton('↓', `Bajar (${STEP_PX}px)`, () => bumpOffset(yKey, STEP_PX)));
+  row.appendChild(repeatButton('→', `Mover a la derecha (${STEP_PX}px)`, () => bumpOffset(xKey, STEP_PX)));
   row.appendChild(repeatButton('−', 'Achicar', () => bumpScale(-STEP_SCALE)));
   row.appendChild(repeatButton('+', 'Agrandar', () => bumpScale(STEP_SCALE)));
+
+  // Segunda fila: intensidad "0.5" (BLOQUE 1, pedido explicito del
+  // usuario) -- mismas 4 direcciones de Offset X/Y, mitad del paso de
+  // arriba. Mismo boton con auto-repeat y misma mutacion in-place de
+  // "data[xKey]/[yKey]", ningun mecanismo nuevo. Escala sin cambios.
+  const halfRow = document.createElement('div');
+  halfRow.className = 'text-adjust-row composition-adjust-row text-adjust-row-half';
+  halfRow.appendChild(repeatButton('←½', `Mover a la izquierda (${HALF_STEP_PX}px)`, () => bumpOffset(xKey, -HALF_STEP_PX)));
+  halfRow.appendChild(repeatButton('↑½', `Subir (${HALF_STEP_PX}px)`, () => bumpOffset(yKey, -HALF_STEP_PX)));
+  halfRow.appendChild(repeatButton('↓½', `Bajar (${HALF_STEP_PX}px)`, () => bumpOffset(yKey, HALF_STEP_PX)));
+  halfRow.appendChild(repeatButton('→½', `Mover a la derecha (${HALF_STEP_PX}px)`, () => bumpOffset(xKey, HALF_STEP_PX)));
 
   const resetBtn = document.createElement('button');
   resetBtn.type = 'button';
@@ -167,6 +191,7 @@ export function renderCompositionControl(container, data, onDirty, options = {})
   row.appendChild(readout);
 
   root.appendChild(row);
+  root.appendChild(halfRow);
 
   // Fila propia (no adentro de "row", que es un grid de columnas fijas
   // pensado para los 8 controles de siempre) -- así no desalinea ni

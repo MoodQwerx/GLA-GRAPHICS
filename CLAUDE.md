@@ -17,7 +17,9 @@ npm install
 npm start
 ```
 
-- Master Control: `http://localhost:4400/master`
-- Program: `http://localhost:4400/program`
+- Master Control: `http://127.0.0.1:4400/master`
+- Program: `http://127.0.0.1:4400/program`
+
+(Local: usar `127.0.0.1`, no `localhost` — el hostname `localhost` agrega una demora de red real de ~300ms tras un rato inactivo, ver informe de auditoria de performance 2026-09-21/23. No aplica a un deploy remoto tipo Render, que resuelve su propio dominio.)
 
 No hay build step, suite de tests ni linter configurados. No agregar esos componentes salvo pedido explícito.

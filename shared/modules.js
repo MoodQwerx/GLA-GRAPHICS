@@ -82,8 +82,17 @@ export const MODULES = {
       { key: 'teamAColor', label: 'Color de camiseta - local', type: FIELD_TYPES.SELECT, options: TEAM_COLOR_OPTIONS },
       { key: 'teamB', label: 'Equipo visitante', type: FIELD_TYPES.SELECT, options: TEAM_OPTIONS },
       { key: 'teamBColor', label: 'Color de camiseta - visitante', type: FIELD_TYPES.SELECT, options: TEAM_COLOR_OPTIONS },
-      { key: 'scoreA', label: 'Goles local', type: FIELD_TYPES.TEXT, adjustable: true },
-      { key: 'scoreB', label: 'Goles visitante', type: FIELD_TYPES.TEXT, adjustable: true },
+      // "scoreA"/"scoreB" (BLOQUE 2, 2026-09-09, pedido explicito del
+      // usuario: "eliminar los textbox/input numéricos manuales actuales
+      // para goles"): pasan de TEXT editable a ADJUST_ONLY -- mismo
+      // criterio que "period"/"clock"/"nameA"/"nameB" mas abajo, el VALOR
+      // ya no se tipea aca (ahora exclusivamente via los botones +/-/RESET
+      // del panel dedicado, ver scoreboard-clock-panel.js), pero la
+      // posicion/tamaño se sigue ajustando igual (arrows inline para GLA,
+      // acordeon AJUSTE DE COMPOSICIÓN para Argentina Streamers -- ningun
+      // cambio en ADJUST_REGISTRY, sigue apuntando a "scoreA"/"scoreB").
+      { key: 'scoreA', label: 'Goles local (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+      { key: 'scoreB', label: 'Goles visitante (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
       { key: 'sponsor', label: 'Sponsor Marcador', type: FIELD_TYPES.SELECT, options: SPONSOR_OPTIONS.scoreboard },
       // "nameA"/"nameB"/"clock" (2026-08-15, auditoria completa): no se
       // tipean aca (la abreviatura sale del equipo elegido arriba, el reloj
@@ -407,11 +416,20 @@ export const MODULES = {
       { key: 'nameB', label: 'Nombre equipo visitante (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
       { key: 'scoreA', label: 'Gol local (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
       { key: 'scoreB', label: 'Gol visitante (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
+      // "scoreSep" (2026-09-14, pedido explicito del usuario: "necesito un
+      // control específico de composición/posición para el GUION/
+      // SEPARADOR del resultado, actualmente no tengo control para
+      // moverlo"). Mismo patron EXACTO que "separador" en
+      // marcadorEntretiempo.js (textAdjust dx/dy/dSize, nunca un sistema
+      // paralelo) -- el guion es texto estatico (" - ", ver
+      // program/js/renderers/vsResultado.js), no depende de "scoreA/B", asi
+      // que ajustarlo nunca mueve los numeros de gol.
+      { key: 'scoreSep', label: 'Guión / separador del resultado (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
     ],
     defaults: {
       titulo: 'RESULTADO',
       titlePresets: [],
-      textAdjust: textAdjustDefaults('titulo', 'nameA', 'nameB', 'scoreA', 'scoreB'),
+      textAdjust: textAdjustDefaults('titulo', 'nameA', 'nameB', 'scoreA', 'scoreB', 'scoreSep'),
       // "localCrestOffset*/awayCrestOffset*" (2026-08-31, auditoria
       // completa): los escudos nunca tuvieron ajuste propio.
       localCrestOffsetX: 0, localCrestOffsetY: 0, localCrestScale: 1,
@@ -691,7 +709,15 @@ export const MODULES = {
     sequencedReveal: true,
     fields: [],
     defaults: {
-      name: '', role: '',
+      // "name"/"role" a nivel raiz ELIMINADOS (2026-09-10, pedido explicito
+      // del usuario: "que el zócalo doble 1 sea el zócalo individual...
+      // que en el panel no me muestre 3 opciones de zócalo"). Antes existia
+      // un tercer slot de datos independiente ("ZÓCALO INDIVIDUAL", sin
+      // relacion con "double1"/"double2") que el modo "single" del renderer
+      // leia aparte -- ahora el modo "single" reutiliza directamente
+      // "double1" (ver program/js/renderers/shortDouble.js), asi que mandar
+      // un solo zocalo o mandar dos es SIEMPRE la misma fuente de datos
+      // (double1, double1+double2), sin una tercera copia paralela.
       airMode: 'single',
       double1: { name: '', role: '' },
       double2: { name: '', role: '' },
@@ -700,8 +726,11 @@ export const MODULES = {
       // modo doble -- distinguen el ajuste de "double1.name" del de
       // "double2.name" aunque compartan las mismas clases CSS (ver
       // program/js/renderers/shortDouble.js), porque son campos de datos
-      // independientes, no un unico elemento reutilizado.
-      textAdjust: textAdjustDefaults('name', 'role', 'double1.name', 'double1.role', 'double2.name', 'double2.role'),
+      // independientes, no un unico elemento reutilizado. "double1.role"/
+      // "double2.role" quedan (el renderer los sigue leyendo -- el campo
+      // "Sub texto" solo se eliminó del PANEL, ver short-double-panel.js)
+      // aunque ya no tengan textbox propio en Master Control.
+      textAdjust: textAdjustDefaults('double1.name', 'double1.role', 'double2.name', 'double2.role'),
     },
   },
 
@@ -729,31 +758,19 @@ export const MODULES = {
           { id: 'fino', label: 'Fino' },
         ],
       },
-      { key: 'status', label: 'Estado del encuentro', type: FIELD_TYPES.SELECT, options: MATCH_STATUS_OPTIONS },
       {
+        // "CONTENIDO CENTRAL" (2026-09-10, pedido explicito del usuario:
+        // "simplificar VS COMPACTO" -- eliminados el selector "Estado del
+        // encuentro" y el selector "Contenido central: Resultado/Estado vs
+        // Sponsor", que en los hechos no controlaba nada real en el
+        // renderer, ver program/js/renderers/vs.js). Texto 100% manual: lo
+        // que el operador escribe es EXACTAMENTE lo que se renderiza en el
+        // renglon central, sin ningun preset de respaldo -- vacio renderiza
+        // vacio, nunca se fuerza un valor.
         key: 'statusTexto',
-        label: 'Texto libre del renglon central (opcional, reemplaza al Estado de arriba si se completa)',
+        label: 'Contenido central (texto libre — vacío no muestra nada)',
         type: FIELD_TYPES.TEXT,
         adjustable: true,
-      },
-      {
-        key: 'goleadoresLocal',
-        label: 'Goleadores Local (uno por linea, ej. "Perez 12\'") — entran aprox. 7 en Alto, 4 en Medio, 1 en Fino, ninguno en Normal',
-        type: FIELD_TYPES.TEXTAREA,
-      },
-      {
-        key: 'goleadoresVisitante',
-        label: 'Goleadores Visitante (mismo formato y limite que Local)',
-        type: FIELD_TYPES.TEXTAREA,
-      },
-      {
-        key: 'contentType',
-        label: 'Contenido central',
-        type: FIELD_TYPES.SELECT,
-        options: [
-          { id: 'match_info', label: 'Resultado / Estado' },
-          { id: 'sponsor', label: 'Sponsor' },
-        ],
       },
       {
         key: 'sponsor',
@@ -761,26 +778,17 @@ export const MODULES = {
         type: FIELD_TYPES.SELECT,
         options: SPONSOR_OPTIONS.vs_compact,
       },
-      // "nameA"/"nameB"/"goalA"/"goalB"/"scorersLocal"/"scorersVisitante"
-      // (2026-08-15, auditoria completa): los 6 quedaban fuera de la
-      // primera pasada de este modulo -- nombre y gol de cada equipo se
-      // derivan en vivo de "scoreboard" (sin campo propio) y los bloques de
-      // goleadores, aunque se tipean en las 2 TEXTAREA de arriba, se
-      // renderizan como lista/marquesina (no un unico punto de texto) por
-      // lo que su ajuste es de BLOQUE (posicion + tamaño de fuente de toda
-      // la lista), no por linea individual -- ver applyScorersAdjust en
-      // program/js/renderers/vs.js.
+      // "nameA"/"nameB"/"goalA"/"goalB" (2026-08-15, auditoria completa):
+      // nombre y gol de cada equipo se derivan en vivo de "scoreboard" (sin
+      // campo propio), pero necesitan su propio ajuste de posicion/tamaño.
       { key: 'nameA', label: 'Nombre equipo local (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
       { key: 'nameB', label: 'Nombre equipo visitante (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
       { key: 'goalA', label: 'Gol local (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
       { key: 'goalB', label: 'Gol visitante (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
-      { key: 'scorersLocal', label: 'Bloque goleadores local (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
-      { key: 'scorersVisitante', label: 'Bloque goleadores visitante (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
     ],
     defaults: {
-      renglon: 'normal', status: '', statusTexto: '', goleadoresLocal: '', goleadoresVisitante: '',
-      contentType: 'match_info', sponsor: '',
-      textAdjust: textAdjustDefaults('statusTexto', 'nameA', 'nameB', 'goalA', 'goalB', 'scorersLocal', 'scorersVisitante'),
+      renglon: 'normal', statusTexto: '', sponsor: '',
+      textAdjust: textAdjustDefaults('statusTexto', 'nameA', 'nameB', 'goalA', 'goalB'),
       // "localCrestOffset*/awayCrestOffset*/sponsorOffset*" (2026-08-31,
       // auditoria completa): ninguno de los 3 tenia ajuste propio.
       localCrestOffsetX: 0, localCrestOffsetY: 0, localCrestScale: 1,
@@ -873,38 +881,63 @@ export const MODULES = {
       escudosFuente: 'MARCADOR', customTeamA: '', customTeamB: '',
       shieldPresets: [], textPresets: [], completePresets: [],
       textAdjust: textAdjustDefaults('texto1', 'texto2'),
-      // "localCrestOffset*/awayCrestOffset*/logoOffset*/sponsor1Offset*/
-      // sponsor2Offset*" (2026-08-31, auditoria completa): ninguno de los
-      // 5 elementos graficos tenia ajuste propio.
+      // "localCrestOffset*/awayCrestOffset*/logoOffset*" (2026-08-31,
+      // auditoria completa): ninguno tenia ajuste propio.
       localCrestOffsetX: 0, localCrestOffsetY: 0, localCrestScale: 1,
       awayCrestOffsetX: 0, awayCrestOffsetY: 0, awayCrestScale: 1,
       logoOffsetX: 0, logoOffsetY: 0, logoScale: 1,
-      sponsor1OffsetX: 0, sponsor1OffsetY: 0, sponsor1Scale: 1,
-      sponsor2OffsetX: 0, sponsor2OffsetY: 0, sponsor2Scale: 1,
+      // "sponsorsOffsetX/Y/Scale" (2026-09-24, pedido explicito del
+      // usuario: "TODOS los sponsors del rotativo deben compartir UN UNICO
+      // ajuste de composicion"). Reemplaza "sponsor1Offset*"/"sponsor2Offset*"
+      // (uno por cada uno de los 2 <img> del crossfade interno, ver
+      // program/js/renderers/zocaloCompuesto.js) -- con dos ajustes
+      // independientes, el mismo sponsor "saltaba" de posicion/escala segun
+      // en cual de los 2 slots del rotativo le tocara aparecer. Ahora los 2
+      // <img> comparten el mismo "data-adjust" (ver ese renderer), asi que
+      // ESTE unico valor se aplica a cualquiera de los dos por igual --
+      // mismo mecanismo ya usado para columnas de tablas (grupos/sideTable/
+      // posiciones), que tambien aplican un unico ajuste a varios nodos con
+      // el mismo id. Base elegida: la posicion COMUN ya guardada del modulo
+      // (0/0/1, ver shared/theme-layouts/gla.json) -- ni sponsor1 ni
+      // sponsor2 tenian una posicion distinta CONFIRMADA con "Guardar
+      // posición" (solo ajustes en vivo sin guardar, y distintos entre si),
+      // asi que no habia ninguna base real que preservar sin inventarla.
+      sponsorsOffsetX: 0, sponsorsOffsetY: 0, sponsorsScale: 1,
     },
   },
 
-  // "zocaloCompuestoEquipos"/"zocaloCompuestoLogo" (2026-09-02, auditoria de
-  // wiring): habia una SEGUNDA entrada duplicada de cada uno mas abajo en
-  // este mismo objeto, incompleta (sin sponsorOffset*/compositionOffset*/
-  // textPresets) -- en un literal de objeto JS la clave repetida MAS TARDE
-  // gana, asi que esa version incompleta era la que realmente terminaba en
-  // MODULES, no esta. Se elimino el duplicado; esta queda como unica fuente.
+  // "zocaloCompuestoEquipos" (2026-09-10, UNIFICADO con "zocaloCompuestoLogo"
+  // -- pedido explicito del usuario: "es todo lo mismo, solo cambia el
+  // asset... necesito que sean un solo módulo, con la opción de menú
+  // desplegable CON LOGO LOCALSTRIKE | CON EQUIPOS"). "tipo" decide que
+  // sector izquierdo se manda: EQUIPOS (escudos en vivo del Marcador, con
+  // linea separadora) o LOGO (logo LocalStrike fijo, sin linea) -- resto
+  // (texto1/texto2/subColor/sponsor/presets/composicion) es UNA sola copia
+  // compartida entre ambos tipos, mismo criterio ya probado en
+  // "zocaloCompuesto" (el modulo de GLA, sin relacion con este -- assets
+  // completamente distintos, ver program/js/renderers/zocaloCompuesto.js
+  // para el patron de "transicion segura al cambiar tipo" que este
+  // renderer reusa). "zocaloCompuestoLogo" (mas abajo) queda registrado
+  // SOLO para no perder datos/presets ya persistidos de quien lo haya
+  // usado antes de esta unificacion -- oculto de toda navegacion (ver
+  // HIDDEN_FROM_NAV_IDS en master-control/js/main.js, mismo patron que
+  // "zocaloFinal"/"zocaloFinalDiv"/"gol"), nunca mas editable directo.
   zocaloCompuestoEquipos: {
     id: 'zocaloCompuestoEquipos',
-    label: 'Zócalo Compuesto con Equipos',
+    label: 'Zócalo Compuesto',
     category: 'Zocalos',
     layer: 'bottom-left',
     live: true,
     sequencedReveal: true,
     // "fields: []" (2026-09-02, auditoria de wiring): el CONTENIDO
     // (texto1/texto2/sponsor) lo muestra el panel dedicado
-    // (master-control/js/zocalo-compuesto-equipos-panel.js) -- declararlos
-    // aca tambien los duplicaba (2 cajas "TEXTO MAIN" en pantalla, una
+    // (master-control/js/zocalo-compuesto-panel.js) -- declararlos aca
+    // tambien los duplicaba (2 cajas "TEXTO MAIN" en pantalla, una
     // generica sin ACTUALIZAR y otra del panel). Mismo criterio que
     // "formacionEquipos" mas arriba.
     fields: [],
     defaults: {
+      tipo: 'equipos',
       // "subColor" (2026-09-02, pedido explicito del usuario): SOLO afecta
       // texto2/SUBTEXTO -- texto1/MAIN se mantiene siempre blanco fijo, sin
       // campo propio, tal como ya estaba. "sponsorsRotation" reemplaza al
@@ -915,11 +948,18 @@ export const MODULES = {
       texto1: '', texto2: '', subColor: 'negro', sponsorsRotation: [], textPresets: [],
       sponsorOffsetX: 0, sponsorOffsetY: 0, sponsorScale: 1,
       compositionOffsetX: 0, compositionOffsetY: 0, compositionScale: 1,
+      // "logoOffsetX/Y/Scale" (2026-09-10, fusionado desde
+      // "zocaloCompuestoLogo"): posicion propia del logo LocalStrike,
+      // independiente de la posicion de los escudos.
+      logoOffsetX: 0, logoOffsetY: 0, logoScale: 1,
       textAdjust: textAdjustDefaults('texto1', 'texto2'),
       crestByTeam: { local: {}, away: {} },
     },
   },
 
+  // LEGACY -- ver comentario en "zocaloCompuestoEquipos" arriba. No editable
+  // desde Master Control (oculto de toda navegacion), solo conserva datos
+  // ya persistidos de antes de la unificacion 2026-09-10.
   zocaloCompuestoLogo: {
     id: 'zocaloCompuestoLogo',
     label: 'Zócalo Compuesto con Logo',
@@ -933,22 +973,6 @@ export const MODULES = {
       sponsorOffsetX: 0, sponsorOffsetY: 0, sponsorScale: 1,
       compositionOffsetX: 0, compositionOffsetY: 0, compositionScale: 1,
       textAdjust: textAdjustDefaults('texto1', 'texto2'),
-    },
-  },
-
-  placaLInfo: {
-    id: 'placaLInfo',
-    label: 'Placa L Info',
-    category: 'Zocalos',
-    layer: 'fullscreen',
-    sequencedReveal: true,
-    fields: [],
-    defaults: {
-      completePresets: [],
-      zocalo1: { text: 'CÁMARA 1', active: true, offsetX: -1256, offsetY: 408, scale: 1, textAdjust: { dx: 0, dy: 0, dSize: 0 }, presets: [] },
-      zocalo2: { text: 'CÁMARA 2', active: true, offsetX: -296, offsetY: 408, scale: 1, textAdjust: { dx: 0, dy: 0, dSize: 0 }, presets: [] },
-      zocalo3: { text: 'CÁMARA 3', active: true, offsetX: -1256, offsetY: 948, scale: 1, textAdjust: { dx: 0, dy: 0, dSize: 0 }, presets: [] },
-      zocalo4: { text: 'CÁMARA 4', active: true, offsetX: -296, offsetY: 948, scale: 1, textAdjust: { dx: 0, dy: 0, dSize: 0 }, presets: [] },
     },
   },
 
@@ -1086,6 +1110,19 @@ export const MODULES = {
       visitanteA: 0,
       visitantePJ: 0,
       ultimaActualizacionWeb: '',
+      // "localJugadorId"/"visitanteJugadorId" (2026-09-10, pedido explicito
+      // del usuario: "Estrellas... tiene que hacer la misma lógica de Ficha
+      // Jugador" -- identidad ESTABLE del jugador del plantel central de
+      // Argentina Streamers, ver server/playerRosters.js), para poder
+      // sincronizar Goles/Asistencias/Partidos Jugados contra
+      // argentinastreamers.com reusando el mismo endpoint/logica que Ficha
+      // Jugador (server/argentinaStreamersPlayerStats.js) -- vacio para un
+      // jugador tipeado a mano o para GLA (que sigue con su propio sync de
+      // gla.futbol, sin tocar).
+      localJugadorId: '',
+      visitanteJugadorId: '',
+      localWebSyncStatus: '', localWebSyncError: '',
+      visitanteWebSyncStatus: '', visitanteWebSyncError: '',
       // 9 ajustes individuales (2026-08-15, auditoria completa): estructura
       // fija (2 jugadores), cada texto se ajusta por separado -- ver
       // master-control/js/estrellas-panel.js.
@@ -1369,8 +1406,27 @@ export const MODULES = {
     category: 'Extras',
     layer: 'fullscreen',
     sequencedReveal: true,
-    fields: [],
+    // "asset" (2026-09-14, RESTAURADO -- pedido explicito del usuario: "se
+    // perdió/regresó el desplegable que ya habíamos agregado"). Investigado
+    // antes de recrear a ciegas: revisé `git log` sobre este módulo -- el
+    // único commit que lo toca ("83cf1fa") nunca tuvo este campo, así que
+    // nunca llegó a confirmarse en un commit; era trabajo sin guardar de
+    // una sesión anterior que se perdió sin dejar rastro en el historial
+    // (no hay ningún diff/commit que lo haya "roto" -- simplemente nunca
+    // quedó persistido). Campo SELECT genérico (sin panel dedicado, este
+    // módulo nunca tuvo uno) -- decide qué variante de imagen usa
+    // "resolveImageSrc" vía "asset.variants" en shared/themes.js.
+    fields: [
+      {
+        key: 'asset', label: 'ASSET', type: FIELD_TYPES.SELECT,
+        options: [
+          { id: 'argentina-streamers', label: 'ARGENTINA STREAMERS' },
+          { id: 'punch', label: 'PUNCH' },
+        ],
+      },
+    ],
     defaults: {
+      asset: 'argentina-streamers',
       compositionOffsetX: 0, compositionOffsetY: 0, compositionScale: 1,
     },
   },
@@ -1449,17 +1505,29 @@ export const MODULES = {
   // -- queda disponible en su navegacion (mismo patron que cualquier otro
   // modulo del registro) pero sin contenido/flujo pensado para GLA.
   //
-  // "jugadores" (el roster manual, mismo shape base que
-  // goleadores/asistidores/participaciones: teamId+nombre+stats) es la
-  // lista de CANDIDATOS -- "selectedPlayerId" elige cual de esa lista se
-  // esta mostrando ahora mismo en la placa. Doble fuente de datos
-  // (manual/futura sync web) preparada igual que el resto de Tablas:
-  // "fuente"/"snapshots" ya soportan reemplazar la lista completa sin
-  // tocar la logica del panel ni del renderer -- ver
-  // ficha-jugador-panel.js. "mvp" es el unico stat nuevo (no existia en
-  // ningun otro modulo); "g+a" se calcula en render, nunca se guarda
-  // aparte (mismo criterio que el resto de Tablas: la fuente de verdad
-  // son los stats base, no un numero derivado tipeado a mano).
+  // REHECHO EN BLOQUE 4 (2026-09-09, pedido explicito del usuario: "FICHA
+  // JUGADOR debe consumir el sistema central de JUGADORES implementado en
+  // el BLOQUE 3... no crear otra lista manual independiente"). Antes de
+  // este bloque el modulo mantenia su PROPIA lista de jugadores
+  // (jugadores[]/snapshots/fuente, igual que Goleadores/Asistidores) --
+  // eso quedaba desconectado del plantel central (server/playerRosters.js)
+  // y obligaba a cargar cada jugador dos veces. Ahora el modulo solo
+  // guarda una SELECCION ("equipo"+"jugadorId", apuntando al plantel
+  // central) mas una COPIA sincronizada de lo ultimo confirmado (nombre +
+  // 4 stats) -- exactamente el mismo patron que ya usa Estrellas
+  // ("localJugador"/"localNombre"/"localG", ver mas arriba en este
+  // archivo) para que Program nunca dependa de golpear la red: la copia
+  // es lo que Program realmente lee, la sincronizacion real pasa por
+  // server/playerRosters.js + server/argentinaStreamersPlayerStats.js
+  // (persistida ahi, reusable por cualquier otro modulo que a futuro
+  // quiera los mismos datos). "xDisponible" distingue "la web confirmo 0"
+  // de "la web nunca informo este dato" (pedido explicito, seccion 7: "no
+  // calcular una estadistica distinta y llamarla MVP" si no esta
+  // disponible) -- el renderer nunca inventa un numero para un stat
+  // marcado como no disponible. Sin "g+a": el PNG real (ver
+  // assets/themes/argentina-streamers/tablas/ficha-jugador.png) NO tiene
+  // ese recuadro -- se elimina el campo inventado de la version anterior
+  // (creada antes de tener el asset real).
   fichaJugador: {
     id: 'fichaJugador',
     label: 'Ficha Jugador',
@@ -1467,13 +1535,16 @@ export const MODULES = {
     layer: 'fullscreen',
     fields: [],
     defaults: {
-      fuente: 'manual',
-      jugadores: [],
-      snapshots: {},
+      equipo: 'local', // 'local' | 'visitante' -- mismo criterio que Tarjeta/Cambios
+      jugadorId: '', // id del jugador en el plantel central (server/playerRosters.js)
+      teamId: '',
+      nombre: '',
+      goles: 0, asistencias: 0, presencias: 0, mvps: 0,
+      golesDisponible: true, asistenciasDisponible: true, presenciasDisponible: true, mvpsDisponible: true,
       ultimaActualizacionWeb: '',
-      selectedPlayerId: '',
-      textAdjust: textAdjustDefaults('nombre', 'goles', 'asistencias', 'gMasA', 'presencias', 'mvps'),
-      crestOffsetX: 0, crestOffsetY: 0, crestScale: 1,
+      webSyncStatus: '', // '' | 'ok' | 'error' | 'not-found' | 'ambiguous'
+      webSyncError: '',
+      textAdjust: textAdjustDefaults('nombre', 'goles', 'asistencias', 'presencias', 'mvps'),
     },
   },
 

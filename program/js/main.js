@@ -8,6 +8,15 @@ import { waitForProgramFonts } from './program-fonts.js';
 import { setActiveThemeId as setRendererActiveThemeId } from './theme-client.js';
 import { applyElementAdjust } from './text-fit.js';
 import { ADJUST_REGISTRY } from '../../shared/adjust-registry.js';
+import {
+  HOT_MODULE_IDS, HOT_VARIANT_FIELD, isHotModule, MAX_WARM_SLOTS,
+  trackWarm, markPlaying, markWarm, untrack, listEvictable, snapshot as hotPoolSnapshot,
+} from './hot-pool.js';
+import {
+  TAKE_BURST_WINDOW_MS, TAKE_STAGGER_MS, TAKE_MAX_STAGGER_MS,
+  HIGH_STAGGER_MS, HIGH_MAX_STAGGER_MS, HIGH_PRIORITY_IDS, CRITICAL_MODULE_IDS,
+  setSchedulerDebug, configureScheduler, getSchedulerConfig,
+} from './take-scheduler.js';
 
 // THEME ACTIVO (2026-08-20/21, sistema multi-theme, pedido explícito): se
 // recibe por WS igual que cualquier otro estado global (sección 8, "no
@@ -54,7 +63,32 @@ const contentExitTimers = {};
 // el siguiente TAKE cree que la estructura todavia existe aunque ya no haya
 // nodos para actualizar. El teardown elimina ambas partes juntas: recursos y
 // marca de montaje. Asi cada ciclo OUT deja el modulo listo para un TAKE nuevo.
-function teardownContent(content) {
+// "moduleId" + "{ force }" (2026-09-23, Hot Pool -- ver program/js/
+// hot-pool.js): para un modulo de la lista Hot Pool, sacarlo del aire NO
+// debe destruir video/canvas/contexto -- eso es exactamente el costo que
+// la auditoria de performance identifico como el causante del hitch en
+// cada TAKE (video recien creado + play() = 100-500ms perdidos; video ya
+// montado/cargado + play() = ~0ms). En vez de "destroy()" se llama
+// "holdWarm()" (pausa, sin liberar nada) y se sale ANTES de tocar
+// intervals/dataset/innerHTML -- el modulo queda WARM, listo para el
+// proximo Take. "force:true" salta este atajo (usado al cambiar de theme,
+// donde el asset del theme viejo ya no sirve y hay que reconstruir de
+// cero para el nuevo) y en la expulsion del Resource Manager
+// (enforceWarmBudget) cuando hay que liberar un slot de verdad.
+// Devuelve la Promise de "destroy()" (ver program/js/alpha-video.js) --
+// resuelve cuando el contexto WebGL/video del modulo YA se liberaron de
+// verdad, no un numero de ms supuesto. "undefined" en cualquier otro caso
+// (modulo hot preservado en WARM, o modulo sin "_alphaVideo") -- el
+// llamador la usa con Promise.all(), que trata "undefined" como un valor
+// ya resuelto, asi que no hace falta distinguir el caso en cada call site.
+function teardownContent(content, moduleId, { force = false } = {}) {
+  if (!force && isHotModule(moduleId) && content._gfxBuilt) {
+    content._alphaVideo?.holdWarm?.();
+    content._plainVideo?.holdWarm?.();
+    if (moduleId) markWarm(moduleId);
+    return undefined;
+  }
+
   if (content._clockInterval) {
     clearInterval(content._clockInterval);
     delete content._clockInterval;
@@ -65,8 +99,9 @@ function teardownContent(content) {
     delete content._sponsorRotationInterval;
   }
 
+  let releasedPromise;
   if (content._alphaVideo) {
-    content._alphaVideo.destroy?.();
+    releasedPromise = content._alphaVideo.destroy?.();
     delete content._alphaVideo;
   }
 
@@ -88,6 +123,8 @@ function teardownContent(content) {
   }
 
   content.innerHTML = '';
+  if (moduleId) untrack(moduleId);
+  return releasedPromise;
 }
 
 function cancelExitCleanup(id) {
@@ -330,7 +367,7 @@ function finishOut(id) {
   if (!target || target.root.classList.contains('is-in')) return;
   cancelExitCleanup(id);
   target.root.classList.add('is-hidden');
-  teardownContent(target.content);
+  teardownContent(target.content, id);
 }
 
 // transitionend no esta garantizado si una transicion se interrumpe muchas
@@ -444,6 +481,13 @@ function applyModuleState(id, moduleState) {
     // de entrada desde el principio.
     const justTaken = lastStatus[id] !== MODULE_STATUS.ON;
 
+    // Hot Pool: marca el slot como PLAYING (nunca se expulsa mientras lo
+    // esté, ver listEvictable en hot-pool.js) apenas el módulo pasa a ON,
+    // sea porque ya estaba WARM (el caso común) o porque nunca pasó por el
+    // pool -- trackWarm()/markPlaying() con la misma key ("id") no rompen
+    // nada si la key todavía no existía en el registro.
+    if (isHotModule(id)) markPlaying(id);
+
     if (sequenced && justTaken) {
       // Ciclo nuevo: cancela cualquier revelado/salida pendiente de un
       // ciclo anterior y arranca oculto otra vez — el contenido no debe
@@ -491,6 +535,14 @@ function applyModuleState(id, moduleState) {
     target.root.classList.add('is-in');
     if (MODULES[id].live) startTicker(id);
   } else {
+    // Burst/Take Scheduler (2026-09-25, seccion 7 del pedido -- ver
+    // program/js/take-scheduler.js): cancela YA MISMO un Take que
+    // todavia estuviera esperando su turno escalonado, sin esperar a que
+    // termine la animacion de salida (--dur-content/--dur-out, mas abajo
+    // en esta misma rama, pueden tardar mucho mas que un stagger corto).
+    // No toca reproduccion ya en curso -- ver "cancelPendingTake()" en
+    // alpha-video.js.
+    target.content._alphaVideo?.cancelPendingTake?.();
     stopTicker(id);
     if (sequenced) {
       // Orden inverso pedido: primero se apaga el contenido, y solo
@@ -516,6 +568,148 @@ function applyModuleState(id, moduleState) {
 
 let lastKnownThemeId = null;
 
+// HOT POOL: precalienta (COLD -> WARM) los modulos de HOT_MODULE_IDS que
+// esten apagados y todavia sin construir -- ver program/js/hot-pool.js
+// para el contrato completo. Llamar al renderer normal del modulo con
+// "justTaken=false" alcanza: el mismo guard "if (!contentEl._gfxBuilt)
+// buildStructure(...)" que YA tiene cada renderer arma video/canvas/
+// contexto (el <video> con preload="auto" empieza a cargar solo) y NUNCA
+// llama a "playFromStart()" salvo que justTaken sea true o cambie la
+// variante (ver el fix de "*Changed" en program/js/renderers/{tarjeta,vs,
+// shortDouble,formacionEquipos}.js) -- ninguno de los dos pasa aca, asi
+// que el video queda cargado y PAUSADO: WARM, no PLAYING. Se llama
+// despues de procesar un STATE_SNAPSHOT completo (arranque de Program, o
+// tras un cambio de theme que ya forzó el teardown de todo, ver mas
+// abajo), nunca antes: necesita "latestData"/"els" ya poblados.
+function warmHotModules() {
+  for (const id of HOT_MODULE_IDS) {
+    const target = els[id];
+    if (!target) continue;
+    if (lastStatus[id] === MODULE_STATUS.ON) continue; // ya esta PLAYING, nada que precargar
+    const content = target.content;
+    if (content._gfxBuilt) continue; // ya WARM (idempotente: boot + cada cambio de theme llaman esto)
+    const data = latestData[id] || {};
+    renderers[id](content, data, false, () => handleOneShotEnded(id), latestData);
+    const field = HOT_VARIANT_FIELD[id];
+    trackWarm(id, id, field ? data[field] : undefined);
+  }
+  enforceWarmBudget();
+}
+
+// RESOURCE MANAGER (2026-09-23, pedido explicito del usuario: "no quiero
+// que esta optimizacion termine cargando ilimitadamente VRAM"): si hay mas
+// slots WARM que MAX_WARM_SLOTS, expulsa (destruye de verdad, vuelve a
+// COLD) los MENOS usados recientemente -- listEvictable() ya excluye
+// cualquier modulo "playing" (al aire) y "gol" (maxima prioridad, ver
+// PROTECTED_MODULE_IDS en hot-pool.js). Con la lista de fabrica esto no
+// expulsa nada en operacion normal (el presupuesto ya la cubre entera);
+// existe como techo de seguridad real ante una lista mal configurada, y se
+// ejercita a proposito en las pruebas de estres del informe.
+function enforceWarmBudget() {
+  for (const id of listEvictable(MAX_WARM_SLOTS)) {
+    const target = els[id];
+    if (!target) { untrack(id); continue; }
+    teardownContent(target.content, id, { force: true });
+  }
+}
+
+// HOT POOL + VARIANTES (2026-09-23, pedido explicito del usuario, sección
+// 9 -- "reemplazo seguro cuando cambia variante"): si el operador cambia
+// la variante de un módulo del Hot Pool (ej. el color de Tarjeta) ANTES de
+// mandarlo al aire, se reconstruye el WARM con la variante nueva de
+// inmediato -- para cuando llegue el Take real ya está lista. Sin esto el
+// Take seguiría siendo correcto (el fix de "*Changed" en el renderer ya lo
+// garantiza) pero pagaría el hitch de arranque en frío para esa variante
+// puntual. No pinta contenido dinámico (crests/texto): eso lo hace el
+// próximo Take real con los datos vigentes en ese momento.
+function maybeRewarmOffAirVariant(id, data) {
+  const field = HOT_VARIANT_FIELD[id];
+  if (!field || !isHotModule(id)) return;
+  const target = els[id];
+  if (!target) return;
+  const content = target.content;
+  if (!content._gfxBuilt) return; // todavia no esta WARM -- lo arma warmHotModules() en su momento
+  const newVariant = data ? data[field] : undefined;
+  if (content.dataset[field] === newVariant) return;
+  teardownContent(content, id, { force: true });
+  renderers[id](content, data || {}, false, () => handleOneShotEnded(id), latestData);
+  trackWarm(id, id, newVariant);
+}
+
+// "handleStateSnapshot" (2026-09-26, WebGL context management -- pedido
+// explicito: "1. cancelar Takes pendientes; 2. detener reproducción del
+// theme viejo; 3. liberar recursos/contextos del theme viejo; 4. confirmar
+// que bajó la cantidad de contextos vivos; 5. recién entonces comenzar el
+// warm-up del theme nuevo... no crear primero los nuevos y destruir los
+// viejos 200ms después"). Antes, "warmHotModules()" corría en la MISMA
+// vuelta sincrónica que el teardown forzado -- pero la liberación real del
+// contexto WebGL de "destroy()" está deliberadamente diferida (2 rAF o
+// 200ms, ver program/js/alpha-video.js, fix del parpadeo blanco) para NO
+// tocar el decodificador/contexto hasta que el navegador asentó el cambio
+// visual. Con Hot Pool (~9-10 contextos siempre vivos) eso significaba que
+// "warmHotModules()" creaba los ~9 contextos del theme NUEVO ANTES de que
+// los ~9 del theme VIEJO llegaran a liberarse -- pico real de hasta ~18,
+// justo el warning "Too many active WebGL contexts" confirmado en la
+// auditoría anterior. Ahora se espera la Promise real de cada
+// "destroy()" (resuelve exactamente cuando ese release ya ocurrió, no un
+// número de ms supuesto -- ver "releasedPromise" en alpha-video.js) antes
+// de tocar nada del theme nuevo: determinista, sin adivinar un timeout.
+//
+// "async" es seguro acá porque el propio "pendingSnapshotChain" (ver mas
+// abajo, en el listener real) serializa las llamadas -- si dos
+// STATE_SNAPSHOT llegaran muy seguidos (dos cambios de theme rápidos), el
+// segundo espera a que el primero termine su propio await antes de
+// empezar, en vez de interlazarse.
+async function handleStateSnapshot(msg) {
+  // El theme se fija ANTES de recorrer los módulos: cada renderer
+  // resuelve su asset (program/js/theme-assets.js) leyendo el theme
+  // activo en el momento exacto en que se lo vuelve a invocar acá.
+  const themeChanged = msg.theme && lastKnownThemeId !== null && msg.theme !== lastKnownThemeId;
+  if (msg.theme) {
+    setRendererActiveThemeId(msg.theme);
+    lastKnownThemeId = msg.theme;
+  }
+  if (themeChanged) {
+    // Cambio de theme real (no la conexión inicial): un módulo que YA
+    // está montado (".av-target"/"._alphaVideo" construidos con el
+    // asset del theme ANTERIOR) no se reconstruye solo -- cada
+    // renderer solo arma su estructura una vez ("if (!contentEl.
+    // _alphaVideo) buildStructure(...)"). Se fuerza un teardown+
+    // rebuild acá, centralizado, para que el asset (o su ausencia) del
+    // theme NUEVO se vuelva a resolver -- sin tocar la lógica interna
+    // de ningún renderer.
+    const releasePromises = [];
+    for (const id of MODULE_IDS) {
+      // "force:true": un cambio de theme real invalida el asset
+      // montado (pertenece al theme VIEJO) incluso para los modulos
+      // del Hot Pool -- se destruyen de verdad aca, "warmHotModules()"
+      // los vuelve a precalentar mas abajo ya con el theme nuevo.
+      if (els[id]) {
+        const p = teardownContent(els[id].content, id, { force: true });
+        if (p) releasePromises.push(p);
+      }
+    }
+    // Punto 3+4 del pedido: esperar el release REAL de todos los contextos
+    // viejos (nunca un timeout adivinado) antes de seguir. Con la pestaña
+    // visible esto resuelve en 1-2 frames (~16-33ms); en el peor caso
+    // (pestaña oculta, rAF suspendido) tarda hasta 200ms, el mismo techo
+    // que ya existía -- ver comentario del fallback en alpha-video.js.
+    await Promise.all(releasePromises);
+  }
+  // Punto 5: recién ahora se pinta el estado real y se calienta el theme
+  // nuevo -- los contextos viejos ya estan liberados (o el modulo nunca
+  // tuvo uno, ej. sin cambio de theme).
+  for (const id of MODULE_IDS) applyModuleState(id, msg.state[id]);
+  warmHotModules();
+}
+
+// Serializa los STATE_SNAPSHOT entre si (ver comentario de
+// "handleStateSnapshot" arriba) -- sin esto, dos cambios de theme muy
+// seguidos podrían interlazar sus propios "await" y pisarse el teardown/
+// warm-up entre ellos. ".catch" evita que un error en uno deje la cadena
+// rota para siempre (los STATE_SNAPSHOT futuros seguirían llegando).
+let pendingSnapshotChain = Promise.resolve();
+
 ws = connect({
   onMessage(msg) {
     if (msg.type === 'TEAM_CATALOG_UPDATE') {
@@ -528,28 +722,9 @@ ws = connect({
     } else if (msg.type === WS_MSG.THEME_UPDATE) {
       setRendererActiveThemeId(msg.themeId);
     } else if (msg.type === WS_MSG.STATE_SNAPSHOT) {
-      // El theme se fija ANTES de recorrer los módulos: cada renderer
-      // resuelve su asset (program/js/theme-assets.js) leyendo el theme
-      // activo en el momento exacto en que se lo vuelve a invocar acá.
-      const themeChanged = msg.theme && lastKnownThemeId !== null && msg.theme !== lastKnownThemeId;
-      if (msg.theme) {
-        setRendererActiveThemeId(msg.theme);
-        lastKnownThemeId = msg.theme;
-      }
-      if (themeChanged) {
-        // Cambio de theme real (no la conexión inicial): un módulo que YA
-        // está montado (".av-target"/"._alphaVideo" construidos con el
-        // asset del theme ANTERIOR) no se reconstruye solo -- cada
-        // renderer solo arma su estructura una vez ("if (!contentEl.
-        // _alphaVideo) buildStructure(...)"). Se fuerza un teardown+
-        // rebuild acá, centralizado, para que el asset (o su ausencia) del
-        // theme NUEVO se vuelva a resolver -- sin tocar la lógica interna
-        // de ningún renderer.
-        for (const id of MODULE_IDS) {
-          if (els[id]) teardownContent(els[id].content);
-        }
-      }
-      for (const id of MODULE_IDS) applyModuleState(id, msg.state[id]);
+      pendingSnapshotChain = pendingSnapshotChain
+        .then(() => handleStateSnapshot(msg))
+        .catch((err) => console.error('[GLA] Error procesando STATE_SNAPSHOT:', err));
     } else if (msg.type === WS_MSG.MODULE_UPDATE) {
       const isOn = msg.moduleState && msg.moduleState.status === MODULE_STATUS.ON;
       if (isOn && msg.isAutoSave && !msg.isExplicitUpdate) {
@@ -561,7 +736,56 @@ ws = connect({
         applyVisualLive(msg.moduleId, msg.moduleState.data);
         return;
       }
+      if (!isOn) maybeRewarmOffAirVariant(msg.moduleId, msg.moduleState && msg.moduleState.data);
       applyModuleState(msg.moduleId, msg.moduleState, msg.isExplicitUpdate);
     }
   },
 });
+
+// Introspección de solo lectura del Hot Pool (2026-09-23) -- diagnóstico
+// operativo y las mediciones del informe de auditoría, sin herramientas
+// adicionales: abrir devtools en Program y llamar
+// "window.__glaHotPool.snapshot()" muestra cada módulo del pool con su
+// estado (warm/playing), variante y último uso.
+window.__glaHotPool = {
+  HOT_MODULE_IDS,
+  MAX_WARM_SLOTS,
+  snapshot: hotPoolSnapshot,
+};
+
+// Introspección + debug del Burst/Take Scheduler (2026-09-25, ver
+// program/js/take-scheduler.js) -- "setDebug(true)" logea cada decisión de
+// timing en consola ("[TAKE-SCHEDULER] ...") sin ensuciar producción por
+// default (arranca apagado). Mismos parámetros que usa el scheduler
+// (config centralizada, ver take-scheduler.js) expuestos de solo lectura.
+window.__glaTakeScheduler = {
+  TAKE_BURST_WINDOW_MS,
+  TAKE_STAGGER_MS,
+  TAKE_MAX_STAGGER_MS,
+  HIGH_STAGGER_MS,
+  HIGH_MAX_STAGGER_MS,
+  CRITICAL_MODULE_IDS: [...CRITICAL_MODULE_IDS],
+  HIGH_PRIORITY_IDS: [...HIGH_PRIORITY_IDS],
+  setDebug: setSchedulerDebug,
+  configure: configureScheduler,
+  getConfig: getSchedulerConfig,
+};
+
+// Introspección de contextos WebGL (2026-09-26, WebGL context management --
+// pedido explicito seccion 8: "medir cantidad de contextos WebGL activos...
+// durante cambio de theme... pico maximo"). Recorre los <canvas> realmente
+// montados en el DOM ahora mismo -- no hay ningun registro paralelo que
+// mantener, un canvas ".alpha-video-canvas" solo existe mientras su modulo
+// esta WARM o PLAYING (ver program/js/alpha-video.js/hot-pool.js), asi que
+// contarlos ES contar contextos vivos.
+window.__glaWebGL = {
+  countLive() {
+    return document.querySelectorAll('canvas').length;
+  },
+  list() {
+    return [...document.querySelectorAll('canvas')].map((c) => {
+      const gl = c.getContext('webgl');
+      return { moduleId: c.closest('[id^="mod-"]')?.id?.replace('mod-', '') || null, contextLost: gl ? gl.isContextLost() : null };
+    });
+  },
+};

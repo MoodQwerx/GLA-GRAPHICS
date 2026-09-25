@@ -1,220 +1,258 @@
-// FICHA JUGADOR (2026-09-02, pedido explicito del usuario: placa vertical
-// individual, Argentina Streamers). Reutiliza el mismo patron de roster +
-// "AJUSTE DE TEXTOS" ya probado en performance-table-panel.js (mismo
-// mecanismo de mountAdjustControl, mismo criterio de fuente/snapshots
-// para poder reemplazar la lista completa por un sync futuro sin tocar
-// este panel) -- no se duplica logica, se adapta al modelo de UN jugador
-// seleccionado en vez de una tabla ordenada.
-import { TEAM_OPTIONS, crestFile } from '../../shared/teams.js';
+// FICHA JUGADOR (BLOQUE 4, 2026-09-09, reconstruido para consumir el
+// plantel central del BLOQUE 3 -- ver server/playerRosters.js -- en vez de
+// la lista manual propia que tenía este panel antes). Mismo patrón de
+// EQUIPO local/visitante que ya usan Tarjeta/Cambios (ver
+// match-roster-panel.js): el desplegable de jugador muestra el plantel del
+// equipo elegido, nunca una lista independiente.
+//
+// "ACTUALIZAR DATOS DE LA WEB" ahora funciona de verdad (antes era un botón
+// deshabilitado a propósito, sin integración) -- ver
+// server/argentinaStreamersPlayerStats.js para la fuente real de cada
+// estadística. El resultado puede ser: ok (stats actualizados), not-found
+// (la web no tiene a este jugador -- no se inventa nada), ambiguous (más
+// de un candidato -- el operador elige, nunca se adivina) o stale-web-id
+// (el jugador ya estaba asociado pero ese id desapareció de la web).
+import { teamName } from '../../shared/teams.js';
 import { mountAdjustControl } from './field-editors.js';
 
-const MAX_PLAYERS = 40; // sin limite real de "casilleros" (una sola placa) -- tope generoso contra carga accidental masiva.
-
 const STATS = [
-  { key: 'g', label: 'GOLES' },
-  { key: 'a', label: 'ASISTENCIAS' },
-  { key: 'pj', label: 'PRESENCIAS' },
-  { key: 'mvp', label: 'MVPS' },
+  { key: 'goles', label: 'GOLES' },
+  { key: 'asistencias', label: 'ASISTENCIAS' },
+  { key: 'presencias', label: 'PRESENCIAS' },
+  { key: 'mvps', label: 'MVPS' },
 ];
 
 const ADJUST_FIELDS = [
   { key: 'nombre', label: 'Nombre del jugador' },
   { key: 'goles', label: 'Goles' },
   { key: 'asistencias', label: 'Asistencias' },
-  { key: 'gMasA', label: 'G+A' },
   { key: 'presencias', label: 'Presencias' },
   { key: 'mvps', label: 'MVPs' },
 ];
 
-function numeric(value) {
-  const parsed = Number.parseInt(value, 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
-}
-
-function makePlayerId() {
-  return `p${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-}
-
-export function renderFichaJugadorPanel(container, data, onDirty, saveOptions) {
-  if (!Array.isArray(data.jugadores)) data.jugadores = [];
-  if (typeof data.selectedPlayerId !== 'string') data.selectedPlayerId = '';
-  if (!data.jugadores.some((p) => p.id === data.selectedPlayerId)) {
-    data.selectedPlayerId = data.jugadores[0]?.id || '';
+function applyPlayerToData(data, jugador) {
+  data.jugadorId = jugador.id;
+  data.teamId = jugador.teamId;
+  data.nombre = jugador.nombreTV || '';
+  const stats = jugador.metadata?.stats;
+  if (stats) {
+    data.goles = stats.goles ?? 0;
+    data.asistencias = stats.asistencias ?? 0;
+    data.presencias = stats.presencias ?? 0;
+    data.mvps = stats.mvps ?? 0;
+    data.golesDisponible = stats.golesDisponible !== false;
+    data.asistenciasDisponible = stats.asistenciasDisponible !== false;
+    data.presenciasDisponible = stats.presenciasDisponible !== false;
+    data.mvpsDisponible = stats.mvpsDisponible !== false;
+  } else {
+    data.goles = 0; data.asistencias = 0; data.presencias = 0; data.mvps = 0;
+    data.golesDisponible = true; data.asistenciasDisponible = true; data.presenciasDisponible = true; data.mvpsDisponible = true;
   }
+}
+
+export function renderFichaJugadorPanel(container, data, scoreboardData, onDirty, saveOptions) {
+  if (data.equipo !== 'visitante') data.equipo = 'local';
+  const teamId = data.equipo === 'visitante' ? scoreboardData?.teamB : scoreboardData?.teamA;
 
   const root = document.createElement('div');
   root.className = 'performance-editor performance-editor--fichaJugador';
   container.appendChild(root);
 
-  function markDirty() {
-    onDirty();
+  let roster = null;
+  let pendingCandidates = null; // [{webId, slug, name, displayName}] cuando la asociación es ambigua
+  let status = null; // {kind:'loading'|'success'|'error'|'info', text, detail}
+  let disposed = false;
+
+  async function loadRoster() {
+    if (!teamId) { render(); return; }
+    try {
+      const response = await fetch(`/api/planteles/${encodeURIComponent(teamId)}`);
+      const body = await response.json().catch(() => null);
+      if (response.ok && body?.ok) roster = body.snapshot;
+    } catch {
+      // Sin red: el selector queda vacío, no rompe el resto del panel.
+    }
+    if (!disposed) render();
+  }
+
+  function currentJugador() {
+    return roster?.jugadores.find((j) => j.id === data.jugadorId) || null;
+  }
+
+  async function syncWeb(explicitWebId) {
+    if (!teamId || !data.jugadorId) return;
+    status = { kind: 'loading', text: 'Consultando argentinastreamers.com...' };
+    pendingCandidates = null;
+    render();
+    try {
+      const response = await fetch(`/api/planteles/${encodeURIComponent(teamId)}/jugadores/${encodeURIComponent(data.jugadorId)}/sync-web`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(explicitWebId ? { webId: explicitWebId } : {}),
+      });
+      const body = await response.json().catch(() => null);
+      if (!response.ok || !body?.ok) {
+        // Error de red/parseo real (Section 9: nunca destruye el último
+        // dato válido -- el jugador cacheado en "roster" sigue teniendo su
+        // "metadata.stats" anterior intacta, solo se informa el error).
+        status = { kind: 'error', text: 'ERROR AL ACTUALIZAR — SE CONSERVÓ EL ÚLTIMO DATO VÁLIDO', detail: body?.error || `HTTP ${response.status}` };
+        await loadRoster();
+        return;
+      }
+      if (body.status === 'ok') {
+        await loadRoster();
+        applyPlayerToData(data, currentJugador() || body.jugador);
+        onDirty();
+        status = { kind: 'success', text: `DATOS ACTUALIZADOS (asociado a "${body.webPlayer.displayName}")` };
+      } else if (body.status === 'not-found') {
+        status = { kind: 'error', text: 'NO SE ENCONTRÓ ESTE JUGADOR EN ARGENTINASTREAMERS.COM — no se inventaron datos.' };
+      } else if (body.status === 'ambiguous') {
+        pendingCandidates = body.candidates;
+        status = { kind: 'info', text: 'HAY MÁS DE UN JUGADOR CON ESE NOMBRE EN LA WEB — elegí a cuál corresponde:' };
+      } else if (body.status === 'stale-web-id') {
+        status = { kind: 'error', text: 'ESTE JUGADOR ESTABA ASOCIADO A UN PERFIL WEB QUE YA NO EXISTE.' };
+      }
+    } catch (error) {
+      status = { kind: 'error', text: 'ERROR AL ACTUALIZAR — SE CONSERVÓ EL ÚLTIMO DATO VÁLIDO', detail: error.message };
+    }
+    render();
   }
 
   function render() {
     root.innerHTML = '';
 
-    // "ACTUALIZAR DATOS DE LA WEB" (2026-09-02, pedido explicito del
-    // usuario): el boton tiene que EXISTIR, sin scraping ni endpoint
-    // falso -- integracion con argentinastreamers.com pendiente. Deja
-    // constancia visible del estado real en vez de simular una accion.
+    const equipoRow = document.createElement('div');
+    equipoRow.className = 'performance-sync';
+    for (const [side, label] of [['local', 'LOCAL'], ['visitante', 'VISITANTE']]) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'performance-sync-btn';
+      btn.classList.toggle('active', data.equipo === side);
+      btn.textContent = label;
+      btn.addEventListener('click', () => {
+        if (data.equipo === side) return;
+        data.equipo = side;
+        onDirty();
+        roster = null;
+        pendingCandidates = null;
+        status = null;
+        render();
+        loadRoster();
+      });
+      equipoRow.appendChild(btn);
+    }
+    root.appendChild(equipoRow);
+
+    const equipoName = teamName(teamId) || (data.equipo === 'visitante' ? 'VISITANTE' : 'LOCAL');
+    const heading = document.createElement('p');
+    heading.className = 'performance-note';
+    heading.textContent = `Plantel ${data.equipo === 'visitante' ? 'VISITANTE' : 'LOCAL'} — ${equipoName}`;
+    root.appendChild(heading);
+
+    if (!teamId) {
+      const note = document.createElement('p');
+      note.className = 'performance-empty';
+      note.textContent = 'Elegí el equipo correspondiente en MARCADOR para ver su plantel.';
+      root.appendChild(note);
+      return;
+    }
+
+    const selectField = document.createElement('label');
+    selectField.className = 'field';
+    const selectLabel = document.createElement('span');
+    selectLabel.textContent = 'JUGADOR';
+    const select = document.createElement('select');
+    const emptyOpt = document.createElement('option');
+    emptyOpt.value = '';
+    emptyOpt.textContent = roster ? 'Seleccionar jugador del plantel' : 'Cargando plantel...';
+    select.appendChild(emptyOpt);
+    for (const jugador of roster?.jugadores || []) {
+      const option = document.createElement('option');
+      option.value = jugador.id;
+      option.textContent = jugador.nombreTV;
+      select.appendChild(option);
+    }
+    select.value = data.jugadorId && currentJugador() ? data.jugadorId : '';
+    select.disabled = !roster?.jugadores?.length;
+    select.addEventListener('change', () => {
+      const jugador = roster?.jugadores.find((j) => j.id === select.value);
+      if (!jugador) return;
+      applyPlayerToData(data, jugador);
+      status = null;
+      pendingCandidates = null;
+      onDirty();
+      render();
+    });
+    selectField.append(selectLabel, select);
+    root.appendChild(selectField);
+
+    if (!roster?.jugadores?.length && roster) {
+      const note = document.createElement('p');
+      note.className = 'performance-empty';
+      note.textContent = `${equipoName} todavía no tiene jugadores cargados -- cargalos desde JUGADORES.`;
+      root.appendChild(note);
+    }
+
     const webRow = document.createElement('div');
     webRow.className = 'performance-sync';
     const webBtn = document.createElement('button');
     webBtn.type = 'button';
     webBtn.className = 'performance-sync-btn';
     webBtn.textContent = 'ACTUALIZAR DATOS DE LA WEB';
-    webBtn.disabled = true;
-    webBtn.title = 'Integración con argentinastreamers.com pendiente';
+    webBtn.disabled = !data.jugadorId || status?.kind === 'loading';
+    webBtn.addEventListener('click', () => syncWeb());
     webRow.appendChild(webBtn);
-    const webNote = document.createElement('span');
-    webNote.className = 'performance-sync-status';
-    webNote.textContent = 'INTEGRACIÓN CON ARGENTINASTREAMERS.COM PENDIENTE';
-    webRow.appendChild(webNote);
     root.appendChild(webRow);
 
-    const selectField = document.createElement('label');
-    selectField.className = 'field';
-    const selectLabel = document.createElement('span');
-    selectLabel.textContent = 'Jugador mostrado';
-    const select = document.createElement('select');
-    if (data.jugadores.length === 0) {
-      const option = document.createElement('option');
-      option.value = '';
-      option.textContent = 'Sin jugadores cargados';
-      select.appendChild(option);
+    if (status) {
+      const statusEl = document.createElement('p');
+      statusEl.className = `performance-sync-status ${status.kind}`;
+      statusEl.textContent = status.text;
+      if (status.detail) statusEl.title = status.detail;
+      root.appendChild(statusEl);
     }
-    for (const player of data.jugadores) {
-      const option = document.createElement('option');
-      option.value = player.id;
-      option.textContent = player.nombre || '(sin nombre)';
-      select.appendChild(option);
-    }
-    select.value = data.selectedPlayerId;
-    select.disabled = data.jugadores.length === 0;
-    select.addEventListener('change', () => {
-      data.selectedPlayerId = select.value;
-      markDirty();
-    });
-    selectField.append(selectLabel, select);
-    root.appendChild(selectField);
 
-    const note = document.createElement('p');
-    note.className = 'performance-note';
-    note.textContent = 'Carga manual mientras no esté integrada la web. La lista de jugadores podrá reemplazarse por el resultado del sync sin reconstruir este panel.';
-    root.appendChild(note);
-
-    const rows = document.createElement('div');
-    rows.className = 'performance-rows';
-
-    data.jugadores.forEach((player, index) => {
-      const row = document.createElement('section');
-      row.className = 'performance-row-editor';
-      row.classList.toggle('is-selected', player.id === data.selectedPlayerId);
-
-      const rowHeader = document.createElement('div');
-      rowHeader.className = 'performance-row-header';
-      const rowTitle = document.createElement('strong');
-      rowTitle.textContent = player.id === data.selectedPlayerId ? 'MOSTRADO AHORA' : `JUGADOR ${index + 1}`;
-      const removeButton = document.createElement('button');
-      removeButton.type = 'button';
-      removeButton.className = 'performance-remove';
-      removeButton.textContent = 'ELIMINAR';
-      removeButton.addEventListener('click', () => {
-        data.jugadores.splice(index, 1);
-        if (data.selectedPlayerId === player.id) {
-          data.selectedPlayerId = data.jugadores[0]?.id || '';
-        }
-        markDirty();
-        render();
-      });
-      rowHeader.append(rowTitle, removeButton);
-      row.appendChild(rowHeader);
-
-      const identity = document.createElement('div');
-      identity.className = 'performance-identity';
-      const crest = document.createElement('img');
-      crest.className = 'performance-crest-preview';
-      crest.alt = '';
-      const crestSrc = crestFile(player.teamId);
-      if (crestSrc) crest.src = crestSrc;
-
-      const teamSelect = document.createElement('select');
-      teamSelect.setAttribute('aria-label', `Equipo del jugador ${index + 1}`);
-      for (const team of TEAM_OPTIONS) {
-        const option = document.createElement('option');
-        option.value = team.id;
-        option.textContent = team.label;
-        teamSelect.appendChild(option);
+    if (pendingCandidates) {
+      const list = document.createElement('div');
+      list.className = 'performance-rows';
+      for (const candidate of pendingCandidates) {
+        const row = document.createElement('button');
+        row.type = 'button';
+        row.className = 'btn';
+        row.textContent = `${candidate.displayName} (${candidate.name})`;
+        row.addEventListener('click', () => syncWeb(candidate.webId));
+        list.appendChild(row);
       }
-      teamSelect.value = player.teamId || '';
-      teamSelect.addEventListener('change', () => {
-        player.teamId = teamSelect.value;
-        const src = crestFile(player.teamId);
-        if (src) crest.src = src;
-        else crest.removeAttribute('src');
-        markDirty();
-      });
+      root.appendChild(list);
+    }
 
-      const nameInput = document.createElement('input');
-      nameInput.type = 'text';
-      nameInput.maxLength = 80;
-      nameInput.value = player.nombre || '';
-      nameInput.placeholder = 'Nombre del jugador';
-      nameInput.setAttribute('aria-label', `Nombre del jugador ${index + 1}`);
-      nameInput.addEventListener('input', () => {
-        player.nombre = nameInput.value;
-        markDirty();
-        if (player.id === data.selectedPlayerId) rowTitle.textContent = 'MOSTRADO AHORA';
-        select.querySelector(`option[value="${player.id}"]`).textContent = player.nombre || '(sin nombre)';
-      });
-      identity.append(crest, teamSelect, nameInput);
-      row.appendChild(identity);
+    const jugador = currentJugador();
+    if (jugador) {
+      const meta = document.createElement('p');
+      meta.className = 'performance-note';
+      const ultima = jugador.metadata?.statsUltimaActualizacion;
+      const error = jugador.metadata?.statsError;
+      const parts = [];
+      parts.push(jugador.webId ? `Asociado a argentinastreamers.com (slug "${jugador.slug}").` : 'Todavía no asociado a un perfil web.');
+      if (ultima) parts.push(`Último dato válido: ${new Date(ultima).toLocaleString('es-AR')}.`);
+      if (error) parts.push(`⚠ Último intento de actualizar falló: ${error}`);
+      meta.textContent = parts.join(' ');
+      root.appendChild(meta);
 
-      const stats = document.createElement('div');
-      stats.className = 'performance-stats';
+      const statsPreview = document.createElement('div');
+      statsPreview.className = 'performance-stats';
       for (const stat of STATS) {
-        const input = document.createElement('input');
-        input.type = 'number';
-        input.min = '0';
-        input.max = '99';
-        input.inputMode = 'numeric';
-        input.value = String(numeric(player[stat.key]));
-        input.setAttribute('aria-label', `${stat.label}, jugador ${index + 1}`);
-        input.addEventListener('input', () => {
-          player[stat.key] = numeric(input.value);
-          markDirty();
-        });
-        const field = document.createElement('label');
+        const field = document.createElement('div');
         field.className = 'performance-field';
         const label = document.createElement('span');
         label.textContent = stat.label;
-        field.append(label, input);
-        stats.appendChild(field);
+        const value = document.createElement('strong');
+        value.textContent = data[`${stat.key}Disponible`] === false ? 'N/D' : String(data[stat.key] ?? 0);
+        field.append(label, value);
+        statsPreview.appendChild(field);
       }
-      row.appendChild(stats);
-
-      const selectRowBtn = document.createElement('button');
-      selectRowBtn.type = 'button';
-      selectRowBtn.className = 'btn';
-      selectRowBtn.textContent = player.id === data.selectedPlayerId ? 'MOSTRANDO' : 'MOSTRAR ESTE JUGADOR';
-      selectRowBtn.disabled = player.id === data.selectedPlayerId;
-      selectRowBtn.addEventListener('click', () => {
-        data.selectedPlayerId = player.id;
-        markDirty();
-        render();
-      });
-      row.appendChild(selectRowBtn);
-
-      rows.appendChild(row);
-    });
-
-    if (data.jugadores.length === 0) {
-      const empty = document.createElement('p');
-      empty.className = 'performance-empty';
-      empty.textContent = 'Todavía no hay jugadores cargados.';
-      rows.appendChild(empty);
+      root.appendChild(statsPreview);
     }
-    root.appendChild(rows);
 
     const adjustSection = document.createElement('section');
     adjustSection.className = 'performance-adjust-section';
@@ -227,27 +265,13 @@ export function renderFichaJugadorPanel(container, data, onDirty, saveOptions) {
       const lbl = document.createElement('span');
       lbl.textContent = label;
       wrap.appendChild(lbl);
-      mountAdjustControl(wrap, data, key, markDirty, saveOptions);
+      mountAdjustControl(wrap, data, key, onDirty, saveOptions);
       adjustSection.appendChild(wrap);
     }
     root.appendChild(adjustSection);
-
-    const addButton = document.createElement('button');
-    addButton.type = 'button';
-    addButton.className = 'btn performance-add';
-    addButton.textContent = 'AÑADIR JUGADOR';
-    addButton.disabled = data.jugadores.length >= MAX_PLAYERS;
-    addButton.addEventListener('click', () => {
-      if (data.jugadores.length >= MAX_PLAYERS) return;
-      const player = { id: makePlayerId(), teamId: '', nombre: '', g: 0, a: 0, pj: 0, mvp: 0 };
-      data.jugadores.push(player);
-      if (!data.selectedPlayerId) data.selectedPlayerId = player.id;
-      markDirty();
-      render();
-    });
-    root.appendChild(addButton);
   }
 
   render();
-  return () => {};
+  loadRoster();
+  return () => { disposed = true; };
 }

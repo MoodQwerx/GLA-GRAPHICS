@@ -49,7 +49,6 @@ export const THEME_ASSET_MODULES = [
   { key: 'zocaloCompuestoLogo', label: 'Zócalo compuesto con logo' },
   { key: 'zocaloFinal', label: 'Zócalo final' },
   { key: 'zocaloFinalDiv', label: 'Zócalo final con equipos' },
-  { key: 'placaLInfo', label: 'Placa L Info' },
   { key: 'vs', label: 'VS' },
   { key: 'vsPrepartido', label: 'VS Prepartido' },
   { key: 'vsResultado', label: 'VS con resultado' },
@@ -118,7 +117,6 @@ export const THEMES = {
       zocaloCompuestoLogo: { video: '/assets/zocalos/zocalo-final-alpha.mp4', image: '/assets/images/gla-logo.png' },
       zocaloFinal: { video: '/assets/zocalos/zocalo-final-alpha.mp4', image: '/assets/images/gla-logo.png' },
       zocaloFinalDiv: { video: '/assets/zocalos/zocalo-final-div-alpha.mp4' },
-      placaLInfo: { image: '/assets/var/zocalo-cortito-brackets.png' },
       vs: {
         variants: {
           normal: '/assets/zocalos/zocalo-vs-alpha.mp4',
@@ -350,6 +348,11 @@ export const THEMES = {
       goleadores: { image: '/assets/themes/argentina-streamers/tablas/tabla-estadisticas.png' },
       asistidores: { image: '/assets/themes/argentina-streamers/tablas/tabla-estadisticas.png' },
       jugadores: { image: '/assets/themes/argentina-streamers/tablas/tabla-estadisticas.png' },
+      // Ficha Jugador (BLOQUE 4, 2026-09-09): PNG real entregado en
+      // "cosas sueltas/JUGADORES.png" -- copiado a la carpeta permanente
+      // del theme (no referencia "cosas sueltas" en runtime). Geometria
+      // medida pixel a pixel en vivo, ver program/js/renderers/fichaJugador.js.
+      fichaJugador: { image: '/assets/themes/argentina-streamers/tablas/ficha-jugador.png' },
       // Cronograma Hoy (2026-09-02): PNG real (VS_DEFAULT entregado por el
       // usuario) -- reemplaza la tarjeta fabricada en CSS que habia antes.
       cronogramaHoy: { image: '/assets/themes/argentina-streamers/brackets/cronograma-hoy.png' },
@@ -361,7 +364,24 @@ export const THEMES = {
       // runtime) -- reemplaza la tarjeta fabricada en CSS que habia antes.
       resultadosParciales: { image: '/assets/themes/argentina-streamers/brackets/resultados-parciales.png' },
       // Sitio Web Promo L (2026-09-02): PNG real (ANUNCIO_AS entregado).
-      sitioWebPromoL: { image: '/assets/themes/argentina-streamers/extras/anuncio-as.png' },
+      // "variants" (2026-09-14, RESTAURADO -- ver comentario en
+      // shared/modules.js "sitioWebPromoL.fields" para la causa raiz del
+      // desplegable perdido): "argentina-streamers" es el mismo PNG de
+      // siempre, sin cambios. "punch" queda en null A PROPOSITO -- busqué
+      // en todo el repo (incluida "cosas sueltas/") y el UNICO archivo
+      // "PUNCH.png" que existe es un logo de sponsor de 297×109 (mismo
+      // tamaño que el resto de "SPONSORS ZOCALO/"), no una placa
+      // full-bleed 1920×1080 -- no hay ningun "ANUNCIO_PUNCH" real
+      // entregado todavia. Usar ese logo chico estirado a pantalla completa
+      // se vería roto/pixelado -- se deja pendiente (mismo criterio que
+      // "THEME EN PREPARACIÓN" en el resto del proyecto) hasta recibir el
+      // asset correcto, en vez de inventar un placeholder.
+      sitioWebPromoL: {
+        variants: {
+          'argentina-streamers': '/assets/themes/argentina-streamers/extras/anuncio-as.png',
+          punch: null,
+        },
+      },
     },
   },
 };
