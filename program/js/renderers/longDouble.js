@@ -1,6 +1,7 @@
 import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { applyFittedText, updateFittedTextWithTransition, readTextAdjust } from '../text-fit.js';
 import { resolveTeamTokens } from '../../../shared/text-tokens.js';
+import { withGlaSegoeRegular } from '../program-fonts.js';
 
 const VIDEO_SRC = '/assets/zocalos/zocalo-largo-doble-alpha.mp4';
 
@@ -51,13 +52,13 @@ export default function renderLongDouble(contentEl, data, justTaken, onOneShotEn
   const oldL1 = contentEl._prevLine1;
   const oldL2 = contentEl._prevLine2;
 
-  updateFittedTextWithTransition(line1El, newL1, oldL1, {
+  updateFittedTextWithTransition(line1El, newL1, oldL1, withGlaSegoeRegular({
     maxFont: LINE1_MAX_FONT, minFont: LINE1_MIN_FONT, maxWidth: LINE_MAX_WIDTH, weight: 800,
-  }, readTextAdjust(adjust, 'line1'), !justTaken);
+  }), readTextAdjust(adjust, 'line1'), !justTaken);
 
-  updateFittedTextWithTransition(line2El, newL2, oldL2, {
+  updateFittedTextWithTransition(line2El, newL2, oldL2, withGlaSegoeRegular({
     maxFont: LINE2_MAX_FONT, minFont: LINE2_MIN_FONT, maxWidth: LINE_MAX_WIDTH, weight: 600,
-  }, readTextAdjust(adjust, 'line2'), !justTaken);
+  }), readTextAdjust(adjust, 'line2'), !justTaken);
 
   contentEl._prevLine1 = newL1;
   contentEl._prevLine2 = newL2;

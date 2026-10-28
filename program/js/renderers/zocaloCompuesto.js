@@ -26,7 +26,7 @@ import { resolveTeamTokens } from '../../../shared/text-tokens.js';
 import { mountThemedAlphaVideo, resolveImageSrc } from '../theme-assets.js';
 import { getActiveThemeId } from '../theme-client.js';
 import { DEFAULT_THEME_ID } from '../../../shared/themes.js';
-import { GLA_SEGOE_BOLD_FAMILY } from '../program-fonts.js';
+import { GLA_SEGOE_BOLD_FAMILY, withGlaSegoeRegular } from '../program-fonts.js';
 
 const VIDEO_SRC = {
   equipos: '/assets/zocalos/zocalo-final-div-alpha.mp4',
@@ -136,14 +136,14 @@ export default function renderZocaloCompuesto(contentEl, data, justTaken, onOneS
   // mismo criterio que longSimple.js/shortSimple.js/shortDouble.js.
   const family = getActiveThemeId() === DEFAULT_THEME_ID ? GLA_SEGOE_BOLD_FAMILY : undefined;
 
-  updateFittedTextWithTransition(texto1El, newT1, oldT1, {
+  updateFittedTextWithTransition(texto1El, newT1, oldT1, withGlaSegoeRegular({
     maxFont: TEXTO1_MAX_FONT, minFont: TEXTO1_MIN_FONT, maxWidth: TEXTO1_MAX_WIDTH, weight: 800, family,
-  }, readTextAdjust(data.textAdjust, 'texto1'), !justTaken && !tipoChanged);
+  }), readTextAdjust(data.textAdjust, 'texto1'), !justTaken && !tipoChanged);
 
-  updateFittedTextWithTransition(texto2El, newT2, oldT2, {
+  updateFittedTextWithTransition(texto2El, newT2, oldT2, withGlaSegoeRegular({
     maxFont: TEXTO2_MAX_FONT, minFont: TEXTO2_MIN_FONT, maxWidth: TEXTO2_MAX_WIDTH,
     weight: 400, letterSpacing: TEXTO2_LETTER_SPACING, family,
-  }, readTextAdjust(data.textAdjust, 'texto2'), !justTaken && !tipoChanged);
+  }), readTextAdjust(data.textAdjust, 'texto2'), !justTaken && !tipoChanged);
 
   contentEl._prevTexto1 = newT1;
   contentEl._prevTexto2 = newT2;

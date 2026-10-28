@@ -20,3 +20,29 @@ export function colorHex(id) {
   const found = TEAM_COLORS.find((c) => c.id === id);
   return found ? found.hex : '#6b6b68';
 }
+
+// COLOR PERSONALIZADO (2026-10-23, pedido explicito del usuario, GLA):
+// "teamColorAssignments[teamId] = 'personalizado'" + el HEX exacto en
+// "teamColorCustomHex[teamId]" (mismo dato del Marcador, ver
+// master-control/js/main.js). El HEX se conserva aunque el equipo vuelva a
+// un color predefinido, para recuperarlo al elegir PERSONALIZADO otra vez.
+export const CUSTOM_COLOR_ID = 'personalizado';
+
+// "#RGB"/"#RRGGBB" (con o sin "#") -> "#RRGGBB" en mayusculas; null si no
+// es un hexadecimal valido.
+export function normalizeHexColor(value) {
+  const raw = String(value ?? '').trim().replace(/^#/, '');
+  if (/^[0-9a-f]{3}$/i.test(raw)) return `#${raw.split('').map((c) => c + c).join('')}`.toUpperCase();
+  if (/^[0-9a-f]{6}$/i.test(raw)) return `#${raw}`.toUpperCase();
+  return null;
+}
+
+// Color real de un lado del Marcador ('A' local / 'B' visitante): el
+// predefinido por id, o el HEX personalizado de ese equipo. Un HEX
+// invalido o ausente cae al gris (nunca rompe el render).
+export function teamColorHex(scoreboard, side) {
+  const colorId = side === 'B' ? scoreboard?.teamBColor : scoreboard?.teamAColor;
+  if (colorId !== CUSTOM_COLOR_ID) return colorHex(colorId);
+  const teamId = side === 'B' ? scoreboard?.teamB : scoreboard?.teamA;
+  return normalizeHexColor(scoreboard?.teamColorCustomHex?.[teamId]) || colorHex('gris');
+}

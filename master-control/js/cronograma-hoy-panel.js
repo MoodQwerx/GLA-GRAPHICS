@@ -11,6 +11,8 @@
 // pisaria (container.innerHTML='' interno) el resto del panel, mismo bug
 // ya encontrado y corregido en los paneles de Zócalo Compuesto.
 import { renderPresetsControl } from './presets-helper.js';
+import { TEAM_OPTIONS as CATALOG_TEAM_OPTIONS } from '../../shared/teams.js';
+import { ARGENTINA_STREAMERS_THEME_ID } from '../../shared/themes.js';
 
 // Catalogo fijo (2026-09-04, pedido explicito del usuario: exactamente
 // estos 4, no el catalogo completo de equipos que mezclaria GLA). Mismos
@@ -108,8 +110,18 @@ export function renderCronogramaHoyPanel(container, data, onDirty) {
   return () => {};
 }
 
+// Argentina Streamers (2026-10-08, pedido explicito: "EQUIPOS es la fuente
+// central del catalogo, no mantener listas divergentes por modulo"): usa el
+// catalogo central del theme respetando VISIBLE (el equipo ya elegido se
+// sigue mostrando aunque este oculto). GLA conserva la lista fija de antes.
 function renderTeamOptions(selectedId) {
-  return TEAM_OPTIONS.map(
+  const isArgentina = document.body.dataset.theme === ARGENTINA_STREAMERS_THEME_ID;
+  const source = isArgentina
+    ? CATALOG_TEAM_OPTIONS
+      .filter((t) => t.visible !== false || t.id === selectedId)
+      .map((t) => ({ id: t.id, label: t.id ? t.label.toUpperCase() : 'SIN EQUIPO' }))
+    : TEAM_OPTIONS;
+  return source.map(
     (t) => `<option value="${t.id}" ${t.id === selectedId ? 'selected' : ''}>${escapeAttr(t.label)}</option>`
   ).join('');
 }

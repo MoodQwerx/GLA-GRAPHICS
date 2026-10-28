@@ -1,5 +1,5 @@
 import { mountThemedAlphaVideo, resolveImageSrc } from '../theme-assets.js';
-import { colorHex } from '../../../shared/team-colors.js';
+import { teamColorHex } from '../../../shared/team-colors.js';
 import { crestFile, teamAbbr } from '../../../shared/teams.js';
 import { applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
 import { getActiveThemeId } from '../theme-client.js';
@@ -79,13 +79,13 @@ export default function renderMarcadorEntretiempo(contentEl, data, justTaken, on
   // ahi, nunca se intenta pintar un color que ya no existe. GLA sigue
   // pintandolo exactamente igual que siempre.
   const dotA = teamAEl.querySelector('.ov-dot');
-  if (dotA) dotA.style.background = colorHex(sb.teamAColor);
+  if (dotA) dotA.style.background = teamColorHex(sb, 'A');
   setCrest(teamAEl.querySelector('.ov-crest'), sb.teamA);
 
   const teamBEl = contentEl.querySelector('.ov-ent-team-b');
   applyPlainTextAdjust(teamBEl.querySelector('.ov-name'), teamAbbr(sb.teamB), readTextAdjust(ta, 'nameB'));
   const dotB = teamBEl.querySelector('.ov-dot');
-  if (dotB) dotB.style.background = colorHex(sb.teamBColor);
+  if (dotB) dotB.style.background = teamColorHex(sb, 'B');
   setCrest(teamBEl.querySelector('.ov-crest'), sb.teamB);
 
   // "scoreA"/"scoreB" divididos en dos spans (2026-08-15, auditoria

@@ -1,6 +1,7 @@
 import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { crestFile } from '../../../shared/teams.js';
 import { updateFittedTextWithTransition, readTextAdjust } from '../text-fit.js';
+import { withGlaSegoeRegular } from '../program-fonts.js';
 
 const VIDEO_SRC = '/assets/eventos/cambios-alpha.mp4';
 
@@ -70,12 +71,12 @@ export default function renderCambios(contentEl, data, justTaken, onOneShotEnded
   // modulo LIVE, su contenido solo cambia via TAKE/ACTUALIZAR.
   const entra = data.entra || '';
   const sale = data.sale || '';
-  updateFittedTextWithTransition(entraEl, entra, contentEl._prevEntra, {
+  updateFittedTextWithTransition(entraEl, entra, contentEl._prevEntra, withGlaSegoeRegular({
     maxFont: TEXT_MAX_FONT, minFont: TEXT_MIN_FONT, maxWidth: TEXT_MAX_WIDTH, weight: 700,
-  }, readTextAdjust(ta, 'entra'), !justTaken);
-  updateFittedTextWithTransition(saleEl, sale, contentEl._prevSale, {
+  }), readTextAdjust(ta, 'entra'), !justTaken);
+  updateFittedTextWithTransition(saleEl, sale, contentEl._prevSale, withGlaSegoeRegular({
     maxFont: TEXT_MAX_FONT, minFont: TEXT_MIN_FONT, maxWidth: TEXT_MAX_WIDTH, weight: 700,
-  }, readTextAdjust(ta, 'sale'), !justTaken);
+  }), readTextAdjust(ta, 'sale'), !justTaken);
   contentEl._prevEntra = entra;
   contentEl._prevSale = sale;
 }

@@ -38,9 +38,16 @@ if (typeof window === 'undefined') {
 
 export const TEAMS = teams;
 
+// "visible" (2026-09-26, pedido explicito del usuario: MOSTRAR/OCULTAR
+// EQUIPOS del catalogo GLA sin borrarlos): pasa derecho el flag que ya
+// entrega server/teams.js -- "Sin equipo" nunca se oculta. Quien RENDERIZA
+// el <select> (ver field-editors.js) es responsable de saltear una opcion
+// con "visible:false", salvo que sea el valor YA seleccionado (para no
+// romper un estado guardado que eligio un equipo despues ocultado) -- este
+// archivo solo transporta el dato, no decide la UI.
 export const TEAM_OPTIONS = [
-  { id: '', label: 'Sin equipo' },
-  ...teams.map((t) => ({ id: t.id, label: t.name })),
+  { id: '', label: 'Sin equipo', visible: true },
+  ...teams.map((t) => ({ id: t.id, label: t.name, visible: t.visible !== false })),
 ];
 
 export function updateLocalTeamCatalog(newCatalog) {
@@ -48,9 +55,9 @@ export function updateLocalTeamCatalog(newCatalog) {
   teams.length = 0;
   teams.push(...newCatalog);
   TEAM_OPTIONS.length = 0;
-  TEAM_OPTIONS.push({ id: '', label: 'Sin equipo' });
+  TEAM_OPTIONS.push({ id: '', label: 'Sin equipo', visible: true });
   for (const t of teams) {
-    TEAM_OPTIONS.push({ id: t.id, label: t.name });
+    TEAM_OPTIONS.push({ id: t.id, label: t.name, visible: t.visible !== false });
   }
 }
 

@@ -5,9 +5,9 @@ import { renderers } from './renderers/index.js';
 import { updateLocalTeamCatalog } from '../../shared/teams.js';
 import { initStageScale } from './stage-scale.js';
 import { waitForProgramFonts } from './program-fonts.js';
-import { setActiveThemeId as setRendererActiveThemeId } from './theme-client.js';
-import { applyElementAdjust } from './text-fit.js';
-import { ADJUST_REGISTRY } from '../../shared/adjust-registry.js';
+import { setActiveThemeId as setRendererActiveThemeId, getActiveThemeId as getRendererActiveThemeId } from './theme-client.js';
+import { ARGENTINA_STREAMERS_THEME_ID } from '../../shared/themes.js';
+import { applyComposition, applyElementAdjustRegistry } from './visual-compose.js';
 import {
   HOT_MODULE_IDS, HOT_VARIANT_FIELD, isHotModule, MAX_WARM_SLOTS,
   trackWarm, markPlaying, markWarm, untrack, listEvictable, snapshot as hotPoolSnapshot,
@@ -161,114 +161,6 @@ function isSequenced(id) {
   return !!MODULES[id].sequencedReveal;
 }
 
-// "AJUSTE DE COMPOSICIÓN" (2026-08-14, pedido explicito del usuario):
-// posicion X/Y + escala de TODO un modulo como una unidad rigida, capa
-// ADICIONAL sobre el diseño base ("posicion final = base + offset",
-// "escala final = base × ajuste") -- ver shared/modules.js
-// (compositionOffsetX/Y/Scale, mezclados en cloneDefaults() para
-// cualquier modulo) y master-control/js/composition-control.js (UI).
-//
-// Se aplica sobre ".content" (NO sobre "#mod-<id>"), a proposito: varios
-// modulos ya tienen su PROPIO "transform" declarado en CSS sobre
-// "#mod-<id>" para su posicion de diseño (ej. "#mod-marcadorZocalo",
-// "#mod-shortDouble") -- pisarlo con estilo inline desde aca borraria esa
-// posicion base. ".content" es el nodo que cada renderer llena via
-// "contentEl.innerHTML" (ver program/js/renderers/*.js): ningun renderer
-// toca jamas "contentEl.style" directamente (verificado, ver
-// CHANGELOG/historial), asi que este es el UNICO punto de la cadena que
-// puede reclamar esa propiedad sin colisionar con nada existente. El
-// transform de "#mod-<id>" (base) y el de ".content" (operador) se
-// componen naturalmente por anidamiento CSS normal, sin reemplazarse.
-//
-// No recalcula fitted text: fitFontSize/verticalCorrection (text-fit.js)
-// miden con canvas.measureText, nunca con getBoundingClientRect sobre el
-// DOM real -- son completamente ajenos a cualquier transform CSS de un
-// ancestro. La composicion entera (ya armada a su tamaño/posicion
-// "logico" normal) se escala/traslada DESPUES, como una foto, sin que
-// ningun renderer necesite saber que esto existe.
-//
-// transform-origin fijo en el centro del stage logico (960,540, ver
-// ".content" en overlay.css) para los 25+ modulos por igual: un punto de
-// anclaje unico y predecible en vez de uno distinto por modulo (que
-// obligaria a un caso especial por cada uno).
-function applyComposition(target, data) {
-  const dx = data.compositionOffsetX || 0;
-  const dy = data.compositionOffsetY || 0;
-  const scale = data.compositionScale || 1;
-  target.content.style.transform = `translate(${dx}px, ${dy}px) scale(${scale})`;
-}
-
-// Registro declarativo de ajuste individual (2026-08-31, pedido explicito
-// del usuario: "que agregar un nuevo elemento editable sea tan simple como
-// definir id/label/xKey/yKey/scaleKey/target" -- ver shared/adjust-registry.js
-// para el contrato completo). Corre SIEMPRE junto a "applyComposition" (mismos
-// dos call sites, TAKE y ajuste en vivo) para cualquier modulo con entradas
-// "kind:'composition'" en su registro -- agregar un elemento nuevo a un
-// modulo YA migrado no requiere tocar este archivo de nuevo, solo:
-//   1. el data-adjust="<id>" en el template del renderer;
-//   2. los 3 campos <xKey>/<yKey>/<scaleKey> en shared/modules.js;
-//   3. la entrada en el registro.
-// Las entradas "kind:'text'" no pasan por aca -- esas ya se resuelven solas
-// dentro del propio renderer via readTextAdjust/applyPlainTextAdjust, el
-// registro solo las declara para que Master Control arme su seccion del
-// acordeon (ver master-control/js/main.js "renderModuleAdjustAccordion").
-// Resuelve, para un elemento "crestTeam" (ver shared/adjust-registry.js),
-// el override POR EQUIPO guardado en "data.crestByTeam" -- null si no hay
-// equipo resuelto o si ese equipo todavia no tiene una posicion propia
-// guardada (en cuyo caso el caller sigue usando el valor generico del
-// slot, exactamente como si "crestTeam" no existiera). El teamId sale
-// SIEMPRE del Marcador (latestData.scoreboard.teamA/teamB) -- mismo
-// criterio que ya usan estos renderers para el escudo en si (ver
-// "sb.teamA"/"sb.teamB" en program/js/renderers/*.js).
-function resolveCrestTeamOverride(entry, data) {
-  const sb = latestData.scoreboard;
-  if (!sb) return null;
-  let slot;
-  let teamId;
-  if (entry.crestTeam === 'dynamic') {
-    const isVisitante = data.equipo === 'visitante';
-    slot = isVisitante ? 'away' : 'local';
-    teamId = isVisitante ? sb.teamB : sb.teamA;
-  } else if (entry.crestTeam === 'B') {
-    slot = 'away';
-    teamId = sb.teamB;
-  } else {
-    slot = 'local';
-    teamId = sb.teamA;
-  }
-  return (teamId && data.crestByTeam?.[slot]?.[teamId]) || null;
-}
-
-function applyElementAdjustRegistry(id, target, data) {
-  const entries = ADJUST_REGISTRY[id]?.elements;
-  if (!entries || !entries.length) return;
-  for (const entry of entries) {
-    if (entry.kind !== 'composition') continue;
-    // "querySelectorAll" (no "querySelector"): cubre tanto el caso de un
-    // unico elemento (escudo/logo/sponsor puntual) como el de tablas con
-    // filas repetidas (ej. "escudo" de una columna en posiciones/grupos/
-    // goleadores) -- un mismo id "data-adjust" puede marcar VARIOS nodos
-    // (una fila cada uno), y el mismo offset de columna se les aplica a
-    // todos por igual, sin codigo extra por modulo (ajuste POR COLUMNA,
-    // pedido explicito del usuario para tablas).
-    const els = target.content.querySelectorAll(`[data-adjust="${entry.id}"]`);
-    if (!els.length) continue;
-    // "crestTeam" (2026-09-01, pedido explicito del usuario: posicion de
-    // escudo guardada POR equipo, no solo por slot). GLA nunca puebla
-    // "crestByTeam" en su propio arbol de datos, asi que esto siempre
-    // resuelve a null ahi y cae directo al valor generico de siempre --
-    // cero cambio de comportamiento para GLA.
-    const override = entry.crestTeam ? resolveCrestTeamOverride(entry, data) : null;
-    const source = override || data;
-    const adjustValue = {
-      offsetX: source[entry.xKey],
-      offsetY: source[entry.yKey],
-      scale: source[entry.scaleKey],
-    };
-    els.forEach((el) => applyElementAdjust(el, adjustValue));
-  }
-}
-
 // AJUSTES VISUALES EN VIVO (2026-08-19, auditoría completa pedida por el
 // usuario: "cuando toco flechitas/+/− el cambio tiene que verse EN VIVO
 // INMEDIATO... ACTUALIZAR sigue existiendo para contenido/datos, pero los
@@ -320,8 +212,8 @@ function mergeVisualFields(confirmed, incoming) {
 function applyVisualLive(id, data) {
   const target = els[id];
   if (!target) return;
-  applyComposition(target, data);
-  applyElementAdjustRegistry(id, target, data);
+  applyComposition(target, data, id, latestData);
+  applyElementAdjustRegistry(id, target, data, latestData);
   const merged = mergeVisualFields(confirmedData[id], data);
   renderers[id](target.content, merged, false, () => handleOneShotEnded(id), latestData);
 }
@@ -442,7 +334,17 @@ for (const id of MODULE_IDS) {
 function startTicker(id) {
   if (tickers[id]) return;
   tickers[id] = setInterval(() => {
-    renderers[id](els[id].content, mergeVisualFields(confirmedData[id], latestData[id]), false, undefined, latestData);
+    const data = mergeVisualFields(confirmedData[id], latestData[id]);
+    renderers[id](els[id].content, data, false, undefined, latestData);
+    // ESCUDO POR EQUIPO (2026-10-09, bug real corregido, SOLO Argentina
+    // Streamers): si el equipo cambia en el Marcador con este modulo al
+    // aire, el repintado de arriba cambia el escudo pero la posicion/escala
+    // propia de ese equipo ("crestByTeam") recien se aplicaba con el
+    // proximo cambio del modulo -- quedaba la geometria del equipo
+    // anterior. Se reaplica en el mismo tick que el escudo.
+    if (getRendererActiveThemeId() === ARGENTINA_STREAMERS_THEME_ID) {
+      applyElementAdjustRegistry(id, els[id], data, latestData);
+    }
   }, 500);
 }
 
@@ -464,13 +366,23 @@ function handleOneShotEnded(id) {
   ws.send({ type: WS_MSG.OUT, moduleId: id });
 }
 
+// GOL SIGUE AL MARCADOR (2026-10-21, SOLO GLA -- ver
+// composedCompositionData en program/js/visual-compose.js): cada vez que
+// cambia el Marcador se recalcula la composicion de GOL, este al aire o no
+// (queda lista para el proximo disparo y, si se esta reproduciendo, lo
+// acompaña en vivo). Solo cambia el transform: no toca el video.
+function syncGolComposition() {
+  if (!els.gol || !latestData.gol) return;
+  applyComposition(els.gol, latestData.gol, 'gol', latestData);
+}
+
 function applyModuleState(id, moduleState) {
   const target = els[id];
   if (!target || !moduleState) return;
 
   latestData[id] = moduleState.data;
   confirmedData[id] = moduleState.data;
-  applyComposition(target, moduleState.data);
+  applyComposition(target, moduleState.data, id, latestData);
   const sequenced = isSequenced(id);
 
   if (moduleState.status === MODULE_STATUS.ON) {
@@ -506,7 +418,7 @@ function applyModuleState(id, moduleState) {
     // que el renderer acaba de construir -- ver applyVisualLive() mas
     // arriba para el caso "modulo ya al aire", donde el orden inverso es
     // correcto porque la estructura ya existia de antes.
-    applyElementAdjustRegistry(id, target, moduleState.data);
+    applyElementAdjustRegistry(id, target, moduleState.data, latestData);
 
     if (sequenced) {
       // Autocurativo: algunos renderers reconstruyen ".gfx-overlay" en un
@@ -700,6 +612,7 @@ async function handleStateSnapshot(msg) {
   // nuevo -- los contextos viejos ya estan liberados (o el modulo nunca
   // tuvo uno, ej. sin cambio de theme).
   for (const id of MODULE_IDS) applyModuleState(id, msg.state[id]);
+  syncGolComposition();
   warmHotModules();
 }
 
@@ -734,10 +647,12 @@ ws = connect({
         // ACTUALIZAR (ver "applyVisualLive" más arriba).
         latestData[msg.moduleId] = msg.moduleState.data;
         applyVisualLive(msg.moduleId, msg.moduleState.data);
+        if (msg.moduleId === 'scoreboard') syncGolComposition();
         return;
       }
       if (!isOn) maybeRewarmOffAirVariant(msg.moduleId, msg.moduleState && msg.moduleState.data);
       applyModuleState(msg.moduleId, msg.moduleState, msg.isExplicitUpdate);
+      if (msg.moduleId === 'scoreboard') syncGolComposition();
     }
   },
 });

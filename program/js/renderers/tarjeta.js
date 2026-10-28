@@ -1,4 +1,4 @@
-import { getProgramFontFamily } from '../program-fonts.js';
+import { getProgramFontFamily, withGlaSegoeRegular } from '../program-fonts.js';
 import { crestFile } from '../../../shared/teams.js';
 import { readTextAdjust, toBroadcastUpper } from '../text-fit.js';
 import { mountThemedAlphaVideo } from '../theme-assets.js';
@@ -28,8 +28,14 @@ const NAME_SAFETY_MARGIN = 6;
 const NAME_MAX_WIDTH = NAME_BOX_WIDTH - NAME_SAFETY_MARGIN;
 
 let measureCtx = null;
+// Fuente de medicion (2026-10-22): en GLA la misma Segoe UI Regular 400 del
+// Marcador (withGlaSegoeRegular); en Argentina Streamers, la de siempre.
+function nameFont(fontSize) {
+  const { weight, family } = withGlaSegoeRegular({ weight: 700, family: getProgramFontFamily() });
+  return `${weight} ${fontSize}px ${family}`;
+}
 function measureWidth(text, fontSize) {
-  measureCtx.font = `700 ${fontSize}px ${getProgramFontFamily()}`;
+  measureCtx.font = nameFont(fontSize);
   return measureCtx.measureText(text).width;
 }
 
@@ -40,7 +46,7 @@ function measureWidth(text, fontSize) {
 // un tamaño fijo chico).
 async function fitNameFontSize(text) {
   if (!measureCtx) measureCtx = document.createElement('canvas').getContext('2d');
-  await document.fonts.load(`700 ${NAME_MAX_FONT}px ${getProgramFontFamily()}`);
+  await document.fonts.load(nameFont(NAME_MAX_FONT));
   const widthAtMax = measureWidth(text, NAME_MAX_FONT);
   if (widthAtMax <= NAME_MAX_WIDTH) return NAME_MAX_FONT;
   let size = Math.floor(NAME_MAX_FONT * (NAME_MAX_WIDTH / widthAtMax));
@@ -63,7 +69,7 @@ async function fitNameFontSize(text) {
 // garantia, por eso se mide en vivo (mismo canvas 2D que ya se usa para
 // el ancho) y se aplica como una correccion vertical explicita.
 function measureVerticalCorrection(text, fontSize) {
-  measureCtx.font = `700 ${fontSize}px ${getProgramFontFamily()}`;
+  measureCtx.font = nameFont(fontSize);
   const m = measureCtx.measureText(text);
   const lineBoxAscent = m.fontBoundingBoxAscent;
   const lineBoxDescent = m.fontBoundingBoxDescent;

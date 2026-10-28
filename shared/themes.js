@@ -50,6 +50,7 @@ export const THEME_ASSET_MODULES = [
   { key: 'zocaloFinal', label: 'Zócalo final' },
   { key: 'zocaloFinalDiv', label: 'Zócalo final con equipos' },
   { key: 'vs', label: 'VS' },
+  { key: 'zocaloVs', label: 'Zócalo VS' },
   { key: 'vsPrepartido', label: 'VS Prepartido' },
   { key: 'vsResultado', label: 'VS con resultado' },
   { key: 'formacionEquipos', label: 'Formaciones' },
@@ -164,7 +165,10 @@ export const THEMES = {
     // -- solo controla el banner informativo "ASSETS PENDIENTES" de
     // Master Control. Cada módulo de "assets" abajo tiene además su
     // propio "status" individual para el indicador por-módulo.
-    ready: false,
+    // "ready: true" (2026-10-09, pedido explicito del usuario: "Argentina
+    // Streamers ya está operativo, no quiero ver más el cartel THEME EN
+    // PREPARACIÓN") -- los avisos por-módulo ("status") no cambian.
+    ready: true,
     // Sin integración externa todavía -- decisión futura (sección 10,
     // pedido explícito: "por ahora MANUAL").
     dataSource: 'manual',
@@ -293,6 +297,18 @@ export const THEMES = {
         },
       },
       zocaloCompuestoEquipos: { video: '/assets/themes/argentina-streamers/zocalos/zocalo-compuesto-equipos-alpha.mp4' },
+      // ZÓCALO VS (2026-10-09): "cosas sueltas/zocalos_vs_solo.mov" y
+      // "zocalos_vs_goles.mov" (ProRes 4444 con alfa, 1920x1080, 30fps, 6s),
+      // identificados por contenido (pastilla VS angosta / ancha con lugar
+      // para goles) y transcodificados con la receta de siempre (color +
+      // alfa apilados, H.264). "video" = variante por defecto.
+      zocaloVs: {
+        video: '/assets/themes/argentina-streamers/zocalos/zocalo-vs-solo-alpha.mp4',
+        variants: {
+          solo: '/assets/themes/argentina-streamers/zocalos/zocalo-vs-solo-alpha.mp4',
+          goles: '/assets/themes/argentina-streamers/zocalos/zocalo-vs-goles-alpha.mp4',
+        },
+      },
       zocaloCompuestoLogo: {
         video: '/assets/themes/argentina-streamers/zocalos/zocalo-compuesto-logo-alpha.mp4',
         image: '/assets/themes/argentina-streamers/zocalos/logo-localstrike.png'

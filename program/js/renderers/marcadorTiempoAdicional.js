@@ -1,6 +1,7 @@
 import { elapsedMs, formatClock } from '../../../shared/clock.js';
 import { applyFittedText, applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
 import { resolveImageSrc } from '../theme-assets.js';
+import { withGlaSegoeRegular } from '../program-fonts.js';
 
 // Asset nuevo: imagen estatica (reemplazo del .mp4 con alfa compuesto que
 // usaba antes) — ver program/css/overlay.css para las coordenadas medidas
@@ -40,9 +41,9 @@ const CONTENT_REVEAL_DELAY_MS = 300;
 function paintContent(contentEl, data) {
   const rawAdded = (data.addedMinutes || '').trim();
   const labelText = rawAdded ? (rawAdded.startsWith('+') ? rawAdded : `+${rawAdded}`) : '';
-  applyFittedText(contentEl.querySelector('.ov-added-label'), labelText, {
+  applyFittedText(contentEl.querySelector('.ov-added-label'), labelText, withGlaSegoeRegular({
     maxFont: LABEL_MAX_FONT, minFont: LABEL_MIN_FONT, maxWidth: LABEL_MAX_WIDTH, weight: 800,
-  }, readTextAdjust(data.textAdjust, 'addedMinutes'));
+  }), readTextAdjust(data.textAdjust, 'addedMinutes'));
   applyPlainTextAdjust(contentEl.querySelector('.ov-added-clock'), formatClock(elapsedMs(data.clock)), readTextAdjust(data.textAdjust, 'clock'));
 }
 

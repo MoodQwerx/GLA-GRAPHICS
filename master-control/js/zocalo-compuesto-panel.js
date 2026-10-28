@@ -30,7 +30,12 @@ function ensureDefaults(data) {
   if (!Array.isArray(data.textPresets)) data.textPresets = [];
 }
 
-export function renderZocaloCompuestoPanel(container, data, scoreboardData, onDirty, saveOptions) {
+// "globalBank" (2026-10-08, pedido explicito del usuario): banco global de
+// zocalos de Argentina Streamers ({ holder, onDirty } -- ver main.js,
+// "themeLowerThirdBank"), compartido con Largo Doble/Corto Simple. MAIN/
+// SUB del banco <-> texto1/texto2 de este modulo. "holder" null = banco
+// todavia cargando (no se ofrece guardar para no pisar la lista real).
+export function renderZocaloCompuestoPanel(container, data, scoreboardData, onDirty, saveOptions, globalBank) {
   if (!data) return () => {};
   ensureDefaults(data);
 
@@ -129,23 +134,48 @@ export function renderZocaloCompuestoPanel(container, data, scoreboardData, onDi
       root.appendChild(textSection);
 
       // PRESETS DE TEXTO
-      renderPresetsControl(root, data, {
-        presetKey: 'textPresets',
-        title: 'PRESETS DE TEXTO (ZÓCALO COMPUESTO)',
-        buttons: [
-          { label: 'GUARDAR PRESET COMPLETO', type: 'complete', getFields: () => ({ texto1: data.texto1, texto2: data.texto2 }) },
-          { label: 'GUARDAR TEXTO MAIN', type: 'main', getFields: () => ({ texto1: data.texto1 }) },
-          { label: 'GUARDAR SUB TEXTO', type: 'sub', getFields: () => ({ texto2: data.texto2 }) },
-        ],
-        onApply: (fields) => {
-          if (fields.texto1 !== undefined) data.texto1 = fields.texto1;
-          if (fields.texto2 !== undefined) data.texto2 = fields.texto2;
-          if (inp1) inp1.value = data.texto1;
-          if (inp2) inp2.value = data.texto2;
-          onDirty();
-        },
-        onDirty,
-      });
+      if (globalBank && !globalBank.holder) {
+        const loading = document.createElement('p');
+        loading.className = 'performance-note';
+        loading.textContent = 'Cargando presets globales de zócalos...';
+        root.appendChild(loading);
+      } else if (globalBank) {
+        renderPresetsControl(root, globalBank.holder, {
+          presetKey: 'textPresets',
+          title: 'PRESETS GLOBALES DE ZÓCALOS (LARGO DOBLE / CORTO SIMPLE / COMPUESTO)',
+          buttons: [
+            { label: 'GUARDAR PRESET COMPLETO', type: 'complete', getFields: () => ({ main: data.texto1, sub: data.texto2 }) },
+            { label: 'GUARDAR TEXTO MAIN', type: 'main', getFields: () => ({ main: data.texto1 }) },
+            { label: 'GUARDAR SUB TEXTO', type: 'sub', getFields: () => ({ sub: data.texto2 }) },
+          ],
+          onApply: (fields) => {
+            if (fields.main !== undefined) data.texto1 = fields.main;
+            if (fields.sub !== undefined) data.texto2 = fields.sub;
+            if (inp1) inp1.value = data.texto1;
+            if (inp2) inp2.value = data.texto2;
+            onDirty();
+          },
+          onDirty: globalBank.onDirty,
+        });
+      } else {
+        renderPresetsControl(root, data, {
+          presetKey: 'textPresets',
+          title: 'PRESETS DE TEXTO (ZÓCALO COMPUESTO)',
+          buttons: [
+            { label: 'GUARDAR PRESET COMPLETO', type: 'complete', getFields: () => ({ texto1: data.texto1, texto2: data.texto2 }) },
+            { label: 'GUARDAR TEXTO MAIN', type: 'main', getFields: () => ({ texto1: data.texto1 }) },
+            { label: 'GUARDAR SUB TEXTO', type: 'sub', getFields: () => ({ texto2: data.texto2 }) },
+          ],
+          onApply: (fields) => {
+            if (fields.texto1 !== undefined) data.texto1 = fields.texto1;
+            if (fields.texto2 !== undefined) data.texto2 = fields.texto2;
+            if (inp1) inp1.value = data.texto1;
+            if (inp2) inp2.value = data.texto2;
+            onDirty();
+          },
+          onDirty,
+        });
+      }
 
       // SPONSORS EN ROTACIÓN (2026-09-02, pedido explicito del usuario: nada
       // de dropdown unico -- reutiliza el mismo panel de checkboxes + la

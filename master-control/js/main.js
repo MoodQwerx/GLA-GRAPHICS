@@ -23,11 +23,15 @@ import { renderZocaloCompuestoPanel } from './zocalo-compuesto-panel.js';
 import { renderZocaloSponsorsPanel } from './zocalo-sponsors-panel.js';
 import { renderCompositionControl } from './composition-control.js';
 import { renderPresetsControl, savePresetEntry } from './presets-helper.js';
-import { renderAbreviaturasPanel } from './abreviaturas-panel.js';
+import { renderEquiposPanel } from './equipos-panel.js';
 import { renderJugadoresPanel } from './jugadores-panel.js';
 import { renderZocaloEscudosPanel } from './zocalo-escudos-panel.js';
 import { renderPenalesPanel } from './penales-panel.js';
+import { renderZocaloVsPanel } from './zocalo-vs-panel.js';
+import { renderActualizadorDatosPanel } from './actualizador-datos-panel.js';
+import { loadGlaTorneoEdicion, setGlaTorneoEdicion } from './gla-torneo-source.js';
 import { updateLocalTeamCatalog, teamName } from '../../shared/teams.js';
+import { CUSTOM_COLOR_ID, colorHex, normalizeHexColor } from '../../shared/team-colors.js';
 import { listThemes, isThemeReady, getTheme, getModuleAssetStatus, DEFAULT_THEME_ID, ARGENTINA_STREAMERS_THEME_ID } from '../../shared/themes.js';
 import { ADJUST_REGISTRY } from '../../shared/adjust-registry.js';
 
@@ -52,116 +56,88 @@ let activeThemeId = DEFAULT_THEME_ID;
 const themeSelect = document.getElementById('theme-select');
 const themeBanner = document.getElementById('theme-pending-banner');
 
-// PERFIL DE PARTIDO (2026-09-05, pedido explicito del usuario, seccion 19:
-// "una zona general y visible de Master Control, preferentemente cerca
-// del arriba"). Ver server/match-profiles.js para la arquitectura
-// completa (captura/aplicacion/GUARDAR POSICIÓN redirigido). Declarado acá
-// arriba (antes de "connect()", mas abajo en este archivo) porque
-// "applyThemeUI" -- que puede correr en cuanto llega el primer
-// STATE_SNAPSHOT -- ya necesita mostrar/ocultar esta barra.
-const matchProfileBar = document.getElementById('match-profile-bar');
-const matchProfileSelect = document.getElementById('match-profile-select');
-const matchProfileStatus = document.getElementById('match-profile-status');
-const btnProfileApply = document.getElementById('btn-profile-apply');
-const btnProfileSave = document.getElementById('btn-profile-save');
-const btnProfileSaveAs = document.getElementById('btn-profile-save-as');
-const btnProfileDelete = document.getElementById('btn-profile-delete');
-
-let matchProfiles = [];
-// "null" es un estado real y distinto de "" (nunca todavia se supo la
-// respuesta del servidor) -- evita que "renderMatchProfileSelect" corra
-// una vez de mas con un valor todavia no confirmado antes de que llegue
-// PROFILE_LIST_UPDATE/ACTIVE_MATCH_PROFILE_UPDATE la primera vez.
-let activeMatchProfileSlug = null;
-let matchProfileListLoaded = false;
-
-function renderMatchProfileSelect() {
-  if (!matchProfileSelect) return;
-  matchProfileSelect.innerHTML = '';
-  const emptyOpt = document.createElement('option');
-  emptyOpt.value = '';
-  emptyOpt.textContent = matchProfiles.length ? 'SIN PERFIL ACTIVO' : 'SIN PERFILES GUARDADOS TODAVÍA';
-  matchProfileSelect.appendChild(emptyOpt);
-  for (const p of matchProfiles) {
-    const opt = document.createElement('option');
-    opt.value = p.slug;
-    const localLabel = teamName(p.teamLocal) || p.teamLocal || '?';
-    const visitanteLabel = teamName(p.teamVisitante) || p.teamVisitante || '?';
-    opt.textContent = `${p.name} (${localLabel} vs ${visitanteLabel})`;
-    matchProfileSelect.appendChild(opt);
-  }
-  matchProfileSelect.value = activeMatchProfileSlug || '';
-  updateMatchProfileButtons();
+// BANCO GLOBAL DE PRESETS DE ZOCALOS (2026-09-27, pedido explicito del
+// usuario: un mismo banco compartido por Largo Doble/Corto Simple/
+// Compuesto, SOLO GLA -- ver server/lower-third-presets.js). Vive como un
+// objeto envoltorio (no un array suelto) para que "renderPresetsControl"
+// (master-control/js/presets-helper.js, sin cambios ahi) lo trate exactamente
+// igual que "draft.<modulo>": solo le importa "holder[presetKey]", nunca de
+// donde sale el objeto. "textPresets" es el mismo nombre de campo que ya usa
+// el resto del proyecto, por consistencia. Zocalo Corto Doble NO participa
+// de este objeto -- sigue con "draft.shortDouble.textPresets" de siempre.
+const globalLowerThirdBank = { textPresets: [] };
+function saveGlobalLowerThirdBank() {
+  ws.send({ type: 'UPDATE_GLOBAL_LOWER_THIRD_PRESETS', presets: globalLowerThirdBank.textPresets });
 }
+const GLOBAL_LOWER_THIRD_MODULE_IDS = new Set(['longDouble', 'shortSimple', 'zocaloCompuesto']);
 
-function updateMatchProfileButtons() {
-  const selectedSlug = matchProfileSelect ? matchProfileSelect.value : '';
-  if (btnProfileApply) btnProfileApply.disabled = !selectedSlug;
-  if (btnProfileDelete) btnProfileDelete.disabled = !selectedSlug;
-  if (btnProfileSave) btnProfileSave.disabled = !activeMatchProfileSlug;
-  if (matchProfileStatus) {
-    const activeProfile = matchProfiles.find((p) => p.slug === activeMatchProfileSlug);
-    matchProfileStatus.textContent = activeProfile ? `Perfil activo: ${activeProfile.name}` : '';
-  }
+// BANCO GLOBAL DE ZOCALOS — ARGENTINA STREAMERS (2026-10-08, pedido
+// explicito del usuario): mismo concepto que el banco de GLA de arriba pero
+// SEPARADO (server/lower-third-presets.js, clave propia). Lo comparten
+// Zócalo Largo Doble, Zócalo Corto Simple y Zócalo Compuesto
+// ("zocaloCompuestoEquipos") de AS; TALENTOS (shortDouble) conserva su
+// banco exclusivo. "loaded" evita guardar sobre un banco todavia no
+// recibido (eso reemplazaria la lista del servidor por una parcial).
+const themeLowerThirdBank = { textPresets: [], themeId: null, loaded: false };
+const THEME_LOWER_THIRD_MODULE_IDS = new Set(['longDouble', 'shortSimple', 'zocaloCompuestoEquipos']);
+function saveThemeLowerThirdBank() {
+  if (!themeLowerThirdBank.loaded) return;
+  // Duplicados EXACTOS (mismo tipo + mismo MAIN + mismo SUB): queda solo el
+  // mas nuevo (el helper agrega al principio de la lista).
+  const seen = new Set();
+  themeLowerThirdBank.textPresets = themeLowerThirdBank.textPresets.filter((preset) => {
+    const key = JSON.stringify([preset.type, (preset.fields?.main ?? '').trim(), (preset.fields?.sub ?? '').trim()]);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  ws.send({ type: 'UPDATE_THEME_LOWER_THIRD_PRESETS', themeId: themeLowerThirdBank.themeId, presets: themeLowerThirdBank.textPresets });
 }
-
-async function refreshMatchProfileList() {
-  try {
-    const res = await fetch('/api/match-profiles');
-    const json = await res.json();
-    if (!json.ok) return;
-    matchProfiles = json.profiles;
-    // Solo adopta el "activeSlug" del servidor la PRIMERA vez (carga
-    // inicial de la pagina) -- despues de eso, la fuente de verdad del
-    // perfil activo son los broadcasts PROFILE_LIST_UPDATE/
-    // ACTIVE_MATCH_PROFILE_UPDATE (evita pisar un cambio que ya llego por
-    // WS con una respuesta REST que salio antes pero volvio despues).
-    if (!matchProfileListLoaded) activeMatchProfileSlug = json.activeSlug;
-    matchProfileListLoaded = true;
-    renderMatchProfileSelect();
-  } catch (err) {
-    console.error('[GLA] Error cargando perfiles de partido:', err.message);
-  }
+function loadThemeLowerThirdBank(themeId) {
+  if (themeId !== ARGENTINA_STREAMERS_THEME_ID || themeLowerThirdBank.themeId === themeId) return;
+  themeLowerThirdBank.themeId = themeId;
+  themeLowerThirdBank.loaded = false;
+  fetch(`/api/lower-third-presets/${encodeURIComponent(themeId)}`)
+    .then((res) => res.json())
+    .then((presets) => {
+      if (!Array.isArray(presets) || themeLowerThirdBank.themeId !== themeId) return;
+      themeLowerThirdBank.textPresets = presets;
+      themeLowerThirdBank.loaded = true;
+      if (THEME_LOWER_THIRD_MODULE_IDS.has(activeId) && activeThemeId === themeId) renderPanel();
+    })
+    .catch((err) => {
+      themeLowerThirdBank.themeId = null;
+      console.error('[GLA] No se pudo cargar el banco de presets de zócalos del theme:', err);
+    });
 }
-
-function setupMatchProfileBar() {
-  if (!matchProfileBar) return;
-  refreshMatchProfileList();
-
-  matchProfileSelect?.addEventListener('change', updateMatchProfileButtons);
-
-  btnProfileApply?.addEventListener('click', () => {
-    const slug = matchProfileSelect.value;
-    if (!slug) return;
-    ws.send({ type: WS_MSG.APPLY_MATCH_PROFILE, slug });
+function renderThemeBankLoadingNote(container) {
+  const note = document.createElement('p');
+  note.className = 'performance-note';
+  note.textContent = 'Cargando presets globales de zócalos...';
+  container.appendChild(note);
+}
+// Sin "await" a proposito (2026-09-27): un top-level await aca pausaria TODO
+// el resto de este modulo (conexion WS, UI, etc.) hasta que resuelva el
+// fetch -- el resto del archivo tiene que seguir ejecutandose de inmediato,
+// igual que siempre. Si el operador ya esta parado en uno de los 3 paneles
+// cuando esto resuelve, "renderPanel()" lo refresca solo -- mismo patron
+// que "TEAM_CATALOG_UPDATE" mas abajo.
+fetch('/api/lower-third-presets')
+  .then((res) => res.json())
+  .then((initial) => {
+    if (!Array.isArray(initial)) return;
+    globalLowerThirdBank.textPresets = initial;
+    if (GLOBAL_LOWER_THIRD_MODULE_IDS.has(activeId) && activeThemeId === DEFAULT_THEME_ID) renderPanel();
+  })
+  .catch((err) => {
+    console.error('[GLA] No se pudo cargar el banco global de presets de zocalos:', err);
   });
 
-  btnProfileSave?.addEventListener('click', () => {
-    if (!activeMatchProfileSlug) return;
-    ws.send({ type: WS_MSG.SAVE_MATCH_PROFILE });
-  });
-
-  btnProfileSaveAs?.addEventListener('click', () => {
-    const name = window.prompt('Nombre del nuevo perfil de partido (ej. "ARG STREAMERS FEM VS OXEN"):', '');
-    if (!name || !name.trim()) return;
-    // Equipos: los que esten seleccionados AHORA MISMO en el Marcador --
-    // mismo criterio que "resolveCrestTeamTarget" (seccion 17, pedido
-    // explicito: "aplicar un perfil debe también seleccionar
-    // automáticamente esos equipos").
-    const teamLocal = draft.scoreboard?.teamA || '';
-    const teamVisitante = draft.scoreboard?.teamB || '';
-    ws.send({ type: WS_MSG.SAVE_AS_NEW_MATCH_PROFILE, name: name.trim(), teamLocal, teamVisitante });
-  });
-
-  btnProfileDelete?.addEventListener('click', () => {
-    const slug = matchProfileSelect.value;
-    if (!slug) return;
-    const profile = matchProfiles.find((p) => p.slug === slug);
-    const confirmed = window.confirm(`¿Eliminar el perfil "${profile?.name || slug}"? Esta acción no se puede deshacer.`);
-    if (!confirmed) return;
-    ws.send({ type: WS_MSG.DELETE_MATCH_PROFILE, slug });
-  });
-}
+// PERFILES DE PARTIDO: barra eliminada de Master Control (2026-10-09,
+// pedido explicito del usuario: "no sirvió y está ahí al pedo"). Solo
+// existia para Argentina Streamers (GLA nunca tuvo perfiles); los perfiles
+// ya guardados en disco y sus endpoints del servidor quedan intactos e
+// ignorados (sin migracion). PRESETS de texto no tienen relacion con esto.
 
 function populateThemeSelect() {
   if (!themeSelect) return;
@@ -177,6 +153,7 @@ function populateThemeSelect() {
 function applyThemeUI(themeId) {
   activeThemeId = themeId;
   document.body.dataset.theme = themeId;
+  loadThemeLowerThirdBank(themeId);
   if (themeSelect) themeSelect.value = themeId;
   if (themeBanner) {
     const ready = isThemeReady(themeId);
@@ -185,11 +162,6 @@ function applyThemeUI(themeId) {
       themeBanner.textContent = `THEME EN PREPARACIÓN / ASSETS PENDIENTES — ${getTheme(themeId).name} todavía no tiene sus piezas gráficas cargadas.`;
     }
   }
-  // PERFIL DE PARTIDO (2026-09-05): solo tiene sentido en Argentina
-  // Streamers -- GLA nunca tuvo pedido este sistema, "GLA debe conservar
-  // exactamente sus modulos, navegacion y comportamiento" (mismo criterio
-  // ya aplicado en toda esta tarea).
-  if (matchProfileBar) matchProfileBar.hidden = themeId !== ARGENTINA_STREAMERS_THEME_ID;
 }
 
 populateThemeSelect();
@@ -210,6 +182,12 @@ serverState['abreviaturas'] = { status: MODULE_STATUS.OUT, data: {} };
 // sistema de draft/autosave (lee/escribe directo contra /api/planteles/,
 // ver jugadores-panel.js).
 serverState['jugadoresAdmin'] = { status: MODULE_STATUS.OUT, data: {} };
+// "actualizadorDatos" (ACTUALIZADOR DE DATOS, 2026-10-21, pedido explicito
+// del usuario, SOLO GLA): mismo criterio -- pseudo-modulo administrativo,
+// nunca sale a Program. Elige la edicion del TORNEO de los syncs web (ver
+// actualizador-datos-panel.js / gla-torneo-source.js).
+serverState['actualizadorDatos'] = { status: MODULE_STATUS.OUT, data: {} };
+loadGlaTorneoEdicion();
 
 // Orden de categorias en el panel (broadcast: lo mas usado en vivo primero).
 // Orden pedido explicitamente: Mosca arriba de todo, Marcador justo
@@ -247,6 +225,16 @@ let lastMarcadorSubId = 'scoreboard';
 // puntualmente a estos 2 modulos -- "no convertir globalmente todo a
 // live-edit" sigue siendo la regla.
 const ALWAYS_LIVE_MODULE_IDS = new Set(['varCheck', 'replay']);
+
+// PENALES LIVE (2026-10-09, pedido explicito del usuario, SOLO Argentina
+// Streamers: "que todo sea en vivo, sin ACTUALIZAR") -- mismo mecanismo que
+// MARCADOR/VAR/Replay ("sendMarcadorSubsectionLive"). GLA conserva su
+// Penales con ACTUALIZAR, sin cambios. "zocaloVs" (ZÓCALO VS, mismo dia,
+// modulo exclusivo de Argentina Streamers): mismo criterio.
+const ARGENTINA_LIVE_MODULE_IDS = new Set(['marcadorPenales', 'zocaloVs']);
+function isArgentinaLiveModule(moduleId) {
+  return ARGENTINA_LIVE_MODULE_IDS.has(moduleId) && activeThemeId === ARGENTINA_STREAMERS_THEME_ID;
+}
 
 // "GOL ya no es un modulo operable a mano" (2026-08-15, pedido explicito
 // del usuario): se saca de la navegacion (ver buildTabs) pero sigue
@@ -307,6 +295,7 @@ let panelCleanup = null;
 const takeBtn = document.getElementById('btn-take');
 const updateBtn = document.getElementById('btn-update');
 const outBtn = document.getElementById('btn-out');
+const previewBtn = document.getElementById('btn-preview');
 const stopAllBtn = document.getElementById('btn-stop-all');
 
 // Auto-guardado: cada edicion de campo (onDirty, ver field-editors.js)
@@ -319,9 +308,34 @@ const stopAllBtn = document.getElementById('btn-stop-all');
 // indexa por moduleId (no por "activeId" al momento de disparar el
 // timer) para que un cambio de pestaña a mitad de un debounce no termine
 // mandando el draft equivocado.
+// PREVIEW EN VIVO (2026-09-27, pedido explicito del usuario: "si modifico
+// composición, Preview debe reflejarla... sin necesitar TAKE/UPDATE/
+// refrescar"). "previewedModuleId" es que modulo esta mostrando ahora
+// mismo el monitor Preview (lo fija el click de PREVIEW, ver mas abajo) --
+// "sendPreviewSnapshot" es el UNICO lugar que arma el mensaje PREVIEW_MODULE,
+// y "sendPreviewUpdateIfActive" es el hook central: se llama desde
+// "scheduleAutoSave"/"flushModuleNow" (el mismo funnel por el que YA pasa
+// CUALQUIER ajuste de composición/texto de CUALQUIER módulo, via
+// "onDirty" en renderModuleAdjustAccordion), asi que un ajuste en vivo se
+// reenvia a Preview sin agregar un hook por modulo ni por control.
+let previewedModuleId = null;
+function sendPreviewSnapshot(moduleId) {
+  ws.send({ type: 'PREVIEW_MODULE', moduleId, data: draft[moduleId], allData: draft });
+}
+function sendPreviewUpdateIfActive(moduleId) {
+  if (moduleId === previewedModuleId) sendPreviewSnapshot(moduleId);
+  // ZÓCALO VS (2026-10-09, solo Argentina Streamers): toma equipos/goles en
+  // vivo del Marcador -- si es lo que muestra Preview, un cambio del
+  // Marcador tambien tiene que verse ahi sin tocar el modulo.
+  else if (moduleId === 'scoreboard' && previewedModuleId === 'zocaloVs') sendPreviewSnapshot('zocaloVs');
+  // GOL SIGUE AL MARCADOR (2026-10-21, SOLO GLA): si Preview muestra GOL,
+  // mover el Marcador tambien lo mueve ahi (sin volver a reproducirlo).
+  else if (moduleId === 'scoreboard' && previewedModuleId === 'gol' && activeThemeId === DEFAULT_THEME_ID) sendPreviewSnapshot('gol');
+}
+
 const saveTimers = {};
 function scheduleAutoSave(moduleId) {
-  if (moduleId === 'abreviaturas' || moduleId === 'jugadoresAdmin') return;
+  if (moduleId === 'abreviaturas' || moduleId === 'jugadoresAdmin' || moduleId === 'actualizadorDatos') return;
   clearTimeout(saveTimers[moduleId]);
   // 350ms -> 80ms (2026-08-19, auditoría de AJUSTES VISUALES pedida por el
   // usuario): con 350ms, mantener apretada una flecha de posición (que ya
@@ -337,14 +351,16 @@ function scheduleAutoSave(moduleId) {
   saveTimers[moduleId] = setTimeout(() => {
     delete saveTimers[moduleId];
     ws.send({ type: WS_MSG.UPDATE, moduleId, data: draft[moduleId], isAutoSave: true });
+    sendPreviewUpdateIfActive(moduleId);
   }, 80);
 }
 function flushPendingSaves() {
   for (const moduleId of Object.keys(saveTimers)) {
-    if (moduleId === 'abreviaturas' || moduleId === 'jugadoresAdmin') continue;
+    if (moduleId === 'abreviaturas' || moduleId === 'jugadoresAdmin' || moduleId === 'actualizadorDatos') continue;
     clearTimeout(saveTimers[moduleId]);
     delete saveTimers[moduleId];
     ws.send({ type: WS_MSG.UPDATE, moduleId, data: draft[moduleId], isAutoSave: true });
+    sendPreviewUpdateIfActive(moduleId);
   }
 }
 window.addEventListener('beforeunload', flushPendingSaves);
@@ -363,6 +379,7 @@ function flushModuleNow(moduleId) {
   clearTimeout(saveTimers[moduleId]);
   delete saveTimers[moduleId];
   ws.send({ type: WS_MSG.UPDATE, moduleId, data: draft[moduleId], isAutoSave: true });
+  sendPreviewUpdateIfActive(moduleId);
 }
 function isPendingSave(moduleId) {
   return !!saveTimers[moduleId];
@@ -527,6 +544,66 @@ function renderMarcadorEntretiempoToggle(parent) {
   parent.appendChild(btn);
 }
 
+// SHOOTOUT (2026-09-27, pedido explicito del usuario: "acceso rapido a
+// TAKE/OUT de Penales sin tener que entrar al modulo separado, boton
+// ON/OFF simple dentro del panel del Marcador"). Visible en cualquiera de
+// las 5 subsecciones de Marcador -- misma logica de "una unica fuente de
+// verdad para onAir" que el resto del proyecto: este boton no guarda
+// ningun estado propio, solo LEE "serverState.marcadorPenales.status" (lo
+// que el modulo Penales YA usa) y manda el mismo TAKE/OUT de siempre --
+// si se cambia desde el modulo Penales, este boton se entera por el mismo
+// MODULE_UPDATE de siempre (ver el re-render forzado en el handler de WS
+// mas abajo), sin mecanismo nuevo de sincronizacion.
+function renderShootoutToggle(parent) {
+  if (activeThemeId === ARGENTINA_STREAMERS_THEME_ID) {
+    renderMarcadorZocaloQuickToggle(parent);
+    return;
+  }
+  const st = serverState.marcadorPenales;
+  const isOn = !!st && st.status === MODULE_STATUS.ON;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'marcador-entretiempo-toggle shootout-toggle';
+  btn.classList.toggle('on-air', isOn);
+  btn.textContent = isOn ? 'SHOOTOUT — ON AIR (sacar)' : 'SHOOTOUT (tomar al aire)';
+  btn.addEventListener('click', () => {
+    if (isOn) {
+      ws.send({ type: WS_MSG.OUT, moduleId: 'marcadorPenales' });
+    } else {
+      ws.send({ type: WS_MSG.TAKE, moduleId: 'marcadorPenales', data: draft.marcadorPenales });
+    }
+  });
+  parent.appendChild(btn);
+}
+
+// MARCADOR ZÓCALO — acceso rapido (2026-10-08, pedido explicito del
+// usuario, SOLO Argentina Streamers): el boton de acceso rapido del panel
+// de Marcador controla "marcadorZocalo" en vez de Penales (GLA conserva su
+// SHOOTOUT de arriba, sin cambios). Misma unica fuente de verdad: lee
+// "serverState.marcadorZocalo.status" y manda el TAKE/OUT de siempre; el
+// TAKE replica exactamente el del boton TOMAR AL AIRE ("autoRunClock":
+// el reloj arranca desde 0). Penales y Marcador Zócalo siguen existiendo
+// como modulos propios, intactos.
+function renderMarcadorZocaloQuickToggle(parent) {
+  const st = serverState.marcadorZocalo;
+  const isOn = !!st && st.status === MODULE_STATUS.ON;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'marcador-entretiempo-toggle shootout-toggle';
+  btn.classList.toggle('on-air', isOn);
+  btn.textContent = isOn ? 'MARCADOR ZÓCALO — EN AIRE (sacar)' : 'MARCADOR ZÓCALO — FUERA DE AIRE (tomar)';
+  btn.addEventListener('click', () => {
+    if (isOn) {
+      ws.send({ type: WS_MSG.OUT, moduleId: 'marcadorZocalo' });
+      return;
+    }
+    const clockKey = MODULES.marcadorZocalo.autoRunClock;
+    if (clockKey) draft.marcadorZocalo[clockKey] = { running: true, accumulatedMs: 0, startedAt: Date.now() };
+    ws.send({ type: WS_MSG.TAKE, moduleId: 'marcadorZocalo', data: draft.marcadorZocalo });
+  });
+  parent.appendChild(btn);
+}
+
 // --- GOL: se dispara solo al sumar un gol desde el Marcador (2026-08-15,
 // pedido explicito del usuario) --- Ya no es una tab operable a mano (ver
 // HIDDEN_FROM_NAV_IDS) pero sigue siendo un modulo real del servidor
@@ -565,7 +642,38 @@ function fireNextGolAnimation() {
 // temporal equipo viejo/nombre nuevo que pedia evitar el usuario.
 function sendScoreboardLive() {
   ws.send({ type: WS_MSG.UPDATE, moduleId: 'scoreboard', data: draft.scoreboard, isExplicitUpdate: true });
+  sendPreviewUpdateIfActive('scoreboard');
 }
+
+// COLOR POR EQUIPO (2026-10-22, pedido explicito del usuario, SOLO GLA):
+// EQUIPOS edita el MISMO mapa que ya usaba el Marcador
+// ("scoreboard.teamColorAssignments", teamId -> colorId, fallback "gris").
+// Si ese equipo esta elegido como local o visitante, su color se actualiza
+// en el acto y se manda en vivo, igual que cualquier cambio del Marcador.
+// COLOR PERSONALIZADO (2026-10-23): colorId 'personalizado' + HEX exacto
+// en "scoreboard.teamColorCustomHex[teamId]" (mismo objeto del Marcador).
+// Volver a un predefinido no borra el HEX: se recupera al elegir
+// PERSONALIZADO de nuevo. Solo se guarda un HEX valido (normalizeHexColor).
+const glaTeamColors = {
+  get: (teamId) => ({
+    colorId: draft.scoreboard.teamColorAssignments?.[teamId] || '',
+    hex: normalizeHexColor(draft.scoreboard.teamColorCustomHex?.[teamId]) || '',
+  }),
+  set: (teamId, colorId, hex) => {
+    const sb = draft.scoreboard;
+    if (!sb.teamColorAssignments || typeof sb.teamColorAssignments !== 'object') sb.teamColorAssignments = {};
+    if (colorId) sb.teamColorAssignments[teamId] = colorId;
+    else delete sb.teamColorAssignments[teamId];
+    const validHex = normalizeHexColor(hex);
+    if (validHex) {
+      if (!sb.teamColorCustomHex || typeof sb.teamColorCustomHex !== 'object') sb.teamColorCustomHex = {};
+      sb.teamColorCustomHex[teamId] = validHex;
+    }
+    if (sb.teamA === teamId) sb.teamAColor = colorId || 'gris';
+    if (sb.teamB === teamId) sb.teamBColor = colorId || 'gris';
+    sendScoreboardLive();
+  },
+};
 
 // "sendMarcadorSubsectionLive" (2026-09-10, pedido explicito del usuario:
 // "todas las subsecciones de MARCADOR deben ser LIVE, no depender de
@@ -582,6 +690,7 @@ function sendScoreboardLive() {
 // convertir globalmente todo a live-edit").
 function sendMarcadorSubsectionLive(moduleId) {
   ws.send({ type: WS_MSG.UPDATE, moduleId, data: draft[moduleId], isExplicitUpdate: true });
+  sendPreviewUpdateIfActive(moduleId);
 }
 
 function scoreGoal(side) {
@@ -709,9 +818,15 @@ function buildTabs() {
   // Argentina Streamers -- no hay ninguna razon tecnica para que GLA no
   // los vea. Categoria 'Brackets' (ver CATEGORY_ORDER arriba) vuelve a
   // aparecer en la navegacion de GLA con estos 3 modulos.
+  // "cronogramaHoy"/"historial"/"resultadosParciales" (2026-10-22, pedido
+  // explicito del usuario): quitados SOLO de GLA (archivos y estado viejo
+  // intactos; el servidor tampoco los acepta al aire en GLA). Argentina
+  // Streamers los conserva.
   const GLA_HIDDEN_MODULES = new Set([
     'fichaJugador',
     'zocaloCompuestoEquipos', 'sitioWebPromoL',
+    'zocaloVs',
+    'cronogramaHoy', 'historial', 'resultadosParciales',
   ]);
 
   const byCategory = new Map();
@@ -730,6 +845,7 @@ function buildTabs() {
   if (!byCategory.has('General')) byCategory.set('General', []);
   byCategory.get('General').push('abreviaturas');
   byCategory.get('General').push('jugadoresAdmin');
+  if (activeThemeId === DEFAULT_THEME_ID) byCategory.get('General').push('actualizadorDatos');
 
   const orderedCategories = [
     ...CATEGORY_ORDER.filter((c) => byCategory.has(c)),
@@ -783,7 +899,7 @@ function buildTabs() {
       // TABLAS); el panel nuevo se identifica igual por su titulo interno
       // ("JUGADORES — Administración de planteles", ver jugadores-panel.js)
       // pero la tab evita la ambiguedad de dos tabs con el mismo texto.
-      tab.textContent = id === 'abreviaturas' ? 'Abreviaturas' : id === 'jugadoresAdmin' ? 'Planteles' : moduleDisplayLabel(id);
+      tab.textContent = id === 'abreviaturas' ? abreviaturasTabLabel() : id === 'jugadoresAdmin' ? 'Planteles' : id === 'actualizadorDatos' ? 'Actualizador de datos' : moduleDisplayLabel(id);
       tab.addEventListener('click', () => selectModule(id));
       row.appendChild(tab);
 
@@ -829,9 +945,25 @@ function buildTabs() {
 // absoluto, esto es puramente el texto mostrado en la navegacion y el
 // titulo del panel. Centralizado aca para no duplicar el chequeo en cada
 // lugar que muestra el label de un modulo.
+// "TALENTOS" (2026-10-08, pedido explicito del usuario, mismo criterio que
+// "Participaciones"): nombre visible de "shortDouble" (Zócalo Corto Doble)
+// SOLO en Argentina Streamers -- id, datos y presets exclusivos intactos.
 function moduleDisplayLabel(id) {
+  // RESULTADOS -> PARTIDOS (2026-10-22, SOLO GLA): solo el nombre visible;
+  // moduleId "sideTable" y renderer sin cambios.
+  if (id === 'sideTable' && activeThemeId === DEFAULT_THEME_ID) return 'Partidos';
   if (id === 'jugadores' && activeThemeId === ARGENTINA_STREAMERS_THEME_ID) return 'Participaciones';
+  if (id === 'shortDouble' && activeThemeId === ARGENTINA_STREAMERS_THEME_ID) return 'Talentos';
   return MODULES[id].label;
+}
+
+// "EQUIPOS" (2026-10-08, pedido explicito del usuario): la pseudo-seccion
+// "abreviaturas" (id interno sin cambios) se llama EQUIPOS en Argentina
+// Streamers, donde edita nombre + abreviatura + visibilidad. Desde
+// 2026-10-21 (pedido explicito del usuario) GLA tambien: mismo panel, con
+// su catalogo propio (assets/crests/) y escudo asociado por equipo.
+function abreviaturasTabLabel() {
+  return 'Equipos';
 }
 
 function updateTabStates() {
@@ -854,7 +986,11 @@ function selectModule(id) {
     clearTimeout(saveTimers[activeId]);
     delete saveTimers[activeId];
     ws.send({ type: WS_MSG.UPDATE, moduleId: activeId, data: draft[activeId], isAutoSave: true });
+    sendPreviewUpdateIfActive(activeId);
   }
+  // VS COMPACTO no se opera en Argentina Streamers (ver ZÓCALO VS): si la
+  // ultima subseccion recordada era esa, el grupo abre MARCADOR PRINCIPAL.
+  if (id === 'vs' && activeThemeId === ARGENTINA_STREAMERS_THEME_ID) id = 'scoreboard';
   activeId = id;
   if (MARCADOR_SUBSECTION_IDS.has(id)) lastMarcadorSubId = id;
   updateTabStates();
@@ -958,6 +1094,8 @@ function renderModuleAdjustAccordion(container, moduleId, data) {
     // este acordeon generico, sin tener que declarar nada especial en
     // shared/modules.js ni en Program.
     if (entry.themeOnly && entry.themeOnly !== activeThemeId) continue;
+    // "variant" (ZÓCALO VS): solo los ajustes de la variante elegida.
+    if (entry.variant && entry.variant !== data.variante) continue;
     if (entry.kind === 'text') {
       section(entry.label, (body) => {
         mountAdjustControl(body, data, entry.textKey, onDirty, saveOptions);
@@ -1009,7 +1147,8 @@ function renderPenalesArgentinaSections(container, data, onDirty, saveOptions, s
     ['scoreA', 'RESULTADO LOCAL'],
     ['separator', 'GUIÓN'],
     ['scoreB', 'RESULTADO VISITANTE'],
-    ['sponsor', 'SPONSOR'],
+    // SPONSOR eliminado de Penales AS (2026-10-09, pedido explicito del
+    // usuario) -- GLA conserva su sponsor por el acordeon generico.
   ];
   for (const [id, label] of elementSections) {
     const entry = byId[id];
@@ -1090,6 +1229,9 @@ function resolveCrestTeamTarget(entry, data) {
     slot = 'local';
     teamId = hasManualTeamSelection ? data.teamLocal : draft.scoreboard?.teamA;
   }
+  // "crestSlot" (ZÓCALO VS, 2026-10-09): slot propio por variante, ver
+  // shared/adjust-registry.js -- mismo criterio en program/js/visual-compose.js.
+  if (entry.crestSlot) slot = entry.crestSlot;
   if (!teamId) return null;
 
   if (typeof data.crestByTeam !== 'object' || data.crestByTeam === null) data.crestByTeam = {};
@@ -1130,7 +1272,7 @@ function renderPanel() {
     // el bloque que lo oculta (mas abajo en esta funcion) nunca se
     // alcanzaba con un "return" temprano.
     if (marcadorSubnav) marcadorSubnav.style.display = 'none';
-    panelTitle.textContent = 'Abreviaturas Generales de Equipos';
+    panelTitle.textContent = 'Equipos';
     if (panelAssetBadge) panelAssetBadge.hidden = true;
     fieldsContainer.innerHTML = '';
     extraContainer.innerHTML = '';
@@ -1138,7 +1280,30 @@ function renderPanel() {
     takeBtn.style.display = 'none';
     updateBtn.style.display = 'none';
     outBtn.style.display = 'none';
-    panelCleanup = renderAbreviaturasPanel(extraContainer, ws);
+    previewBtn.style.display = 'none';
+    panelCleanup = renderEquiposPanel(extraContainer, {
+      themeId: activeThemeId,
+      teamColors: activeThemeId === DEFAULT_THEME_ID ? glaTeamColors : null,
+    });
+    updatePanelStatus();
+    return;
+  }
+
+  // ACTUALIZADOR DE DATOS solo existe en GLA: si se cambia de theme parado
+  // ahi, se vuelve al Marcador.
+  if (activeId === 'actualizadorDatos' && activeThemeId !== DEFAULT_THEME_ID) activeId = 'scoreboard';
+  if (activeId === 'actualizadorDatos') {
+    if (marcadorSubnav) marcadorSubnav.style.display = 'none';
+    panelTitle.textContent = 'Actualizador de datos — Torneo';
+    if (panelAssetBadge) panelAssetBadge.hidden = true;
+    fieldsContainer.innerHTML = '';
+    extraContainer.innerHTML = '';
+    compositionContainer.innerHTML = '';
+    takeBtn.style.display = 'none';
+    updateBtn.style.display = 'none';
+    outBtn.style.display = 'none';
+    previewBtn.style.display = 'none';
+    panelCleanup = renderActualizadorDatosPanel(extraContainer);
     updatePanelStatus();
     return;
   }
@@ -1153,6 +1318,7 @@ function renderPanel() {
     takeBtn.style.display = 'none';
     updateBtn.style.display = 'none';
     outBtn.style.display = 'none';
+    previewBtn.style.display = 'none';
     panelCleanup = renderJugadoresPanel(extraContainer, draft.scoreboard);
     updatePanelStatus();
     return;
@@ -1161,6 +1327,7 @@ function renderPanel() {
   takeBtn.style.display = '';
   updateBtn.style.display = '';
   outBtn.style.display = '';
+  previewBtn.style.display = '';
   // "ACTUALIZAR" eliminado de TODAS las subsecciones de MARCADOR
   // (BLOQUE 2 para "scoreboard"; ampliado 2026-09-10 al resto -- pedido
   // explicito del usuario: "todas las subsecciones de MARCADOR deben ser
@@ -1174,7 +1341,7 @@ function renderPanel() {
   // criterio que MARCADOR): ACTUALIZAR queda redundante ahi tambien, ver
   // "sendFormacionLive" mas abajo. "ALWAYS_LIVE_MODULE_IDS" (mismo dia,
   // ronda de correcciones siguiente): VAR Chequeo y Replay, mismo criterio.
-  if (MARCADOR_SUBSECTION_IDS.has(activeId) || activeId === 'formacionEquipos' || ALWAYS_LIVE_MODULE_IDS.has(activeId)) {
+  if (MARCADOR_SUBSECTION_IDS.has(activeId) || activeId === 'formacionEquipos' || ALWAYS_LIVE_MODULE_IDS.has(activeId) || isArgentinaLiveModule(activeId)) {
     updateBtn.style.display = 'none';
   }
 
@@ -1192,6 +1359,10 @@ function renderPanel() {
       panelTitle.textContent = `MARCADOR — ${mod.label}`;
       updateAssetBadge(activeId);
       for (const sub of MARCADOR_SUBSECTIONS) {
+        // ZÓCALO VS (2026-10-09): en Argentina Streamers el VS deja de ser
+        // parte del grupo MARCADOR -- vive como modulo propio ("zocaloVs").
+        // GLA conserva su VS COMPACTO aca, sin cambios.
+        if (sub.id === 'vs' && activeThemeId === ARGENTINA_STREAMERS_THEME_ID) continue;
         const subBtn = document.createElement('button');
         subBtn.type = 'button';
         subBtn.className = 'marcador-subnav-btn';
@@ -1203,6 +1374,7 @@ function renderPanel() {
         marcadorSubnav.appendChild(subBtn);
       }
       renderMarcadorEntretiempoToggle(marcadorSubnav);
+      renderShootoutToggle(marcadorSubnav);
     } else {
       marcadorSubnav.style.display = 'none';
       panelTitle.textContent = moduleDisplayLabel(activeId);
@@ -1214,6 +1386,14 @@ function renderPanel() {
   }
 
   let fields = mod.fields;
+  // COLOR PERSONALIZADO (2026-10-23, SOLO GLA): el selector de color del
+  // Marcador suma PERSONALIZADO (el HEX exacto se elige en EQUIPOS; si el
+  // equipo todavia no tiene uno, arranca del color que tenia).
+  if (activeId === 'scoreboard' && activeThemeId === DEFAULT_THEME_ID) {
+    fields = fields.map((field) => (field.key === 'teamAColor' || field.key === 'teamBColor')
+      ? { ...field, options: [...field.options, { id: CUSTOM_COLOR_ID, label: 'Personalizado' }] }
+      : field);
+  }
   const isRosterEvent = activeId === 'tarjeta' || activeId === 'cambios';
   if (isRosterEvent) {
     const localName = teamName(draft.scoreboard.teamA) || 'Sin equipo';
@@ -1261,6 +1441,8 @@ function renderPanel() {
   // después de "titulo".
   const isPenalesArgentina = activeId === 'marcadorPenales' && activeThemeId === ARGENTINA_STREAMERS_THEME_ID;
   if (isPenalesArgentina) {
+    // Sin selector de SPONSOR en Penales AS (2026-10-09, pedido explicito).
+    fields = fields.filter((field) => field.key !== 'sponsor');
     const nameModeOptions = [
       { id: 'auto', label: 'AUTOMÁTICO' },
       { id: 'manual', label: 'MANUAL' },
@@ -1275,6 +1457,24 @@ function renderPanel() {
     const insertAt = tituloIdx === -1 ? 0 : tituloIdx + 1;
     fields = [...fields.slice(0, insertAt), ...extraFields, ...fields.slice(insertAt)];
   }
+  // "MOSTRAR GOLES" de VS COMPACTO (2026-10-22, pedido explicito del
+  // usuario, SOLO GLA): CON GOLES / SIN GOLES, primer control del panel.
+  // Cambiarlo se manda EN VIVO (mismo mecanismo que VAR/Replay) para que
+  // Preview y Program lo reflejen sin ACTUALIZAR. Argentina Streamers no
+  // ve este control.
+  const isGlaVsCompacto = activeId === 'vs' && activeThemeId === DEFAULT_THEME_ID;
+  if (isGlaVsCompacto) {
+    fields = [{
+      key: 'mostrarGoles',
+      label: 'MOSTRAR GOLES',
+      type: FIELD_TYPES.SELECT,
+      options: [
+        { id: 'con', label: 'CON GOLES' },
+        { id: 'sin', label: 'SIN GOLES' },
+      ],
+    }, ...fields];
+  }
+  let renderedMostrarGoles = isGlaVsCompacto ? draft.vs.mostrarGoles : null;
   let renderedTeamSide = isRosterEvent ? draft[activeId].equipo : null;
   const isVarCheck = activeId === 'varCheck';
   const renderedMotivoPreset = isVarCheck ? draft.varCheck.motivoPreset : null;
@@ -1288,6 +1488,8 @@ function renderPanel() {
   const isScoreboard = activeId === 'scoreboard';
   let renderedTeamA = isScoreboard ? draft.scoreboard.teamA : null;
   let renderedTeamB = isScoreboard ? draft.scoreboard.teamB : null;
+  let renderedTeamAColor = isScoreboard ? draft.scoreboard.teamAColor : null;
+  let renderedTeamBColor = isScoreboard ? draft.scoreboard.teamBColor : null;
   // "TIPO" de Zócalo Compuesto (2026-08-16): cambiar EQUIPOS/LOGO decide
   // si el panel de escudos (extraContainer, mas abajo) tiene sentido
   // mostrarse -- necesita un renderPanel() completo para reflejarlo,
@@ -1315,6 +1517,27 @@ function renderPanel() {
         draft.scoreboard.teamBColor = draft.scoreboard.teamColorAssignments?.[draft.scoreboard.teamB] || 'gris';
         colorChanged = true;
       }
+      // GLA (2026-10-22): el color pertenece al EQUIPO, no al slot -- elegir
+      // otro color para el equipo ya elegido lo guarda en el mismo mapa que
+      // edita EQUIPOS (sin boton "ASIGNAR" aparte). Si el mismo equipo esta
+      // en los dos lados, el otro lado toma el mismo color.
+      if (activeThemeId === DEFAULT_THEME_ID) {
+        const sb = draft.scoreboard;
+        for (const [teamKey, colorKey, rendered] of [['teamA', 'teamAColor', renderedTeamAColor], ['teamB', 'teamBColor', renderedTeamBColor]]) {
+          const teamId = sb[teamKey];
+          if (!teamId || sb[colorKey] === rendered || colorChanged) continue;
+          if (!sb.teamColorAssignments || typeof sb.teamColorAssignments !== 'object') sb.teamColorAssignments = {};
+          sb.teamColorAssignments[teamId] = sb[colorKey];
+          if (sb[colorKey] === CUSTOM_COLOR_ID && !normalizeHexColor(sb.teamColorCustomHex?.[teamId])) {
+            if (!sb.teamColorCustomHex || typeof sb.teamColorCustomHex !== 'object') sb.teamColorCustomHex = {};
+            sb.teamColorCustomHex[teamId] = colorHex(rendered && rendered !== CUSTOM_COLOR_ID ? rendered : 'gris');
+          }
+          if (sb.teamA === teamId && sb.teamAColor !== sb[colorKey]) { sb.teamAColor = sb[colorKey]; colorChanged = true; }
+          if (sb.teamB === teamId && sb.teamBColor !== sb[colorKey]) { sb.teamBColor = sb[colorKey]; colorChanged = true; }
+        }
+        renderedTeamAColor = sb.teamAColor;
+        renderedTeamBColor = sb.teamBColor;
+      }
       sendScoreboardLive();
       if (colorChanged) renderPanel();
     } else {
@@ -1334,7 +1557,9 @@ function renderPanel() {
         }
         motivoPresetChanged = true;
       }
-      if (MARCADOR_SUBSECTION_IDS.has(idForThisRender) || ALWAYS_LIVE_MODULE_IDS.has(idForThisRender)) {
+      const vsGoalsChanged = isGlaVsCompacto && renderedMostrarGoles !== draft.vs.mostrarGoles;
+      if (vsGoalsChanged) renderedMostrarGoles = draft.vs.mostrarGoles;
+      if (vsGoalsChanged || MARCADOR_SUBSECTION_IDS.has(idForThisRender) || ALWAYS_LIVE_MODULE_IDS.has(idForThisRender) || isArgentinaLiveModule(idForThisRender)) {
         sendMarcadorSubsectionLive(idForThisRender);
       } else {
         scheduleAutoSave(idForThisRender);
@@ -1365,6 +1590,7 @@ function renderPanel() {
   if (activeId === 'scoreboard') {
     panelCleanup = renderScoreboardClockPanel(extraContainer, draft[activeId], (patch) => {
       ws.send({ type: WS_MSG.UPDATE, moduleId: activeId, data: patch });
+      sendPreviewUpdateIfActive(activeId);
     }, {
       onGoalPlus: scoreGoal,
       onGoalMinus: undoGoal,
@@ -1374,6 +1600,17 @@ function renderPanel() {
       golData: draft.gol,
       golOnDirty: () => scheduleAutoSave('gol'),
       golSaveOptions: buildSaveOptions('gol'),
+      // GLA (2026-10-21): GOL sigue la composicion del Marcador; su control
+      // es el ajuste fino RELATIVO, y se puede ver en el bus PREVIEW.
+      golRelativeToScoreboard: activeThemeId === DEFAULT_THEME_ID,
+      // GLA (2026-10-22): el color se guarda por equipo al elegirlo (ver
+      // arriba) y tambien desde EQUIPOS -- los botones "ASIGNAR COLOR" ya no
+      // hacen falta.
+      hideTeamColorAssign: activeThemeId === DEFAULT_THEME_ID,
+      onPreviewGol: activeThemeId === DEFAULT_THEME_ID ? () => {
+        previewedModuleId = 'gol';
+        ws.send({ type: 'PREVIEW_MODULE', moduleId: 'gol', data: draft.gol, allData: draft, replay: true });
+      } : null,
     });
   } else if (activeId === 'formacionEquipos') {
     // "sendFormacionLive" (2026-09-10, pedido explicito del usuario: "en
@@ -1384,6 +1621,7 @@ function renderPanel() {
     // "scheduleAutoSave". Scoped a este unico modulo (no toca el resto).
     panelCleanup = renderFormationListPanel(extraContainer, draft[activeId], draft.scoreboard, () => {
       ws.send({ type: WS_MSG.UPDATE, moduleId: idForThisRender, data: draft[idForThisRender], isExplicitUpdate: true });
+      sendPreviewUpdateIfActive(idForThisRender);
     }, {
       transitioning: formationTransitioning,
       pendingSide: formationPendingSide,
@@ -1391,53 +1629,151 @@ function renderPanel() {
       saveOptions: buildSaveOptions(activeId),
     });
   } else if (activeId === 'shortSimple') {
-    renderPresetsControl(extraContainer, draft.shortSimple, {
-      presetKey: 'textPresets',
-      title: 'PRESETS DE TEXTO (ZÓCALO CORTO SIMPLE)',
-      buttons: [
-        { label: 'GUARDAR PRESET', type: 'complete', getFields: () => ({ text: draft.shortSimple.text }) },
-      ],
-      onApply: (fields) => {
-        if (fields.text !== undefined) draft.shortSimple.text = fields.text;
-        renderPanel();
-      },
-      onDirty: () => scheduleAutoSave('shortSimple'),
-    });
+    // BANCO GLOBAL (2026-09-27, pedido explicito, SOLO GLA): Largo Doble/
+    // Corto Simple/Compuesto comparten el mismo banco de presets -- ver
+    // "globalLowerThirdBank" mas arriba. Argentina Streamers sigue con su
+    // "textPresets" propio de siempre, sin ningun cambio. "main" es el
+    // nombre canonico compartido por los 3 modulos (aca es el unico campo
+    // de texto que tiene Corto Simple); "sub" no aplica -- ni se guarda ni
+    // se pide, pero si el preset cargado lo trae (creado desde un modulo
+    // doble) simplemente se ignora, nunca se borra del preset.
+    if (activeThemeId === DEFAULT_THEME_ID) {
+      renderPresetsControl(extraContainer, globalLowerThirdBank, {
+        presetKey: 'textPresets',
+        title: 'PRESETS DE TEXTO (ZÓCALOS GLA)',
+        buttons: [
+          { label: 'GUARDAR PRESET', type: 'complete', getFields: () => ({ main: draft.shortSimple.text }) },
+        ],
+        onApply: (fields) => {
+          if (fields.main !== undefined) draft.shortSimple.text = fields.main;
+          renderPanel();
+          scheduleAutoSave('shortSimple');
+        },
+        onDirty: saveGlobalLowerThirdBank,
+      });
+    } else if (activeThemeId === ARGENTINA_STREAMERS_THEME_ID) {
+      // BANCO GLOBAL AS (2026-10-08): Corto Simple guarda su texto como
+      // MAIN (SUB vacio) y al aplicar usa solo MAIN -- el SUB de un preset
+      // creado desde un zocalo doble se ignora sin borrarse.
+      if (!themeLowerThirdBank.loaded) {
+        renderThemeBankLoadingNote(extraContainer);
+      } else {
+        renderPresetsControl(extraContainer, themeLowerThirdBank, {
+          presetKey: 'textPresets',
+          title: 'PRESETS GLOBALES DE ZÓCALOS (LARGO DOBLE / CORTO SIMPLE / COMPUESTO)',
+          buttons: [
+            { label: 'GUARDAR PRESET', type: 'complete', getFields: () => ({ main: draft.shortSimple.text, sub: '' }) },
+          ],
+          onApply: (fields) => {
+            if (fields.main !== undefined) draft.shortSimple.text = fields.main;
+            renderPanel();
+            scheduleAutoSave('shortSimple');
+          },
+          onDirty: saveThemeLowerThirdBank,
+        });
+      }
+    } else {
+      renderPresetsControl(extraContainer, draft.shortSimple, {
+        presetKey: 'textPresets',
+        title: 'PRESETS DE TEXTO (ZÓCALO CORTO SIMPLE)',
+        buttons: [
+          { label: 'GUARDAR PRESET', type: 'complete', getFields: () => ({ text: draft.shortSimple.text }) },
+        ],
+        onApply: (fields) => {
+          if (fields.text !== undefined) draft.shortSimple.text = fields.text;
+          renderPanel();
+        },
+        onDirty: () => scheduleAutoSave('shortSimple'),
+      });
+    }
   } else if (activeId === 'shortDouble') {
     panelCleanup = renderShortDoublePanel(extraContainer, draft[activeId], () => {
       scheduleAutoSave(idForThisRender);
     }, buildSaveOptions('shortDouble'));
+    // TALENTOS (nombre AS de este modulo, 2026-10-08): banco EXCLUSIVO
+    // per-modulo de siempre -- nunca el banco global de zocalos.
     renderPresetsControl(extraContainer, draft.shortDouble, {
       presetKey: 'textPresets',
-      title: 'PRESETS DE TEXTO (ZÓCALO CORTO DOBLE)',
+      title: activeThemeId === ARGENTINA_STREAMERS_THEME_ID ? 'PRESETS DE TALENTOS (EXCLUSIVOS)' : 'PRESETS DE TEXTO (ZÓCALO CORTO DOBLE)',
+      // "double1.name/.role" (2026-09-26, BUG encontrado y corregido: los
+      // presets de Zocalo Corto Doble no guardaban ni cargaban nada -- este
+      // panel seguia leyendo/escribiendo "draft.shortDouble.name/.role" a
+      // nivel raiz, campos eliminados el 2026-09-10 cuando el modo "single"
+      // paso a reusar "double1" directamente, ver shared/modules.js y
+      // program/js/renderers/shortDouble.js). El campo visible en pantalla
+      // (modo individual) es "double1", nunca la raiz.
       buttons: [
-        { label: 'GUARDAR PRESET COMPLETO', type: 'complete', getFields: () => ({ name: draft.shortDouble.name, role: draft.shortDouble.role }) },
-        { label: 'GUARDAR TEXTO MAIN', type: 'main', getFields: () => ({ name: draft.shortDouble.name }) },
-        { label: 'GUARDAR SUB TEXTO', type: 'sub', getFields: () => ({ role: draft.shortDouble.role }) },
+        { label: 'GUARDAR PRESET COMPLETO', type: 'complete', getFields: () => ({ name: draft.shortDouble.double1.name, role: draft.shortDouble.double1.role }) },
+        { label: 'GUARDAR TEXTO MAIN', type: 'main', getFields: () => ({ name: draft.shortDouble.double1.name }) },
+        { label: 'GUARDAR SUB TEXTO', type: 'sub', getFields: () => ({ role: draft.shortDouble.double1.role }) },
       ],
       onApply: (fields) => {
-        if (fields.name !== undefined) draft.shortDouble.name = fields.name;
-        if (fields.role !== undefined) draft.shortDouble.role = fields.role;
+        if (fields.name !== undefined) draft.shortDouble.double1.name = fields.name;
+        if (fields.role !== undefined) draft.shortDouble.double1.role = fields.role;
         renderPanel();
       },
       onDirty: () => scheduleAutoSave('shortDouble'),
     });
   } else if (activeId === 'longDouble') {
-    renderPresetsControl(extraContainer, draft.longDouble, {
-      presetKey: 'textPresets',
-      title: 'PRESETS DE TEXTO (ZÓCALO LARGO DOBLE)',
-      buttons: [
-        { label: 'GUARDAR PRESET COMPLETO', type: 'complete', getFields: () => ({ line1: draft.longDouble.line1, line2: draft.longDouble.line2 }) },
-        { label: 'GUARDAR TEXTO MAIN', type: 'main', getFields: () => ({ line1: draft.longDouble.line1 }) },
-        { label: 'GUARDAR SUB TEXTO', type: 'sub', getFields: () => ({ line2: draft.longDouble.line2 }) },
-      ],
-      onApply: (fields) => {
-        if (fields.line1 !== undefined) draft.longDouble.line1 = fields.line1;
-        if (fields.line2 !== undefined) draft.longDouble.line2 = fields.line2;
-        renderPanel();
-      },
-      onDirty: () => scheduleAutoSave('longDouble'),
-    });
+    // BANCO GLOBAL (2026-09-27, ver nota completa en "shortSimple" arriba):
+    // "main"/"sub" (canonico) <-> "line1"/"line2" (campo real de este
+    // modulo). Argentina Streamers sigue con "textPresets" propio.
+    if (activeThemeId === DEFAULT_THEME_ID) {
+      renderPresetsControl(extraContainer, globalLowerThirdBank, {
+        presetKey: 'textPresets',
+        title: 'PRESETS DE TEXTO (ZÓCALOS GLA)',
+        buttons: [
+          { label: 'GUARDAR PRESET COMPLETO', type: 'complete', getFields: () => ({ main: draft.longDouble.line1, sub: draft.longDouble.line2 }) },
+          { label: 'GUARDAR TEXTO MAIN', type: 'main', getFields: () => ({ main: draft.longDouble.line1 }) },
+          { label: 'GUARDAR SUB TEXTO', type: 'sub', getFields: () => ({ sub: draft.longDouble.line2 }) },
+        ],
+        onApply: (fields) => {
+          if (fields.main !== undefined) draft.longDouble.line1 = fields.main;
+          if (fields.sub !== undefined) draft.longDouble.line2 = fields.sub;
+          renderPanel();
+          scheduleAutoSave('longDouble');
+        },
+        onDirty: saveGlobalLowerThirdBank,
+      });
+    } else if (activeThemeId === ARGENTINA_STREAMERS_THEME_ID) {
+      // BANCO GLOBAL AS (2026-10-08): MAIN/SUB <-> line1/line2.
+      if (!themeLowerThirdBank.loaded) {
+        renderThemeBankLoadingNote(extraContainer);
+      } else {
+        renderPresetsControl(extraContainer, themeLowerThirdBank, {
+          presetKey: 'textPresets',
+          title: 'PRESETS GLOBALES DE ZÓCALOS (LARGO DOBLE / CORTO SIMPLE / COMPUESTO)',
+          buttons: [
+            { label: 'GUARDAR PRESET COMPLETO', type: 'complete', getFields: () => ({ main: draft.longDouble.line1, sub: draft.longDouble.line2 }) },
+            { label: 'GUARDAR TEXTO MAIN', type: 'main', getFields: () => ({ main: draft.longDouble.line1 }) },
+            { label: 'GUARDAR SUB TEXTO', type: 'sub', getFields: () => ({ sub: draft.longDouble.line2 }) },
+          ],
+          onApply: (fields) => {
+            if (fields.main !== undefined) draft.longDouble.line1 = fields.main;
+            if (fields.sub !== undefined) draft.longDouble.line2 = fields.sub;
+            renderPanel();
+            scheduleAutoSave('longDouble');
+          },
+          onDirty: saveThemeLowerThirdBank,
+        });
+      }
+    } else {
+      renderPresetsControl(extraContainer, draft.longDouble, {
+        presetKey: 'textPresets',
+        title: 'PRESETS DE TEXTO (ZÓCALO LARGO DOBLE)',
+        buttons: [
+          { label: 'GUARDAR PRESET COMPLETO', type: 'complete', getFields: () => ({ line1: draft.longDouble.line1, line2: draft.longDouble.line2 }) },
+          { label: 'GUARDAR TEXTO MAIN', type: 'main', getFields: () => ({ line1: draft.longDouble.line1 }) },
+          { label: 'GUARDAR SUB TEXTO', type: 'sub', getFields: () => ({ line2: draft.longDouble.line2 }) },
+        ],
+        onApply: (fields) => {
+          if (fields.line1 !== undefined) draft.longDouble.line1 = fields.line1;
+          if (fields.line2 !== undefined) draft.longDouble.line2 = fields.line2;
+          renderPanel();
+        },
+        onDirty: () => scheduleAutoSave('longDouble'),
+      });
+    }
   } else if (activeId === 'zocaloFinal') {
     renderPresetsControl(extraContainer, draft.zocaloFinal, {
       presetKey: 'textPresets',
@@ -1481,21 +1817,45 @@ function renderPanel() {
     if (draft.zocaloCompuesto.tipo !== 'logo') {
       renderZocaloEscudosPanel(extraContainer, draft.zocaloCompuesto, () => scheduleAutoSave('zocaloCompuesto'));
     }
-    renderPresetsControl(extraContainer, draft.zocaloCompuesto, {
-      presetKey: 'textPresets',
-      title: 'PRESETS DE TEXTO (ZÓCALO COMPUESTO)',
-      buttons: [
-        { label: 'GUARDAR PRESET COMPLETO', type: 'complete', getFields: () => ({ texto1: draft.zocaloCompuesto.texto1, texto2: draft.zocaloCompuesto.texto2 }) },
-        { label: 'GUARDAR TEXTO MAIN', type: 'main', getFields: () => ({ texto1: draft.zocaloCompuesto.texto1 }) },
-        { label: 'GUARDAR SUB TEXTO', type: 'sub', getFields: () => ({ texto2: draft.zocaloCompuesto.texto2 }) },
-      ],
-      onApply: (fields) => {
-        if (fields.texto1 !== undefined) draft.zocaloCompuesto.texto1 = fields.texto1;
-        if (fields.texto2 !== undefined) draft.zocaloCompuesto.texto2 = fields.texto2;
-        renderPanel();
-      },
-      onDirty: () => scheduleAutoSave('zocaloCompuesto'),
-    });
+    // BANCO GLOBAL (2026-09-27, ver nota completa en "shortSimple" arriba):
+    // "main"/"sub" (canonico) <-> "texto1"/"texto2" (campo real de este
+    // modulo). Argentina Streamers no usa "zocaloCompuesto" (usa
+    // "zocaloCompuestoEquipos"/"zocaloCompuestoLogo", paneles propios sin
+    // tocar) pero se deja igual el mismo guard por consistencia/seguridad.
+    if (activeThemeId === DEFAULT_THEME_ID) {
+      renderPresetsControl(extraContainer, globalLowerThirdBank, {
+        presetKey: 'textPresets',
+        title: 'PRESETS DE TEXTO (ZÓCALOS GLA)',
+        buttons: [
+          { label: 'GUARDAR PRESET COMPLETO', type: 'complete', getFields: () => ({ main: draft.zocaloCompuesto.texto1, sub: draft.zocaloCompuesto.texto2 }) },
+          { label: 'GUARDAR TEXTO MAIN', type: 'main', getFields: () => ({ main: draft.zocaloCompuesto.texto1 }) },
+          { label: 'GUARDAR SUB TEXTO', type: 'sub', getFields: () => ({ sub: draft.zocaloCompuesto.texto2 }) },
+        ],
+        onApply: (fields) => {
+          if (fields.main !== undefined) draft.zocaloCompuesto.texto1 = fields.main;
+          if (fields.sub !== undefined) draft.zocaloCompuesto.texto2 = fields.sub;
+          renderPanel();
+          scheduleAutoSave('zocaloCompuesto');
+        },
+        onDirty: saveGlobalLowerThirdBank,
+      });
+    } else {
+      renderPresetsControl(extraContainer, draft.zocaloCompuesto, {
+        presetKey: 'textPresets',
+        title: 'PRESETS DE TEXTO (ZÓCALO COMPUESTO)',
+        buttons: [
+          { label: 'GUARDAR PRESET COMPLETO', type: 'complete', getFields: () => ({ texto1: draft.zocaloCompuesto.texto1, texto2: draft.zocaloCompuesto.texto2 }) },
+          { label: 'GUARDAR TEXTO MAIN', type: 'main', getFields: () => ({ texto1: draft.zocaloCompuesto.texto1 }) },
+          { label: 'GUARDAR SUB TEXTO', type: 'sub', getFields: () => ({ texto2: draft.zocaloCompuesto.texto2 }) },
+        ],
+        onApply: (fields) => {
+          if (fields.texto1 !== undefined) draft.zocaloCompuesto.texto1 = fields.texto1;
+          if (fields.texto2 !== undefined) draft.zocaloCompuesto.texto2 = fields.texto2;
+          renderPanel();
+        },
+        onDirty: () => scheduleAutoSave('zocaloCompuesto'),
+      });
+    }
     panelCleanup = renderZocaloSponsorsPanel(extraContainer, draft[activeId], () => scheduleAutoSave(idForThisRender));
   } else if (activeId === 'vsPrepartido') {
     renderPresetsControl(extraContainer, draft.vsPrepartido, {
@@ -1524,19 +1884,34 @@ function renderPanel() {
       onDirty: () => scheduleAutoSave('vsResultado'),
     });
   } else if (activeId === 'marcadorPenales') {
-    renderPenalesPanel(extraContainer, draft[activeId], () => scheduleAutoSave(idForThisRender));
+    renderPenalesPanel(extraContainer, draft[activeId], () => {
+      if (isArgentinaLiveModule(idForThisRender)) sendMarcadorSubsectionLive(idForThisRender);
+      else scheduleAutoSave(idForThisRender);
+    });
+  } else if (activeId === 'zocaloVs') {
+    // ZÓCALO VS (2026-10-09): todo en vivo (sin ACTUALIZAR); cambiar de
+    // variante vuelve a armar el panel para mostrar los ajustes de esa variante.
+    panelCleanup = renderZocaloVsPanel(extraContainer, draft[activeId], draft.scoreboard, () => {
+      sendMarcadorSubsectionLive(idForThisRender);
+    }, { onVarianteChange: () => renderPanel() });
   } else if (activeId === 'grupos') {
+    // GLA (2026-10-23): puntos y VALIDAR WEB van en vivo (Grupos reordena
+    // en Preview y Program sin ACTUALIZAR); el resto sigue con autosave.
     panelCleanup = renderGruposPanel(extraContainer, draft[activeId], () => {
       scheduleAutoSave(idForThisRender);
-    }, buildSaveOptions(activeId));
+    }, buildSaveOptions(activeId), {
+      onLive: activeThemeId === DEFAULT_THEME_ID ? () => sendMarcadorSubsectionLive(idForThisRender) : null,
+    });
   } else if (activeId === 'sideTable') {
     panelCleanup = renderResultadosPanel(extraContainer, draft[activeId], () => {
       scheduleAutoSave(idForThisRender);
     }, buildSaveOptions(activeId));
   } else if (activeId === 'estrellas') {
+    // Tablas locales de Goleadores/Asistidores (Argentina Streamers,
+    // "ESTRELLA POR" GOLES/ASISTENCIAS usa su primer jugador por rama).
     panelCleanup = renderEstrellasPanel(extraContainer, draft[activeId], draft['scoreboard'], () => {
       scheduleAutoSave(idForThisRender);
-    }, buildSaveOptions(activeId));
+    }, buildSaveOptions(activeId), { goleadores: draft.goleadores, asistidores: draft.asistidores });
   } else if (activeId === 'posiciones') {
     panelCleanup = renderPosicionesPanel(extraContainer, draft[activeId], () => {
       scheduleAutoSave(idForThisRender);
@@ -1567,21 +1942,41 @@ function renderPanel() {
       scheduleAutoSave(idForThisRender);
     }, buildSaveOptions(activeId));
   } else if (activeId === 'cronogramaHoy') {
+    // ESCUDO POR EQUIPO (2026-10-09, bug real corregido): Cronograma elige
+    // LOCAL/VISITANTE dentro de su propio panel; el acordeon de ajuste
+    // quedaba atado al equipo de cuando se abrio el panel, asi que mover el
+    // escudo despues de cambiar de equipo pisaba la posicion del equipo
+    // ANTERIOR. Al cambiar de equipo se vuelve a armar el acordeon.
+    let crestTeams = `${draft[activeId].teamLocal}|${draft[activeId].teamVisitante}`;
     panelCleanup = renderCronogramaHoyPanel(fieldsContainer, draft[activeId], () => {
       scheduleAutoSave(idForThisRender);
+      const nextTeams = `${draft[idForThisRender].teamLocal}|${draft[idForThisRender].teamVisitante}`;
+      if (nextTeams !== crestTeams && activeId === idForThisRender) {
+        crestTeams = nextTeams;
+        renderModuleAdjustAccordion(compositionContainer, idForThisRender, draft[idForThisRender]);
+      }
     }, buildSaveOptions(activeId)) || (() => {});
   } else if (activeId === 'resultadosParciales') {
+    // TÍTULO con selector ENTRETIEMPO/RESULTADO FINAL/MANUAL: SOLO
+    // Argentina Streamers (2026-10-08); GLA conserva su campo de texto libre.
     panelCleanup = renderResultadosParcialesPanel(fieldsContainer, draft[activeId], () => {
       scheduleAutoSave(idForThisRender);
-    }, buildSaveOptions(activeId)) || (() => {});
+    }, { tituloConSelector: activeThemeId === ARGENTINA_STREAMERS_THEME_ID }) || (() => {});
   } else if (activeId === 'historial') {
     panelCleanup = renderHistorialPanel(fieldsContainer, draft[activeId], () => {
       scheduleAutoSave(idForThisRender);
     }, buildSaveOptions(activeId)) || (() => {});
   } else if (activeId === 'zocaloCompuestoEquipos') {
+    // BANCO GLOBAL AS (2026-10-08): este es el "ZÓCALO COMPUESTO" de
+    // Argentina Streamers -- comparte el banco global con Largo Doble y
+    // Corto Simple (null mientras el banco no llego: el panel muestra
+    // "cargando" en vez de permitir guardar sobre una lista parcial).
     panelCleanup = renderZocaloCompuestoPanel(extraContainer, draft[activeId], draft.scoreboard, () => {
       scheduleAutoSave(idForThisRender);
-    }, buildSaveOptions(activeId));
+    }, buildSaveOptions(activeId), {
+      holder: themeLowerThirdBank.loaded ? themeLowerThirdBank : null,
+      onDirty: saveThemeLowerThirdBank,
+    });
   } else if (mod.autoRunClock) {
     // "FIN DEL CONTADOR" (2026-08-15, pedido explicito del usuario): solo
     // Marcador Zocalo lo pidio (default 06:00) -- Tiempo Adicional sigue
@@ -1597,10 +1992,14 @@ function renderPanel() {
   takeBtn.disabled = activeId === 'formacionEquipos' && formationTransitioning;
 
   if (activeId === 'scoreboard' && activeThemeId !== ARGENTINA_STREAMERS_THEME_ID) {
-    // GLA conserva EXACTAMENTE su control unico de siempre (sin acordeon,
-    // sin GUARDAR POSICIÓN) -- pedido explicito del usuario de no tocar
-    // ni un pixel de la interfaz de GLA.
-    renderCompositionControl(compositionContainer, draft[activeId], () => scheduleAutoSave(idForThisRender));
+    // GLA conserva su control unico de siempre (sin acordeon). GUARDAR
+    // POSICIÓN agregado (2026-10-21, pedido explicito del usuario: "GUARDAR
+    // POSICIÓN del Marcador debe consolidar la nueva base sin romper la
+    // relacion con Gol") -- mismo mecanismo que el resto de los modulos.
+    renderCompositionControl(compositionContainer, draft[activeId], () => scheduleAutoSave(idForThisRender), {
+      ...buildSaveOptions(activeId),
+      elementSpec: { kind: 'composition', dataPath: [], xKey: 'compositionOffsetX', yKey: 'compositionOffsetY', scaleKey: 'compositionScale' },
+    });
   } else {
     // Todo modulo (con o sin entradas en ADJUST_REGISTRY) usa el acordeon
     // generico -- ver renderModuleAdjustAccordion. "varCheck" ya no
@@ -1614,7 +2013,7 @@ function renderPanel() {
 }
 
 function updatePanelStatus() {
-  if (activeId === 'abreviaturas' || activeId === 'jugadoresAdmin') {
+  if (activeId === 'abreviaturas' || activeId === 'jugadoresAdmin' || activeId === 'actualizadorDatos') {
     panelStatus.textContent = 'CONFIG';
     panelStatus.className = 'status-pill off';
     return;
@@ -1645,6 +2044,24 @@ const ws = connect({
       // GLA hasta cambiar de tab y volver.
       if (activeId === 'abreviaturas' || activeId === 'jugadoresAdmin' || activeId === 'zocaloFinalDiv' || activeId === 'zocaloCompuesto' || activeId === 'scoreboard') {
         renderPanel();
+      }
+    } else if (msg.type === 'GLA_TORNEO_EDICION_UPDATE') {
+      // ACTUALIZADOR DE DATOS (2026-10-21): otra pestaña cambio la edicion
+      // del torneo -- las leyendas "FUENTE ACTUAL" se repintan solas.
+      setGlaTorneoEdicion(msg.edicion);
+      if (activeId === 'actualizadorDatos') renderPanel();
+    } else if (msg.type === 'GLOBAL_LOWER_THIRD_PRESETS_UPDATE') {
+      // Mismo motivo que "TEAM_CATALOG_UPDATE" arriba: otro Master Control
+      // pudo haber guardado/borrado un preset del banco global -- si el
+      // operador esta parado en uno de los 3 paneles que lo comparten,
+      // refrescar para que la lista se vea al dia.
+      if (Array.isArray(msg.presets)) globalLowerThirdBank.textPresets = msg.presets;
+      if (GLOBAL_LOWER_THIRD_MODULE_IDS.has(activeId) && activeThemeId === DEFAULT_THEME_ID) renderPanel();
+    } else if (msg.type === 'THEME_LOWER_THIRD_PRESETS_UPDATE') {
+      if (msg.themeId === themeLowerThirdBank.themeId && Array.isArray(msg.presets)) {
+        themeLowerThirdBank.textPresets = msg.presets;
+        themeLowerThirdBank.loaded = true;
+        if (THEME_LOWER_THIRD_MODULE_IDS.has(activeId) && activeThemeId === msg.themeId) renderPanel();
       }
     } else if (msg.type === WS_MSG.THEME_UPDATE) {
       applyThemeUI(msg.themeId);
@@ -1731,10 +2148,38 @@ const ws = connect({
       // WS) -- nunca en cada tecla de "Nombre"/"Rol"/etc.
       const previousShortDoubleStatus = serverState.shortDouble?.status;
       const previousShortDoubleAirMode = serverState.shortDouble?.data?.airMode;
+      const previousMarcadorZocaloStatus = serverState.marcadorZocalo?.status;
       serverState[msg.moduleId] = msg.moduleState;
+      // PARTIDOS SORTEO (2026-10-22, SOLO GLA): el servidor reasigno equipos
+      // del SORTEO a partir de Grupos -- la copia local de Master Control se
+      // refresca para no reenviar equipos viejos en la proxima edicion.
+      if (msg.moduleId === 'sideTable' && msg.syncedFromGrupos && activeThemeId === DEFAULT_THEME_ID && msg.moduleState?.data) {
+        draft.sideTable = JSON.parse(JSON.stringify(msg.moduleState.data));
+        if (activeId === 'sideTable') renderPanel();
+        sendPreviewUpdateIfActive('sideTable');
+      }
       updateTabStates();
       if (msg.moduleId === activeId) updatePanelStatus();
       if (msg.moduleId === 'scoreboard' && activeId === 'estrellas') {
+        renderPanel();
+      }
+      // SHOOTOUT (2026-09-27): si Penales cambia de estado desde CUALQUIER
+      // lado (su propio panel, el boton SHOOTOUT de otro Master Control
+      // conectado, la exclusion mutua, etc.) y el operador esta parado en
+      // una subseccion de Marcador (donde vive el boton SHOOTOUT), refrescar
+      // para que el boton muestre el estado real -- mismo criterio que el
+      // resto de este handler (solo re-renderiza si hay algo que reflejar).
+      if (msg.moduleId === 'marcadorPenales' && MARCADOR_SUBSECTION_IDS.has(activeId)) {
+        renderPanel();
+      }
+      // MARCADOR ZÓCALO (Argentina Streamers, 2026-10-08): mismo criterio
+      // para su acceso rapido, pero SOLO ante un cambio real de ON/OFF --
+      // Marcador Zócalo es una subseccion editable, re-renderizar en cada
+      // autosave le robaria el foco al operador mientras escribe.
+      if (
+        msg.moduleId === 'marcadorZocalo' && activeThemeId === ARGENTINA_STREAMERS_THEME_ID
+        && MARCADOR_SUBSECTION_IDS.has(activeId) && msg.moduleState.status !== previousMarcadorZocaloStatus
+      ) {
         renderPanel();
       }
       if (
@@ -1751,14 +2196,6 @@ const ws = connect({
       if (msg.moduleId === 'gol' && msg.moduleState.status === MODULE_STATUS.OUT) {
         fireNextGolAnimation();
       }
-    } else if (msg.type === WS_MSG.PROFILE_LIST_UPDATE) {
-      matchProfiles = msg.profiles;
-      activeMatchProfileSlug = msg.activeSlug;
-      matchProfileListLoaded = true;
-      renderMatchProfileSelect();
-    } else if (msg.type === WS_MSG.ACTIVE_MATCH_PROFILE_UPDATE) {
-      activeMatchProfileSlug = msg.slug;
-      renderMatchProfileSelect();
     }
   },
 });
@@ -1968,6 +2405,21 @@ updateBtn.addEventListener('click', () => {
     return;
   }
   ws.send({ type: WS_MSG.UPDATE, moduleId: activeId, data: draft[activeId], isExplicitUpdate: true });
+  sendPreviewUpdateIfActive(activeId);
+});
+// PREVIEW (2026-09-27, pedido explicito del usuario: "ver la grafica ANTES
+// de mandarla al aire... sin disparar onAir, sin tocar el Program real").
+// Manda el DRAFT actual (nunca lo persiste ni lo confirma, es exactamente
+// el mismo objeto que ya se manda con TAKE/UPDATE) mas el draft COMPLETO
+// como "allData" -- los renderers que dependen de otro modulo (ej. Tarjeta
+// lee "allData.scoreboard" para el escudo) resuelven igual que en
+// Program real. El servidor de esto SOLO hace de relay (ver
+// server/index.js, "PREVIEW_MODULE") -- nunca toca "status"/"data"
+// autoritativo de ningun modulo, así que el Program real (OBS/vMix) nunca
+// se entera de que esto paso.
+previewBtn.addEventListener('click', () => {
+  previewedModuleId = activeId;
+  sendPreviewSnapshot(activeId);
 });
 outBtn.addEventListener('click', () => {
   // Si el operador saca Formacion a mano mientras hay un cambio de equipo
@@ -2013,7 +2465,6 @@ stopAllBtn.addEventListener('click', () => {
 buildTabs();
 renderPanel();
 setupPreviewMonitor();
-setupMatchProfileBar();
 
 // Monitor de preview (columna derecha): un iframe que carga el Program
 // real (misma URL que se usa como Browser Source/Input en OBS/vMix) a su
@@ -2034,8 +2485,27 @@ function setupPreviewMonitor() {
   const copyBtn = document.getElementById('btn-copy-url');
 
   const programUrl = `${location.origin}/program`;
+  // "PREVIEW | PROGRAM" (2026-09-27, pedido explicito del usuario: poder
+  // alternar el monitor entre ver el PROGRAM real o un PREVIEW
+  // independiente, sin que eso cambie el link/output real que entra a
+  // vMix/OBS). "urlEl"/"copyBtn" SIEMPRE muestran/copian la URL de
+  // PROGRAM, sin importar que este mirando el operador en este momento --
+  // ese es el unico contrato que vMix/OBS conocen. Solo "iframe.src"
+  // cambia con el toggle. Default: PROGRAM (mismo comportamiento de
+  // siempre para quien nunca toque el toggle nuevo).
+  const previewUrl = `${location.origin}/program/preview.html`;
   urlEl.textContent = programUrl;
   iframe.src = programUrl;
+
+  const btnPreview = document.getElementById('btn-monitor-preview');
+  const btnProgram = document.getElementById('btn-monitor-program');
+  function setMonitorMode(mode) {
+    iframe.src = mode === 'preview' ? previewUrl : programUrl;
+    btnPreview.classList.toggle('active', mode === 'preview');
+    btnProgram.classList.toggle('active', mode !== 'preview');
+  }
+  btnPreview.addEventListener('click', () => setMonitorMode('preview'));
+  btnProgram.addEventListener('click', () => setMonitorMode('program'));
 
   function rescale() {
     const scale = frame.getBoundingClientRect().width / 1920;

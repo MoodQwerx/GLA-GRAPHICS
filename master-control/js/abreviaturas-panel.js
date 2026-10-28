@@ -120,6 +120,23 @@ export function renderAbreviaturasPanel(container, ws) {
         background: #552222;
         color: #fff;
       }
+      .abbr-row.is-hidden-team {
+        opacity: 0.55;
+      }
+      .abbr-visible-toggle {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 10px;
+        color: #ccc;
+        font-weight: 700;
+        text-transform: uppercase;
+        white-space: nowrap;
+        cursor: pointer;
+      }
+      .abbr-visible-toggle input {
+        cursor: pointer;
+      }
     `;
     document.head.appendChild(style);
   }
@@ -134,7 +151,7 @@ export function renderAbreviaturasPanel(container, ws) {
 
     const desc = document.createElement('div');
     desc.className = 'abbr-desc';
-    desc.textContent = 'Edita la abreviatura central de cualquier equipo. Cada cambio se guarda inmediatamente, se actualiza en el catálogo central y se refleja en todos los módulos de Program que consumen siglas.';
+    desc.textContent = 'Edita la abreviatura central de cualquier equipo. Cada cambio se guarda inmediatamente, se actualiza en el catálogo central y se refleja en todos los módulos de Program que consumen siglas. El check VISIBLE controla si el equipo aparece en los desplegables de selección (no lo borra: sigue disponible en gráficas/presets que ya lo tenían elegido).';
     root.appendChild(desc);
 
     const grid = document.createElement('div');
@@ -143,6 +160,7 @@ export function renderAbreviaturasPanel(container, ws) {
     for (const team of TEAMS) {
       const row = document.createElement('div');
       row.className = 'abbr-row';
+      if (team.visible === false) row.classList.add('is-hidden-team');
 
       const img = document.createElement('img');
       img.className = 'abbr-crest';
@@ -230,8 +248,40 @@ export function renderAbreviaturasPanel(container, ws) {
         editWrap.appendChild(resetBtn);
       }
 
+      // MOSTRAR/OCULTAR (2026-09-26, pedido explicito del usuario): mismo
+      // patron fetch+WS que abbr arriba, apuntando a /api/teams/visibility
+      // y TOGGLE_TEAM_VISIBILITY (ver server/teams.js + server/index.js).
+      // Oculto NUNCA borra el equipo -- solo deja de ofrecerlo en NUEVAS
+      // selecciones (ver el filtro generico en field-editors.js).
+      const visibleLabel = document.createElement('label');
+      visibleLabel.className = 'abbr-visible-toggle';
+      const visibleCheckbox = document.createElement('input');
+      visibleCheckbox.type = 'checkbox';
+      visibleCheckbox.checked = team.visible !== false;
+      visibleCheckbox.addEventListener('change', async () => {
+        const nextVisible = visibleCheckbox.checked;
+        try {
+          const res = await fetch('/api/teams/visibility', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: team.id, visible: nextVisible }),
+          });
+          const data = await res.json();
+          if (data.ok && data.catalog) {
+            updateLocalTeamCatalog(data.catalog);
+            if (ws) ws.send({ type: 'TOGGLE_TEAM_VISIBILITY', id: team.id, visible: nextVisible });
+            render();
+          }
+        } catch (err) {
+          console.error('Error actualizando visibilidad de equipo:', err);
+        }
+      });
+      visibleLabel.appendChild(visibleCheckbox);
+      visibleLabel.appendChild(document.createTextNode('VISIBLE'));
+
       row.appendChild(img);
       row.appendChild(info);
+      row.appendChild(visibleLabel);
       row.appendChild(editWrap);
 
       grid.appendChild(row);

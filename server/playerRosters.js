@@ -138,12 +138,38 @@ export function findPlayer(themeId, teamId, jugadorId) {
 // arma el arreglo completo en el panel (agregar/editar/eliminar filas
 // libremente) y recién lo persiste/asigna al teamId con una sola llamada,
 // evitando escrituras parciales a mitad de edición.
-export function saveRoster(themeId, teamId, jugadoresInput, fuente = 'manual') {
+// "extra" (2026-10-08, Planteles de Argentina Streamers): metadatos del
+// plantel completo (rama/partido de Convocados de los que salio) -- se
+// conservan tambien las preferencias del panel ya guardadas ("preferencias",
+// ver setRosterPreferences) para que guardar la lista no las resetee.
+export function saveRoster(themeId, teamId, jugadoresInput, fuente = 'manual', extra = {}) {
   const themeStore = ensureTheme(themeId);
   const jugadores = (Array.isArray(jugadoresInput) ? jugadoresInput : [])
     .map((j) => buildJugador(j, teamId, fuente))
     .filter((j) => j.nombreTV);
-  themeStore[teamId] = { teamId, jugadores, fuente, ultimaActualizacion: new Date().toISOString() };
+  const preferencias = themeStore[teamId]?.preferencias;
+  themeStore[teamId] = {
+    teamId, jugadores, fuente, ultimaActualizacion: new Date().toISOString(),
+    ...(preferencias ? { preferencias } : {}),
+    ...extra,
+  };
+  persistNow();
+  return themeStore[teamId];
+}
+
+// Preferencias del panel PLANTELES por equipo (2026-10-08, pedido
+// explicito: "cada lado con su fuente... persistir"): { modoCarga:
+// 'web'|'manual', ramaWeb: 'masculino'|'femenino' }. Pertenecen al EQUIPO
+// (igual que sus jugadores), no al slot LOCAL/VISITANTE. No toca jugadores.
+export function setRosterPreferences(themeId, teamId, preferencias) {
+  const themeStore = ensureTheme(themeId);
+  if (!themeStore[teamId]) {
+    themeStore[teamId] = { teamId, jugadores: [], fuente: 'manual', ultimaActualizacion: new Date().toISOString() };
+  }
+  const clean = {};
+  if (preferencias?.modoCarga === 'web' || preferencias?.modoCarga === 'manual') clean.modoCarga = preferencias.modoCarga;
+  if (preferencias?.ramaWeb === 'masculino' || preferencias?.ramaWeb === 'femenino') clean.ramaWeb = preferencias.ramaWeb;
+  themeStore[teamId].preferencias = { ...(themeStore[teamId].preferencias || {}), ...clean };
   persistNow();
   return themeStore[teamId];
 }

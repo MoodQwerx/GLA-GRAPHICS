@@ -161,10 +161,17 @@ export const MODULES = {
     autoRunClock: 'clock',
     fields: [
       { key: 'addedMinutes', label: 'Minutos agregados (ej. 5)', type: FIELD_TYPES.TEXT, adjustable: true },
+      // "autoTake" (2026-09-27, pedido explicito del usuario): si el TAKE
+      // automatico al llegar a FIN DEL CONTADOR del Marcador principal
+      // esta habilitado. String 'si'/'no' (mismo criterio que cualquier
+      // otro campo SELECT del proyecto) -- persistido junto al resto de
+      // "data" de este modulo, sin mecanismo nuevo. Default 'si': mismo
+      // comportamiento de siempre para quien no lo toque.
+      { key: 'autoTake', label: 'AUTOMÁTICO', type: FIELD_TYPES.SELECT, options: [{ id: 'si', label: 'SÍ' }, { id: 'no', label: 'NO' }] },
       { key: 'clock', label: 'Reloj (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
     ],
     defaults: {
-      addedMinutes: '5', clock: emptyClock(),
+      addedMinutes: '5', clock: emptyClock(), autoTake: 'si',
       textAdjust: textAdjustDefaults('addedMinutes', 'clock'),
     },
   },
@@ -416,19 +423,17 @@ export const MODULES = {
       { key: 'nameB', label: 'Nombre equipo visitante (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
       { key: 'scoreA', label: 'Gol local (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
       { key: 'scoreB', label: 'Gol visitante (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
-      // "scoreSep" (2026-09-14, pedido explicito del usuario: "necesito un
-      // control específico de composición/posición para el GUION/
-      // SEPARADOR del resultado, actualmente no tengo control para
-      // moverlo"). Mismo patron EXACTO que "separador" en
-      // marcadorEntretiempo.js (textAdjust dx/dy/dSize, nunca un sistema
-      // paralelo) -- el guion es texto estatico (" - ", ver
-      // program/js/renderers/vsResultado.js), no depende de "scoreA/B", asi
-      // que ajustarlo nunca mueve los numeros de gol.
-      { key: 'scoreSep', label: 'Guión / separador del resultado (posición/tamaño)', type: FIELD_TYPES.ADJUST_ONLY },
     ],
     defaults: {
       titulo: 'RESULTADO',
       titlePresets: [],
+      // "scoreSep" (guion dinamico entre goles): RETIRADO para GLA
+      // (2026-09-27, su asset ya trae el guion) y VUELTO solo para
+      // ARGENTINA STREAMERS (2026-10-08, pedido explicito: "agregar un guion
+      // dinamico entre GOL LOCAL y GOL VISITANTE" con ajuste propio). El
+      // nodo existe siempre en el renderer pero solo se muestra con
+      // body[data-theme='argentinaStreamers'] (ver overlay.css); el control
+      // de ajuste es "themeOnly" en shared/adjust-registry.js.
       textAdjust: textAdjustDefaults('titulo', 'nameA', 'nameB', 'scoreA', 'scoreB', 'scoreSep'),
       // "localCrestOffset*/awayCrestOffset*" (2026-08-31, auditoria
       // completa): los escudos nunca tuvieron ajuste propio.
@@ -535,7 +540,10 @@ export const MODULES = {
     layer: 'top-left-secondary',
     oneShot: true,
     fields: [],
-    defaults: {},
+    // "golRelativoMarcador" (2026-10-21, solo GLA lo usa): marca que su
+    // composicion ya es el ajuste fino RELATIVO al Marcador (ver la
+    // migracion unica en server/state.js). Inocuo para Argentina Streamers.
+    defaults: { golRelativoMarcador: true },
   },
 
   // ---------------------------------------------------------------------
@@ -788,12 +796,54 @@ export const MODULES = {
     ],
     defaults: {
       renglon: 'normal', statusTexto: '', sponsor: '',
+      // "MOSTRAR GOLES" (2026-10-22, pedido explicito del usuario, SOLO GLA):
+      // 'con' = goles en vivo del Marcador (como siempre); 'sin' = oculta
+      // unicamente los dos goles. El control solo aparece en GLA (ver
+      // master-control/js/main.js) y el renderer solo lo lee en GLA.
+      mostrarGoles: 'con',
       textAdjust: textAdjustDefaults('statusTexto', 'nameA', 'nameB', 'goalA', 'goalB'),
       // "localCrestOffset*/awayCrestOffset*/sponsorOffset*" (2026-08-31,
       // auditoria completa): ninguno de los 3 tenia ajuste propio.
       localCrestOffsetX: 0, localCrestOffsetY: 0, localCrestScale: 1,
       awayCrestOffsetX: 0, awayCrestOffsetY: 0, awayCrestScale: 1,
       sponsorOffsetX: 0, sponsorOffsetY: 0, sponsorScale: 1,
+    },
+  },
+
+  // ZÓCALO VS (2026-10-09, pedido explicito del usuario, SOLO Argentina
+  // Streamers -- GLA no lo ve en su navegacion): modulo independiente con 2
+  // variantes de asset ("solo" = escudo/nombre VS nombre/escudo; "goles" =
+  // ademas el gol de cada lado). Equipos, escudos y goles NO tienen estado
+  // propio: se leen en vivo de "scoreboard" (`live: true`, 5to argumento del
+  // renderer, mismo patron que "vs"/marcadorPenales). Solo guarda lo propio
+  // del modulo: variante, nombre AUTOMÁTICO/MANUAL por lado (shared/
+  // broadcast-names.js) y ajustes de composicion. Los ajustes son POR
+  // VARIANTE (claves "solo*"/"goles*": las dos piezas tienen la pastilla
+  // central de distinto ancho, asi que nombres/goles no caen en el mismo
+  // lugar) y los escudos ademas POR EQUIPO ("crestByTeam[soloLocal|
+  // soloAway|golesLocal|golesAway][teamId]", ver "crestSlot" en
+  // shared/adjust-registry.js). El "VS" viene dibujado dentro del asset.
+  zocaloVs: {
+    id: 'zocaloVs',
+    label: 'Zócalo VS',
+    category: 'Zocalos',
+    layer: 'bottom-center',
+    live: true,
+    sequencedReveal: true,
+    fields: [],
+    defaults: {
+      variante: 'solo',
+      nombreLocalMode: 'auto', nombreLocalManual: '',
+      nombreVisitanteMode: 'auto', nombreVisitanteManual: '',
+      textAdjust: textAdjustDefaults(
+        'soloNombreLocal', 'soloNombreVisitante',
+        'golesNombreLocal', 'golesGolLocal', 'golesGolVisitante', 'golesNombreVisitante',
+      ),
+      soloLocalCrestOffsetX: 0, soloLocalCrestOffsetY: 0, soloLocalCrestScale: 1,
+      soloAwayCrestOffsetX: 0, soloAwayCrestOffsetY: 0, soloAwayCrestScale: 1,
+      golesLocalCrestOffsetX: 0, golesLocalCrestOffsetY: 0, golesLocalCrestScale: 1,
+      golesAwayCrestOffsetX: 0, golesAwayCrestOffsetY: 0, golesAwayCrestScale: 1,
+      crestByTeam: { soloLocal: {}, soloAway: {}, golesLocal: {}, golesAway: {} },
     },
   },
 
@@ -1041,6 +1091,12 @@ export const MODULES = {
     defaults: {
       titulo: 'RESULTADOS',
       posicion: 'placaL',
+      // PARTIDOS EVENTO / SORTEO (2026-10-22, SOLO GLA -- ver
+      // syncBracketCrestsFromGrupos en server/state.js): modo activo y la
+      // lista guardada del modo inactivo ({ encuentros, tanda } o null).
+      modoPartidos: 'evento',
+      partidosEvento: null,
+      partidosSorteo: null,
       // Maximo 6 brackets visibles a la vez en Program; con mas de 6
       // encuentros cargados, "tanda" elige que ventana de 6 se muestra
       // ('tanda1' = partidos 1-6, 'tanda2' = partidos 4 en adelante) --

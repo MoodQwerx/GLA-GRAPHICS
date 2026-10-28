@@ -3,7 +3,7 @@ import { getActiveThemeId } from '../theme-client.js';
 import { crestFile, teamName } from '../../../shared/teams.js';
 import { DEFAULT_THEME_ID, getThemeAsset } from '../../../shared/themes.js';
 import { normalizePlayers } from '../../../shared/player-lists.js';
-import { colorHex } from '../../../shared/team-colors.js';
+import { teamColorHex } from '../../../shared/team-colors.js';
 import { applyElementAdjust, applyPlainTextAdjust, readTextAdjust, toBroadcastUpper } from '../text-fit.js';
 
 const VIDEO_SRC = '/assets/placas/formacion-equipos.mp4';
@@ -161,8 +161,7 @@ export default function renderFormacionEquipos(contentEl, data, justTaken, onOne
     });
   }
 
-  const shirtColorId = isVisitor ? sb.teamBColor : sb.teamAColor;
-  if (isGla) contentEl.querySelector('.ov-formacion-shirts-tint').style.backgroundColor = colorHex(shirtColorId);
+  if (isGla) contentEl.querySelector('.ov-formacion-shirts-tint').style.backgroundColor = teamColorHex(sb, isVisitor ? 'B' : 'A');
 
   // "playerName"/"playerNumber" (2026-08-15, auditoria completa): ajuste
   // compartido por las 6 posiciones (mismo criterio "column-level" que las

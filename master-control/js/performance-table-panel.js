@@ -1,4 +1,5 @@
 import { TEAM_OPTIONS, crestFile } from '../../shared/teams.js';
+import { createGlaTorneoSourceNote, glaTorneoLabel } from './gla-torneo-source.js';
 import { mountAdjustControl } from './field-editors.js';
 
 // "AJUSTE DE TEXTOS" (2026-08-15, auditoria completa): tabla dinamica
@@ -88,6 +89,8 @@ const POSITIONS = [
 const ARGENTINA_CANDIDATE_IDS = ['goleadores', 'asistidores', 'jugadores'];
 const ARGENTINA_CANDIDATE_LABELS = { goleadores: 'GOLEADORES', asistidores: 'ASISTIDORES', jugadores: 'PARTICIPACIONES' };
 const ARGENTINA_SLOT_POSITIONS = new Set(['placaL-top', 'placaL-bottom', 'placaL-solo']);
+const RAMA_LABELS = { masculino: 'MASCULINO', femenino: 'FEMENINO' };
+const RAMA_TEAM_IDS = { masculino: 'argentina-streamers', femenino: 'argentina-streamers-fem' };
 
 // Lee el estado actual de la seleccion 5/10 SLOTS a partir de "posicion"
 // en los 3 modulos candidatos -- no hay una fuente de estado aparte,
@@ -168,6 +171,42 @@ export function renderPerformanceTablePanel(container, data, moduleId, onDirty, 
     };
   }
 
+  // RAMA MASCULINO/FEMENINO (2026-10-08, pedido explicito del usuario, SOLO
+  // Argentina Streamers): cada rama de ESTADISTICAS de la web conserva su
+  // propia tabla en "snapshotsRama" (mismo patron que LIGA/TORNEO de GLA) --
+  // actualizar FEMENINO nunca pisa la tabla MASCULINO ni las ediciones
+  // manuales hechas sobre ella. "ramaWeb" persiste la eleccion.
+  if (isArgentinaCandidate) {
+    data.ramaWeb = data.ramaWeb === 'femenino' ? 'femenino' : 'masculino';
+    if (!data.snapshotsRama || typeof data.snapshotsRama !== 'object') data.snapshotsRama = {};
+    // Limpieza de datos mezclados (2026-10-08, BUG real: un servidor viejo
+    // devolvia la tabla MASCULINA al pedir FEMENINO y quedo guardada en el
+    // slot femenino). Un slot cuyas filas son TODAS del equipo web de la
+    // OTRA rama es de la otra rama: se descarta (las filas manuales de
+    // otros equipos nunca se tocan).
+    let cleaned = false;
+    for (const rama of ['masculino', 'femenino']) {
+      const otherTeam = RAMA_TEAM_IDS[rama === 'masculino' ? 'femenino' : 'masculino'];
+      const isForeign = (rows) => Array.isArray(rows) && rows.length > 0 && rows.every((row) => row?.teamId === otherTeam);
+      if (isForeign(data.snapshotsRama[rama]?.jugadores)) {
+        data.snapshotsRama[rama] = { jugadores: [], ultimaActualizacionWeb: '' };
+        cleaned = true;
+      }
+      if (data.ramaWeb === rama && isForeign(data.jugadores)) {
+        data.jugadores = [];
+        data.ultimaActualizacionWeb = '';
+        cleaned = true;
+      }
+    }
+    if (cleaned) onDirty();
+    if (!data.snapshotsRama[data.ramaWeb]) {
+      data.snapshotsRama[data.ramaWeb] = {
+        jugadores: JSON.parse(JSON.stringify(data.jugadores)),
+        ultimaActualizacionWeb: data.ultimaActualizacionWeb || '',
+      };
+    }
+  }
+
   const root = document.createElement('div');
   root.className = `performance-editor performance-editor--${moduleId}`;
   container.appendChild(root);
@@ -193,6 +232,12 @@ export function renderPerformanceTablePanel(container, data, moduleId, onDirty, 
       jugadores: JSON.parse(JSON.stringify(data.jugadores)),
       ultimaActualizacionWeb: data.ultimaActualizacionWeb || '',
     };
+    if (isArgentinaCandidate) {
+      data.snapshotsRama[data.ramaWeb] = {
+        jugadores: JSON.parse(JSON.stringify(data.jugadores)),
+        ultimaActualizacionWeb: data.ultimaActualizacionWeb || '',
+      };
+    }
   }
 
   function markDirty() {
@@ -211,10 +256,12 @@ export function renderPerformanceTablePanel(container, data, moduleId, onDirty, 
     }
   }
 
+  // Solo el "ok" se borra solo: un aviso de vacio/error queda visible
+  // hasta la proxima accion (el operador tiene que poder leerlo).
   function setWebSyncStatus(next) {
     webSyncStatus = next;
     clearTimeout(webSyncStatusTimer);
-    if (next && next.kind !== 'loading') {
+    if (next && next.kind === 'success') {
       webSyncStatusTimer = setTimeout(() => {
         webSyncStatus = null;
         render();
@@ -226,19 +273,39 @@ export function renderPerformanceTablePanel(container, data, moduleId, onDirty, 
   // manda al aire por si sola (pedido explicito del usuario, seccion 22):
   // el operador decide TAKE/UPDATE despues, con los datos ya visibles en
   // el panel para revisar antes de salir en vivo.
+  // Fuente: ESTADISTICAS de la rama elegida (server/argentinaStreamersSync.js).
+  // Respuesta "vacio"/"error" (ok:false + mensaje): la tabla actual NO se
+  // toca, solo se muestra el motivo.
   async function syncFromArgentinaStreamersWeb() {
+    const rama = data.ramaWeb;
     setWebSyncStatus({ kind: 'loading', text: 'ACTUALIZANDO...' });
     render();
     try {
-      const res = await fetch(`/api/argentina-streamers/${moduleId}/sync-web`, { method: 'POST' });
+      const res = await fetch(`/api/argentina-streamers/${moduleId}/sync-web?rama=${encodeURIComponent(rama)}`, { method: 'POST' });
       const body = await res.json().catch(() => null);
-      if (!res.ok || !body?.ok) throw new Error(body?.error || `HTTP ${res.status}`);
-      data.jugadores = body.jugadores;
-      data.ultimaActualizacionWeb = body.ultimaActualizacionWeb;
-      markDirty();
-      setWebSyncStatus({ kind: 'success', text: 'DATOS ACTUALIZADOS ✓' });
+      if (!body) throw new Error(`HTTP ${res.status}`);
+      if (!body.ok) {
+        setWebSyncStatus({ kind: 'error', text: body.mensaje || 'NO SE PUDO ACTUALIZAR — SE CONSERVAN LOS ÚLTIMOS DATOS VÁLIDOS', detail: body.detalle || body.error });
+      } else if (body.rama !== rama) {
+        // BUG real (2026-10-08): un servidor viejo ignoraba "?rama=" y
+        // devolvia la tabla MASCULINA aunque se pidiera FEMENINO -- nunca
+        // se guarda una tabla de otra rama en el slot equivocado.
+        setWebSyncStatus({ kind: 'error', text: `EL SERVIDOR DEVOLVIÓ DATOS DE OTRA RAMA (${String(body.rama || 'desconocida').toUpperCase()}) — NO SE APLICARON. Reiniciá LIVE GRAPHICS.` });
+      } else {
+        // Se guarda en el slot de la rama PEDIDA (aunque el operador haya
+        // cambiado de pestaña mientras esperaba) y solo se muestra si esa
+        // es la rama visible: nunca una tabla en la pestaña equivocada.
+        const snapshot = { jugadores: JSON.parse(JSON.stringify(body.jugadores)), ultimaActualizacionWeb: body.ultimaActualizacionWeb };
+        data.snapshotsRama[rama] = snapshot;
+        if (data.ramaWeb === rama) {
+          data.jugadores = JSON.parse(JSON.stringify(body.jugadores));
+          data.ultimaActualizacionWeb = body.ultimaActualizacionWeb;
+        }
+        markDirty();
+        setWebSyncStatus({ kind: 'success', text: `DATOS ACTUALIZADOS ✓ (ESTADÍSTICAS ${RAMA_LABELS[rama]})` });
+      }
     } catch (err) {
-      setWebSyncStatus({ kind: 'error', text: 'ERROR AL ACTUALIZAR', detail: err.message });
+      setWebSyncStatus({ kind: 'error', text: 'NO SE PUDO ACTUALIZAR — SE CONSERVAN LOS ÚLTIMOS DATOS VÁLIDOS', detail: err.message });
     }
     render();
   }
@@ -253,9 +320,9 @@ export function renderPerformanceTablePanel(container, data, moduleId, onDirty, 
       data.jugadores = body.jugadores;
       data.ultimaActualizacionWeb = body.ultimaActualizacionWeb;
       data.snapshots = body.snapshots || data.snapshots;
-      setSyncStatus({ kind: 'success', text: 'DATOS ACTUALIZADOS', unmatchedTeams: body.unmatchedTeams || [] });
+      setSyncStatus({ kind: 'success', text: `DATOS ACTUALIZADOS${body.edicion ? ` (${body.edicion.label})` : ''}`, unmatchedTeams: body.unmatchedTeams || [] });
     } catch (err) {
-      setSyncStatus({ kind: 'error', text: 'ERROR AL ACTUALIZAR', detail: err.message });
+      setSyncStatus({ kind: 'error', text: data.fuente === 'torneo' ? `ERROR AL ACTUALIZAR — ${err.message}` : 'ERROR AL ACTUALIZAR', detail: err.message });
     }
     render();
   }
@@ -384,7 +451,30 @@ export function renderPerformanceTablePanel(container, data, moduleId, onDirty, 
 
     const sourceTabs = document.createElement('div');
     sourceTabs.className = 'performance-source-tabs';
-    for (const source of SOURCES) {
+    // Argentina Streamers: MASCULINO/FEMENINO (ramas de ESTADISTICAS de la
+    // web) en lugar de LIGA/TORNEO, que son fuentes de gla.futbol (GLA).
+    if (isArgentinaCandidate) {
+      for (const rama of ['masculino', 'femenino']) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'performance-sync-btn';
+        button.classList.toggle('active', data.ramaWeb === rama);
+        button.textContent = RAMA_LABELS[rama];
+        button.addEventListener('click', () => {
+          if (data.ramaWeb === rama) return;
+          saveActiveSnapshot();
+          data.ramaWeb = rama;
+          const snapshot = data.snapshotsRama[rama];
+          data.jugadores = JSON.parse(JSON.stringify(snapshot?.jugadores || []));
+          data.ultimaActualizacionWeb = snapshot?.ultimaActualizacionWeb || '';
+          setWebSyncStatus(null);
+          markDirty();
+          render();
+        });
+        sourceTabs.appendChild(button);
+      }
+    }
+    for (const source of (isArgentinaCandidate ? [] : SOURCES)) {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'performance-sync-btn';
@@ -460,7 +550,7 @@ export function renderPerformanceTablePanel(container, data, moduleId, onDirty, 
       const webSyncBtn = document.createElement('button');
       webSyncBtn.type = 'button';
       webSyncBtn.className = 'performance-sync-btn';
-      webSyncBtn.textContent = 'ACTUALIZAR DATOS DE LA WEB';
+      webSyncBtn.textContent = `ACTUALIZAR DATOS DE LA WEB (${RAMA_LABELS[data.ramaWeb]})`;
       webSyncBtn.disabled = webSyncStatus?.kind === 'loading';
       webSyncBtn.addEventListener('click', syncFromArgentinaStreamersWeb);
       webSyncRow.appendChild(webSyncBtn);
@@ -483,7 +573,9 @@ export function renderPerformanceTablePanel(container, data, moduleId, onDirty, 
       root.appendChild(webSyncRow);
     }
 
-    if (WEB_SYNC_MODULE_IDS.includes(moduleId)) {
+    // "ACTUALIZAR DESDE WEB" de gla.futbol: solo GLA (en Argentina Streamers
+    // el servidor lo rechaza siempre -- era un boton que solo podia fallar).
+    if (WEB_SYNC_MODULE_IDS.includes(moduleId) && !isArgentinaCandidate) {
       const syncRow = document.createElement('div');
       syncRow.className = 'performance-sync';
 
@@ -494,6 +586,9 @@ export function renderPerformanceTablePanel(container, data, moduleId, onDirty, 
       syncBtn.disabled = syncStatus?.kind === 'loading';
       syncBtn.addEventListener('click', syncFromWeb);
       syncRow.appendChild(syncBtn);
+      // ACTUALIZADOR DE DATOS (2026-10-21): con FUENTE = TORNEO, edicion de
+      // la que salen los datos (LIGA no depende de esto).
+      if (data.fuente === 'torneo') syncRow.appendChild(createGlaTorneoSourceNote());
 
       if (syncStatus) {
         const statusEl = document.createElement('span');
@@ -566,6 +661,11 @@ export function renderPerformanceTablePanel(container, data, moduleId, onDirty, 
       const teamSelect = document.createElement('select');
       teamSelect.setAttribute('aria-label', `Equipo del jugador ${index + 1}`);
       for (const team of TEAM_OPTIONS) {
+        // Argentina Streamers (2026-10-08): equipos ocultos en EQUIPOS no se
+        // ofrecen, salvo el ya elegido en esta fila. GLA sin cambios.
+        if (isArgentinaCandidate && team.visible === false && team.id !== (player.teamId || '')) continue;
+        // GLA (2026-10-21): mismo criterio para sus tablas.
+        if (document.body.dataset.theme === 'gla' && team.visible === false && team.id !== (player.teamId || '')) continue;
         const option = document.createElement('option');
         option.value = team.id;
         option.textContent = team.label;

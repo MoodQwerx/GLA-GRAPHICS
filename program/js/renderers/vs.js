@@ -2,6 +2,7 @@ import { crestFile, teamName } from '../../../shared/teams.js';
 import { sponsorFile } from '../../../shared/sponsors.js';
 import { applyFittedText, fitFontSize, readTextAdjust, toBroadcastUpper } from '../text-fit.js';
 import { mountThemedAlphaVideo } from '../theme-assets.js';
+import { getActiveThemeId } from '../theme-client.js';
 
 const VIDEO_BY_RENGLON = {
   normal: '/assets/zocalos/zocalo-vs-alpha.mp4',
@@ -126,8 +127,11 @@ export default function renderVs(contentEl, data, justTaken, onOneShotEnded, all
 
   // Gol de cada equipo en su propio recuadro amarillo lateral (independiente
   // uno del otro, ninguno invade el bloque central del estado).
+  // "MOSTRAR GOLES: SIN GOLES" (2026-10-22, SOLO GLA): oculta unicamente
+  // los dos goles; nombres, escudos, estado central y sponsor sin cambios.
+  const hideGoals = getActiveThemeId() === 'gla' && data.mostrarGoles === 'sin';
   const goalAEl = contentEl.querySelector('.ov-vs-goalA');
-  const showGoalA = String(scoreA).trim() !== '';
+  const showGoalA = !hideGoals && String(scoreA).trim() !== '';
   goalAEl.style.display = showGoalA ? 'flex' : 'none';
   if (showGoalA) {
     applyFittedText(goalAEl, String(scoreA), {
@@ -136,7 +140,7 @@ export default function renderVs(contentEl, data, justTaken, onOneShotEnded, all
   }
 
   const goalBEl = contentEl.querySelector('.ov-vs-goalB');
-  const showGoalB = String(scoreB).trim() !== '';
+  const showGoalB = !hideGoals && String(scoreB).trim() !== '';
   goalBEl.style.display = showGoalB ? 'flex' : 'none';
   if (showGoalB) {
     applyFittedText(goalBEl, String(scoreB), {

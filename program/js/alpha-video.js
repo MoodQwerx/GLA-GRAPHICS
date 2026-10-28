@@ -362,6 +362,38 @@ export function createAlphaVideo(el, src, { onEnded, moduleId } = {}) {
     video.addEventListener('ended', onEnded);
   }
 
+  // "clearStaleFrame" (2026-09-26, BUG real reproducido en vivo en GLA --
+  // Zocalo Compuesto/Largo Doble/Corto Simple/Corto Doble/Tabla Global:
+  // "TAKE -> aparece la grafica completa/asentada un instante -> desaparece
+  // -> recien ahi arranca la animacion de entrada correcta"). Causa real:
+  // el Burst/Take Scheduler (2026-09-25, ver program/js/take-scheduler.js)
+  // puede diferir "video.currentTime=0; video.play()" hasta 160ms (o 50ms
+  // para HIGH) cuando 2+ modulos hacen Take casi juntos -- pero
+  // "target.root.classList.add('is-in')" en program/js/main.js sigue
+  // siendo 100% SINCRONICO en el mismo Take, sin esperar a ese turno
+  // escalonado (a proposito, el scheduler no acopla nada del pipeline
+  // visual). Con "preserveDrawingBuffer:true" el canvas WebGL retiene el
+  // ULTIMO frame compuesto (tipicamente el asset ya asentado, quieto desde
+  // que "holdWarm()" lo dejo en pausa) hasta el proximo dibujo real -- ese
+  // es exactamente el frame que se ve durante la espera del turno
+  // escalonado. "seekPending" (2026-09-24) ya evitaba pisar ese frame viejo
+  // con uno tambien viejo durante el seek asincronico, pero nunca borraba
+  // lo que YA estaba pintado antes de que existiera ningun escalonado que
+  // esperar. Limpiar el canvas a transparente SINCRONICAMENTE, en el mismo
+  // instante en que se PIDE el Take (antes de llamar al scheduler, nunca
+  // despues) cierra la ventana completa: para un Take inmediato (slot 0,
+  // el caso de siempre) el limpiado y el primer dibujo real ocurren en el
+  // mismo tick antes de que el navegador pinte nada, cero cambio visible;
+  // para uno diferido, el modulo se revela ya transparente y permanece asi
+  // hasta que su turno real llega, en vez de mostrar el asset asentado.
+  function clearStaleFrame() {
+    if (glCtx) {
+      glCtx.gl.clear(glCtx.gl.COLOR_BUFFER_BIT);
+    } else if (ctx2d) {
+      ctx2d.clearRect(0, 0, FRAME_W, FRAME_H);
+    }
+  }
+
   return {
     canvas,
     // Reproduce la animacion de entrada completa desde el frame 0. Al
@@ -372,6 +404,7 @@ export function createAlphaVideo(el, src, { onEnded, moduleId } = {}) {
       if (destroyed) return;
       invalidatePendingPlay(); // cualquier turno escalonado viejo deja de ser valido
       const myToken = takeToken;
+      clearStaleFrame(); // ver "clearStaleFrame" arriba -- antes de pedir turno, no despues
       // La prioridad/tier (CRITICAL/HIGH/NORMAL, ver program/js/
       // take-scheduler.js) se resuelve DENTRO del scheduler a partir del
       // mismo "moduleId" -- este archivo no necesita saber a que tier

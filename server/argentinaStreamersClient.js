@@ -99,22 +99,58 @@ function extractBalanced(source, openIdx) {
 // busca por CONTENIDO de clave en cada chunk, nunca por indice/orden de
 // chunk (los indices de Next.js pueden cambiar en cada build/deploy del
 // sitio; el nombre de la clave "product" es la unica referencia estable).
-export function extractProductData(html) {
+function extractKeyedObject(html, key) {
   const chunks = decodeFlightChunks(html);
-  const anchor = '"product":';
+  const anchor = `"${key}":`;
   for (const chunk of chunks) {
-    const idx = chunk.indexOf(anchor);
-    if (idx === -1) continue;
-    const objectText = extractBalanced(chunk, idx + anchor.length);
-    if (!objectText) continue;
-    try {
-      const product = JSON.parse(objectText);
-      if (product && typeof product === 'object') return product;
-    } catch {
-      // Puede haber mas de una aparicion parcial; seguir buscando.
+    let idx = chunk.indexOf(anchor);
+    while (idx !== -1) {
+      const objectText = extractBalanced(chunk, idx + anchor.length);
+      if (objectText) {
+        try {
+          const value = JSON.parse(objectText);
+          if (value && typeof value === 'object') return value;
+        } catch {
+          // Puede haber mas de una aparicion parcial; seguir buscando.
+        }
+      }
+      idx = chunk.indexOf(anchor, idx + anchor.length);
     }
   }
+  return null;
+}
+
+export function extractProductData(html) {
+  const product = extractKeyedObject(html, 'product');
+  if (product) return product;
   throw new Error('No se encontro el payload estructurado "product" en argentinastreamers.com (puede haber cambiado el formato de la pagina).');
+}
+
+// PERFIL DE JUGADOR (2026-10-08, investigado en el codigo cliente de la
+// web): al hacer click en un jugador, el sitio NO navega ni hace ningun
+// request -- abre el dialogo "PERFIL DE JUGADOR" leyendo "asProfiles[id]",
+// un mapa por id de jugador que viaja en el MISMO HTML (props del
+// PlayerDialogProvider): { stats: { goals, assists, appearances,
+// discipline: { total, yellow, red } }, mvps: [{ kind, title, subtitle,
+// matchId }] }. No existe una pagina individual por jugador (/jugadores/
+// <slug> responde 404). null si la web no lo publica.
+export function extractAsProfiles(html) {
+  return extractKeyedObject(html, 'asProfiles');
+}
+
+// RAMA MASCULINO/FEMENINO (2026-10-08, confirmado leyendo el propio
+// codigo cliente de la web, funcion "scopeArgentinaProduct"): los botones
+// MASC/FEM de Convocados/Jugadores/Estadisticas/Partidos NO disparan ningun
+// request -- la rama femenina viaja en el MISMO payload, bajo
+// "product.fem" (misma forma: players, rosterIds, upcomingMatch, stats,
+// competitions). Masculino = "product" de nivel superior. Sin "fem" ->
+// null (la web todavia no publico esa rama), nunca se inventa.
+export const RAMAS = ['masculino', 'femenino'];
+
+export function scopeArgentinaProduct(product, rama) {
+  if (!product) return null;
+  if (rama === 'femenino') return product.fem && typeof product.fem === 'object' ? product.fem : null;
+  return product;
 }
 
 // Historial (2026-09-04): "product" no trae un array plano "matches" --
@@ -125,10 +161,15 @@ export function extractProductData(html) {
 // aplana ese arbol completo; cada partido ya trae "opponent" resuelto
 // inline ({name, crestUrl, initials}) mas "competitionType"/"friendlyType"
 // -- suficiente para clasificar sin depender de a que clave de
-// "competitions" pertenecia.
-export function extractMatches(html) {
-  const product = extractProductData(html);
-  const competitions = product?.competitions;
+// "competitions" pertenecia. "rama" (2026-10-08): la seccion Partidos de
+// la web tambien tiene MASC/FEM -- default masculino (comportamiento de
+// siempre).
+export function extractMatches(html, rama = 'masculino') {
+  const scope = scopeArgentinaProduct(extractProductData(html), rama);
+  if (!scope) {
+    throw new Error(`argentinastreamers.com todavía no publica la rama ${rama.toUpperCase()}.`);
+  }
+  const competitions = scope.competitions;
   if (!competitions || typeof competitions !== 'object') {
     throw new Error('No se encontro "product.competitions" en argentinastreamers.com (puede haber cambiado el formato de la pagina).');
   }
@@ -140,7 +181,7 @@ export function extractMatches(html) {
     }
   }
   if (matches.length === 0) {
-    throw new Error('"product.competitions" no trajo ningun partido en argentinastreamers.com (puede haber cambiado el formato de la pagina).');
+    throw new Error(`argentinastreamers.com no trae partidos para la rama ${rama.toUpperCase()}.`);
   }
   return matches;
 }

@@ -43,6 +43,37 @@
   font-display: block;
 }
 
+/* "GLA Segoe Light" (2026-10-21, pedido explicito del usuario: goles, guion,
+   reloj y periodo del MARCADOR y hora de la MOSCA mas finos, SOLO GLA).
+   Cara REAL fina de Windows (Segoe UI Light, segoeuil.ttf -- instalada en
+   el equipo de produccion, donde corren Chrome/vMix/OBS), no un
+   "font-weight" sintetico sobre Anton (que tiene un unico peso). Se usa
+   via local(): no se copia ningun archivo de fuente al repo. Si algun
+   equipo no la tuviera, el stack de overlay.css cae a "Segoe UI" 300 /
+   Arial. Aplicada solo con "body[data-theme='gla']" en overlay.css. */
+@font-face {
+  font-family: 'GLA Segoe Light';
+  src: local('Segoe UI Light'), local('SegoeUI-Light');
+  font-weight: 300;
+  font-style: normal;
+  font-display: block;
+}
+
+/* "GLA Segoe Regular" (2026-10-22, pedido explicito del usuario: el Light
+   del Marcador "quedo demasiado fino", todo el texto dinamico del Marcador,
+   Entretiempo, Tiempo Adicional, Marcador Zocalo, motivo de VAR y zocalos
+   de GLA pasa a Segoe UI Regular 400). Cara REAL de Windows (segoeui.ttf)
+   via local(), mismo criterio que "GLA Segoe Light": unico peso 400
+   declarado y "font-synthesis: none" en overlay.css, asi nunca se pinta un
+   bold sintetico. */
+@font-face {
+  font-family: 'GLA Segoe Regular';
+  src: local('Segoe UI'), local('SegoeUI');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
 :root {
   --gold: #E3B23C;
   --gold-bright: #FFD873;
@@ -138,12 +169,41 @@ body[data-theme='argentinaStreamers'] .ov-zf-texto1 {
    el auto-ajuste seguiria calculando anchos con las metricas de "GLA
    Anton" mientras el texto se ve en Segoe, y podria desbordar o quedar
    con espacio de sobra. */
-body[data-theme='gla'] #mod-longSimple,
-body[data-theme='gla'] #mod-shortSimple,
-body[data-theme='gla'] #mod-shortDouble,
-body[data-theme='gla'] #mod-zocaloCompuesto {
+body[data-theme='gla'] #mod-longSimple {
   --font-display: 'GLA Segoe Bold', 'Segoe UI', Arial, sans-serif;
   --font-body: 'GLA Segoe Bold', 'Segoe UI', Arial, sans-serif;
+}
+
+/* SEGOE UI REGULAR 400 -- SOLO GLA (2026-10-22, pedidos explicitos del
+   usuario). "--gla-font-ui" es la UNICA declaracion de la familia: los
+   modulos de abajo la reciben como "--font-display"/"--font-body", las
+   reglas puntuales (motivo de VAR, titulo general de PARTIDOS) la leen
+   directo, y la medicion del auto-ajuste lee este mismo token (ver
+   withGlaSegoeRegular en program/js/program-fonts.js). El peso 400 (sin
+   sintetico) se fija en overlay.css. Argentina Streamers sin cambios.
+   Primera tanda: Marcador, Entretiempo, Tiempo Adicional, Marcador Zocalo
+   y zocalos; segunda tanda (mismo dia): Tarjeta, Cambios, Tabla Global,
+   Posiciones Torneo, Goleadores, Asistidores y Jugadores. */
+body[data-theme='gla'] {
+  --gla-font-ui: 'GLA Segoe Regular', 'Segoe UI', Arial, sans-serif;
+}
+body[data-theme='gla'] #mod-scoreboard,
+body[data-theme='gla'] #mod-marcadorEntretiempo,
+body[data-theme='gla'] #mod-marcadorTiempoAdicional,
+body[data-theme='gla'] #mod-marcadorZocalo,
+body[data-theme='gla'] #mod-longDouble,
+body[data-theme='gla'] #mod-shortSimple,
+body[data-theme='gla'] #mod-shortDouble,
+body[data-theme='gla'] #mod-zocaloCompuesto,
+body[data-theme='gla'] #mod-tarjeta,
+body[data-theme='gla'] #mod-cambios,
+body[data-theme='gla'] #mod-posiciones,
+body[data-theme='gla'] #mod-posicionesTorneo,
+body[data-theme='gla'] #mod-goleadores,
+body[data-theme='gla'] #mod-asistidores,
+body[data-theme='gla'] #mod-jugadores {
+  --font-display: var(--gla-font-ui);
+  --font-body: var(--gla-font-ui);
 }
 
 * {

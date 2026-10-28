@@ -1,6 +1,7 @@
 import { elapsedMs, formatClock, parseClockLimit } from '../../../shared/clock.js';
 import { applyFittedText, applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
 import { resolveImageSrc } from '../theme-assets.js';
+import { withGlaSegoeRegular } from '../program-fonts.js';
 
 // "FIN DEL CONTADOR" (2026-08-15, pedido explicito del usuario): default
 // 06:00 para Marcador Zocalo -- misma mecanica que el Marcador principal
@@ -38,9 +39,9 @@ export default function renderMarcadorZocalo(contentEl, data) {
   if (!contentEl._gfxBuilt) {
     buildStructure(contentEl);
   }
-  applyFittedText(contentEl.querySelector('.ov-zocalo-titulo'), data.titulo || '', {
+  applyFittedText(contentEl.querySelector('.ov-zocalo-titulo'), data.titulo || '', withGlaSegoeRegular({
     maxFont: TITULO_MAX_FONT, minFont: TITULO_MIN_FONT, maxWidth: TITULO_MAX_WIDTH, weight: 800,
-  }, readTextAdjust(data.textAdjust, 'titulo'));
+  }), readTextAdjust(data.textAdjust, 'titulo'));
   const clockLimitMs = parseClockLimit(data.clockEndText, DEFAULT_CLOCK_END_MS);
   applyPlainTextAdjust(contentEl.querySelector('.ov-zocalo-clock'), formatClock(elapsedMs(data.clock, clockLimitMs)), readTextAdjust(data.textAdjust, 'clock'));
 }

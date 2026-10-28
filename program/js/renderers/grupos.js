@@ -1,6 +1,9 @@
 import { crestFile, teamName } from '../../../shared/teams.js';
 import { applyFittedText, applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
 import { resolveImageSrc } from '../theme-assets.js';
+import { ordenarGrupo, desempateVigente } from '../../../shared/grupos-orden.js';
+import { getActiveThemeId } from '../theme-client.js';
+import { DEFAULT_THEME_ID } from '../../../shared/themes.js';
 
 // PNG estaticos (sin video, ya preparados y escalados a 1920x1080 por el
 // usuario) — mismo criterio que marcadorZocalo.js/marcadorTiempoAdicional.js:
@@ -23,23 +26,24 @@ function normalizePosicion(posicion) {
 }
 
 // Orden de exhibicion: se calcula siempre a partir de "puntos" (mayor a
-// menor), nunca se guarda como dato aparte — asi refrescar o reiniciar el
-// servidor reconstruye la clasificacion correcta con solo los datos ya
-// persistidos (equipos + puntos), sin un campo de "orden" que pudiera
-// quedar desincronizado. Array.prototype.sort es estable (ES2019+): a
-// puntaje igual, dos equipos empatados conservan el orden en el que se
-// cargaron originalmente (indice dentro de "filas"), sin inventar un
-// criterio de desempate adicional (pedido explicito del usuario).
-function sortedFilas(filas) {
-  return filas
+// menor), nunca se guarda como dato aparte ni reordena "filas" (el indice
+// de cada fila es su SLOT del sorteo, A1..B3, que usa PARTIDOS > SABADO).
+// 2026-10-23 (pedido explicito del usuario): ordena por los puntos cargados
+// aunque las filas vengan de la web ("ordenOficial" ya no pisa los puntos);
+// entre empatados manda un VALIDAR WEB vigente para estos mismos datos, y
+// si no hay, el orden de los slots. Ver shared/grupos-orden.js.
+function sortedFilas(filas, desempate) {
+  return ordenarGrupo(filas, desempate).map((entry) => entry.fila);
+}
+
+// MODO WEB (2026-10-23, SOLO GLA): el snapshot WEB ("gruposWeb", Fase de
+// Grupos de Relámpago #4) se muestra en el ORDEN OFICIAL que publica
+// gla.futbol ("posicion"), sin recalcular nada; el MANUAL sigue con la
+// logica de arriba. Cada modo tiene sus propios datos, nunca se mezclan.
+function officialFilas(filas) {
+  return (Array.isArray(filas) ? filas : [])
     .map((fila, index) => ({ fila, index }))
-    .sort((a, b) => {
-      if (a.fila.ordenOficial || b.fila.ordenOficial) {
-        return (Number(a.fila.posicion) || a.index + 1) - (Number(b.fila.posicion) || b.index + 1);
-      }
-      const diff = (parseFloat(b.fila.puntos) || 0) - (parseFloat(a.fila.puntos) || 0);
-      return diff !== 0 ? diff : a.index - b.index;
-    })
+    .sort((a, b) => (Number(a.fila.posicion) || a.index + 1) - (Number(b.fila.posicion) || b.index + 1))
     .map((entry) => entry.fila);
 }
 
@@ -72,7 +76,7 @@ function setCrest(imgEl, teamId) {
 // equipo (mismo catalogo global que Marcador principal, ver
 // shared/teams.js) — escudo y nombre completo se derivan siempre de ese
 // ID, nunca se cargan ni se escriben a mano.
-function paintCard(cardEl, grupoKey, filas, textAdjust) {
+function paintCard(cardEl, grupoKey, filas, textAdjust, desempate, web = false) {
   const bgEl = cardEl.querySelector('[data-card-bg]');
   const bgSrc = resolveImageSrc('grupos', IMG_SRC[grupoKey], grupoKey);
   if (bgSrc) {
@@ -82,7 +86,7 @@ function paintCard(cardEl, grupoKey, filas, textAdjust) {
     bgEl.removeAttribute('src');
     bgEl.style.visibility = 'hidden';
   }
-  const ordered = sortedFilas(filas || []);
+  const ordered = web ? officialFilas(filas) : sortedFilas(filas || [], desempate);
   const nombreAdjust = readTextAdjust(textAdjust, 'nombre');
   const puntosAdjust = readTextAdjust(textAdjust, 'puntos');
   for (let i = 0; i < ROW_COUNT; i++) {
@@ -90,7 +94,9 @@ function paintCard(cardEl, grupoKey, filas, textAdjust) {
     setCrest(cardEl.querySelector(`.ov-grupos-crest[data-row="${i}"]`), fila.teamId);
     applyFittedText(
       cardEl.querySelector(`.ov-grupos-name[data-row="${i}"]`),
-      fila.teamId ? teamName(fila.teamId) : '',
+      // WEB: un equipo que no se pudo asociar al catalogo se muestra con
+      // el nombre de la web (sin escudo), nunca con otro equipo.
+      fila.teamId ? teamName(fila.teamId) : (web ? fila.nombreWeb || '' : ''),
       // Agrandado levemente de 28/14 (2026-08-06, pedido explicito del usuario).
       { maxFont: 31, minFont: 16, maxWidth: 145, weight: 400 },
       nombreAdjust,
@@ -101,6 +107,8 @@ function paintCard(cardEl, grupoKey, filas, textAdjust) {
 
 export default function renderGrupos(contentEl, data) {
   const posicion = normalizePosicion(data.posicion);
+  const web = getActiveThemeId() === DEFAULT_THEME_ID && data.modoGrupos === 'web';
+  const fuente = web ? (data.gruposWeb || {}) : data;
   const grupoVisible = data.variante === 'grupo2' ? 'grupo2' : 'grupo1';
   // Firma de la estructura DOM actual: solo cambia si cambia el modo o (en
   // fullscreen) el grupo elegido — nunca por un simple cambio de puntos o
@@ -123,10 +131,10 @@ export default function renderGrupos(contentEl, data) {
   }
 
   if (posicion === 'placaL') {
-    paintCard(contentEl.querySelector('[data-slot="grupo1"]'), 'grupo1', data.grupo1?.filas, data.textAdjust);
-    paintCard(contentEl.querySelector('[data-slot="grupo2"]'), 'grupo2', data.grupo2?.filas, data.textAdjust);
+    paintCard(contentEl.querySelector('[data-slot="grupo1"]'), 'grupo1', fuente.grupo1?.filas, data.textAdjust, desempateVigente(data, 'grupo1'), web);
+    paintCard(contentEl.querySelector('[data-slot="grupo2"]'), 'grupo2', fuente.grupo2?.filas, data.textAdjust, desempateVigente(data, 'grupo2'), web);
   } else {
     const card = contentEl.querySelector(`[data-slot="${grupoVisible}"]`);
-    paintCard(card, grupoVisible, data[grupoVisible]?.filas, data.textAdjust);
+    paintCard(card, grupoVisible, fuente[grupoVisible]?.filas, data.textAdjust, desempateVigente(data, grupoVisible), web);
   }
 }

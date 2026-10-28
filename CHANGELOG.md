@@ -2,6 +2,129 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [Unreleased] - 2026-10-23 (98)
+
+### Agregado — GRUPOS: modos MANUAL / WEB (GRAN LIGA RELÁMPAGO; Argentina Streamers sin cambios)
+
+- Selector **MODO: MANUAL / WEB** en el panel de Grupos (`grupos.modoGrupos`, sin valor = MANUAL). **MANUAL** usa `grupo1`/`grupo2` de siempre (los mismos datos que arman los cruces de SÁBADO, que no cambian) con su lógica actual de orden por puntos, desempate y VALIDAR WEB; suma la edición de PJ, G, E, P, GXP, PXP, GF, GC y DG por fila. **WEB** usa su propio snapshot `grupos.gruposWeb` (`grupo1`, `grupo2`, `actualizadoEn`, `fuente`, `webId`). Cambiar de modo no copia ni borra nada; Program y Preview muestran el modo activo (el cambio de modo va en vivo).
+- **ACTUALIZAR DESDE WEB** (solo en WEB): `POST /api/grupos/web-update` descarga Grupo A y Grupo B de GLA RELÁMPAGO #4 (solo por id `6ac2dcf72e0f4806ee6bfe60`, sin respaldo por nombre) en el orden oficial (`position`) con points, played, won, draw, lost, penaltyWins, penaltyLosses, goalsFor, goalsAgainst y difference, más el nombre de la web (un equipo no asociado se ve con ese nombre, sin escudo). Reemplaza solo el snapshot WEB y lo manda a Program al instante. Sin datos publicados o con falla: no se escribe nada y se avisa ("…TODAVÍA NO PUBLICA DATOS DE FASE DE GRUPOS" / "NO SE PUDO ACTUALIZAR — SE CONSERVAN LOS ÚLTIMOS DATOS WEB VÁLIDOS"). En MANUAL ya no hay botón web. Lo editado en WEB queda solo en WEB y se reemplaza al volver a actualizar.
+
+### Verificado
+
+- Servidor real: MANUAL con A1 = 5 pts / PJ 1 / G 1 → WEB → MANUAL, sin cambios. WEB trajo Relámpago #4 (A: Basili, Omi, Dou; B: Charrúa, BRG, Calambres; todo en 0, todavía sin jugar), Preview = Program al aire; una edición en WEB no tocó MANUAL; reactualizar volvió al dato oficial; respuestas "sin datos" y falla (simuladas en el navegador) conservaron el snapshot. SÁBADO sin cambios.
+- Reinicio con datos distintos en cada modo: ambos snapshots y el modo persistieron, sin mezclarse, todo fuera del aire. Argentina Streamers sin cambios. Datos de prueba restaurados (Grupos vuelve a MANUAL con sus datos de antes).
+
+## [Unreleased] - 2026-10-23 (97)
+
+### Cambiado — Color personalizado, SÁBADO y Grupos por puntos (GRAN LIGA RELÁMPAGO; Argentina Streamers sin cambios)
+
+- **Color PERSONALIZADO por equipo** (EQUIPOS y selector de color del Marcador, solo GLA): nueva opción con paleta (`input type=color`) y campo HEX validado (`#RGB`/`#RRGGBB`; uno inválido se rechaza y se conserva el anterior). Misma fuente central del Marcador: `scoreboard.teamColorAssignments[teamId] = 'personalizado'` + HEX en `scoreboard.teamColorCustomHex[teamId]`, que se conserva al volver a un color predefinido. Program/Preview resuelven el color con `teamColorHex` (`shared/team-colors.js`) en Marcador, Entretiempo y Formación; un HEX inválido o ausente cae a gris, nunca rompe el render.
+- **PARTIDOS: SORTEO → SÁBADO** (solo el nombre visible; id interno `sorteo`, estado y datos intactos). SÁBADO suma un **primer partido MANUAL a las 11:00** (id estable `sabado-manual-1100`, todos los campos editables, fuera de Grupos): 10 partidos = manual + P1..P9 automáticos con el mismo cruce de siempre. Migración al arrancar: inserta el manual sin tocar los 9 existentes (reconocidos por su id). Program muestra hasta 10; con 10, la segunda tanda es "PARTIDOS 5–10".
+- **GRUPOS ordenados por puntos** (`shared/grupos-orden.js`, compartido por Program/Preview y Master Control): más puntos arriba; entre empatados, el orden oficial de un VALIDAR WEB vigente y, si no hay, el orden de los slots. El slot del sorteo (A1..B3 = índice de la fila) nunca se reordena: SÁBADO sigue usándolo. Ya no manda el flag `ordenOficial` de la web. Los puntos van en vivo (Preview y Program reordenan sin ACTUALIZAR). El panel muestra el slot de cada fila y la TABLA VISIBLE ordenada. ACTUALIZAR DESDE WEB de Grupos conserva los slots si el grupo tiene los mismos equipos.
+- **VALIDAR WEB — GRUPO A/B** (aparece con empate en puntos): `POST /api/grupos/validar-web` consulta Relámpago #4 por su id estable y devuelve el orden oficial publicado (`position`, junto con points/difference/goalsFor/goalsAgainst/played). No toca los puntos; el panel guarda `grupos.desempateWeb[grupo]` con la huella de equipos/puntos/slots, y cualquier cambio posterior la marca DESACTUALIZADA. Sin partidos jugados en la web: "GLA RELÁMPAGO #4 TODAVÍA NO PUBLICA DATOS DE DESEMPATE" (se conservan el orden y la última validación válida). Un equipo que no se puede asociar con seguridad da error claro sin cambiar nada.
+
+### Verificado
+
+- Servidor real (Master Control + Preview + Program): #12A8E0 por paleta como local y visitante, cambio en vivo desde EQUIPOS (ROJO y vuelta a PERSONALIZADO con el mismo HEX), HEX inválido rechazado; persistió tras reiniciar.
+- SÁBADO: selector "SÁBADO", 10 encuentros, 11:00 primero y editado (título, equipos, resultado), Grupos no lo modifica (B2 cambiado actualizó P2/P4/P7), horarios y cruce A1..B3 correctos, EVENTO ↔ SÁBADO sin pérdida; Program en las dos tandas.
+- Grupos B con 0/0/3: LOS CALAMBRES primero en Master Control, Preview y Program en vivo, y sigue siendo B3 en SÁBADO. VALIDAR WEB real: mensaje "sin datos" con el orden conservado; respuesta simulada en el navegador: desempate aplicado y luego DESACTUALIZADA al cambiar puntos. STOP ALL; persistencia tras reiniciar.
+- Argentina Streamers: módulos, catálogo, orden, colores y fuentes sin cambios. Datos de prueba restaurados: `data/` idéntico al previo salvo el partido manual 11:00 (vacío) agregado a SÁBADO.
+
+## [Unreleased] - 2026-10-22 (96)
+
+### Cambiado — Equipos, fuentes y Asistidores de GRAN LIGA RELÁMPAGO (Argentina Streamers sin cambios)
+
+- **COLOR por equipo en EQUIPOS** (GLA): selector COLOR con la misma paleta del Marcador (`shared/team-colors.js`), sobre el MISMO mapa que ya usaba el Marcador (`scoreboard.teamColorAssignments`, teamId → colorId, sin asignar = gris). Se aplica al elegirlo; si el equipo está como local o visitante, el Marcador se actualiza en vivo. En el Marcador, cambiar el color del equipo elegido guarda ese mismo dato (se quitaron los botones "ASIGNAR COLOR", ya innecesarios).
+- **Orden manual de EQUIPOS** (GLA): handle ⠿ a la izquierda de cada equipo para arrastrar (con auto-scroll en los bordes). El orden se guarda en `data/gla-teams.json` (`order`) y `server/teams.js` ordena el catálogo con él, así que lo respetan todos los desplegables que leen el catálogo (Marcador → VS/Formación/Tarjeta/Cambios/Planteles, Grupos, Partidos, Tabla Global, Posiciones Torneo, Goleadores/Asistidores/Jugadores, Zócalo con escudos). Los ocultos conservan su lugar; un equipo nuevo va al final; sin orden guardado queda alfabético como antes. Endpoint `POST /api/teams/order` (solo GLA).
+- **Fuente única `--gla-font-ui`** (`program/css/theme.css`): la misma Segoe UI Regular 400 del Marcador ahora también en Tarjeta, Cambios, título general de Partidos, Tabla Global, Posiciones Torneo, Goleadores, Asistidores y Jugadores. La medición del auto-ajuste lee ese mismo token (`withGlaSegoeRegular`). Corrección vertical medida de −2 px en la posición de Goleadores/Asistidores y el título de Tabla Global/Posiciones Torneo (los demás textos se recentran solos).
+- **Hora de la MOSCA** (GLA): de Segoe UI Light 300 a Segoe UI Regular 400 (`--gla-font-ui`, sin negrita sintética ni trazo), un poco más llena sin ser bold; misma métrica vertical, posición sin cambios.
+- **Asistidores**: `assets/tablas/tabla-asistidores.png` reemplazado por `cosas sueltas/TABLA_DE_ASISTENCIAS.png` (misma ruta). Solo cambia el título horneado; filas, recuadros, 1920×1080 y alfa idénticos, sin tocar coordenadas. Original en `assets/_tablas_backup/2026-10-22_asistidores/`.
+
+### Verificado
+
+- Servidor real (Master Control + Preview + Program): 4 equipos arrastrados con el mouse; mismo orden en Marcador, Grupos, Partidos, Tabla Global y Goleadores; ocultar/mostrar conserva el lugar.
+- Color CELESTE de Los Calambres como local y como visitante; cambio a VIOLETA desde EQUIPOS con el Marcador al aire (Program y Preview); cambio desde el Marcador visto en EQUIPOS.
+- Fuentes por estilo calculado con textos cortos y largos (Segoe UI Regular 400, sin síntesis); Asistidores con el PNG nuevo en Preview y Program; STOP ALL; sin errores de consola ni 404. Orden y color persistieron tras reiniciar.
+- Argentina Streamers: EQUIPOS sin cambios (sin orden ni color), su catálogo y orden, fuentes y assets intactos. Datos de prueba restaurados: todo `data/` idéntico al estado previo.
+
+## [Unreleased] - 2026-10-22 (95)
+
+### Cambiado — Correcciones GRAN LIGA RELÁMPAGO (Argentina Streamers sin cambios)
+
+- **Assets "GLA RELÁMPAGO #4"**: `assets/marcador/marcador-principal-alpha.mp4` (desde `MARCADOR_nuevo_4.mov`) y `marcador-entretiempo-alpha.mp4` (desde `entretiempo_marcador_n4.mov`), mismas rutas y mismo perfil de runtime que los anteriores (H.264 1920×2160 color arriba + mate abajo, 30 fps, 5 s / 6 s, yuv420p bt709; el principal sin B-frames, el de entretiempo con faststart, igual que antes). Mismo recorte de alfa que los viejos. Respaldos en `assets/_marcador_backup/2026-10-22_edicion3-a-edicion4/`.
+- **Segoe UI Regular 400** (cara real de Windows vía `@font-face 'GLA Segoe Regular'` con `local()`, sin peso sintético): todo el texto dinámico de Marcador, Entretiempo, Tiempo Adicional, Marcador Zócalo, Zócalo Largo Doble, Corto Simple, Corto Doble y Compuesto, y el MOTIVO del VAR. Reemplaza al Segoe Light (Marcador) y al Segoe Bold (zócalos) del pase anterior; la Mosca no cambia. El auto-ajuste mide con la misma cara (`withGlaSegoeRegular` en `program/js/program-fonts.js`); los textos sin auto-ajuste llevan una compensación vertical medida de 1–1.5 px.
+- **VS COMPACTO**: selector "MOSTRAR GOLES: CON GOLES / SIN GOLES" (campo `mostrarGoles`). SIN oculta solo los dos goles; se aplica en vivo en Preview y Program.
+- **RESULTADOS → PARTIDOS** (solo el nombre visible; `sideTable` y su renderer siguen igual), **sin auto-ajuste**: cada texto queda en su tamaño base fijo; el ajuste manual de tamaño y su RESET siguen funcionando.
+- **PARTIDOS: modos EVENTO / SORTEO**. `encuentros` es siempre la lista del modo activo; la del otro modo se guarda en `partidosEvento`/`partidosSorteo` y se intercambia al cambiar de modo (EVENTO vuelve idéntico). SORTEO: exactamente 9 partidos (12:30 a 20:30), equipos resueltos desde GRUPOS (slot → equipo) con el cruce P1 A1-A2, P2 B1-B2, P3 A3-B3, P4 A2-B2, P5 B1-B3, P6 A1-A3, P7 B2-B3, P8 A2-A3, P9 A1-B1. Cambiar un slot actualiza solo `teamA/teamB` de los partidos donde juega (slot vacío = TBD) y Master Control refresca su copia. En SORTEO no hay alta/baja de partidos, ni ACTUALIZAR DESDE WEB, ni preset completo. Desde hoy Grupos ya no reescribe los equipos de EVENTO.
+- **TABLA GLOBAL**: LOS CALAMBRES no aparecía porque la tabla de gla.futbol ya tiene 16 equipos y la sincronización cortaba en 11 (está 13°). Ahora toma 16 y suma la página "POSICIONES 12-16" (mismo asset de 5 filas que 7-11).
+- **Quitados solo de GLA**: Cronograma Hoy, Historial y Resultados Parciales (sin pestaña y el servidor no los acepta al aire en GLA; archivos y estado intactos).
+
+### Verificado
+
+- Servidor real (Master Control + Preview + Program): Marcador TAKE/OUT/TAKE y Marcador → PASAR A ENTRETIEMPO → OUT → Marcador, el video arranca en 0.00 y con transparencia. Fuentes verificadas por estilo calculado y en pantalla (Segoe UI Regular 400, sin síntesis), zócalos con texto corto/medio/largo.
+- VS CON/SIN GOLES en vivo; PARTIDOS EVENTO (6) ↔ SORTEO (9, 6 equipos distintos, 9 horarios), A2 y B2 cambiados en Grupos (y B3 vacío → TBD), Preview = Program; EVENTO restaurado byte a byte.
+- Tabla Global actualizada desde la web con LOS CALAMBRES 13° (página 12-16) en Preview y Program; STOP ALL; sin errores de consola. Reinicio: modo, SIN GOLES, SORTEO y página persistieron con todo fuera del aire.
+- Argentina Streamers: Cronograma Hoy, Historial y Resultados Parciales presentes; fuentes y assets propios sin cambios. Datos de prueba restaurados (Grupos, PARTIDOS en EVENTO, VS CON GOLES, Tabla Global y relojes).
+
+## [Unreleased] - 2026-10-21 (94)
+
+### Cambiado — Correcciones GLA (Argentina Streamers sin cambios)
+
+- **GOL sigue al MARCADOR** (`program/js/visual-compose.js` `composedCompositionData`, usado por Program y Preview): en GLA, la composición final de GOL = desplazamiento del Marcador + ajuste propio de GOL; escala = escala del Marcador × ajuste propio (mismo origen 960,540 en los dos módulos). Se recalcula con cada cambio del Marcador, también con GOL reproduciéndose (solo el transform, sin tocar el video). Su control en el panel del Marcador pasa a ser el AJUSTE FINO RELATIVO (RESET no mueve el Marcador) y suma "PREVIEW GOL" (flag `replay` en `PREVIEW_MODULE`). Migración única en `server/state.js` (marca `golRelativoMarcador`): el valor absoluto que había (10/18/×1.04 con el Marcador en 2/14/×1.03) pasó a relativo 8/4/×1.0097, sin cambio visual; misma conversión en la base de `shared/theme-layouts/gla.json`. El Marcador de GLA suma GUARDAR POSICIÓN a su control único.
+- **EQUIPOS en GLA** (antes "Abreviaturas"; id interno `abreviaturas` sin cambios): mismo panel que Argentina Streamers (`master-control/js/equipos-panel.js`) con nombre completo, abreviatura, visible y ESCUDO asociado. AGREGAR EQUIPO abre `assets/crests/` (mismo endpoint seguro); REFRESCAR muestra los PNG nuevos como PENDIENTES (nombre propuesto desde el archivo) y ofrece asociarlos a un equipo existente cuando parece un duplicado. Abreviatura/visibilidad siguen en sus archivos de siempre; nombre, escudo asociado y escudos conocidos en `data/gla-teams.json` (archivo propio de GLA). Los desplegables propios de Grupos, Posiciones, Resultados, Zócalo con escudos y tablas de rendimiento dejan de ofrecer equipos ocultos (el ya elegido se conserva).
+- **ACTUALIZADOR DE DATOS** (módulo administrativo nuevo, solo GLA): edición central del TORNEO (`GLA_TORNEO_EDICIONES` en `server/glaFutbolClient.js`, persistida en `data/gla-data-source.json`, default #3 = comportamiento anterior). Identificada por el `id` estable de `product.lightningTournaments[]` de gla.futbol (#1 `6a559debf3f5e6129751867a`, #2 `6a73a391f5c10432af94421b`, #3 `6a8471c223d8726062c726ff`, #4 `6ac2dcf72e0f4806ee6bfe60`), con respaldo por número en el nombre. Una edición sin datos publicados da error claro y conserva lo cargado. Consumen la selección: Goleadores/Asistidores/Jugadores con FUENTE = TORNEO, Posiciones Torneo, Grupos A/B, Resultados (grupos y playoffs) y Estrellas con FUENTE = TORNEO. Cambiar la edición no actualiza nada solo; cada panel muestra "FUENTE ACTUAL". Se quitó el "GLA RELAMPAGO #3" fijo del título de Posiciones Torneo.
+- **Tipografía fina** (solo GLA): goles, guion, reloj y período del Marcador y hora de la Mosca en Segoe UI Light real (`@font-face 'GLA Segoe Light'` con `local()`, `program/css/theme.css`), mismo tamaño/caja/color; corrección vertical medida (1–2 px) para no mover la tinta. La Mosca pierde el trazo "bold" extra.
+
+### Verificado
+
+- Servidor real reiniciado; Master Control + Program + Preview reales, sin 404 (los únicos errores de consola fueron los 502 esperados de las pruebas con Relámpago #4).
+- Marcador X+30/Y−10/0.90 → GOL en 40/8/×0.9087 antes de disparar; con GOL reproduciéndose, mover el Marcador lo movió sin reiniciar el video; ajuste fino propio y RESET de GOL sin mover el Marcador; GUARDAR POSICIÓN de ambos; refresh y reinicio conservaron todo; Preview = Program.
+- EQUIPOS: nombre/abreviatura, ocultar/mostrar (Marcador y Grupos), AGREGAR EQUIPO abrió `assets\crests`, dos PNG de prueba detectados como pendientes (uno marcado como posible duplicado de "Los Calambres" y asociado a ese equipo), confirmado otro y visto en el Marcador y en Program; persistió tras reiniciar. Archivos y datos de prueba eliminados/restaurados.
+- ACTUALIZADOR: #3 → goleador "Cordobés", #2 → "Zurdo" (sin actualización automática al cambiar), #4 → "todavía no publica datos" en Goleadores, Asistidores, Jugadores, Posiciones Torneo, Grupos y Resultados conservando los datos; Grupos #2/#3 con equipos distintos; la edición persistió tras reiniciar. Quedó en #3.
+- Tipografía: cara "GLA Segoe Light 300" cargada; 0-0/11-10/10-10, 1T/2T/ET, 00:00/100:00 y la hora de la Mosca entran en sus cajas; Preview = Program.
+- Argentina Streamers: catálogo (7 equipos), EQUIPOS, sync web, GOL independiente y tipografía sin cambios; datos GLA y AS idénticos a la copia previa a las pruebas (salvo la base relativa de GOL).
+
+## [Unreleased] - 2026-10-09 (93)
+
+### Agregado — Módulo ZÓCALO VS (solo Argentina Streamers)
+
+- **Assets**: `cosas sueltas/zocalos_vs_solo.mov` y `zocalos_vs_goles.mov` (ProRes 4444 `ap4h` con alfa, 1920×1080, 30 fps, 6 s, 180 frames — leído de las cabeceras QuickTime y con `ffmpeg`). Identificados por contenido, no por nombre: SOLO = pastilla central angosta (verde x905-999) con "VS"; GOLES = pastilla ancha (x825-1082) con lugar para un gol a cada lado. Transcodificados con la receta del proyecto (color + alfa apilados, H.264 `yuv420p`, `crf 16`, `preset slow`, faststart) a `assets/themes/argentina-streamers/zocalos/zocalo-vs-{solo,goles}-alpha.mp4` (1920×2160); alfa reconstruido con error medio 0,002/255. Se usó el `ffmpeg` 6.0 que trae vMix instalado (no hay ffmpeg en el PATH de esta PC). Originales intactos en `cosas sueltas/`.
+- **Módulo** `zocaloVs` (`shared/modules.js`, `shared/themes.js`, `shared/adjust-registry.js`, `program/js/renderers/zocaloVs.js`, `program/css/overlay.css`, `program/index.html`, `program/preview.html`, `master-control/js/zocalo-vs-panel.js`, `master-control/js/main.js`): independiente, categoría Zócalos, oculto en GLA. Equipos/escudos/goles en vivo del Marcador principal (módulo `live`, sin estado duplicado); nombre completo del catálogo o MANUAL por lado. Todo en vivo (sin ACTUALIZAR); Preview también se actualiza cuando cambia el Marcador. Geometría medida sobre el alfa real; revelado del contenido a 800 ms (barra armada en el frame 16 + 250 ms).
+- **Ajustes por variante y por equipo**: entradas del registro con `variant` (el acordeón muestra solo la variante activa) y `crestSlot` (slot propio por variante dentro de `crestByTeam`, resuelto igual en Master Control y en `program/js/visual-compose.js`).
+- **Separado de MARCADOR**: en Argentina Streamers la subsección VS COMPACTO ya no aparece en el grupo MARCADOR; el módulo `vs` y su lógica siguen intactos para GLA.
+
+### Verificado
+
+- Servidor real reiniciado; Master Control + Program + Preview reales, sin errores de consola ni 4xx.
+- SOLO: ARGENTINA STREAMERS vs ACTORES con escudos correctos; cambiar el visitante en el Marcador actualizó nombre completo y escudo al aire.
+- GOLES: 1-2 al tomar; gol local en el Marcador → 2-2 en Program (~360 ms) y en Preview sin tocar el módulo. Preview y Program con valores idénticos (fuentes, correcciones y ajustes).
+- MANUAL: "ARG STREAMERS" solo en el zócalo (escudo, Marcador y catálogo sin cambios); vuelta a AUTOMÁTICO recupera el nombre; texto manual conservado al cambiar de equipo.
+- Escudos: ACTORES (20/−10/0.90) y AS FEM (−5/8/1.10) en GOLES, ACTORES (10/0/1.20) en SOLO, cada uno recupera su geometría al alternar equipos y variantes, y tras reiniciar. Valores de prueba revertidos después.
+- Regresión: Marcador Principal, Marcador Zócalo, Penales, Zócalo VS (incl. segunda entrada) y STOP ALL. GLA: VS COMPACTO sigue en su grupo y funciona, Zócalo VS no aparece, 46 presets, datos GLA sin cambios (solo se agrega la entrada por defecto del módulo nuevo).
+
+## [Unreleased] - 2026-10-09 (92)
+
+### Corregido — Pasada de correcciones Argentina Streamers (GLA sin cambios)
+
+- **Penales live** (`master-control/js/main.js`): en AS, cada cambio de Penales (título, círculos, muerte súbita, nombres) se manda con `isExplicitUpdate` (mismo mecanismo que MARCADOR/VAR/Replay); ACTUALIZAR oculto solo en Penales AS. Equipos/escudos/resultado reglamentario ya venían en vivo del Marcador.
+- **Penales sin sponsor** (AS): sin selector ni sección de ajuste en Master Control; `program/js/renderers/marcadorPenales.js` nunca pinta el sponsor dinámico en AS aunque `data.sponsor` conserve un valor viejo. Marcador y GLA conservan sus sponsors.
+- **CARGAR LISTA** (`master-control/js/jugadores-panel.js`): el número inicial de cada línea es el DORSAL (antes se descartaba como numeración). Acepta `1- X`, `18-X`, `2 - X`, `22 – X`, `3 — X`, `16. X`, `21) X`, `11 X`, `#10 X`, `(10) X`; sin número → sin dorsal. Jugadores ya cargados (mismo nombre) reciben el dorsal en vez de duplicarse; dorsales repetidos entre jugadores distintos se advierten. Además, en AS, editar dorsal/nombre/apodo a mano descarta el `nombreTV` viejo para que el servidor lo regenere (antes quedaba sin el dorsal nuevo en Formación/Tarjetas/Cambios).
+- **Perfiles de partido**: barra eliminada de Master Control (`index.html`, `main.js`, `master.css`); solo existía para AS. Perfiles en disco y endpoints del servidor se conservan, ignorados. Presets intactos.
+- **Banner "THEME EN PREPARACIÓN"**: AS pasa a `ready: true` (`shared/themes.js`).
+- **Ficha Jugador** (`master-control/js/ficha-jugador-panel.js`, `server/argentinaStreamersPlayerStats.js`, `server/index.js`): el desplegable lista solo el PLANTEL del equipo de la rama; la web (sección JUGADORES) aporta identidad y números. Asociación: webId → slug → nombre completo con coincidencia única (se guarda); sin coincidencia → "SIN ASOCIACIÓN WEB", números a mano. Nuevo "NOMBRE EN PANTALLA" por jugador (`metadata.nombrePantalla` del plantel, `PUT /api/argentina-streamers/ficha/nombre-pantalla`), usado por Program; no toca webId/slug/nombre/dorsal.
+- **Estrellas**: campo TÍTULO manual en AS (`master-control/js/estrellas-panel.js`, `program/js/renderers/estrellas.js`); vacío = "LOS MEJORES DE CADA EQUIPO"; un título largo se achica para entrar en la banda. GLA conserva su título fijo.
+- **Escudos por equipo** (la persistencia por `theme → módulo → crestByTeam → slot → teamId` ya existía): 2 bugs corregidos. (1) Cronograma: al cambiar LOCAL/VISITANTE dentro de su panel, el acordeón de ajuste seguía editando el escudo del equipo anterior; ahora se re-arma. (2) Program: con un módulo al aire que toma el equipo del Marcador (Penales, VS, Estrellas, Tarjeta, Cambios…), al cambiar el equipo el escudo cambiaba pero conservaba la geometría del equipo anterior; el ticker de Program ahora reaplica el ajuste por equipo (solo AS).
+
+### Verificado
+
+- Servidor real `:4400` reiniciado con el código nuevo; Master Control + Program + Preview reales, sin errores de consola ni respuestas 4xx.
+- Penales AS al aire: título, convertido/fallado, muerte súbita, nombre manual, escudo visitante y resultado reglamentario se vieron en Program sin ACTUALIZAR; sin sponsor en panel, Program ni Preview.
+- CARGAR LISTA con la lista exacta de ACTORES: 18 dorsales correctos en el campo `dorsal`, ids conservados; visibles en Planteles, Formación, Tarjetas y Cambios; persisten tras reinicio.
+- Ficha: lista = plantel (16 FEM / 18 MASC); alta/baja en Planteles reflejada; alias visto en Program y Preview; persiste tras reinicio.
+- Estrellas: título manual igual en Preview y Program; actualizar desde web y cambiar criterio no lo pisan; persiste tras reinicio.
+- Escudos ACTORES (20/−10/0.90) y AS FEM (−5/8/1.10) en Marcador, Penales y Cronograma: cada equipo recupera su geometría al alternar, tras refresh y tras reinicio. Valores de prueba revertidos después.
+- GLA: Marcador, Penales con ACTUALIZAR y sponsor, Estrellas sin título manual, 46 presets; datos GLA idénticos a la copia previa.
+
 ## [Unreleased] - 2026-09-02 (91)
 
 ### Agregado — Tablas "MODO CANTIDAD" 5/10 SLOTS y Ficha Jugador (Argentina Streamers)

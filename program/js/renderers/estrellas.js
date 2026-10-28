@@ -1,6 +1,8 @@
 import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { crestFile, teamName } from '../../../shared/teams.js';
-import { applyFittedText, applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
+import { applyFittedText, applyPlainTextAdjust, readTextAdjust, measureTextWidth, toBroadcastUpper } from '../text-fit.js';
+import { getActiveThemeId } from '../theme-client.js';
+import { ARGENTINA_STREAMERS_THEME_ID } from '../../../shared/themes.js';
 
 const VIDEO_SRC = '/assets/placas/estrellas-alpha.mp4';
 
@@ -16,6 +18,10 @@ const STAT_MIN_FONT = 18;
 const STAT_MAX_WIDTH = 60 - 12; // 48px útil
 
 const TITLE_TEXT = 'LOS MEJORES DE CADA EQUIPO';
+// Banda del titulo: 490px de ancho (ver ".ov-estrellas-titulo" en
+// overlay.css) -- un titulo manual mas largo se achica para entrar.
+const TITLE_MAX_WIDTH = 490 - 20;
+const TITLE_MIN_FONT = 12;
 
 function setCrest(imgEl, teamId) {
   const src = crestFile(teamId);
@@ -72,8 +78,22 @@ export default function renderEstrellas(contentEl, data, justTaken, onOneShotEnd
 
   // Título fijo: no depende de data ni ejecuta medición dinámica, pero
   // sigue siendo texto visible en Program -> ajustable (2026-08-15,
-  // auditoria completa).
-  applyPlainTextAdjust(contentEl.querySelector('.ov-estrellas-titulo'), TITLE_TEXT, readTextAdjust(ta, 'titulo'));
+  // auditoria completa). TÍTULO MANUAL (2026-10-09, pedido explicito, SOLO
+  // Argentina Streamers): "data.titulo" (vacio = el titulo de siempre).
+  // GLA sigue con su titulo fijo, sin cambios.
+  const tituloEl = contentEl.querySelector('.ov-estrellas-titulo');
+  const isArgentina = getActiveThemeId() === ARGENTINA_STREAMERS_THEME_ID;
+  const tituloText = isArgentina ? (String(data.titulo || '').trim() || TITLE_TEXT) : TITLE_TEXT;
+  // Sin el achique del render anterior, para que el tamaño base medido sea el del CSS.
+  if (isArgentina) tituloEl.style.removeProperty('font-size');
+  applyPlainTextAdjust(tituloEl, tituloText, readTextAdjust(ta, 'titulo'));
+  if (isArgentina && tituloText !== TITLE_TEXT) {
+    const fontPx = parseFloat(tituloEl.style.fontSize || getComputedStyle(tituloEl).fontSize) || 28;
+    const width = measureTextWidth(toBroadcastUpper(tituloText), fontPx, { weight: 800 });
+    if (width > TITLE_MAX_WIDTH) {
+      tituloEl.style.fontSize = `${Math.max(TITLE_MIN_FONT, Math.floor(fontPx * (TITLE_MAX_WIDTH / width)))}px`;
+    }
+  }
 
   // Escudos dinámicos heredados del Marcador
   const crestLocalEl = contentEl.querySelector('.ov-estrellas-row--local .ov-estrellas-crest');

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>LIVE GRAPHICS — Preview</title>
+<link rel="icon" type="image/png" sizes="64x64" href="/assets/images/gla-favicon.png" />
+<link rel="stylesheet" href="css/theme.css?v=2" />
+<link rel="stylesheet" href="css/overlay.css?v=24" />
+</head>
+<body>
+<!-- Preview independiente del Program real (2026-09-26, pedido explicito,
+     seccion 7): esta pagina NUNCA es el output real que alimenta vMix --
+     ese sigue siendo /program (program/index.html + program/js/main.js).
+     Es una copia deliberada de la estructura de modulos de program/index.html
+     (mismos "#mod-<id>" con ".content" adentro, mismos CSS) para poder
+     reusar los renderers de program/js/renderers/*.js tal cual, sin
+     duplicar su logica -- ver program/js/preview-main.js, que es un bus
+     visual propio y mucho mas simple (sin Hot Pool/Take Scheduler/tickers:
+     el preview solo necesita mostrar el draft actual de UN modulo a la vez,
+     no sostener produccion real). -->
+<div id="stage">
+  <div id="mod-marcadorZocalo" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-marcadorTiempoAdicional" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-scoreboard" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-marcadorEntretiempo" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-marcadorPenales" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+
+  <div id="mod-formacionEquipos" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-vsPrepartido" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-vsResultado" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+
+  <div id="mod-tarjeta" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-cambios" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-gol" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+
+  <div id="mod-varCheck" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-replay" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+
+  <div id="mod-bug" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+
+  <div id="mod-longDouble" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-shortSimple" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-shortDouble" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-vs" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-zocaloVs" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-zocaloFinalDiv" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-zocaloFinal" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-zocaloCompuesto" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-zocaloCompuestoEquipos" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-zocaloCompuestoLogo" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+
+  <div id="mod-grupos" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+
+  <div id="mod-sideTable" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-estrellas" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-posiciones" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-posicionesTorneo" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-goleadores" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-asistidores" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-jugadores" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-fichaJugador" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+
+  <div id="mod-cronogramaHoy" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-resultadosParciales" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <div id="mod-historial" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+
+  <div id="mod-sitioWebPromoL" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+</div>
+<script type="module" src="js/preview-main.js"></script>
+</body>
+</html>

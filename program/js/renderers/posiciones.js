@@ -1,6 +1,7 @@
 import { crestFile, teamName } from '../../../shared/teams.js';
 import { applyFittedText, fitFontSize, readTextAdjust, toBroadcastUpper } from '../text-fit.js';
 import { mountThemedAlphaVideo } from '../theme-assets.js';
+import { withGlaSegoeRegular } from '../program-fonts.js';
 
 // La liga tiene 11 equipos: "filas" (shared/modules.js) guarda las 11 con
 // su posicion real (1-11, nunca renumerada). El asset solo tiene
@@ -12,9 +13,12 @@ import { mountThemedAlphaVideo } from '../theme-assets.js';
 // videos reales): la unica diferencia es que el de pagina2 no tiene un
 // sexto casillero, por eso ambas paginas reutilizan las mismas reglas
 // CSS .ov-pos-row[data-row="0..4"] y solo pagina1 usa tambien la fila 5.
+// "pagina3" (2026-10-22, la liga ya tiene 16 equipos): mismo asset y
+// mismas 5 filas que pagina2, para las posiciones 12-16.
 const PAGINAS = {
   pagina1: { src: '/assets/tablas/posiciones-alpha.mp4', rows: 6, desde: 1, hasta: 6 },
   pagina2: { src: '/assets/tablas/posiciones-5-alpha.mp4', rows: 5, desde: 7, hasta: 11 },
+  pagina3: { src: '/assets/tablas/posiciones-5-alpha.mp4', rows: 5, desde: 12, hasta: 16 },
 };
 
 function paginaConfig(data) {
@@ -101,13 +105,13 @@ async function applyCenteredTitle(el, rawText, adjust = {}) {
   // tinta variable) -- translate es una propiedad CSS independiente, se
   // compone sin reabrir ese problema.
   el.style.translate = `${dx}px ${dy}px`;
-  const size = await fitFontSize(text, {
+  const size = await fitFontSize(text, withGlaSegoeRegular({
     maxFont: TITULO_MAX_FONT,
     minFont: TITULO_MIN_FONT,
     maxWidth: TITULO_MAX_WIDTH,
     weight: 800,
     letterSpacing: 1,
-  });
+  }));
   if (el.textContent !== text) return;
   el.style.fontSize = `${Math.max(1, size + dSize)}px`;
   // El flex del contenedor mantiene un unico centro vertical para todos
@@ -134,7 +138,7 @@ function filasParaPagina(filas, pagina) {
 
 export default function renderPosiciones(contentEl, data, justTaken) {
   const pagina = paginaConfig(data);
-  const paginaId = data.pagina === 'pagina2' ? 'pagina2' : 'pagina1';
+  const paginaId = PAGINAS[data.pagina] ? data.pagina : 'pagina1';
   // Cambio de pagina mientras el modulo sigue montado (mismo contentEl):
   // el asset es distinto (video diferente), asi que hay que destruir el
   // compositor viejo y crear uno nuevo apuntando al video correcto -- no
@@ -170,28 +174,28 @@ export default function renderPosiciones(contentEl, data, justTaken) {
     const row = contentEl.querySelector(`.ov-pos-row[data-row="${i}"]`);
     const fila = ordered[i] || {};
 
-    applyFittedText(row.querySelector('.ov-pos-num'), fila.posicion != null ? String(fila.posicion) : '', {
+    applyFittedText(row.querySelector('.ov-pos-num'), fila.posicion != null ? String(fila.posicion) : '', withGlaSegoeRegular({
       maxFont: NUM_MAX_FONT, minFont: NUM_MIN_FONT, maxWidth: NUM_MAX_WIDTH, weight: 900,
-    }, numAdjust);
+    }), numAdjust);
 
     setCrest(row.querySelector('.ov-pos-crest'), fila.teamId);
 
-    applyFittedText(row.querySelector('.ov-pos-equipo'), fila.teamId ? teamName(fila.teamId) : '', {
+    applyFittedText(row.querySelector('.ov-pos-equipo'), fila.teamId ? teamName(fila.teamId) : '', withGlaSegoeRegular({
       maxFont: EQUIPO_MAX_FONT, minFont: EQUIPO_MIN_FONT, maxWidth: EQUIPO_MAX_WIDTH, weight: 800,
-    }, equipoAdjust);
+    }), equipoAdjust);
 
     for (const col of STAT_COLS) {
       const cell = row.querySelector(`.ov-pos-stat[data-col="${col}"]`);
       const value = col === 'pts' ? (fila.puntos ?? 0) : (fila[col] ?? 0);
       const colAdjust = readTextAdjust(ta, col);
       if (col === 'pts') {
-        applyFittedText(cell, String(value), {
+        applyFittedText(cell, String(value), withGlaSegoeRegular({
           maxFont: PTS_MAX_FONT, minFont: PTS_MIN_FONT, maxWidth: PTS_MAX_WIDTH, weight: 900,
-        }, colAdjust);
+        }), colAdjust);
       } else {
-        applyFittedText(cell, String(value), {
+        applyFittedText(cell, String(value), withGlaSegoeRegular({
           maxFont: STAT_MAX_FONT, minFont: STAT_MIN_FONT, maxWidth: STAT_MAX_WIDTH, weight: 900,
-        }, colAdjust);
+        }), colAdjust);
       }
     }
   }

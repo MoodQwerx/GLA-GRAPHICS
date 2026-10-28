@@ -16,6 +16,9 @@ import {
   extractLeagueStandings,
   extractProductData,
   findLightningTournament,
+  getTorneoEdicion,
+  GLA_TORNEO_EDICIONES,
+  resolveTorneoEdicion,
   matchLocalTeam,
   buildTvName,
   normalizeRosterPlayer,
@@ -25,7 +28,12 @@ import {
 export { matchLocalTeam, buildTvName };
 
 const MAX_ROWS = 6; // mismo limite que master-control/js/performance-table-panel.js
-const POSICIONES_ROWS = 11; // liga completa (11 equipos); el selector de pagina en Program decide que subset se muestra
+// Liga completa; el selector de pagina en Program decide que subset se
+// muestra. 11 -> 16 (2026-10-22, pedido explicito del usuario: "LOS
+// CALAMBRES no aparece en TABLA GLOBAL"): la tabla de gla.futbol ya trae 16
+// equipos y el corte en 11 descartaba a todos los de la posicion 12 en
+// adelante (Los Calambres esta 13°). 16 = paginas 1-6, 7-11 y 12-16.
+const POSICIONES_ROWS = 16;
 
 function isValidStatEntry(entry) {
   return entry
@@ -60,7 +68,7 @@ function buildRankedPlayers(rawEntries, catalog, maxRows = MAX_ROWS) {
 function tournamentStats(html) {
   const tournament = findLightningTournament(extractProductData(html));
   if (!tournament.stats || typeof tournament.stats !== 'object') {
-    throw new Error('El torneo Relampago #2 no tiene estadisticas estructuradas en gla.futbol.');
+    throw new Error(`${getTorneoEdicion().label} no tiene estadisticas estructuradas en gla.futbol.`);
   }
   return tournament.stats;
 }
@@ -258,6 +266,120 @@ export async function syncGruposFromWeb(htmlSnapshot = null) {
   };
 }
 
+// GRUPOS — MODO WEB (2026-10-23, pedido explicito del usuario): tabla
+// oficial de Fase de Grupos de GLA RELÁMPAGO #4 (Grupo A y Grupo B) para el
+// snapshot WEB del modulo, separado de los datos MANUALES. Siempre #4 por su
+// id estable (GLA_TORNEO_EDICIONES), nunca por nombre ni por la edicion
+// elegida en el ACTUALIZADOR. Se respeta el orden oficial que publica la web
+// ("position") y se importan todos sus campos: points, played, won, draw,
+// lost, penaltyWins, penaltyLosses, goalsFor, goalsAgainst, difference. El
+// nombre tal cual de la web queda en "nombreWeb" (si un equipo no se puede
+// asociar al catalogo, se muestra igual, sin escudo). Sin grupos publicados:
+// error "sinDatos" y quien llama conserva el ultimo snapshot valido.
+export const GRUPOS_WEB_SIN_DATOS = 'GLA RELÁMPAGO #4 TODAVÍA NO PUBLICA DATOS DE FASE DE GRUPOS';
+
+export async function syncGruposWebRelampago4(htmlSnapshot = null) {
+  const edicion = GLA_TORNEO_EDICIONES.find((e) => e.key === 'relampago-4');
+  const html = htmlSnapshot || await fetchGlaFutbolHtml();
+  const { tournament, metodo } = resolveTorneoEdicion(extractProductData(html), edicion);
+  const findGroup = (letter) => (metodo === 'id' ? tournament?.groups : null)
+    ?.find((group) => String(group?.name || '').toUpperCase().endsWith(letter));
+  const groupA = findGroup('A');
+  const groupB = findGroup('B');
+  const hasRows = (group) => Array.isArray(group?.standings) && group.standings.some(isValidStandingEntry);
+  if (!hasRows(groupA) || !hasRows(groupB)) {
+    const error = new Error(GRUPOS_WEB_SIN_DATOS);
+    error.sinDatos = true;
+    throw error;
+  }
+
+  const catalog = getTeamCatalog();
+  const unmatchedTeams = new Set();
+  const buildGroup = (group) => ({
+    nombre: group.name,
+    filas: group.standings.filter(isValidStandingEntry)
+      .map((entry, index) => {
+        const team = matchLocalTeam(entry.team, catalog);
+        if (!team) unmatchedTeams.add(entry.team);
+        return {
+          posicion: numberOr0(entry.position) || index + 1,
+          teamId: team ? team.id : '',
+          nombreWeb: entry.team,
+          puntos: numberOr0(entry.points),
+          pj: numberOr0(entry.played),
+          g: numberOr0(entry.won),
+          e: numberOr0(entry.draw),
+          p: numberOr0(entry.lost),
+          gxp: numberOr0(entry.penaltyWins),
+          pxp: numberOr0(entry.penaltyLosses),
+          gf: numberOr0(entry.goalsFor),
+          gc: numberOr0(entry.goalsAgainst),
+          dg: numberOr0(entry.difference),
+        };
+      })
+      .sort((a, b) => a.posicion - b.posicion),
+  });
+  return {
+    edicion: edicion.label,
+    webId: edicion.webId,
+    grupo1: buildGroup(groupA),
+    grupo2: buildGroup(groupB),
+    unmatchedTeams: [...unmatchedTeams],
+  };
+}
+
+// VALIDAR WEB (2026-10-23, pedido explicito del usuario): orden OFICIAL de
+// un grupo de GLA RELÁMPAGO #4 en gla.futbol, para resolver SOLO los
+// empates de puntos de la tabla de GRUPOS (los puntos cargados a mano no se
+// tocan: esto no escribe estado, lo guarda el panel). Siempre #4 por su id
+// estable (GLA_TORNEO_EDICIONES), sin importar la edicion elegida en el
+// ACTUALIZADOR. La web publica la tabla ya ordenada ("position" 01, 02...)
+// junto con points, difference, goalsFor, goalsAgainst, played, won, draw,
+// lost y penales -- se usa ese orden oficial tal cual, sin reglas propias.
+// Sin partidos jugados todavia (todos "played: 0") ese orden es solo el del
+// sorteo, no un desempate: se informa que no hay datos.
+export const DESEMPATE_SIN_DATOS = 'GLA RELÁMPAGO #4 TODAVÍA NO PUBLICA DATOS DE DESEMPATE';
+
+export async function validarDesempateGrupo(letra, teamIdsLocales = [], htmlSnapshot = null) {
+  const edicion = GLA_TORNEO_EDICIONES.find((e) => e.key === 'relampago-4');
+  const html = htmlSnapshot || await fetchGlaFutbolHtml();
+  const { tournament } = resolveTorneoEdicion(extractProductData(html), edicion);
+  const group = tournament?.groups?.find((g) => String(g?.name || '').toUpperCase().endsWith(letra));
+  const standings = Array.isArray(group?.standings) ? group.standings.filter(isValidStandingEntry) : [];
+  if (!standings.length || standings.every((entry) => numberOr0(entry.played) === 0)) {
+    const error = new Error(DESEMPATE_SIN_DATOS);
+    error.sinDatos = true;
+    throw error;
+  }
+
+  // Equipos: mismo matching de toda la integracion (id / nombre normalizado
+  // / alias unico). Ante cualquier duda se corta y se conserva el orden.
+  const catalog = getTeamCatalog();
+  const filas = standings.map((entry, index) => ({ entry, index, team: matchLocalTeam(entry.team, catalog) }));
+  const sinMatch = filas.filter((f) => !f.team).map((f) => f.entry.team);
+  if (sinMatch.length) throw new Error(`No se pudo asociar con seguridad: ${sinMatch.join(', ')}. Se conserva el orden actual.`);
+  const ids = filas.map((f) => f.team.id);
+  if (new Set(ids).size !== ids.length) throw new Error('Dos equipos de la web corresponden al mismo equipo local. Se conserva el orden actual.');
+  const faltan = teamIdsLocales.filter((id) => id && !ids.includes(id));
+  if (faltan.length) {
+    const nombres = faltan.map((id) => catalog.find((t) => t.id === id)?.name || id);
+    throw new Error(`${nombres.join(', ')} no figura(n) en ${edicion.label} — ${group.name}. Se conserva el orden actual.`);
+  }
+
+  const oficial = [...filas].sort((a, b) => (numberOr0(a.entry.position) || a.index + 1) - (numberOr0(b.entry.position) || b.index + 1));
+  return {
+    edicion: edicion.label,
+    grupo: group.name,
+    orden: oficial.map((f) => f.team.id),
+    detalle: oficial.map((f) => ({
+      teamId: f.team.id,
+      posicion: numberOr0(f.entry.position) || f.index + 1,
+      puntos: numberOr0(f.entry.points), pj: numberOr0(f.entry.played),
+      dg: numberOr0(f.entry.difference), gf: numberOr0(f.entry.goalsFor), gc: numberOr0(f.entry.goalsAgainst),
+    })),
+  };
+}
+
 function formatMatch(match, catalog, unmatchedTeams) {
   const home = matchLocalTeam(match?.homeTeam?.name, catalog);
   const away = matchLocalTeam(match?.awayTeam?.name, catalog);
@@ -280,13 +402,27 @@ function formatMatch(match, catalog, unmatchedTeams) {
   };
 }
 
+// Titulos CF1/CF2/SF1/SF2/TORNEO EXPRESS/GF (2026-09-27, pedido explicito
+// del usuario -- reemplaza los titulos largos anteriores, mismos 6 slots
+// fijos de siempre, mismo "id" estable por slot asi que un titulo editado
+// a mano en Master Control (ver resultados-panel.js, matching por "id")
+// sigue sobreviviendo a la proxima sincronizacion). "TORNEO EXPRESS"
+// (ex "GLA FEM FECHA 1") es un amistoso fuera del sistema de brackets de
+// gla.futbol -- esos 2 equipos (Argentina Streamers FEM/Oxen FC) no existen
+// en el catalogo de la web, asi que "stage:'women'" nunca va a matchear
+// ningun partido real ahi (queda como red de seguridad si algun dia la web
+// SI publica un partido con ese rotulo) y el slot usa sus propios
+// "defaultTeamA/defaultTeamB/hora" fijos en vez de quedar vacio.
 const PLAYOFF_SLOTS = [
-  { id: 'playoffs-cuartos-1', titulo: 'CUARTOS 1', stage: 'quarterfinal', order: 0, hora: '' },
-  { id: 'playoffs-cuartos-2', titulo: 'CUARTOS 2', stage: 'quarterfinal', order: 1, hora: '' },
-  { id: 'playoffs-semis-1', titulo: 'SEMIS 1', stage: 'semifinal', order: 0, hora: '13:00' },
-  { id: 'playoffs-semis-2', titulo: 'SEMIS 2', stage: 'semifinal', order: 1, hora: '14:00' },
-  { id: 'playoffs-gla-fem-fecha-1', titulo: 'GLA FEM FECHA 1', stage: 'women', order: 0, hora: '15:00' },
-  { id: 'playoffs-gran-final', titulo: 'GRAN FINAL', stage: 'final', order: 0, hora: '16:00' },
+  { id: 'playoffs-cuartos-1', titulo: 'CF1', stage: 'quarterfinal', order: 0, hora: '' },
+  { id: 'playoffs-cuartos-2', titulo: 'CF2', stage: 'quarterfinal', order: 1, hora: '' },
+  { id: 'playoffs-semis-1', titulo: 'SF1', stage: 'semifinal', order: 0, hora: '13:00' },
+  { id: 'playoffs-semis-2', titulo: 'SF2', stage: 'semifinal', order: 1, hora: '14:00' },
+  {
+    id: 'playoffs-gla-fem-fecha-1', titulo: 'TORNEO EXPRESS', stage: 'women', order: 0, hora: '13:00',
+    defaultTeamA: 'argentina-streamers-fem', defaultTeamB: 'oxen-fc',
+  },
+  { id: 'playoffs-gran-final', titulo: 'GF', stage: 'final', order: 0, hora: '16:00' },
 ];
 
 function normalizeStageText(value) {
@@ -308,7 +444,7 @@ function emptyPlayoffMatch(slot) {
   return {
     id: slot.id,
     titulo: slot.titulo,
-    teamA: '', teamB: '', scoreA: '', scoreB: '',
+    teamA: slot.defaultTeamA || '', teamB: slot.defaultTeamB || '', scoreA: '', scoreB: '',
     status: slot.hora ? 'hora' : 'proximo',
     hora: slot.hora,
     placeholderWeb: true,

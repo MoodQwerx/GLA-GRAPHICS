@@ -412,6 +412,79 @@
   letter-spacing: 0.5px;
   color: var(--black);
 }
+/* SEGOE UI REGULAR 400 -- SOLO GLA (2026-10-22, pedido explicito del
+   usuario; reemplaza el Segoe Light del 2026-10-21, "demasiado fino"). La
+   familia llega por "--font-display" (ver theme.css); aca se fija el peso
+   400 en TODO el texto de estos modulos (las reglas base piden 700-900) y
+   se apaga la sintesis de negrita y el trazo "bold". Tamaño, color, cajas,
+   posicion, ajustes y logica sin cambios. */
+body[data-theme='gla'] #mod-scoreboard *,
+body[data-theme='gla'] #mod-marcadorEntretiempo *,
+body[data-theme='gla'] #mod-marcadorTiempoAdicional *,
+body[data-theme='gla'] #mod-marcadorZocalo *,
+body[data-theme='gla'] #mod-longDouble *,
+body[data-theme='gla'] #mod-shortSimple *,
+body[data-theme='gla'] #mod-shortDouble *,
+body[data-theme='gla'] #mod-zocaloCompuesto *,
+body[data-theme='gla'] #mod-tarjeta *,
+body[data-theme='gla'] #mod-cambios *,
+body[data-theme='gla'] #mod-posiciones *,
+body[data-theme='gla'] #mod-posicionesTorneo *,
+body[data-theme='gla'] #mod-goleadores *,
+body[data-theme='gla'] #mod-asistidores *,
+body[data-theme='gla'] #mod-jugadores *,
+body[data-theme='gla'] #mod-varCheck .ov-var-motivo-container .ov-short-simple-text,
+body[data-theme='gla'] #mod-sideTable .ov-resultados-titulo {
+  font-weight: 400;
+  font-synthesis: none;
+  -webkit-text-stroke: 0;
+}
+/* VAR: solo el MOTIVO; PARTIDOS: solo el TITULO GENERAL (titulos de
+   encuentro, horarios y resultados sin cambios). Misma familia unica
+   "--gla-font-ui" (ver theme.css). */
+body[data-theme='gla'] #mod-varCheck .ov-var-motivo-container .ov-short-simple-text,
+body[data-theme='gla'] #mod-sideTable .ov-resultados-titulo {
+  font-family: var(--gla-font-ui);
+}
+/* Compensacion vertical MINIMA de los textos sin auto-ajuste (los que pasan
+   por applyFittedText ya se recentran solos con verticalCorrection midiendo
+   la misma cara). Medido con canvas.measureText (fontBoundingBox vs
+   actualBoundingBox, mismo tamaño): la tinta de Segoe UI Regular queda
+   1px (22px) / 1.5px (19-20px) mas abajo que la de Anton en la misma caja.
+   Valor = transform que ya tenia cada elemento + esa diferencia; el ajuste
+   manual del operador usa "translate" (otra propiedad) y se sigue sumando. */
+body[data-theme='gla'] #mod-scoreboard .ov-team-a .ov-name,
+body[data-theme='gla'] #mod-scoreboard .ov-team-b .ov-name {
+  transform: translateY(-2.5px);
+}
+body[data-theme='gla'] #mod-scoreboard .ov-score {
+  transform: translateY(-2px);
+}
+body[data-theme='gla'] #mod-scoreboard .ov-period,
+body[data-theme='gla'] #mod-scoreboard .ov-clock,
+body[data-theme='gla'] #mod-marcadorTiempoAdicional .ov-added-clock,
+body[data-theme='gla'] #mod-marcadorZocalo .ov-zocalo-clock {
+  transform: translateY(-1.5px);
+}
+body[data-theme='gla'] #mod-marcadorEntretiempo .ov-ent-team-a .ov-name,
+body[data-theme='gla'] #mod-marcadorEntretiempo .ov-ent-team-b .ov-name {
+  transform: translateY(0);
+}
+body[data-theme='gla'] #mod-marcadorEntretiempo .ov-ent-score {
+  transform: translateY(-0.5px);
+}
+/* Segunda tanda (2026-10-22), mismo criterio: posicion de Goleadores/
+   Asistidores (23px, texto fijo) y titulo de Tabla Global / Posiciones
+   Torneo (centrado por flex, sin correccion de tinta a proposito, ver
+   applyCenteredTitle en posiciones.js): con Segoe la tinta queda 2px mas
+   abajo que con Anton (canvas.measureText, 23px "123456" y 44px
+   "POSICIONES"). El ajuste manual usa "translate" y se sigue sumando. */
+body[data-theme='gla'] #mod-goleadores .ov-performance-position,
+body[data-theme='gla'] #mod-asistidores .ov-performance-position,
+body[data-theme='gla'] #mod-posiciones .ov-posiciones-titulo,
+body[data-theme='gla'] #mod-posicionesTorneo .ov-posiciones-titulo {
+  transform: translateY(-2px);
+}
 .ov-scoreboard-sponsor {
   position: absolute;
   left: 143px;
@@ -1783,12 +1856,17 @@ body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-subs-v
 .ov-vsfull-scoreA { left: 794px; width: 136px; }
 .ov-vsfull-scoreB { left: 1000px; width: 136px; }
 
-/* Guión entre los goles del resultado (2026-09-10, pedido explicito del
-   usuario) -- centrado en el hueco real entre scoreA (termina en x930) y
-   scoreB (arranca en x1000), mismas top/height/color que ".ov-vsfull-score"
-   para quedar alineado con los numeros. Texto estatico ("-"), sin pasar
-   por fitFontSize -- no hay riesgo de desborde. */
+/* Guión dinámico entre los goles: RETIRADO para GLA (2026-09-27, su asset
+   ya trae el guión) y VUELTO solo para ARGENTINA STREAMERS (2026-10-08,
+   pedido explicito). El nodo existe siempre (program/js/renderers/
+   vsResultado.js) pero en GLA queda oculto -- cero cambio visual ahi.
+   Geometria original (entre scoreA y scoreB, mismas top/height que
+   ".ov-vsfull-score"); su ajuste fino es "scoreSep" (textAdjust, con
+   GUARDAR POSICIÓN), independiente de los goles. */
 .ov-vsfull-score-dash {
+  display: none;
+}
+body[data-theme='argentinaStreamers'] #mod-vsResultado .ov-vsfull-score-dash {
   position: absolute;
   left: 930px;
   width: 70px;
@@ -1800,10 +1878,6 @@ body[data-theme='argentinaStreamers'] #mod-formacionEquipos .ov-formacion-subs-v
   font-family: var(--font-display);
   font-size: 58px;
   font-weight: 900;
-  /* Mismo color base que ".ov-vsfull-score" (--white para GLA). */
-  color: var(--white);
-}
-body[data-theme='argentinaStreamers'] #mod-vsResultado .ov-vsfull-score-dash {
   color: var(--as-navy);
 }
 
@@ -2219,6 +2293,23 @@ body[data-theme='argentinaStreamers'] #mod-vsResultado .ov-vsfull-score {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* HORA — MOSCA GLA (2026-10-21, pedido explicito del usuario: cara fina,
+   sin el trazo extra de "BOLD real" de arriba). 2026-10-22: Light 300 ->
+   Regular 400 ("se ve muy transparente, un poquito mas bold, no bold"),
+   misma fuente unica de GLA ("--gla-font-ui", ver theme.css). Misma
+   familia Segoe UI: metrica vertical igual, la compensacion no cambia.
+   Color, posicion, tamaño, asset y logica del reloj sin cambios.
+   Argentina Streamers sin cambios. */
+body[data-theme='gla'] #mod-bug .ov-mosca-clock {
+  font-family: var(--gla-font-ui);
+  font-weight: 400;
+  font-synthesis: none;
+  -webkit-text-stroke: 0;
+  /* Centro de tinta 2px mas abajo que con Anton a 25px (medido igual que
+     en el Marcador): se compensa para no mover la hora. */
+  transform: translateY(-2px);
 }
 
 /* MOSCA — ARGENTINA STREAMERS (2026-08-28, correccion visual explicita del
@@ -3087,6 +3178,74 @@ body[data-theme='argentinaStreamers'] #mod-zocaloFinal .ov-zf-texto2 {
 }
 
 /* ============================================================
+   ZÓCALO VS (2026-10-09, solo Argentina Streamers) -- ver
+   program/js/renderers/zocaloVs.js. Medido sobre el alfa real del frame
+   asentado de "zocalos_vs_solo.mov"/"zocalos_vs_goles.mov" (no a ojo):
+   barra x335-1575, y971-1034 (64px, centro y1002.5) en ambas variantes;
+   pastilla con borde a la altura de la barra ~x895-1009 (SOLO) y
+   ~x815-1092 (GOLES); "VS" horneado x929-974, y993-1017 (#010c06 sobre
+   verde #02ff77). El asset no trae recuadro de escudo: los escudos van
+   dentro de los extremos de la barra (58px, 12px de aire al borde).
+   Nombres orientados hacia el VS (mismo criterio que VS Resultado), con
+   ~15px de aire contra la pastilla; cajas simetricas respecto del centro
+   de la barra (x955). Goles centrados en el verde a cada lado del VS
+   (centros x878 / x1026, simetricos respecto del centro de la pastilla).
+   La barra termina de armarse en el frame 16 (0.53s, medido sobre el
+   alfa): +250ms de margen -> 800ms antes de revelar el contenido.
+   ============================================================ */
+#mod-zocaloVs {
+  width: 1920px;
+  height: 1080px;
+  left: 0;
+  top: 0;
+  --dur-content-delay: 800ms;
+}
+.ov-zvs-crest {
+  position: absolute;
+  top: 973.5px;
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+}
+.ov-zvs-crest-local { left: 347px; }
+.ov-zvs-crest-visitante { left: 1505px; }
+.ov-zvs-name {
+  position: absolute;
+  top: 971px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1;
+  color: #fff;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+.ov-zvs-name-local { justify-content: flex-end; text-align: right; }
+.ov-zvs-name-visitante { justify-content: flex-start; text-align: left; }
+.ov-zvs--solo .ov-zvs-name-local { left: 419px; width: 461px; }
+.ov-zvs--solo .ov-zvs-name-visitante { left: 1030px; width: 461px; }
+.ov-zvs--goles .ov-zvs-name-local { left: 419px; width: 381px; }
+.ov-zvs--goles .ov-zvs-name-visitante { left: 1110px; width: 381px; }
+.ov-zvs-gol {
+  position: absolute;
+  top: 977px;
+  width: 72px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1;
+  color: #010c06;
+  white-space: nowrap;
+}
+.ov-zvs-gol-local { left: 842px; }
+.ov-zvs-gol-visitante { left: 990px; }
+
+/* ============================================================
    GRUPOS — PNG estatico (sin video, entregado ya preparado y escalado a
    1920x1080 por el usuario; no se reescala ni se reposiciona). Grupo 1 y
    Grupo 2 comparten exactamente la misma geometria (medida por separado
@@ -3385,6 +3544,17 @@ body[data-theme='argentinaStreamers'] #mod-grupos .ov-grupos-puntos {
   width: 85px;
   object-fit: contain;
   flex-shrink: 0;
+}
+
+/* "TBD" (2026-09-27, pedido explicito del usuario): mismo cuadro que el
+   escudo (".ov-resultados-escudo" ya centra flex), reemplaza el escudo
+   cuando el equipo todavia no esta definido -- ver program/js/renderers/
+   sideTable.js. Mismo font-family/weight que el resto de la placa. */
+.ov-resultados-tbd {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--black);
 }
 
 .ov-resultados-bloque-central {

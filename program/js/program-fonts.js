@@ -34,6 +34,30 @@ const DEFAULT_FONT = THEME_FONTS.gla;
 export const GLA_SEGOE_BOLD_FACE = '"GLA Segoe Bold"';
 export const GLA_SEGOE_BOLD_FAMILY = `${GLA_SEGOE_BOLD_FACE}, "Segoe UI", Arial, sans-serif`;
 
+// "GLA Segoe Regular" (2026-10-22, pedido explicito del usuario: todo el
+// texto dinamico de Marcador, Entretiempo, Tiempo Adicional, Marcador
+// Zocalo, motivo de VAR, zocalos, Tarjeta, Cambios, titulo de Partidos,
+// tablas y posiciones de GLA en Segoe UI Regular 400; ver @font-face y
+// "--gla-font-ui" en program/css/theme.css). Envuelve las opciones de
+// medicion de esos modulos para que lo que se MIDE (ancho y correccion
+// vertical) coincida con lo que se pinta: en GLA fuerza la familia del
+// token CSS "--gla-font-ui" (la misma declaracion que pinta, no una copia)
+// y peso 400; en cualquier otro theme devuelve las opciones intactas
+// (Argentina Streamers sin cambios). GLA_SEGOE_REGULAR_FAMILY es solo el
+// respaldo si el token no se pudiera leer.
+export const GLA_SEGOE_REGULAR_FACE = '"GLA Segoe Regular"';
+export const GLA_SEGOE_REGULAR_FAMILY = `${GLA_SEGOE_REGULAR_FACE}, "Segoe UI", Arial, sans-serif`;
+
+function glaUiFontFamily() {
+  const token = getComputedStyle(document.body).getPropertyValue('--gla-font-ui').trim();
+  return token || GLA_SEGOE_REGULAR_FAMILY;
+}
+
+export function withGlaSegoeRegular(opts) {
+  if (getActiveThemeId() !== 'gla') return opts;
+  return { ...opts, family: glaUiFontFamily(), weight: 400 };
+}
+
 // Reemplaza al viejo export estatico "PROGRAM_FONT_FAMILY" (2026-09-01,
 // integracion de fuente propia para Argentina Streamers): Program puede
 // cambiar de theme en caliente (WS THEME_UPDATE/STATE_SNAPSHOT, sin

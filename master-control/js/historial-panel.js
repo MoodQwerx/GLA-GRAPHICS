@@ -1,4 +1,5 @@
 import { TEAM_OPTIONS } from '../../shared/teams.js';
+import { ARGENTINA_STREAMERS_THEME_ID } from '../../shared/themes.js';
 import { renderTextAdjustControl } from './text-adjust-control.js';
 
 const ROW_COUNT = 5;
@@ -73,6 +74,12 @@ export function renderHistorialPanel(container, data, onDirty, saveOptions) {
   root.className = 'historial-editor';
   container.appendChild(root);
 
+  // RAMA (2026-10-08, solo Argentina Streamers): la seccion PARTIDOS de la
+  // web tiene su propio MASC/FEM -- Historial la respeta (nunca usa
+  // Convocados ni Estadisticas). Persistida en "ramaWeb".
+  const isArgentina = document.body.dataset.theme === ARGENTINA_STREAMERS_THEME_ID;
+  if (isArgentina) data.ramaWeb = data.ramaWeb === 'femenino' ? 'femenino' : 'masculino';
+
   const topSection = document.createElement('div');
   topSection.className = 'panel-section';
   topSection.innerHTML = `
@@ -85,6 +92,14 @@ export function renderHistorialPanel(container, data, onDirty, saveOptions) {
       <label style="display:block; font-size:11px; margin-bottom:4px; opacity:0.8;">TIPO DE HISTORIAL</label>
       <select class="mc-select sel-tipoHistorial">${renderTipoHistorialOptions(data.tipoHistorial)}</select>
     </div>
+    ${isArgentina ? `
+    <div style="margin-bottom:10px;">
+      <label style="display:block; font-size:11px; margin-bottom:4px; opacity:0.8;">RAMA (PARTIDOS DE LA WEB)</label>
+      <select class="mc-select sel-rama">
+        <option value="masculino" ${data.ramaWeb === 'masculino' ? 'selected' : ''}>MASCULINO</option>
+        <option value="femenino" ${data.ramaWeb === 'femenino' ? 'selected' : ''}>FEMENINO</option>
+      </select>
+    </div>` : ''}
     <div class="titulo-adjust-box" style="margin-bottom:10px;"></div>
     <div style="margin-bottom:4px;">
       <button type="button" class="performance-sync-btn btn-actualizar-web">ACTUALIZAR DATOS DE LA WEB</button>
@@ -169,6 +184,13 @@ export function renderHistorialPanel(container, data, onDirty, saveOptions) {
     renderTituloAdjust();
     onDirty();
   });
+  const selRama = topSection.querySelector('.sel-rama');
+  if (selRama) {
+    selRama.addEventListener('change', () => {
+      data.ramaWeb = selRama.value;
+      onDirty();
+    });
+  }
 
   const btnWeb = topSection.querySelector('.btn-actualizar-web');
   const webMsg = topSection.querySelector('.web-update-msg');
@@ -197,8 +219,18 @@ export function renderHistorialPanel(container, data, onDirty, saveOptions) {
     btnWeb.disabled = true;
     try {
       const categoria = encodeURIComponent(data.tipoHistorial);
-      const res = await fetch(`/api/argentina-streamers/historial/sync-web?categoria=${categoria}`, { method: 'POST' });
+      const rama = encodeURIComponent(data.ramaWeb || 'masculino');
+      const res = await fetch(`/api/argentina-streamers/historial/sync-web?categoria=${categoria}&rama=${rama}`, { method: 'POST' });
       const body = await res.json().catch(() => null);
+      // Sin partidos jugados de esa categoria/rama: el historial actual se
+      // conserva tal cual (el servidor tampoco lo toca) -- aviso, no error.
+      if (body && body.ok === false && body.status === 'vacio') {
+        webMsg.className = 'web-update-msg error';
+        webMsg.textContent = body.mensaje;
+        btnWeb.disabled = false;
+        webSyncTimer = setTimeout(() => { webMsg.textContent = ''; webMsg.className = 'web-update-msg'; }, 12000);
+        return;
+      }
       if (!res.ok || !body?.ok) throw new Error(body?.error || `HTTP ${res.status}`);
       data.partidos = body.partidos;
       data.titulo = autoTituloFor(data.tipoHistorial);
@@ -310,7 +342,12 @@ function renderTipoHistorialOptions(selectedId) {
 }
 
 function renderTeamOptions(selectedId) {
-  const opts = [{ id: '', label: 'SIN EQUIPO' }, ...TEAM_OPTIONS];
+  // Argentina Streamers (2026-10-08): respeta VISIBLE del catalogo central
+  // (el equipo ya elegido se sigue mostrando). GLA sin cambios.
+  const isArgentina = document.body.dataset.theme === ARGENTINA_STREAMERS_THEME_ID;
+  const opts = isArgentina
+    ? [{ id: '', label: 'SIN EQUIPO' }, ...TEAM_OPTIONS.filter((t) => t.id && (t.visible !== false || t.id === selectedId))]
+    : [{ id: '', label: 'SIN EQUIPO' }, ...TEAM_OPTIONS];
   return opts.map(
     (t) => `<option value="${t.id}" ${t.id === selectedId ? 'selected' : ''}>${escapeAttr(t.label)}</option>`
   ).join('');

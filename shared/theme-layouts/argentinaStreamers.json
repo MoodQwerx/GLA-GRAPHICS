@@ -1,18 +1,18 @@
 {
   "scoreboard": {
-    "compositionOffsetX": -10,
-    "compositionOffsetY": -20,
-    "compositionScale": 1,
+    "compositionOffsetX": 120,
+    "compositionOffsetY": 62,
+    "compositionScale": 1.12,
     "textAdjust": {
       "scoreA": {
-        "dx": 2,
-        "dy": 0,
-        "dSize": 0
+        "dx": 0,
+        "dy": -1,
+        "dSize": 10
       },
       "scoreB": {
-        "dx": 2,
-        "dy": 0,
-        "dSize": 0
+        "dx": 0,
+        "dy": -2,
+        "dSize": 13
       },
       "period": {
         "dx": 88,
@@ -20,14 +20,14 @@
         "dSize": 0
       },
       "nameA": {
-        "dx": 2,
-        "dy": 4,
-        "dSize": 0
+        "dx": -4,
+        "dy": 6,
+        "dSize": 4
       },
       "nameB": {
         "dx": 10,
-        "dy": 4,
-        "dSize": 0
+        "dy": 6,
+        "dSize": 4
       },
       "clock": {
         "dx": -20,
@@ -44,8 +44,8 @@
     "separatorOffsetX": 2,
     "separatorOffsetY": -2,
     "separatorScale": 1,
-    "sponsorOffsetX": 2,
-    "sponsorOffsetY": 2,
+    "sponsorOffsetX": -2,
+    "sponsorOffsetY": 8,
     "sponsorScale": 1,
     "crestByTeam": {
       "away": {
@@ -80,9 +80,9 @@
     }
   },
   "marcadorTiempoAdicional": {
-    "compositionOffsetX": -186,
-    "compositionOffsetY": -160,
-    "compositionScale": 0.71,
+    "compositionOffsetX": -116,
+    "compositionOffsetY": -126,
+    "compositionScale": 0.72,
     "textAdjust": {
       "addedMinutes": {
         "dx": 132,
@@ -97,29 +97,29 @@
     }
   },
   "marcadorEntretiempo": {
-    "compositionOffsetX": -290,
-    "compositionOffsetY": -140,
-    "compositionScale": 0.71,
+    "compositionOffsetX": -144,
+    "compositionOffsetY": -64,
+    "compositionScale": 0.84,
     "textAdjust": {
       "nameA": {
-        "dx": 42,
+        "dx": 38,
         "dy": -8,
         "dSize": 5
       },
       "nameB": {
-        "dx": 136,
-        "dy": -8,
-        "dSize": 7
+        "dx": 130,
+        "dy": -6,
+        "dSize": 6
       },
       "scoreA": {
         "dx": 68,
         "dy": -8,
-        "dSize": 18
+        "dSize": 21
       },
       "scoreB": {
-        "dx": 108,
+        "dx": 104,
         "dy": -8,
-        "dSize": 18
+        "dSize": 21
       },
       "separador": {
         "dx": 0,
@@ -136,9 +136,14 @@
     "crestByTeam": {
       "local": {
         "argentina-streamers": {
-          "localCrestOffsetX": 26,
-          "localCrestOffsetY": -8,
-          "localCrestScale": 2.75
+          "localCrestOffsetX": 14,
+          "localCrestOffsetY": -4,
+          "localCrestScale": 2.68
+        },
+        "argentina-streamers-fem": {
+          "localCrestOffsetX": 18,
+          "localCrestOffsetY": -4,
+          "localCrestScale": 2.57
         }
       },
       "away": {
@@ -148,9 +153,14 @@
           "awayCrestScale": 2.42
         },
         "argentina-senior": {
+          "awayCrestOffsetX": 164,
+          "awayCrestOffsetY": -2,
+          "awayCrestScale": 2
+        },
+        "actrices": {
           "awayCrestOffsetX": 154,
           "awayCrestOffsetY": -6,
-          "awayCrestScale": 2.24
+          "awayCrestScale": 2.51
         }
       }
     }
@@ -186,14 +196,14 @@
         "dSize": 0
       },
       "nombreLocal": {
-        "dx": 14,
-        "dy": 42,
-        "dSize": 0
+        "dx": 12,
+        "dy": 44,
+        "dSize": 2
       },
       "nombreVisitante": {
-        "dx": 34,
-        "dy": 40,
-        "dSize": 0
+        "dx": 30,
+        "dy": 43,
+        "dSize": 2
       }
     },
     "localCrestOffsetX": 0,
@@ -276,18 +286,18 @@
     "kickVisitante5Scale": 1
   },
   "marcadorZocalo": {
-    "compositionOffsetX": 44,
-    "compositionOffsetY": 0,
-    "compositionScale": 1,
+    "compositionOffsetX": 176,
+    "compositionOffsetY": 88,
+    "compositionScale": 1.12,
     "textAdjust": {
       "titulo": {
         "dx": -14,
-        "dy": -13,
+        "dy": -12,
         "dSize": 0
       },
       "clock": {
         "dx": -72,
-        "dy": -10,
+        "dy": -12,
         "dSize": 0
       }
     }
@@ -550,9 +560,9 @@
     }
   },
   "gol": {
-    "compositionOffsetX": 6,
-    "compositionOffsetY": 0,
-    "compositionScale": 1
+    "compositionOffsetX": 80,
+    "compositionOffsetY": 39,
+    "compositionScale": 1.07
   },
   "varCheck": {
     "compositionOffsetX": -22,
@@ -584,9 +594,9 @@
     "sponsorScale": 1.34
   },
   "bug": {
-    "compositionOffsetX": -30,
-    "compositionOffsetY": 0,
-    "compositionScale": 1,
+    "compositionOffsetX": -116,
+    "compositionOffsetY": 56,
+    "compositionScale": 1.09,
     "textAdjust": {
       "clock": {
         "dx": 0,
@@ -625,9 +635,9 @@
     }
   },
   "shortDouble": {
-    "compositionOffsetX": -36,
-    "compositionOffsetY": 112,
-    "compositionScale": 0.74,
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 54,
+    "compositionScale": 0.85,
     "textAdjust": {
       "name": {
         "dx": 0,
@@ -861,8 +871,8 @@
         "dSize": -3
       },
       "localNombre": {
-        "dx": 18,
-        "dy": -2,
+        "dx": 20,
+        "dy": 0,
         "dSize": 0
       },
       "localG": {
@@ -871,9 +881,9 @@
         "dSize": 12
       },
       "localA": {
-        "dx": -6,
-        "dy": -2,
-        "dSize": 13
+        "dx": -4,
+        "dy": 0,
+        "dSize": 0
       },
       "localPJ": {
         "dx": -6,
@@ -881,9 +891,9 @@
         "dSize": 14
       },
       "visitanteNombre": {
-        "dx": 22,
-        "dy": -4,
-        "dSize": 1
+        "dx": 20,
+        "dy": 0,
+        "dSize": 0
       },
       "visitanteG": {
         "dx": -6,
@@ -891,9 +901,9 @@
         "dSize": 14
       },
       "visitanteA": {
-        "dx": -6,
-        "dy": -8,
-        "dSize": 12
+        "dx": -4,
+        "dy": 0,
+        "dSize": 0
       },
       "visitantePJ": {
         "dx": -6,
@@ -1118,6 +1128,11 @@
         "dx": 0,
         "dy": 0,
         "dSize": 0
+      },
+      "titulo": {
+        "dx": 6,
+        "dy": 0,
+        "dSize": 0
       }
     },
     "crestOffsetX": 0,
@@ -1155,7 +1170,7 @@
         "dSize": 0
       },
       "titulo": {
-        "dx": 8,
+        "dx": 10,
         "dy": 0,
         "dSize": 0
       }
@@ -1200,7 +1215,10 @@
           "awayCrestScale": 0.88
         }
       }
-    }
+    },
+    "logoOffsetX": 0,
+    "logoOffsetY": 0,
+    "logoScale": 2.09
   },
   "zocaloCompuestoLogo": {
     "compositionOffsetX": 0,
@@ -1265,8 +1283,8 @@
         "dSize": 0
       },
       "copa-america": {
-        "dx": 8,
-        "dy": 2,
+        "dx": 14,
+        "dy": 0,
         "dSize": -2
       }
     },
@@ -1285,8 +1303,8 @@
     },
     "resultadoConPenales": {
       "dx": 0,
-      "dy": -6,
-      "dSize": -15
+      "dy": -14,
+      "dSize": -6
     }
   },
   "sitioWebPromoL": {
@@ -1304,8 +1322,8 @@
         },
         "argentina-streamers-fem": {
           "crestLocalOffsetX": 0,
-          "crestLocalOffsetY": -8,
-          "crestLocalScale": 1.47
+          "crestLocalOffsetY": -4,
+          "crestLocalScale": 1.56
         }
       },
       "away": {
@@ -1318,6 +1336,16 @@
           "crestVisitanteOffsetX": 0,
           "crestVisitanteOffsetY": 0,
           "crestVisitanteScale": 1.69
+        },
+        "actrices": {
+          "crestVisitanteOffsetX": 0,
+          "crestVisitanteOffsetY": -2,
+          "crestVisitanteScale": 1.36
+        },
+        "actores-fc-png": {
+          "crestVisitanteOffsetX": 0,
+          "crestVisitanteOffsetY": -2,
+          "crestVisitanteScale": 1.58
         }
       }
     },
@@ -1383,6 +1411,11 @@
           "awayCrestOffsetX": 0,
           "awayCrestOffsetY": 36,
           "awayCrestScale": 1.1
+        },
+        "actores-fc-png": {
+          "awayCrestOffsetX": 0,
+          "awayCrestOffsetY": 28,
+          "awayCrestScale": 1.33
         }
       }
     }
@@ -1390,9 +1423,98 @@
   "fichaJugador": {
     "textAdjust": {
       "nombre": {
-        "dx": 44,
+        "dx": 40,
+        "dy": -6,
+        "dSize": 16
+      },
+      "goles": {
+        "dx": 0,
+        "dy": -8,
+        "dSize": 50
+      },
+      "asistencias": {
+        "dx": 0,
+        "dy": -6,
+        "dSize": 49
+      },
+      "presencias": {
+        "dx": 0,
+        "dy": -6,
+        "dSize": 44
+      },
+      "mvps": {
+        "dx": 0,
+        "dy": -14,
+        "dSize": 46
+      }
+    }
+  },
+  "zocaloVs": {
+    "textAdjust": {
+      "soloNombreVisitante": {
+        "dx": 94,
         "dy": -2,
-        "dSize": 10
+        "dSize": 11
+      },
+      "soloNombreLocal": {
+        "dx": -76,
+        "dy": -2,
+        "dSize": 8
+      },
+      "golesNombreLocal": {
+        "dx": -36,
+        "dy": -4,
+        "dSize": 6
+      },
+      "golesGolLocal": {
+        "dx": 0,
+        "dy": -6,
+        "dSize": 18
+      },
+      "golesGolVisitante": {
+        "dx": 0,
+        "dy": -6,
+        "dSize": 17
+      },
+      "golesNombreVisitante": {
+        "dx": 74,
+        "dy": -2,
+        "dSize": 7
+      }
+    },
+    "crestByTeam": {
+      "soloAway": {
+        "actores-fc-png": {
+          "soloAwayCrestOffsetX": 8,
+          "soloAwayCrestOffsetY": -4,
+          "soloAwayCrestScale": 2.15
+        }
+      },
+      "soloLocal": {
+        "argentina-streamers-fem": {
+          "soloLocalCrestOffsetX": -14,
+          "soloLocalCrestOffsetY": -2,
+          "soloLocalCrestScale": 2
+        },
+        "argentina-streamers": {
+          "soloLocalCrestOffsetX": -20,
+          "soloLocalCrestOffsetY": -6,
+          "soloLocalCrestScale": 1.9
+        }
+      },
+      "golesLocal": {
+        "argentina-streamers": {
+          "golesLocalCrestOffsetX": -18,
+          "golesLocalCrestOffsetY": 0,
+          "golesLocalCrestScale": 1.8
+        }
+      },
+      "golesAway": {
+        "actores-fc-png": {
+          "golesAwayCrestOffsetX": 20,
+          "golesAwayCrestOffsetY": -4,
+          "golesAwayCrestScale": 1.8
+        }
       }
     }
   }

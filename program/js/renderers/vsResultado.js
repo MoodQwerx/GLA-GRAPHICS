@@ -98,12 +98,10 @@ export default function renderVsResultado(contentEl, data, justTaken, onOneShotE
   contentEl._prevScoreA = scoreA;
   contentEl._prevScoreB = scoreB;
 
-  // "scoreSep" (2026-09-14, pedido explicito del usuario: control de
-  // posición/tamaño para el guión del resultado, "sin afectar los números
-  // de gol"). Texto estatico -- mismo criterio EXACTO que "separador" en
-  // program/js/renderers/marcadorEntretiempo.js: "applyPlainTextAdjust"
-  // (dx/dy/dSize sobre un textContent fijo), nunca fitFontSize (no hay
-  // riesgo de overflow con un solo caracter).
+  // Guion entre goles (2026-10-08, SOLO Argentina Streamers -- en GLA el
+  // nodo queda oculto por CSS, su asset ya trae el guion). Texto fijo con
+  // su propio ajuste "scoreSep" (dx/dy/dSize), independiente de los goles:
+  // moverlo nunca mueve los numeros.
   applyPlainTextAdjust(contentEl.querySelector('.ov-vsfull-score-dash'), '-', readTextAdjust(data.textAdjust, 'scoreSep'));
 
   const tituloEl = contentEl.querySelector('.ov-vsfull-titulo');

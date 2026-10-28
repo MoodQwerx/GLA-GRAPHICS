@@ -3,6 +3,7 @@ import { applyElementAdjust, applyFittedText, applyPlainTextAdjust, readTextAdju
 import { resolveImageSrc } from '../theme-assets.js';
 import { getActiveThemeId } from '../theme-client.js';
 import { ARGENTINA_STREAMERS_THEME_ID } from '../../../shared/themes.js';
+import { withGlaSegoeRegular } from '../program-fonts.js';
 
 // Titulo por default segun modulo (2026-09-02, pedido explicito del
 // usuario: "TÍTULO configurable" sobre TABLA_ESTADISTICAS.png -- el
@@ -246,32 +247,32 @@ export function renderPerformanceTable(moduleId, contentEl, data) {
     row.classList.toggle('is-empty', !player);
 
     setCrest(row.querySelector('.ov-performance-crest'), player?.teamId);
-    applyFittedText(row.querySelector('.ov-performance-name'), player?.nombre || '', {
+    applyFittedText(row.querySelector('.ov-performance-name'), player?.nombre || '', withGlaSegoeRegular({
       maxFont: isArgentinaSolo ? 26 : (ranking ? 23 : 24),
       minFont: isArgentinaSolo ? 13 : (ranking ? 11 : 10),
       maxWidth: isArgentinaSolo ? 300 : (ranking ? 154 : 145),
       weight: 800,
-    }, nameAdjust);
+    }), nameAdjust);
 
     if (ranking) {
       applyPlainTextAdjust(row.querySelector('.ov-performance-position'), player ? String(index + 1) : '', readTextAdjust(ta, 'position'));
       // "placaL"/"placaL-top"/"placaL-bottom" (5-6 filas en media zona
       // vertical): fuente grande, igual que siempre.
       const isHalfColumn = position === 'placaL' || position === 'placaL-top' || position === 'placaL-bottom';
-      applyFittedText(row.querySelector('.ov-performance-primary-stat'), player ? String(config.value(player)) : '', {
+      applyFittedText(row.querySelector('.ov-performance-primary-stat'), player ? String(config.value(player)) : '', withGlaSegoeRegular({
         maxFont: isArgentinaSolo ? 28 : (isHalfColumn ? 30 : 25),
         minFont: isArgentinaSolo ? 15 : (isHalfColumn ? 17 : 14),
         maxWidth: isArgentinaSolo ? 44 : 44,
         weight: 900,
-      }, readTextAdjust(ta, 'primaryStat'));
+      }), readTextAdjust(ta, 'primaryStat'));
       continue;
     }
 
     const values = player ? config.values(player) : ['', '', ''];
     for (let statIndex = 0; statIndex < 3; statIndex += 1) {
-      applyFittedText(row.querySelector(`.ov-performance-stat[data-stat="${statIndex}"]`), String(values[statIndex]), {
+      applyFittedText(row.querySelector(`.ov-performance-stat[data-stat="${statIndex}"]`), String(values[statIndex]), withGlaSegoeRegular({
         maxFont: 23, minFont: 12, maxWidth: statIndex === 2 ? 35 : 29, weight: 900,
-      }, readTextAdjust(ta, `stat${statIndex}`));
+      }), readTextAdjust(ta, `stat${statIndex}`));
     }
   }
 }

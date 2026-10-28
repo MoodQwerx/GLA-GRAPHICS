@@ -258,14 +258,10 @@ export const ADJUST_REGISTRY = {
       { id: 'nameA', label: 'NOMBRE EQUIPO LOCAL', kind: 'text', textKey: 'nameA' },
       { id: 'scoreA', label: 'GOL LOCAL', kind: 'text', textKey: 'scoreA' },
       { id: 'scoreB', label: 'GOL VISITANTE', kind: 'text', textKey: 'scoreB' },
-      // "scoreSep" (2026-09-14, pedido explicito del usuario: ajuste de
-      // posicion/tamaño para el guion del resultado, con persistencia via
-      // GUARDAR POSICIÓN) -- registrado aca (mismo patron EXACTO que
-      // scoreA/scoreB) para que use el acordeon "AJUSTE DE COMPOSICIÓN"
-      // (con guardado real) en vez del field-list generico de
-      // field-editors.js, que NUNCA pasa "saveOptions" a
-      // mountAdjustControl y por eso nunca renderiza el boton de guardado.
-      { id: 'scoreSep', label: 'GUIÓN / SEPARADOR', kind: 'text', textKey: 'scoreSep' },
+      // "scoreSep" (2026-10-08): guion dinamico entre goles, SOLO Argentina
+      // Streamers (GLA usa el guion que ya trae su asset) -- control propio
+      // con GUARDAR POSICIÓN, independiente de los dos goles.
+      { id: 'scoreSep', label: 'GUIÓN ENTRE GOLES', kind: 'text', textKey: 'scoreSep', themeOnly: 'argentinaStreamers' },
       { id: 'nameB', label: 'NOMBRE EQUIPO VISITANTE', kind: 'text', textKey: 'nameB' },
       { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale', crestTeam: 'B' },
     ],
@@ -316,6 +312,26 @@ export const ADJUST_REGISTRY = {
       { id: 'nameB', label: 'NOMBRE EQUIPO VISITANTE', kind: 'text', textKey: 'nameB' },
       { id: 'awayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'awayCrestOffsetX', yKey: 'awayCrestOffsetY', scaleKey: 'awayCrestScale', crestTeam: 'B' },
       { id: 'sponsor', label: 'SPONSOR', kind: 'composition', xKey: 'sponsorOffsetX', yKey: 'sponsorOffsetY', scaleKey: 'sponsorScale' },
+    ],
+  },
+  // ZÓCALO VS (2026-10-09, solo Argentina Streamers). "variant": la entrada
+  // solo se muestra en el acordeon cuando "data.variante" coincide (cada
+  // variante tiene sus propias claves). "crestSlot": slot propio dentro de
+  // "crestByTeam" (en vez de local/away), asi cada escudo guarda su
+  // posicion por VARIANTE + SLOT + EQUIPO. El "VS" esta horneado en el
+  // asset: no tiene entrada propia (se mueve con COMPOSICIÓN COMPLETA).
+  zocaloVs: {
+    elements: [
+      { id: 'soloLocalCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'soloLocalCrestOffsetX', yKey: 'soloLocalCrestOffsetY', scaleKey: 'soloLocalCrestScale', crestTeam: 'A', crestSlot: 'soloLocal', variant: 'solo' },
+      { id: 'soloNombreLocal', label: 'NOMBRE LOCAL', kind: 'text', textKey: 'soloNombreLocal', variant: 'solo' },
+      { id: 'soloNombreVisitante', label: 'NOMBRE VISITANTE', kind: 'text', textKey: 'soloNombreVisitante', variant: 'solo' },
+      { id: 'soloAwayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'soloAwayCrestOffsetX', yKey: 'soloAwayCrestOffsetY', scaleKey: 'soloAwayCrestScale', crestTeam: 'B', crestSlot: 'soloAway', variant: 'solo' },
+      { id: 'golesLocalCrest', label: 'ESCUDO LOCAL', kind: 'composition', xKey: 'golesLocalCrestOffsetX', yKey: 'golesLocalCrestOffsetY', scaleKey: 'golesLocalCrestScale', crestTeam: 'A', crestSlot: 'golesLocal', variant: 'goles' },
+      { id: 'golesNombreLocal', label: 'NOMBRE LOCAL', kind: 'text', textKey: 'golesNombreLocal', variant: 'goles' },
+      { id: 'golesGolLocal', label: 'GOL LOCAL', kind: 'text', textKey: 'golesGolLocal', variant: 'goles' },
+      { id: 'golesGolVisitante', label: 'GOL VISITANTE', kind: 'text', textKey: 'golesGolVisitante', variant: 'goles' },
+      { id: 'golesNombreVisitante', label: 'NOMBRE VISITANTE', kind: 'text', textKey: 'golesNombreVisitante', variant: 'goles' },
+      { id: 'golesAwayCrest', label: 'ESCUDO VISITANTE', kind: 'composition', xKey: 'golesAwayCrestOffsetX', yKey: 'golesAwayCrestOffsetY', scaleKey: 'golesAwayCrestScale', crestTeam: 'B', crestSlot: 'golesAway', variant: 'goles' },
     ],
   },
   zocaloCompuesto: {

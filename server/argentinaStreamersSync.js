@@ -17,66 +17,171 @@
 import { ARGENTINA_STREAMERS_THEME_ID, getThemeTeams } from '../shared/themes.js';
 import {
   fetchArgentinaStreamersHtml,
-  extractProductData,
   extractMatches,
   matchLocalTeam,
   resolveHistoricalOpponentCrest,
   buildDorsalName,
   numberOr0,
 } from './argentinaStreamersClient.js';
+import {
+  refreshArgentinaStreamersWebData,
+  getWebEntry,
+  normalizeRama,
+  ramaForTeamId,
+  statsForPlayer,
+  TEAM_ID_BY_RAMA,
+} from './argentinaStreamersWebData.js';
 
 const MAX_ROWS = 10; // "modo cantidad" 10 SLOTS, ver program/js/renderers/performanceTable.js
 const HISTORIAL_ROWS = 5; // mismo limite que master-control/js/historial-panel.js
 
-function buildPlayersById(product) {
-  const map = new Map();
-  for (const player of Array.isArray(product?.players) ? product.players : []) {
-    if (player?.id) map.set(player.id, player);
+// GOLEADORES / ASISTIDORES / PARTICIPACIONES (2026-10-08): leen SIEMPRE de
+// ESTADISTICAS de la rama elegida (adaptador compartido,
+// server/argentinaStreamersWebData.js), nunca de Convocados.
+// "PARTICIPACIONES" <- tabla "Presencias" de la web (stats.appearances,
+// columna "P") -- la web no publica ninguna tabla llamada
+// "participaciones"; "Contribuciones" (G+A) es otra cosa y NO se usa aca.
+const STATS_TABLES = {
+  goleadores: { rowsKey: 'goleadores', statKey: 'g', label: 'GOLES' },
+  asistidores: { rowsKey: 'asistidores', statKey: 'a', label: 'ASISTENCIAS' },
+  jugadores: { rowsKey: 'presencias', statKey: 'pj', label: 'PRESENCIAS' },
+};
+
+// Contrato: { status: 'ok' | 'vacio' | 'error', ... }. Solo "ok" trae
+// "jugadores" para reemplazar la tabla del modulo -- vacio/error nunca
+// pisan lo que el operador ya tenia cargado (ver server/index.js).
+// teamId por rama: masculino -> "argentina-streamers", femenino ->
+// "argentina-streamers-fem" (el escudo solo se ve en modo 5 SLOTS).
+export async function syncStatsTableFromWeb(moduleId, ramaInput) {
+  const config = STATS_TABLES[moduleId];
+  if (!config) throw new Error(`Tabla sin estadísticas web: ${moduleId}`);
+  const rama = normalizeRama(ramaInput);
+  const refresh = await refreshArgentinaStreamersWebData(['estadisticas']);
+  const entry = getWebEntry('estadisticas', rama);
+  const base = { rama, fuente: entry.fuente, ultimaActualizacion: entry.ultimaActualizacion };
+  if (!refresh.ok) {
+    return { ...base, status: 'error', mensaje: 'NO SE PUDO ACTUALIZAR — SE CONSERVAN LOS ÚLTIMOS DATOS VÁLIDOS', detalle: refresh.error };
   }
-  return map;
+  const rows = entry.ultimoResultado === 'ok' ? (entry.data?.[config.rowsKey] || []) : [];
+  if (!rows.length) {
+    return { ...base, status: 'vacio', mensaje: `LA WEB NO PUBLICA ${config.label} PARA LA RAMA ${rama.toUpperCase()} — SE CONSERVAN LOS DATOS ACTUALES` };
+  }
+  const jugadores = rows.slice(0, MAX_ROWS).map((row) => ({
+    teamId: TEAM_ID_BY_RAMA[rama],
+    nombre: buildDorsalName(row.nombre, row.dorsal),
+    webId: row.webId,
+    g: 0, a: 0, pj: 0,
+    [config.statKey]: numberOr0(row.count),
+  }));
+  return { ...base, status: 'ok', jugadores, totalEnLaWeb: rows.length };
 }
 
-// "argentina-streamers" fijo para todas las filas: los 3 rankings de
-// Estadisticas son del plantel de Argentina Streamers -- no hay "equipo
-// rival" por jugador (a diferencia de Historial). En modo "placaL-solo"
-// (el que usan las 3 tablas por defecto, ver el fix permanente de
-// posicion en performanceTable.js) la columna de escudo ni siquiera se
-// muestra; se deja igual el teamId para que el modo "5 SLOTS" (con
-// escudo visible) no quede vacio si el operador lo elige mas adelante.
-function buildRankedPlayers(rawRows, playersById, statKey) {
-  const rows = Array.isArray(rawRows) ? rawRows.slice(0, MAX_ROWS) : [];
-  const jugadores = rows.map((row) => {
-    const dorsal = playersById.get(row.playerId)?.number || '';
-    return {
-      teamId: 'argentina-streamers',
-      nombre: buildDorsalName(row.player, dorsal),
-      g: 0, a: 0, pj: 0,
-      [statKey]: numberOr0(row.count),
+// ESTRELLAS (rehecho 2026-10-08, pedido explicito del usuario): "ESTRELLA
+// POR" GOLES / ASISTENCIAS / AMBOS, por cada lado cuyo equipo tiene datos
+// web (argentina-streamers -> MASCULINO, argentina-streamers-fem ->
+// FEMENINO). Nunca usa Convocados.
+//   - GOLES:       primer jugador de la tabla de GOLEADORES de la rama.
+//   - ASISTENCIAS: primer jugador de la tabla de ASISTIDORES de la rama.
+//   - AMBOS:       primer jugador de CONTRIBUCIONES (G+A) de ESTADISTICAS
+//                  (misma tabla/orden/desempate que la web). PARTICIPACIONES
+//                  (= Presencias) NO es G+A y no se usa aca.
+// Para GOLES/ASISTENCIAS se prefiere el "dataset local" que manda Master
+// Control (primer jugador de SU tabla de Goleadores/Asistidores de esa
+// rama, ya actualizada por el operador); si no existe, la tabla web.
+// Los numeros G/A/PJ del elegido salen de SU PERFIL en la web (seccion
+// JUGADORES) o, si no estuviera, de las tablas de ESTADISTICAS.
+// Cache: solo se consulta la web si se pide "forzar" (boton ACTUALIZAR
+// DESDE WEB) o si todavia no hay datos guardados de esa rama -- cambiar el
+// criterio o hacer TAKE no consulta la web. Un lado rival queda "manual".
+const ESTRELLA_CRITERIOS = {
+  goles: { rowsKey: 'goleadores', label: 'GOLEADORES' },
+  asistencias: { rowsKey: 'asistidores', label: 'ASISTIDORES' },
+  ambos: { rowsKey: 'contribuciones', label: 'CONTRIBUCIONES (G+A)' },
+};
+
+function stripDorsal(nombre) {
+  return String(nombre || '').replace(/^\s*\d+\s*[.)\-]?\s*/, '').trim();
+}
+
+export async function syncEstrellasFromWeb({ local, visitante, criterio, lideresLocales, forzar }) {
+  const crit = ESTRELLA_CRITERIOS[criterio] ? criterio : 'ambos';
+  const config = ESTRELLA_CRITERIOS[crit];
+  const ramasPedidas = [...new Set([local, visitante].map(ramaForTeamId).filter(Boolean))];
+  const sinDatos = ramasPedidas.some((rama) => !getWebEntry('estadisticas', rama).data || !getWebEntry('jugadores', rama).data);
+  const refresh = (forzar || sinDatos) && ramasPedidas.length
+    ? await refreshArgentinaStreamersWebData(['estadisticas', 'jugadores'])
+    : { ok: true, desdeCache: true };
+
+  const lados = {};
+  for (const [lado, teamId] of Object.entries({ local, visitante })) {
+    const rama = ramaForTeamId(teamId);
+    if (!rama) {
+      lados[lado] = { status: 'manual', mensaje: 'SIN DATOS WEB PARA ESTE EQUIPO — QUEDA LA CARGA MANUAL' };
+      continue;
+    }
+    const est = getWebEntry('estadisticas', rama).data;
+    const jugadoresWeb = getWebEntry('jugadores', rama).data?.jugadores || [];
+    if (!est) {
+      lados[lado] = { status: 'error', rama, mensaje: 'NO SE PUDO OBTENER ESTADÍSTICAS — SE CONSERVAN LOS DATOS ACTUALES', detalle: refresh.error };
+      continue;
+    }
+
+    // 1. Quien es la estrella.
+    const localRef = crit !== 'ambos' ? lideresLocales?.[rama]?.[crit] : null;
+    const webRow = (est[config.rowsKey] || [])[0] || null;
+    const ref = localRef && (localRef.webId || localRef.nombre) ? localRef : webRow;
+    if (!ref) {
+      lados[lado] = { status: 'vacio', rama, criterio: crit, mensaje: `LA WEB NO PUBLICA ${config.label} PARA LA RAMA ${rama.toUpperCase()}` };
+      continue;
+    }
+    const nombreRef = stripDorsal(ref.nombre);
+    const assoc = statsForPlayer(est, { webId: ref.webId || null, nombreCompleto: nombreRef, apodo: nombreRef, displayName: nombreRef });
+    const webId = assoc.estado === 'ok' ? assoc.webId : (ref.webId || null);
+
+    // 2. Sus numeros: perfil web de la seccion JUGADORES; si no, tablas.
+    const perfilJugador = webId ? jugadoresWeb.find((p) => p.webId === webId) : null;
+    const identity = perfilJugador || (webId ? est.jugadores.find((p) => p.webId === webId) : null) || null;
+    let g;
+    let a;
+    let pj;
+    let fuenteNumeros;
+    if (perfilJugador?.perfil) {
+      ({ goles: g, asistencias: a, presencias: pj } = perfilJugador.perfil);
+      fuenteNumeros = 'perfil-web';
+    } else if (assoc.estado === 'ok') {
+      g = assoc.goles ?? 0;
+      a = assoc.asistencias ?? 0;
+      pj = assoc.presencias ?? 0;
+      fuenteNumeros = 'tablas-web';
+    } else {
+      // Fila manual sin identidad web: solo se conoce el numero de la tabla.
+      g = crit === 'goles' ? (ref.count ?? 0) : 0;
+      a = crit === 'asistencias' ? (ref.count ?? 0) : 0;
+      pj = 0;
+      fuenteNumeros = 'tabla-local';
+    }
+
+    lados[lado] = {
+      status: 'ok',
+      rama,
+      criterio: crit,
+      origenEstrella: localRef && ref === localRef ? 'tabla-local' : 'web',
+      fuenteNumeros,
+      jugador: {
+        dorsal: identity?.dorsal || ref.dorsal || '',
+        nombre: identity?.nombre || '',
+        apellido: identity?.apellido || '',
+        apodo: identity?.apodo || (identity ? '' : nombreRef),
+        nombreCompleto: identity?.nombreCompleto || nombreRef,
+        webId,
+      },
+      g,
+      a,
+      pj,
+      desdeCache: !!refresh.desdeCache || !refresh.ok,
     };
-  });
-  return { jugadores, totalEnLaWeb: Array.isArray(rawRows) ? rawRows.length : 0 };
-}
-
-async function statsFromWeb(field, statKey) {
-  const html = await fetchArgentinaStreamersHtml();
-  const product = extractProductData(html);
-  const rows = product?.stats?.[field];
-  if (!Array.isArray(rows)) {
-    throw new Error(`No se encontro "stats.${field}" en argentinastreamers.com (puede haber cambiado el formato de la pagina).`);
   }
-  return buildRankedPlayers(rows, buildPlayersById(product), statKey);
-}
-
-export async function syncGoleadoresFromWeb() {
-  return statsFromWeb('scorers', 'g');
-}
-
-export async function syncAsistidoresFromWeb() {
-  return statsFromWeb('assists', 'a');
-}
-
-export async function syncParticipacionesFromWeb() {
-  return statsFromWeb('appearances', 'pj');
+  return { lados, criterio: crit, refresh };
 }
 
 // Categoria (2026-09-04, pedido explicito del usuario, valores estables
@@ -97,17 +202,26 @@ const CATEGORY_FILTERS = {
 // jugados, asi que se filtra "finished" (decision confirmada con el
 // usuario). Orden: mas reciente primero (fecha real de la web, nunca
 // inventado).
-export async function syncHistorialFromWeb(categoria) {
+// "rama" (2026-10-08): la seccion PARTIDOS de la web tiene su propio
+// MASC/FEM (product.competitions vs product.fem.competitions) -- Historial
+// la respeta. Nunca usa Convocados ni Estadisticas. Si la categoria no
+// tiene ningun partido jugado en esa rama, "partidos" queda vacio y
+// server/index.js NO pisa el historial actual.
+export async function syncHistorialFromWeb(categoria, ramaInput) {
   const filterFn = CATEGORY_FILTERS[categoria];
   if (!filterFn) throw new Error(`Categoría de historial desconocida: "${categoria}".`);
+  const rama = normalizeRama(ramaInput);
 
   const html = await fetchArgentinaStreamersHtml();
-  const matches = extractMatches(html);
+  const matches = extractMatches(html, rama);
 
   const catalog = getThemeTeams(ARGENTINA_STREAMERS_THEME_ID);
   const finished = matches
     .filter((m) => m?.status === 'finished' && filterFn(m))
     .sort((a, b) => new Date(b.date) - new Date(a.date));
+  if (finished.length === 0) {
+    return { partidos: [], totalEnLaWeb: 0, unmatchedTeams: [], rama };
+  }
 
   const unmatchedTeams = new Set();
   const partidos = finished.slice(0, HISTORIAL_ROWS).map((m) => {
@@ -120,7 +234,7 @@ export async function syncHistorialFromWeb(categoria) {
     if (!oppTeam && !historicalCrestUrl) unmatchedTeams.add(m.opponent?.name || '(sin nombre)');
     const wentToPenalties = m.penalties?.wentToPenalties === true;
     return {
-      teamA: 'argentina-streamers',
+      teamA: TEAM_ID_BY_RAMA[rama],
       golLocal: String(numberOr0(m.argentinaScore)),
       golVisitante: String(numberOr0(m.opponentScore)),
       teamB: oppTeam ? oppTeam.id : '',
@@ -141,5 +255,5 @@ export async function syncHistorialFromWeb(categoria) {
     partidos.push({ teamA: '', golLocal: '', golVisitante: '', teamB: '', teamBCrestUrl: '', penalLocal: '', penalVisitante: '', fase: '' });
   }
 
-  return { partidos, totalEnLaWeb: finished.length, unmatchedTeams: [...unmatchedTeams] };
+  return { partidos, totalEnLaWeb: finished.length, unmatchedTeams: [...unmatchedTeams], rama };
 }

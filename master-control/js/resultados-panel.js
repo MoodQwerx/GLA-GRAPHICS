@@ -1,4 +1,12 @@
 import { TEAM_OPTIONS } from '../../shared/teams.js';
+import { createGlaTorneoSourceNote, glaTorneoLabel } from './gla-torneo-source.js';
+// EQUIPOS VISIBLES (2026-10-21, pedido explicito del usuario, SOLO GLA):
+// un equipo oculto en EQUIPOS no se ofrece para nuevas selecciones; el ya
+// elegido se sigue mostrando (ocultar no borra ni rompe estados guardados).
+function isHiddenGlaOption(opt, currentId) {
+  return document.body.dataset.theme === 'gla' && opt.visible === false && opt.id !== (currentId || '');
+}
+
 import { mountAdjustControl } from './field-editors.js';
 import { renderPresetsControl } from './presets-helper.js';
 import { renderCompositionControl } from './composition-control.js';
@@ -57,6 +65,39 @@ const ESTADOS = [
 const MAX_ENCUENTROS = 9;
 const VISIBLE_ENCUENTROS = 6;
 
+// PARTIDOS: MODOS EVENTO / SORTEO (2026-10-22, pedido explicito del
+// usuario, SOLO GLA -- ver syncBracketCrestsFromGrupos en server/state.js).
+// "encuentros" es siempre la lista del modo ACTIVO; la del otro modo queda
+// guardada en "partidosEvento"/"partidosSorteo" y se intercambia al cambiar
+// de modo, asi EVENTO vuelve exactamente como estaba. En SORTEO los equipos
+// los define GRUPOS (slot -> equipo, lo resuelve el servidor): aca solo se
+// muestran, y no se agregan/eliminan partidos (son exactamente 9).
+// "sorteo" se muestra como SÁBADO (2026-10-23, pedido explicito: solo el
+// nombre visible; id interno, estado y datos guardados sin cambios).
+const MODOS_PARTIDOS = [
+  { id: 'evento', label: 'EVENTO' },
+  { id: 'sorteo', label: 'SÁBADO' },
+];
+// Solo para mostrar el cruce de cada partido (la fuente es el servidor).
+const SORTEO_SLOTS = [
+  ['A1', 'A2'], ['B1', 'B2'], ['A3', 'B3'], ['A2', 'B2'], ['B1', 'B3'],
+  ['A1', 'A3'], ['B2', 'B3'], ['A2', 'A3'], ['A1', 'B1'],
+];
+// SÁBADO (2026-10-23): primer partido MANUAL de las 11:00, editable y fuera
+// de la sincronizacion con Grupos (ver server/state.js).
+const SABADO_MANUAL_ID = 'sabado-manual-1100';
+function sorteoAutoNumber(encuentro) {
+  const match = /^sorteo-p(\d+)$/.exec(encuentro?.id || '');
+  return match ? Number(match[1]) : null;
+}
+// Segunda tanda: 4 en adelante (7-9 partidos, como siempre) o 5-10 (10).
+function tanda2Desde(count) {
+  return Math.max(4, count - VISIBLE_ENCUENTROS + 1);
+}
+function partidosStashKey(modo) {
+  return modo === 'sorteo' ? 'partidosSorteo' : 'partidosEvento';
+}
+
 export function renderResultadosPanel(container, data, onDirty, saveOptions) {
   const root = document.createElement('div');
   root.className = 'resultados-editor';
@@ -77,6 +118,24 @@ export function renderResultadosPanel(container, data, onDirty, saveOptions) {
   if (!data.snapshotsWeb || typeof data.snapshotsWeb !== 'object') data.snapshotsWeb = {};
   if (!data.visualByFase || typeof data.visualByFase !== 'object') data.visualByFase = {};
   let syncStatus = null;
+  const isGla = document.body.dataset.theme === 'gla';
+
+  function modoActual() {
+    return isGla && data.modoPartidos === 'sorteo' ? 'sorteo' : 'evento';
+  }
+  function cambiarModo(nuevo) {
+    const actual = modoActual();
+    if (nuevo === actual) return;
+    data[partidosStashKey(actual)] = JSON.parse(JSON.stringify({ encuentros: data.encuentros, tanda: data.tanda }));
+    const guardado = data[partidosStashKey(nuevo)];
+    data.encuentros = guardado && Array.isArray(guardado.encuentros) ? guardado.encuentros : [];
+    data.tanda = guardado?.tanda || 'tanda1';
+    data[partidosStashKey(nuevo)] = null;
+    data.modoPartidos = nuevo;
+    syncStatus = null;
+    onDirty();
+    render();
+  }
 
   // AJUSTES VISUALES INDEPENDIENTES POR FASE (2026-08-16, pedido urgente
   // del usuario: mover flechas/escala en PLAYOFFS no debe pisar ni
@@ -159,7 +218,7 @@ export function renderResultadosPanel(container, data, onDirty, saveOptions) {
       });
       data.tanda = 'tanda1';
       data.ultimaActualizacionWeb = body.ultimaActualizacionWeb;
-      syncStatus = { kind: 'success', fase, text: 'RESULTADOS ACTUALIZADOS', unmatchedTeams: body.unmatchedTeams || [] };
+      syncStatus = { kind: 'success', fase, text: `RESULTADOS ACTUALIZADOS${body.edicion ? ` (${body.edicion.label})` : ''}`, unmatchedTeams: body.unmatchedTeams || [] };
       onDirty();
       // El widget de "AJUSTE DE COMPOSICIÓN" lo monta main.js aparte, en
       // "#composition-container" -- sin este refresh el dato queda bien
@@ -167,13 +226,47 @@ export function renderResultadosPanel(container, data, onDirty, saveOptions) {
       // ya se aplico para "cargar preset completo").
       refreshCompositionWidget();
     } catch (error) {
-      syncStatus = { kind: 'error', fase, text: 'ERROR AL ACTUALIZAR', detail: error.message };
+      syncStatus = { kind: 'error', fase, text: `ERROR AL ACTUALIZAR — ${error.message}`, detail: error.message };
     }
     render();
   }
 
   function render() {
     root.innerHTML = '';
+    const isSorteo = modoActual() === 'sorteo';
+
+    if (isGla) {
+      const modoField = document.createElement('div');
+      modoField.className = 'field';
+      const modoLabel = document.createElement('label');
+      modoLabel.textContent = 'MODO';
+      modoField.appendChild(modoLabel);
+      const modoSelect = document.createElement('select');
+      modoSelect.setAttribute('aria-label', 'MODO');
+      for (const opt of MODOS_PARTIDOS) {
+        const option = document.createElement('option');
+        option.value = opt.id;
+        option.textContent = opt.label;
+        modoSelect.appendChild(option);
+      }
+      modoSelect.value = modoActual();
+      modoSelect.addEventListener('change', () => cambiarModo(modoSelect.value));
+      modoField.appendChild(modoSelect);
+      root.appendChild(modoField);
+    }
+
+    // "A) CRONOGRAMA / B) CARGA MANUAL" (2026-09-27, pedido explicito del
+    // usuario: "dos secciones claras"). Sin rehacer el panel -- el
+    // mecanismo ya es exactamente ese (web llena los campos, despues son
+    // inputs editables normales, nunca se vuelven a pisar salvo que se
+    // aprete el boton de nuevo) -- esto solo etiqueta con encabezados lo
+    // que ya funciona asi, para que quede visualmente separado.
+    // SORTEO: sin "ACTUALIZAR DESDE WEB" ni presets completos (pisarian el
+    // fixture de 9 partidos que arma GRUPOS).
+    const cronogramaHeading = document.createElement('h3');
+    cronogramaHeading.textContent = 'A) CRONOGRAMA — ACTUALIZAR DESDE WEB';
+    cronogramaHeading.style.marginBottom = '6px';
+    if (!isSorteo) root.appendChild(cronogramaHeading);
 
     const syncRow = document.createElement('div');
     syncRow.className = 'performance-sync resultados-sync';
@@ -189,6 +282,8 @@ export function renderResultadosPanel(container, data, onDirty, saveOptions) {
       button.addEventListener('click', () => syncFromWeb(fase));
       syncRow.appendChild(button);
     }
+    // ACTUALIZADOR DE DATOS (2026-10-21): edicion del torneo de la que salen.
+    syncRow.appendChild(createGlaTorneoSourceNote());
     if (syncStatus) {
       const status = document.createElement('span');
       status.className = `performance-sync-status ${syncStatus.kind}`;
@@ -196,8 +291,8 @@ export function renderResultadosPanel(container, data, onDirty, saveOptions) {
       if (syncStatus.detail) status.title = syncStatus.detail;
       syncRow.appendChild(status);
     }
-    root.appendChild(syncRow);
-    if (syncStatus?.unmatchedTeams?.length) {
+    if (!isSorteo) root.appendChild(syncRow);
+    if (!isSorteo && syncStatus?.unmatchedTeams?.length) {
       const warning = document.createElement('p');
       warning.className = 'performance-sync-warning';
       warning.textContent = `Sin equipo local equivalente para: ${syncStatus.unmatchedTeams.join(', ')}`;
@@ -244,7 +339,7 @@ export function renderResultadosPanel(container, data, onDirty, saveOptions) {
       },
       onDirty,
     });
-    root.appendChild(presetsBox);
+    if (!isSorteo) root.appendChild(presetsBox);
 
     // --- Posición ---
     const posicionField = document.createElement('div');
@@ -311,7 +406,7 @@ export function renderResultadosPanel(container, data, onDirty, saveOptions) {
 
     const tanda2Option = document.createElement('option');
     tanda2Option.value = 'tanda2';
-    tanda2Option.textContent = 'PARTIDOS 4–9';
+    tanda2Option.textContent = `PARTIDOS ${tanda2Desde(data.encuentros.length)}–${Math.max(data.encuentros.length, 9)}`;
     tanda2Option.disabled = data.encuentros.length <= VISIBLE_ENCUENTROS;
     tandaSelect.appendChild(tanda2Option);
 
@@ -330,10 +425,21 @@ export function renderResultadosPanel(container, data, onDirty, saveOptions) {
     section.className = 'resultados-encuentros-section';
     
     const heading = document.createElement('h3');
-    heading.textContent = 'ENCUENTROS';
+    heading.textContent = isSorteo
+      ? 'SÁBADO — 10 PARTIDOS (11:00 manual + 9 según GRUPOS)'
+      : 'B) CARGA MANUAL / EDICIÓN — ENCUENTROS';
     heading.style.marginTop = '20px';
-    heading.style.marginBottom = '10px';
+    heading.style.marginBottom = '4px';
     section.appendChild(heading);
+    const manualHint = document.createElement('p');
+    manualHint.textContent = isSorteo
+      ? 'El partido de las 11:00 es manual: todo se edita acá y Grupos no lo toca. En los otros 9 los equipos salen de GRUPOS (slots del sorteo A1–A3 / B1–B3) y se actualizan solos; hora, título, estado y resultado se editan acá.'
+      : 'Editá acá cualquier campo (equipo, hora, título, estado) sea que vino de "ACTUALIZAR DESDE WEB" o lo cargaste a mano. No se pisa hasta que vuelvas a apretar ACTUALIZAR DESDE WEB.';
+    manualHint.style.fontSize = '11px';
+    manualHint.style.opacity = '0.75';
+    manualHint.style.marginTop = '0';
+    manualHint.style.marginBottom = '10px';
+    section.appendChild(manualHint);
 
     data.encuentros.forEach((encuentro, index) => {
       const card = document.createElement('div');
@@ -351,7 +457,15 @@ export function renderResultadosPanel(container, data, onDirty, saveOptions) {
       titleRow.style.marginBottom = '10px';
 
       const cardTitle = document.createElement('h4');
-      cardTitle.textContent = `Encuentro ${index + 1}`;
+      const autoNumber = isSorteo ? sorteoAutoNumber(encuentro) : null;
+      const isAuto = autoNumber !== null && !!SORTEO_SLOTS[autoNumber - 1];
+      if (isSorteo && encuentro.id === SABADO_MANUAL_ID) {
+        cardTitle.textContent = `Partido ${index + 1} — MANUAL (no depende de Grupos)`;
+      } else if (isAuto) {
+        cardTitle.textContent = `Partido ${index + 1} — P${autoNumber}: ${SORTEO_SLOTS[autoNumber - 1][0]} vs ${SORTEO_SLOTS[autoNumber - 1][1]}`;
+      } else {
+        cardTitle.textContent = `Encuentro ${index + 1}`;
+      }
       cardTitle.style.margin = '0';
       titleRow.appendChild(cardTitle);
 
@@ -377,7 +491,7 @@ export function renderResultadosPanel(container, data, onDirty, saveOptions) {
           render();
         });
       }
-      titleRow.appendChild(deleteBtn);
+      if (!isSorteo) titleRow.appendChild(deleteBtn);
       card.appendChild(titleRow);
 
       // Fila de Equipos y Goles
@@ -391,12 +505,14 @@ export function renderResultadosPanel(container, data, onDirty, saveOptions) {
       const localSelect = document.createElement('select');
       localSelect.setAttribute('aria-label', `Equipo Local, encuentro ${index + 1}`);
       for (const opt of TEAM_OPTIONS) {
+        if (isHiddenGlaOption(opt, encuentro.teamA)) continue;
         const option = document.createElement('option');
         option.value = opt.id;
         option.textContent = opt.label;
         localSelect.appendChild(option);
       }
       localSelect.value = encuentro.teamA || '';
+      localSelect.disabled = isAuto;
       localSelect.addEventListener('change', () => {
         encuentro.teamA = localSelect.value;
         onDirty();
@@ -428,12 +544,14 @@ export function renderResultadosPanel(container, data, onDirty, saveOptions) {
       const visitorSelect = document.createElement('select');
       visitorSelect.setAttribute('aria-label', `Equipo Visitante, encuentro ${index + 1}`);
       for (const opt of TEAM_OPTIONS) {
+        if (isHiddenGlaOption(opt, encuentro.teamB)) continue;
         const option = document.createElement('option');
         option.value = opt.id;
         option.textContent = opt.label;
         visitorSelect.appendChild(option);
       }
       visitorSelect.value = encuentro.teamB || '';
+      visitorSelect.disabled = isAuto;
       visitorSelect.addEventListener('change', () => {
         encuentro.teamB = visitorSelect.value;
         onDirty();
@@ -647,7 +765,7 @@ export function renderResultadosPanel(container, data, onDirty, saveOptions) {
     }
 
     footer.appendChild(addBtn);
-    root.appendChild(footer);
+    if (!isSorteo) root.appendChild(footer);
   }
 
   render();

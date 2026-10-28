@@ -3,7 +3,7 @@ import { resolveTeamTokens } from '../../../shared/text-tokens.js';
 import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { getActiveThemeId } from '../theme-client.js';
 import { DEFAULT_THEME_ID } from '../../../shared/themes.js';
-import { GLA_SEGOE_BOLD_FAMILY } from '../program-fonts.js';
+import { GLA_SEGOE_BOLD_FAMILY, withGlaSegoeRegular } from '../program-fonts.js';
 
 const VIDEO_SRC = '/assets/zocalos/zocalo-corto-doble-alpha.mp4';
 
@@ -59,13 +59,13 @@ function fillPair(root, name, role, textAdjust, nameKey, roleKey, isExplicitUpda
   const oldRole = prevStore[roleKey];
   const family = getActiveThemeId() === DEFAULT_THEME_ID ? GLA_SEGOE_BOLD_FAMILY : undefined;
 
-  updateFittedTextWithTransition(nameEl, newName, oldName, {
+  updateFittedTextWithTransition(nameEl, newName, oldName, withGlaSegoeRegular({
     maxFont: NAME_MAX_FONT, minFont: NAME_MIN_FONT, maxWidth: MAX_WIDTH, weight: 800, family,
-  }, readTextAdjust(textAdjust, nameKey), isExplicitUpdate);
+  }), readTextAdjust(textAdjust, nameKey), isExplicitUpdate);
 
-  updateFittedTextWithTransition(roleEl, newRole, oldRole, {
+  updateFittedTextWithTransition(roleEl, newRole, oldRole, withGlaSegoeRegular({
     maxFont: ROLE_MAX_FONT, minFont: ROLE_MIN_FONT, maxWidth: MAX_WIDTH, weight: 600, letterSpacing: 1, family,
-  }, readTextAdjust(textAdjust, roleKey), isExplicitUpdate);
+  }), readTextAdjust(textAdjust, roleKey), isExplicitUpdate);
 
   prevStore[nameKey] = newName;
   prevStore[roleKey] = newRole;

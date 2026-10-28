@@ -1,6 +1,8 @@
 import express from 'express';
 import http from 'node:http';
 import path from 'node:path';
+import fs from 'node:fs';
+import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
 
@@ -17,8 +19,15 @@ import {
 import {
   listMatchProfiles, readMatchProfile, createMatchProfile, overwriteMatchProfile, deleteMatchProfile,
 } from './match-profiles.js';
-import { getTeamCatalog, updateTeamAbbreviation, resetTeamAbbreviation } from './teams.js';
+import {
+  getTeamCatalog, updateTeamAbbreviation, resetTeamAbbreviation, setTeamVisibility,
+  updateThemeTeam, getThemeCrestDir, updateGlaTeam, listGlaCrestFiles, setGlaTeamOrder,
+} from './teams.js';
 import { getSponsorsCatalog } from './sponsors.js';
+import {
+  getGlobalLowerThirdPresets, setGlobalLowerThirdPresets,
+  getThemeLowerThirdPresets, setThemeLowerThirdPresets,
+} from './lower-third-presets.js';
 import {
   syncGoleadoresFromWeb,
   syncAsistidoresFromWeb,
@@ -28,17 +37,27 @@ import {
   syncGruposFromWeb,
   syncResultadosFromWeb,
   syncEstrellasFromWeb,
+  validarDesempateGrupo,
+  syncGruposWebRelampago4,
 } from './glaFutbolSync.js';
+import {
+  GLA_TORNEO_EDICIONES, getTorneoEdicion, setTorneoEdicion, resolveTorneoEdicion,
+  fetchGlaFutbolHtml, extractProductData,
+} from './glaFutbolClient.js';
 import { syncRosterFromWeb } from './glaFutbolRosters.js';
 import { syncRosterFromWeb as syncArgentinaStreamersRosterFromWeb } from './argentinaStreamersRosters.js';
-import { getRoster, saveRoster, addPlayer, updatePlayer, findPlayer } from './playerRosters.js';
-import { syncFichaJugadorStats } from './argentinaStreamersPlayerStats.js';
 import {
-  syncGoleadoresFromWeb as syncGoleadoresFromArgentinaStreamersWeb,
-  syncAsistidoresFromWeb as syncAsistidoresFromArgentinaStreamersWeb,
-  syncParticipacionesFromWeb as syncParticipacionesFromArgentinaStreamersWeb,
+  getRoster, saveRoster, addPlayer, updatePlayer, findPlayer, setRosterPreferences,
+} from './playerRosters.js';
+import {
+  syncFichaJugadorStats, buildFichaJugadores, refreshFichaJugadores, fichaPerfilJugador, setNombrePantalla,
+} from './argentinaStreamersPlayerStats.js';
+import {
+  syncStatsTableFromWeb as syncStatsTableFromArgentinaStreamersWeb,
   syncHistorialFromWeb as syncHistorialFromArgentinaStreamersWeb,
+  syncEstrellasFromWeb as syncEstrellasFromArgentinaStreamersWeb,
 } from './argentinaStreamersSync.js';
+import { refreshArgentinaStreamersWebData, summarizeWebData } from './argentinaStreamersWebData.js';
 import { flushPersistence, getPersistenceStatus } from './persistence.js';
 import { getActiveThemeId, setActiveThemeId } from './theme.js';
 import { listThemes, getTheme, ARGENTINA_STREAMERS_THEME_ID } from '../shared/themes.js';
@@ -88,6 +107,16 @@ app.use('/assets/sponsors', express.static(path.join(root, 'assets', 'shared', '
 // ahi aparece con solo refrescar el navegador, sin reiniciar el server.
 app.get('/api/teams', (req, res) => res.json(getTeamCatalog(getActiveThemeId())));
 app.get('/api/sponsors', (req, res) => res.json(getSponsorsCatalog()));
+app.get('/api/lower-third-presets', (req, res) => res.json(getGlobalLowerThirdPresets()));
+// Banco global de zocalos de Argentina Streamers (2026-10-08) -- separado
+// del de GLA (que sigue en la ruta de arriba, sin cambios).
+app.get('/api/lower-third-presets/:themeId', (req, res) => {
+  try {
+    res.json(getThemeLowerThirdPresets(req.params.themeId));
+  } catch (err) {
+    res.status(404).json({ ok: false, error: err.message });
+  }
+});
 app.get('/api/persistence/status', (req, res) => {
   const persistence = getPersistenceStatus();
   res.status(persistence.degraded ? 503 : 200).json({ ok: !persistence.degraded, persistence });
@@ -119,12 +148,155 @@ app.get('/api/match-profiles', async (req, res) => {
   }
 });
 
+// THEME-AWARE (2026-10-08, BUG real corregido: estas rutas SIEMPRE editaban
+// y difundian el catalogo de GLA aunque el theme activo fuera Argentina
+// Streamers -- un cambio hecho desde AS reemplazaba el catalogo AS de todos
+// los clientes por el de GLA). GLA sigue por exactamente las mismas
+// funciones de siempre; cualquier otro theme va a sus propios overrides.
+function applyTeamChange(id, glaChange, themePatch) {
+  const themeId = getActiveThemeId();
+  const catalog = themeId === 'gla' ? glaChange() : updateThemeTeam(themeId, id, themePatch);
+  broadcast({ type: 'TEAM_CATALOG_UPDATE', catalog });
+  return catalog;
+}
+
 app.post('/api/teams/abbreviation', (req, res) => {
   const { id, abbr, reset } = req.body || {};
   if (!id) return res.status(400).json({ ok: false, error: 'Falta id de equipo' });
-  const catalog = reset ? resetTeamAbbreviation(id) : updateTeamAbbreviation(id, abbr);
+  try {
+    const catalog = applyTeamChange(
+      id,
+      () => (reset ? resetTeamAbbreviation(id) : updateTeamAbbreviation(id, abbr)),
+      { abbr: reset ? '' : String(abbr || '') },
+    );
+    res.json({ ok: true, catalog });
+  } catch (err) {
+    res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
+// MOSTRAR/OCULTAR EQUIPOS (2026-09-26): mismo patron exacto que
+// "/api/teams/abbreviation" de arriba.
+app.post('/api/teams/visibility', (req, res) => {
+  const { id, visible } = req.body || {};
+  if (!id) return res.status(400).json({ ok: false, error: 'Falta id de equipo' });
+  try {
+    const catalog = applyTeamChange(id, () => setTeamVisibility(id, visible !== false), { visible: visible !== false });
+    res.json({ ok: true, catalog });
+  } catch (err) {
+    res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
+// EQUIPOS (Argentina Streamers, 2026-10-08): nombre completo + abreviatura
+// + visible de un equipo en una sola operacion (tambien confirma un equipo
+// PENDIENTE recien detectado en la carpeta de escudos). Solo themes con
+// catalogo manual -- GLA conserva su panel de Abreviaturas de siempre.
+// Payload: { theme, teamId, fullName, abbreviation, visible } (tambien
+// acepta id/name/abbr). "theme" tiene que coincidir con el theme ACTIVO y
+// nunca puede ser GLA: editar un equipo de Argentina Streamers jamas toca el
+// catalogo de GLA (que se sigue editando por /abbreviation y /visibility).
+app.post('/api/teams/team', (req, res) => {
+  const themeId = getActiveThemeId();
+  const body = req.body || {};
+  const id = body.teamId || body.id;
+  const name = body.fullName ?? body.name;
+  const abbr = body.abbreviation ?? body.abbr;
+  const { visible } = body;
+  if (!id) return res.status(400).json({ ok: false, error: 'Falta teamId' });
+  if (body.theme && body.theme !== themeId) {
+    return res.status(409).json({ ok: false, error: `El theme activo es "${themeId}", no "${body.theme}". Recargá Master Control.` });
+  }
+  // GLA (2026-10-21, pedido explicito del usuario: ABREVIATURAS pasa a ser
+  // EQUIPOS tambien en GLA): mismo endpoint, catalogo propio de GLA
+  // (server/teams.js updateGlaTeam) -- nunca toca el de Argentina Streamers.
+  // "crestFile": escudo asociado (un archivo real de assets/crests/).
+  if (themeId === 'gla') {
+    try {
+      const catalog = updateGlaTeam(id, {
+        name: typeof name === 'string' ? name : undefined,
+        abbr: typeof abbr === 'string' ? abbr : undefined,
+        visible: typeof visible === 'boolean' ? visible : undefined,
+        crestFile: typeof body.crestFile === 'string' ? body.crestFile : undefined,
+      });
+      broadcast({ type: 'TEAM_CATALOG_UPDATE', catalog });
+      return res.json({ ok: true, catalog });
+    } catch (err) {
+      return res.status(400).json({ ok: false, error: err.message });
+    }
+  }
+  try {
+    const catalog = updateThemeTeam(themeId, id, {
+      name: typeof name === 'string' ? name : undefined,
+      abbr: typeof abbr === 'string' ? abbr : undefined,
+      visible: typeof visible === 'boolean' ? visible : undefined,
+    });
+    broadcast({ type: 'TEAM_CATALOG_UPDATE', catalog });
+    res.json({ ok: true, catalog });
+  } catch (err) {
+    res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
+// ORDEN DE EQUIPOS de GLA (2026-10-22): lista completa de teamId en el
+// orden arrastrado en EQUIPOS; todos los desplegables lo toman del catalogo.
+app.post('/api/teams/order', (req, res) => {
+  if (getActiveThemeId() !== 'gla') return res.status(409).json({ ok: false, error: 'El orden manual de equipos es solo de GRAN LIGA RELÁMPAGO.' });
+  try {
+    const catalog = setGlaTeamOrder(req.body?.order);
+    broadcast({ type: 'TEAM_CATALOG_UPDATE', catalog });
+    res.json({ ok: true, catalog });
+  } catch (err) {
+    res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
+// ESCUDOS DISPONIBLES de GLA (2026-10-21): archivos de assets/crests/ para
+// el selector "ESCUDO" de EQUIPOS. Solo nombres de archivo, nunca rutas.
+app.get('/api/teams/crest-files', (req, res) => {
+  if (getActiveThemeId() !== 'gla') return res.json({ ok: true, files: [] });
+  res.json({ ok: true, files: listGlaCrestFiles() });
+});
+
+// REFRESCAR EQUIPOS / ESCUDOS: relee la carpeta de escudos y difunde el
+// catalogo a TODOS los clientes (Program incluido) para que un PNG recien
+// copiado aparezca sin reiniciar nada.
+app.post('/api/teams/refresh', (req, res) => {
+  const catalog = getTeamCatalog(getActiveThemeId());
   broadcast({ type: 'TEAM_CATALOG_UPDATE', catalog });
   res.json({ ok: true, catalog });
+});
+
+// AGREGAR EQUIPO (2026-10-08, pedido explicito): abre en el Explorador de
+// Windows la carpeta REAL de escudos del theme activo. Seguridad: solo
+// pedidos desde esta misma maquina (loopback), solo en Windows, nunca en un
+// deploy (Render), ninguna ruta llega del request (la carpeta sale fija de
+// server/teams.js) y se ejecuta explorer.exe directo, sin shell.
+function isLoopbackRequest(req) {
+  const addr = req.socket?.remoteAddress || '';
+  return addr === '127.0.0.1' || addr === '::1' || addr === '::ffff:127.0.0.1';
+}
+
+app.post('/api/teams/open-crest-folder', (req, res) => {
+  if (process.platform !== 'win32' || process.env.RENDER) {
+    return res.status(409).json({ ok: false, code: 'OPEN_FOLDER_NOT_AVAILABLE', error: 'OPEN_FOLDER_NOT_AVAILABLE: solo disponible corriendo LIVE GRAPHICS localmente en Windows.' });
+  }
+  if (!isLoopbackRequest(req)) {
+    return res.status(409).json({ ok: false, code: 'OPEN_FOLDER_NOT_AVAILABLE', error: 'OPEN_FOLDER_NOT_AVAILABLE: solo se puede abrir la carpeta desde esta misma computadora (127.0.0.1).' });
+  }
+  const configuredDir = getThemeCrestDir(getActiveThemeId());
+  const dir = configuredDir ? path.resolve(configuredDir) : null;
+  if (!dir || !fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) {
+    return res.status(404).json({ ok: false, code: 'OPEN_FOLDER_NOT_AVAILABLE', error: 'Este theme no tiene una carpeta de escudos administrable.' });
+  }
+  try {
+    const child = spawn('explorer.exe', [dir], { detached: true, stdio: 'ignore', windowsHide: false });
+    child.on('error', (err) => console.error('[GLA] No se pudo abrir el Explorador:', err.message));
+    child.unref();
+    res.json({ ok: true, carpeta: dir });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
 // Sincronizacion manual de las 4 tablas alimentadas por gla.futbol (ver
@@ -151,6 +323,9 @@ function requireGlaTheme(res) {
   return false;
 }
 
+// Modulos quitados de GLA (2026-10-22, ver el guard de TAKE en el handler WS).
+const GLA_REMOVED_MODULE_IDS = new Set(['cronogramaHoy', 'historial', 'resultadosParciales']);
+
 function registerSyncRoute(path, moduleId, syncFn, dataKey) {
   app.post(path, async (req, res) => {
     if (!requireGlaTheme(res)) return;
@@ -159,13 +334,64 @@ function registerSyncRoute(path, moduleId, syncFn, dataKey) {
       const ultimaActualizacionWeb = new Date().toISOString();
       const moduleState = applyUpdate(moduleId, { [dataKey]: result[dataKey], ultimaActualizacionWeb });
       broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId, moduleState });
-      res.json({ ok: true, ...result, ultimaActualizacionWeb });
+      res.json({ ok: true, ...result, ultimaActualizacionWeb, ...torneoEdicionInfo(moduleId === 'posicionesTorneo') });
     } catch (err) {
       console.error(`[GLA] Error sincronizando ${moduleId} desde gla.futbol:`, err.message);
-      res.status(502).json({ ok: false, error: err.message });
+      res.status(502).json({ ok: false, error: err.message, ...torneoEdicionInfo(moduleId === 'posicionesTorneo') });
     }
   });
 }
+
+// ACTUALIZADOR DE DATOS (2026-10-21, pedido explicito del usuario, SOLO
+// GLA): edicion del TORNEO de la que toman datos los syncs con FUENTE =
+// TORNEO (ver getTorneoEdicion en server/glaFutbolClient.js). Cada
+// respuesta de esos syncs informa de que edicion salieron los datos (o
+// cual fallo), para que el panel lo muestre sin adivinar.
+function torneoEdicionInfo(isTorneo) {
+  if (!isTorneo) return {};
+  const { key, label, numero } = getTorneoEdicion();
+  return { edicion: { key, label, numero } };
+}
+
+app.get('/api/gla/torneo-edicion', (req, res) => {
+  res.json({ ok: true, edicion: getTorneoEdicion(), ediciones: GLA_TORNEO_EDICIONES });
+});
+
+// Cambiar la edicion SOLO guarda la preferencia: no actualiza ningun modulo.
+app.put('/api/gla/torneo-edicion', (req, res) => {
+  if (!requireGlaTheme(res)) return;
+  try {
+    const edicion = setTorneoEdicion(String(req.body?.key || ''));
+    broadcast({ type: 'GLA_TORNEO_EDICION_UPDATE', edicion });
+    res.json({ ok: true, edicion });
+  } catch (err) {
+    res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
+// "VERIFICAR EN LA WEB": consulta gla.futbol una vez y cuenta, por edicion,
+// lo que hay publicado. Solo lectura (no toca ningun modulo).
+app.get('/api/gla/torneo-ediciones/verificar', async (req, res) => {
+  if (!requireGlaTheme(res)) return;
+  try {
+    const product = extractProductData(await fetchGlaFutbolHtml());
+    const len = (list) => (Array.isArray(list) ? list.length : 0);
+    const ediciones = GLA_TORNEO_EDICIONES.map((edicion) => {
+      const { tournament, metodo, publicado } = resolveTorneoEdicion(product, edicion);
+      if (!tournament) return { key: edicion.key, label: edicion.label, existe: false };
+      return {
+        key: edicion.key, label: edicion.label, existe: true, metodo, publicado,
+        nombreWeb: tournament.name, estado: tournament.status || '', webId: tournament.id,
+        equipos: len(tournament.teams), grupos: len(tournament.groups),
+        partidosPlayoff: len(tournament.knockoutMatches), posiciones: len(tournament.tournamentStandings),
+        goleadores: len(tournament.stats?.scorers), asistidores: len(tournament.stats?.assists),
+      };
+    });
+    res.json({ ok: true, ediciones });
+  } catch (err) {
+    res.status(502).json({ ok: false, error: err.message });
+  }
+});
 
 function registerPerformanceSyncRoute(path, moduleId, syncFn) {
   app.post(path, async (req, res) => {
@@ -183,10 +409,10 @@ function registerPerformanceSyncRoute(path, moduleId, syncFn) {
         fuente, snapshots, jugadores: result.jugadores, ultimaActualizacionWeb,
       });
       broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId, moduleState });
-      res.json({ ok: true, ...result, fuente, snapshots, ultimaActualizacionWeb });
+      res.json({ ok: true, ...result, fuente, snapshots, ultimaActualizacionWeb, ...torneoEdicionInfo(fuente === 'torneo') });
     } catch (err) {
       console.error(`[GLA] Error sincronizando ${moduleId}/${fuente} desde gla.futbol:`, err.message);
-      res.status(502).json({ ok: false, error: err.message });
+      res.status(502).json({ ok: false, error: err.message, ...torneoEdicionInfo(fuente === 'torneo') });
     }
   });
 }
@@ -214,42 +440,140 @@ function requireArgentinaStreamersTheme(res) {
   return false;
 }
 
-function registerArgentinaStreamersStatsRoute(path, moduleId, syncFn) {
-  app.post(path, async (req, res) => {
+// GOLEADORES/ASISTIDORES/PARTICIPACIONES (2026-10-08): ESTADISTICAS de la
+// rama elegida ("?rama=masculino|femenino", ver
+// server/argentinaStreamersSync.js). Solo un resultado "ok" reemplaza la
+// tabla del modulo; "vacio"/"error" responden 200 con ok:false + mensaje
+// para que el panel lo muestre, sin tocar los datos ya cargados.
+for (const moduleId of ['goleadores', 'asistidores', 'jugadores']) {
+  app.post(`/api/argentina-streamers/${moduleId}/sync-web`, async (req, res) => {
     if (!requireArgentinaStreamersTheme(res)) return;
     try {
-      const result = await syncFn();
-      const ultimaActualizacionWeb = new Date().toISOString();
-      const moduleState = applyUpdate(moduleId, { jugadores: result.jugadores, ultimaActualizacionWeb });
+      const result = await syncStatsTableFromArgentinaStreamersWeb(moduleId, req.query.rama);
+      if (result.status !== 'ok') return res.json({ ok: false, ...result });
+      const ultimaActualizacionWeb = result.ultimaActualizacion || new Date().toISOString();
+      // "snapshotsRama" (2026-10-08, bug real MASC/FEM mezclados): la tabla
+      // de la rama pedida queda guardada en SU slot tambien del lado del
+      // servidor -- nunca solo en "jugadores" -- para que MASCULINO y
+      // FEMENINO sean datasets separados aunque el panel no este abierto.
+      const current = getModuleState(moduleId).data;
+      const snapshotsRama = {
+        ...(current.snapshotsRama || {}),
+        [result.rama]: { jugadores: result.jugadores, ultimaActualizacionWeb },
+      };
+      const moduleState = applyUpdate(moduleId, { jugadores: result.jugadores, ultimaActualizacionWeb, ramaWeb: result.rama, snapshotsRama });
       broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId, moduleState });
       res.json({ ok: true, ...result, ultimaActualizacionWeb });
     } catch (err) {
       console.error(`[GLA] Error sincronizando ${moduleId} desde argentinastreamers.com:`, err.message);
-      res.status(502).json({ ok: false, error: err.message });
+      res.status(502).json({ ok: false, status: 'error', error: err.message });
     }
   });
 }
-
-registerArgentinaStreamersStatsRoute('/api/argentina-streamers/goleadores/sync-web', 'goleadores', syncGoleadoresFromArgentinaStreamersWeb);
-registerArgentinaStreamersStatsRoute('/api/argentina-streamers/asistidores/sync-web', 'asistidores', syncAsistidoresFromArgentinaStreamersWeb);
-registerArgentinaStreamersStatsRoute('/api/argentina-streamers/jugadores/sync-web', 'jugadores', syncParticipacionesFromArgentinaStreamersWeb);
 
 // Historial: la categoria ("iwc"/"copa-america"/"amistosos-oficiales"/
 // "amistosos") llega por query string -- el operador ya la eligio en el
 // selector "TIPO DE HISTORIAL" del panel antes de apretar el boton, asi
 // que el titulo automatico ("HISTORIAL - <CATEGORIA>") tambien se resuelve
 // del lado del cliente con el mismo valor, sin duplicar la lista aca.
+// "rama" (2026-10-08): seccion PARTIDOS de la web, MASC/FEM. Sin partidos
+// jugados para esa categoria/rama NO se pisa el historial actual.
 app.post('/api/argentina-streamers/historial/sync-web', async (req, res) => {
   if (!requireArgentinaStreamersTheme(res)) return;
   const categoria = String(req.query.categoria || '');
   try {
-    const result = await syncHistorialFromArgentinaStreamersWeb(categoria);
+    const result = await syncHistorialFromArgentinaStreamersWeb(categoria, req.query.rama);
+    if (!result.totalEnLaWeb) {
+      return res.json({
+        ok: false, status: 'vacio', ...result,
+        mensaje: `LA WEB NO TIENE PARTIDOS JUGADOS DE ESTA CATEGORÍA (RAMA ${result.rama.toUpperCase()}) — SE CONSERVA EL HISTORIAL ACTUAL`,
+      });
+    }
     const ultimaActualizacionWeb = new Date().toISOString();
-    const moduleState = applyUpdate('historial', { partidos: result.partidos, ultimaActualizacionWeb });
+    const moduleState = applyUpdate('historial', { partidos: result.partidos, ultimaActualizacionWeb, ramaWeb: result.rama });
     broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId: 'historial', moduleState });
     res.json({ ok: true, ...result, ultimaActualizacionWeb });
   } catch (err) {
     console.error('[GLA] Error sincronizando historial desde argentinastreamers.com:', err.message);
+    res.status(502).json({ ok: false, error: err.message });
+  }
+});
+
+// ADAPTADOR WEB COMPARTIDO (2026-10-08): estado de los 4 snapshots
+// (Convocados/Estadisticas x Masculino/Femenino) y refresco manual.
+app.get('/api/argentina-streamers/web-data', (req, res) => {
+  res.json({ ok: true, webData: summarizeWebData() });
+});
+
+app.post('/api/argentina-streamers/web-data/refresh', async (req, res) => {
+  if (!requireArgentinaStreamersTheme(res)) return;
+  const refresh = await refreshArgentinaStreamersWebData();
+  res.json({ ok: refresh.ok, error: refresh.error, webData: summarizeWebData() });
+});
+
+// FICHA JUGADOR (2026-10-08): GET = desplegable desde CACHE (nunca consulta
+// la web, ni al abrir el panel ni en TAKE); POST = "ACTUALIZAR DATOS DE LA
+// WEB" (Convocados + Estadisticas de la rama, una sola consulta).
+app.get('/api/argentina-streamers/ficha/jugadores', (req, res) => {
+  res.json({ ok: true, ...buildFichaJugadores(req.query.rama) });
+});
+
+app.post('/api/argentina-streamers/ficha/sync-web', async (req, res) => {
+  if (!requireArgentinaStreamersTheme(res)) return;
+  try {
+    res.json({ ok: true, ...(await refreshFichaJugadores(req.query.rama)) });
+  } catch (err) {
+    console.error('[GLA] Error actualizando Ficha Jugador desde argentinastreamers.com:', err.message);
+    res.status(502).json({ ok: false, error: err.message });
+  }
+});
+
+// Elegir jugador en FICHA JUGADOR = leer SU perfil en la web (por id).
+app.post('/api/argentina-streamers/ficha/perfil', async (req, res) => {
+  if (!requireArgentinaStreamersTheme(res)) return;
+  const webId = String(req.query.webId || '');
+  if (!webId) return res.status(400).json({ ok: false, error: 'Falta webId del jugador' });
+  try {
+    res.json({ ok: true, ...(await fichaPerfilJugador(req.query.rama, webId)) });
+  } catch (err) {
+    console.error('[GLA] Error leyendo perfil de jugador en argentinastreamers.com:', err.message);
+    res.status(502).json({ ok: false, error: err.message });
+  }
+});
+
+// FICHA JUGADOR — "NOMBRE EN PANTALLA" (2026-10-09): alias de broadcast de
+// un jugador del plantel (persistido en el plantel, no toca su identidad web).
+app.put('/api/argentina-streamers/ficha/nombre-pantalla', (req, res) => {
+  if (!requireArgentinaStreamersTheme(res)) return;
+  const teamId = String(req.body?.teamId || '');
+  const jugadorId = String(req.body?.jugadorId || '');
+  if (!teamId || !jugadorId) return res.status(400).json({ ok: false, error: 'Faltan teamId/jugadorId' });
+  try {
+    const jugador = setNombrePantalla(teamId, jugadorId, req.body?.nombrePantalla);
+    res.json({ ok: true, jugador });
+  } catch (err) {
+    res.status(404).json({ ok: false, error: err.message });
+  }
+});
+
+// ESTRELLAS (2026-10-08): "ESTRELLA POR" goles|asistencias|ambos por lado
+// (solo lados con equipo web). Body opcional "lideresLocales": primer
+// jugador de las tablas de Goleadores/Asistidores de Master Control, por
+// rama. "forzar=1" (boton ACTUALIZAR DESDE WEB) relee la web; sin eso se
+// usa el cache. El panel aplica al draft solo los lados "ok".
+app.post('/api/argentina-streamers/estrellas/sync-web', async (req, res) => {
+  if (!requireArgentinaStreamersTheme(res)) return;
+  try {
+    const result = await syncEstrellasFromArgentinaStreamersWeb({
+      local: String(req.query.teamA || ''),
+      visitante: String(req.query.teamB || ''),
+      criterio: String(req.query.criterio || 'ambos'),
+      forzar: req.query.forzar === '1',
+      lideresLocales: req.body?.lideresLocales || null,
+    });
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    console.error('[GLA] Error sincronizando Estrellas desde argentinastreamers.com:', err.message);
     res.status(502).json({ ok: false, error: err.message });
   }
 });
@@ -287,6 +611,17 @@ app.post('/api/planteles/:teamId/jugadores', (req, res) => {
   }
 });
 
+// Preferencias del panel PLANTELES por equipo (2026-10-08): fuente WEB/
+// MANUAL y rama web elegidas -- persisten con el plantel del equipo.
+app.put('/api/planteles/:teamId/preferencias', (req, res) => {
+  try {
+    const snapshot = setRosterPreferences(getActiveThemeId(), req.params.teamId, req.body || {});
+    res.json({ ok: true, snapshot });
+  } catch (err) {
+    res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
 // FICHA JUGADOR — "ACTUALIZAR DATOS DE LA WEB" (BLOQUE 4, 2026-09-09):
 // sincroniza UN jugador puntual del plantel central contra
 // argentinastreamers.com (ver server/argentinaStreamersPlayerStats.js).
@@ -300,7 +635,7 @@ app.post('/api/planteles/:teamId/jugadores', (req, res) => {
 app.post('/api/planteles/:teamId/jugadores/:jugadorId/sync-web', async (req, res) => {
   const { teamId, jugadorId } = req.params;
   try {
-    const result = await syncFichaJugadorStats(teamId, jugadorId, req.body?.webId || null);
+    const result = await syncFichaJugadorStats(teamId, jugadorId, req.body?.webId || null, req.body?.rama || null);
     res.json({ ok: true, ...result });
   } catch (err) {
     console.error(`[GLA] Error sincronizando Ficha Jugador (${teamId}/${jugadorId}) desde argentinastreamers.com:`, err.message);
@@ -323,9 +658,13 @@ app.post('/api/planteles/:teamId/jugadores/:jugadorId/sync-web', async (req, res
 app.post('/api/planteles/:teamId/sync-web', async (req, res) => {
   try {
     const themeId = getActiveThemeId();
-    const snapshot = themeId === ARGENTINA_STREAMERS_THEME_ID
-      ? await syncArgentinaStreamersRosterFromWeb(req.params.teamId)
-      : await syncRosterFromWeb(req.params.teamId);
+    if (themeId === ARGENTINA_STREAMERS_THEME_ID) {
+      // CONVOCADOS de la rama (2026-10-08). vacio/error/equipo sin datos
+      // responden 200 + ok:false + mensaje: el plantel actual queda intacto.
+      const result = await syncArgentinaStreamersRosterFromWeb(req.params.teamId, req.query.rama || null);
+      return res.json({ ok: result.status === 'ok', ...result });
+    }
+    const snapshot = await syncRosterFromWeb(req.params.teamId);
     res.json({ ok: true, snapshot });
   } catch (err) {
     console.error(`[GLA] Error sincronizando plantel ${req.params.teamId}:`, err.message);
@@ -333,10 +672,28 @@ app.post('/api/planteles/:teamId/sync-web', async (req, res) => {
   }
 });
 
+// SLOTS DEL SORTEO (2026-10-23, pedido explicito del usuario: la posicion
+// en la tabla no puede cambiar A1..B3, que arman los cruces de SÁBADO). La
+// web entrega cada grupo en el orden de su tabla; si el grupo ya tiene
+// cargados exactamente los mismos equipos, los datos nuevos se acomodan en
+// los MISMOS slots de siempre (el orden visible lo calcula Program por
+// puntos). Con equipos distintos (otra edicion) se toma el orden de la web.
+function conservarSlotsSorteo(filasActuales, grupoWeb) {
+  const actuales = (Array.isArray(filasActuales) ? filasActuales : []).map((f) => f?.teamId || '');
+  const web = Array.isArray(grupoWeb?.filas) ? grupoWeb.filas : [];
+  const webIds = web.map((f) => f?.teamId || '');
+  const mismos = actuales.length === web.length && actuales.every(Boolean) && webIds.every(Boolean)
+    && [...actuales].sort().join('|') === [...webIds].sort().join('|');
+  return mismos ? { ...grupoWeb, filas: actuales.map((id) => web.find((f) => f.teamId === id)) } : grupoWeb;
+}
+
 app.post('/api/grupos/sync-web', async (req, res) => {
   if (!requireGlaTheme(res)) return;
   try {
     const result = await syncGruposFromWeb();
+    const gruposActuales = getModuleState('grupos').data;
+    result.grupo1 = conservarSlotsSorteo(gruposActuales?.grupo1?.filas, result.grupo1);
+    result.grupo2 = conservarSlotsSorteo(gruposActuales?.grupo2?.filas, result.grupo2);
     const ultimaActualizacionWeb = new Date().toISOString();
     const moduleState = applyUpdate('grupos', { grupo1: result.grupo1, grupo2: result.grupo2, ultimaActualizacionWeb });
     broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId: 'grupos', moduleState });
@@ -344,11 +701,55 @@ app.post('/api/grupos/sync-web', async (req, res) => {
     // en server/state.js) -- el sorteo tambien puede llegar por sync-web, no
     // solo por edicion manual del panel; mismo mecanismo en los dos casos.
     const sideTableState = syncBracketCrestsFromGrupos();
-    if (sideTableState) broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId: 'sideTable', moduleState: sideTableState });
-    res.json({ ok: true, ...result, ultimaActualizacionWeb });
+    if (sideTableState) broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId: 'sideTable', moduleState: sideTableState, syncedFromGrupos: true });
+    res.json({ ok: true, ...result, ultimaActualizacionWeb, ...torneoEdicionInfo(true) });
   } catch (err) {
     console.error('[GLA] Error sincronizando grupos:', err.message);
-    res.status(502).json({ ok: false, error: err.message });
+    res.status(502).json({ ok: false, error: err.message, ...torneoEdicionInfo(true) });
+  }
+});
+
+// GRUPOS — MODO WEB (2026-10-23): descarga la Fase de Grupos de Relámpago
+// #4 y reemplaza UNICAMENTE el snapshot WEB ("gruposWeb"); los datos
+// MANUALES ("grupo1"/"grupo2", que tambien arman los cruces de SÁBADO) no se
+// tocan. Si la web no tiene datos o el pedido falla, no se escribe nada: se
+// conserva el ultimo snapshot WEB valido.
+app.post('/api/grupos/web-update', async (req, res) => {
+  if (!requireGlaTheme(res)) return;
+  try {
+    const result = await syncGruposWebRelampago4();
+    const gruposWeb = {
+      grupo1: result.grupo1,
+      grupo2: result.grupo2,
+      actualizadoEn: new Date().toISOString(),
+      fuente: result.edicion,
+      webId: result.webId,
+    };
+    const moduleState = applyUpdate('grupos', { gruposWeb });
+    broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId: 'grupos', moduleState });
+    res.json({ ok: true, gruposWeb, unmatchedTeams: result.unmatchedTeams });
+  } catch (err) {
+    console.error('[GLA] GRUPOS modo WEB:', err.message);
+    res.status(err.sinDatos ? 200 : 502).json({ ok: false, error: err.message, sinDatos: !!err.sinDatos });
+  }
+});
+
+// VALIDAR WEB (2026-10-23): orden oficial de un grupo de Relámpago #4 para
+// desempatar puntos iguales. No escribe estado (lo guarda el panel junto con
+// la huella de los datos validados). Sin datos todavia: respuesta normal
+// con ok:false y el mensaje pedido (no es una falla: no ensucia la consola);
+// el orden actual y la ultima validacion valida se conservan.
+app.post('/api/grupos/validar-web', async (req, res) => {
+  if (!requireGlaTheme(res)) return;
+  const grupoKey = req.body?.grupo;
+  if (grupoKey !== 'grupo1' && grupoKey !== 'grupo2') return res.status(400).json({ ok: false, error: 'Grupo inválido.' });
+  const teamIds = Array.isArray(req.body?.teamIds) ? req.body.teamIds.map(String) : [];
+  try {
+    const result = await validarDesempateGrupo(grupoKey === 'grupo1' ? 'A' : 'B', teamIds);
+    res.json({ ok: true, ...result, validadoEn: new Date().toISOString() });
+  } catch (err) {
+    console.error('[GLA] VALIDAR WEB grupos:', err.message);
+    res.status(err.sinDatos ? 200 : 502).json({ ok: false, error: err.message, sinDatos: !!err.sinDatos });
   }
 });
 
@@ -364,10 +765,10 @@ for (const fase of ['grupos', 'playoffs']) {
         faseWeb: fase, snapshotsWeb, encuentros: result.encuentros, tanda: 'tanda1', ultimaActualizacionWeb,
       });
       broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId: 'sideTable', moduleState });
-      res.json({ ok: true, ...result, fase, snapshotsWeb, ultimaActualizacionWeb });
+      res.json({ ok: true, ...result, fase, snapshotsWeb, ultimaActualizacionWeb, ...torneoEdicionInfo(true) });
     } catch (err) {
       console.error(`[GLA] Error sincronizando resultados/${fase}:`, err.message);
-      res.status(502).json({ ok: false, error: err.message });
+      res.status(502).json({ ok: false, error: err.message, ...torneoEdicionInfo(true) });
     }
   });
 }
@@ -413,10 +814,10 @@ app.post('/api/estrellas/sync-web', async (req, res) => {
     patch.snapshots = { ...(current.snapshots || {}), [fuente]: snapshot };
     const moduleState = applyUpdate('estrellas', patch);
     broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId: 'estrellas', moduleState });
-    res.json({ ok: true, ...result, ...patch });
+    res.json({ ok: true, ...result, ...patch, ...torneoEdicionInfo(fuente === 'torneo') });
   } catch (err) {
     console.error('[GLA] Error sincronizando estrellas:', err.message);
-    res.status(502).json({ ok: false, error: err.message });
+    res.status(502).json({ ok: false, error: err.message, ...torneoEdicionInfo(req.query.fuente === 'torneo') });
   }
 });
 
@@ -485,12 +886,27 @@ function checkTiempoAdicionalAutoTake() {
   const scoreboardState = getModuleState('scoreboard');
   if (scoreboardState.status !== MODULE_STATUS.ON) return;
   if (tiempoAdicionalFiredByTheme.get(themeId)) return;
+  // "AUTOMÁTICO: SÍ/NO" (2026-09-27, pedido explicito del usuario) --
+  // ver shared/modules.js. Default 'si' (cloneDefaults ya lo garantiza)
+  // asi que un dato viejo sin este campo sigue disparando como siempre.
+  const tiempoAdicionalState = getModuleState('marcadorTiempoAdicional');
+  if (tiempoAdicionalState.data.autoTake === 'no') return;
   const limitMs = parseClockLimit(scoreboardState.data.clockEndText, parseClockLimit(DEFAULT_CLOCK_END_TEXT, null));
   if (limitMs == null) return;
   if (elapsedMs(scoreboardState.data.clock, limitMs) < limitMs) return;
   tiempoAdicionalFiredByTheme.set(themeId, true);
   try {
-    const moduleState = applyTake('marcadorTiempoAdicional', {});
+    // "clock" reiniciado a 0 (2026-09-27, BUG real: "a veces arranca
+    // mostrando/continuando un contador anterior" -- causa real: este TAKE
+    // automatico mandaba "{}" como data, sin tocar el reloj, asi que
+    // heredaba el "clock" que hubiera quedado de la ULTIMA vez que el
+    // modulo estuvo al aire -- el TAKE manual desde Master Control SI lo
+    // reinicia siempre, ver master-control/js/main.js "mod.autoRunClock"
+    // en el handler del boton TOMAR AL AIRE; el automatico nunca replico
+    // ese mismo reset). Mismo shape exacto que ese reset manual.
+    const moduleState = applyTake('marcadorTiempoAdicional', {
+      clock: { running: true, accumulatedMs: 0, startedAt: Date.now() },
+    });
     broadcast({
       type: WS_MSG.MODULE_UPDATE, moduleId: 'marcadorTiempoAdicional', moduleState,
       isAutoSave: false, isExplicitUpdate: true,
@@ -514,12 +930,73 @@ wss.on('connection', (socket) => {
       return;
     }
 
+    // Theme-aware (2026-10-08, ver "applyTeamChange" en las rutas REST).
     if (msg.type === 'UPDATE_TEAM_ABBR') {
       const { id, abbr, reset } = msg;
       if (id) {
-        const catalog = reset ? resetTeamAbbreviation(id) : updateTeamAbbreviation(id, abbr);
-        broadcast({ type: 'TEAM_CATALOG_UPDATE', catalog });
+        try {
+          applyTeamChange(
+            id,
+            () => (reset ? resetTeamAbbreviation(id) : updateTeamAbbreviation(id, abbr)),
+            { abbr: reset ? '' : String(abbr || '') },
+          );
+        } catch (err) {
+          console.error('[GLA] Error actualizando abreviatura:', err.message);
+        }
       }
+      return;
+    }
+
+    if (msg.type === 'TOGGLE_TEAM_VISIBILITY') {
+      const { id, visible } = msg;
+      if (id) {
+        try {
+          applyTeamChange(id, () => setTeamVisibility(id, visible !== false), { visible: visible !== false });
+        } catch (err) {
+          console.error('[GLA] Error actualizando visibilidad de equipo:', err.message);
+        }
+      }
+      return;
+    }
+
+    // BANCO GLOBAL DE ZOCALOS POR THEME (2026-10-08, Argentina Streamers):
+    // mismo contrato que UPDATE_GLOBAL_LOWER_THIRD_PRESETS (abajo, GLA) pero
+    // con el theme explicito -- nunca se mezcla con el banco de GLA.
+    if (msg.type === 'UPDATE_THEME_LOWER_THIRD_PRESETS') {
+      try {
+        const presets = setThemeLowerThirdPresets(msg.themeId, msg.presets);
+        broadcast({ type: 'THEME_LOWER_THIRD_PRESETS_UPDATE', themeId: msg.themeId, presets });
+      } catch (err) {
+        console.error('[GLA] Error guardando presets de zócalos del theme:', err.message);
+      }
+      return;
+    }
+
+    // PREVIEW (2026-09-27, pedido explicito del usuario: "ver la grafica
+    // antes de mandarla al aire, sin tocar el Program real"). Puro RELAY --
+    // nunca toca "status"/"data" autoritativo de ningun modulo (server/
+    // state.js queda completamente afuera de este mensaje), asi que el
+    // Program real (el que consume OBS/vMix) nunca se entera de que esto
+    // paso. Solo lo procesa la pagina nueva "/preview" (program/js/
+    // preview-main.js) -- el "/program" real ignora cualquier tipo de
+    // mensaje que no reconoce (ver su propio if/else if), asi que este tipo
+    // nuevo no necesita ningun cambio ahi.
+    if (msg.type === 'PREVIEW_MODULE') {
+      // "replay" (2026-10-21, PREVIEW GOL en GLA): vuelve a reproducir la
+      // animacion de un modulo ya mostrado en Preview (un oneShot no se
+      // repite solo). Ausente = comportamiento de siempre.
+      broadcast({ type: 'PREVIEW_MODULE', moduleId: msg.moduleId, data: msg.data, allData: msg.allData, replay: msg.replay === true });
+      return;
+    }
+
+    // BANCO GLOBAL DE PRESETS DE ZOCALOS (2026-09-27): el cliente manda el
+    // arreglo COMPLETO ya mutado (mismo criterio que el resto de los
+    // presets del proyecto, ver master-control/js/presets-helper.js) --
+    // el servidor solo persiste y difunde a todos los clientes conectados
+    // (multiples Master Control en simultaneo quedan sincronizados).
+    if (msg.type === 'UPDATE_GLOBAL_LOWER_THIRD_PRESETS') {
+      const presets = setGlobalLowerThirdPresets(msg.presets);
+      broadcast({ type: 'GLOBAL_LOWER_THIRD_PRESETS_UPDATE', presets });
       return;
     }
 
@@ -642,6 +1119,11 @@ wss.on('connection', (socket) => {
 
     const { type, moduleId, data, isAutoSave, isExplicitUpdate } = msg;
     if (!MODULE_IDS.includes(moduleId)) return;
+    // Modulos QUITADOS de GLA (2026-10-22, pedido explicito del usuario):
+    // Cronograma Hoy, Historial y Resultados Parciales ya no tienen tab en
+    // GLA (ver GLA_HIDDEN_MODULES en master-control/js/main.js); por las
+    // dudas tampoco se aceptan al aire. Argentina Streamers sin cambios.
+    if (type === WS_MSG.TAKE && getActiveThemeId() === 'gla' && GLA_REMOVED_MODULE_IDS.has(moduleId)) return;
 
     // TIEMPO ADICIONAL AUTOMATICO: rearma el latch (ver
     // checkTiempoAdicionalAutoTake arriba) exactamente en los 3 casos que
@@ -678,9 +1160,35 @@ wss.on('connection', (socket) => {
     // sin que el operador tenga que entrar a Brackets a mano. Solo GLA
     // (mismo criterio que "requireGlaTheme" en los endpoints REST de
     // arriba) -- Argentina Streamers nunca se toca.
-    if (moduleId === 'grupos' && (type === WS_MSG.TAKE || type === WS_MSG.UPDATE) && getActiveThemeId() === 'gla') {
+    // PARTIDOS (2026-10-22): desde hoy solo alimenta al SORTEO; tambien
+    // corre tras un TAKE/UPDATE de "sideTable" (ej. cambio de modo) para que
+    // el SORTEO nunca quede con equipos distintos a Grupos. "syncedFromGrupos"
+    // le avisa a Master Control que refresque su copia local del modulo.
+    if ((moduleId === 'grupos' || moduleId === 'sideTable') && (type === WS_MSG.TAKE || type === WS_MSG.UPDATE) && getActiveThemeId() === 'gla') {
       const sideTableState = syncBracketCrestsFromGrupos();
-      if (sideTableState) broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId: 'sideTable', moduleState: sideTableState });
+      if (sideTableState) broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId: 'sideTable', moduleState: sideTableState, syncedFromGrupos: true });
+    }
+
+    // MARCADOR PRINCIPAL / ENTRETIEMPO — EXCLUSION MUTUA (2026-09-27, pedido
+    // explicito del usuario: "nunca pueden coexistir al aire... si presiono
+    // TAKE de uno, el otro debe salir automaticamente"). Ya existia un
+    // boton dedicado para esto ("PASAR A ENTRETIEMPO", ver
+    // switchMarcadorEntretiempo en master-control/js/main.js) pero SOLO
+    // cubria ese boton puntual -- un TAKE normal desde el propio panel de
+    // cualquiera de los dos (sin pasar por ese boton) podia dejarlos
+    // superpuestos. Resuelto aca, a nivel servidor (unica fuente de verdad
+    // de "status"), para que valga sin importar que camino de UI disparo el
+    // TAKE -- mismo patron que el bloque de "grupos" de arriba.
+    const MARCADOR_MUTUALLY_EXCLUSIVE = { scoreboard: 'marcadorEntretiempo', marcadorEntretiempo: 'scoreboard' };
+    if (type === WS_MSG.TAKE && MARCADOR_MUTUALLY_EXCLUSIVE[moduleId]) {
+      const otherId = MARCADOR_MUTUALLY_EXCLUSIVE[moduleId];
+      if (getModuleState(otherId).status === MODULE_STATUS.ON) {
+        const otherState = applyOut(otherId);
+        broadcast({
+          type: WS_MSG.MODULE_UPDATE, moduleId: otherId, moduleState: otherState,
+          isAutoSave: false, isExplicitUpdate: true,
+        });
+      }
     }
   });
 });
@@ -697,6 +1205,57 @@ server.listen(PORT, HOST, () => {
   console.log(`[GLA] Master Control:  http://127.0.0.1:${PORT}/master`);
   console.log(`[GLA] Program/Overlay: http://127.0.0.1:${PORT}/program`);
   console.log(`[GLA] Persistencia: ${getPersistenceStatus().activeBackend}`);
+});
+
+// LOGGING DE CRASH (2026-09-26, pedido explicito del usuario: "el server
+// se cayo durante la transmision y tuve que reiniciarlo a mano... si no se
+// puede reproducir hoy, dejar logging suficientemente claro: hora, error,
+// stack"). Causa real evidente encontrada al revisar el arranque: no habia
+// NINGUN handler de "uncaughtException"/"unhandledRejection" -- el
+// comportamiento default de Node es TERMINAR EL PROCESO ante cualquiera de
+// los dos, sin dejar mas rastro que lo que haya scrolleado en la terminal
+// (que nadie mira en vivo). Cualquier error asincronico sin catch en
+// CUALQUIER handler de WS/HTTP (hay decenas) tumbaba el server entero sin
+// dejar evidencia. "logCrash" escribe a un archivo ademas de la consola
+// (sobrevive aunque se haya cerrado la terminal) -- no reemplaza la
+// persistencia de estado (server/persistence.js), es solo un log de texto
+// plano, liviano, append-only.
+const CRASH_LOG_PATH = path.join(process.env.GLA_DATA_DIR || path.join(process.cwd(), 'data'), 'server-crashes.log');
+function logCrash(kind, error) {
+  const line = `[${new Date().toISOString()}] ${kind}: ${error?.stack || error?.message || String(error)}\n`;
+  console.error(`[GLA CRASH] ${line.trimEnd()}`);
+  try {
+    fs.mkdirSync(path.dirname(CRASH_LOG_PATH), { recursive: true });
+    fs.appendFileSync(CRASH_LOG_PATH, line);
+  } catch (writeError) {
+    console.error('[GLA CRASH] No se pudo escribir server-crashes.log:', writeError.message);
+  }
+}
+
+// "uncaughtException" (error sincronico sin catch): el proceso queda en un
+// estado no confiable -- se loguea con el maximo detalle posible, se
+// intenta guardar el estado pendiente (mejor esfuerzo, con tope de tiempo
+// para no colgar el cierre) y se termina, IGUAL que el comportamiento
+// default de Node -- la diferencia es que ahora queda dicho por que, en vez
+// de un stack perdido en una terminal que nadie estaba mirando.
+process.on('uncaughtException', (error) => {
+  logCrash('uncaughtException', error);
+  Promise.race([
+    flushPersistence().catch(() => {}),
+    new Promise((resolve) => setTimeout(resolve, 2000)),
+  ]).finally(() => process.exit(1));
+});
+
+// "unhandledRejection" (promesa rechazada sin ".catch()"): a diferencia de
+// una excepcion sincronica, normalmente viene de UNA operacion asincronica
+// puntual (ej. un fetch de sincronizacion, una escritura) sin relacion con
+// el resto del estado en memoria -- cortar la transmision entera por eso
+// es peor que el problema original. Se loguea igual de completo pero NO se
+// termina el proceso (Node 15+ lo haria por default) -- consistente con el
+// pedido explicito: "no quiero que esto tumbe el servidor por un error
+// aislado", sin ocultar el error (sigue quedando registrado).
+process.on('unhandledRejection', (reason) => {
+  logCrash('unhandledRejection', reason instanceof Error ? reason : new Error(String(reason)));
 });
 
 let shuttingDown = false;

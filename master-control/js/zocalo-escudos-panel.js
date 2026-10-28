@@ -1,4 +1,11 @@
 import { TEAM_OPTIONS } from '../../shared/teams.js';
+// EQUIPOS VISIBLES (2026-10-21, pedido explicito del usuario, SOLO GLA):
+// un equipo oculto en EQUIPOS no se ofrece para nuevas selecciones; el ya
+// elegido se sigue mostrando (ocultar no borra ni rompe estados guardados).
+function isHiddenGlaOption(opt, currentId) {
+  return document.body.dataset.theme === 'gla' && opt.visible === false && opt.id !== (currentId || '');
+}
+
 import { renderPresetsControl } from './presets-helper.js';
 
 export function renderZocaloEscudosPanel(container, data, onDirty) {
@@ -138,6 +145,7 @@ export function renderZocaloEscudosPanel(container, data, onDirty) {
       labelA.textContent = 'IZQUIERDA (EQUIPO A)';
       const selectA = document.createElement('select');
       for (const opt of TEAM_OPTIONS) {
+        if (isHiddenGlaOption(opt, data.customTeamA)) continue;
         const option = document.createElement('option');
         option.value = opt.id;
         option.textContent = opt.label;
@@ -157,6 +165,7 @@ export function renderZocaloEscudosPanel(container, data, onDirty) {
       labelB.textContent = 'DERECHA (EQUIPO B)';
       const selectB = document.createElement('select');
       for (const opt of TEAM_OPTIONS) {
+        if (isHiddenGlaOption(opt, data.customTeamB)) continue;
         const option = document.createElement('option');
         option.value = opt.id;
         option.textContent = opt.label;

@@ -33,7 +33,7 @@ const PERIOD_PRESETS = [
 //
 // Devuelve una funcion de limpieza que hay que llamar al salir de este panel
 // (cambiar de tab) para frenar el intervalo que refresca el reloj en pantalla.
-export function renderScoreboardClockPanel(container, data, sendPatch, { onGoalPlus, onGoalMinus, onResetGoles, onResetLocal, onResetVisitante, golData, golOnDirty, golSaveOptions } = {}) {
+export function renderScoreboardClockPanel(container, data, sendPatch, { onGoalPlus, onGoalMinus, onResetGoles, onResetLocal, onResetVisitante, golData, golOnDirty, golSaveOptions, golRelativeToScoreboard, onPreviewGol, hideTeamColorAssign } = {}) {
   container.innerHTML = '';
 
   if (!data.clockEndText) data.clockEndText = DEFAULT_CLOCK_END_TEXT;
@@ -285,16 +285,31 @@ export function renderScoreboardClockPanel(container, data, sendPatch, { onGoalP
     golAdjustBox.className = 'clock-box';
     const golAdjustTitle = document.createElement('div');
     golAdjustTitle.className = 'clock-box-title';
-    golAdjustTitle.textContent = 'AJUSTE DE COMPOSICIÓN — ANIMACIÓN DE GOL';
+    // GLA (2026-10-21, pedido explicito del usuario): GOL ya sigue solo la
+    // composicion del Marcador (ver composedCompositionData en
+    // program/js/visual-compose.js) -- este control pasa a ser el AJUSTE
+    // FINO RELATIVO de GOL respecto del Marcador; su RESET no toca el
+    // Marcador. Argentina Streamers conserva el texto/comportamiento de siempre.
+    golAdjustTitle.textContent = golRelativeToScoreboard
+      ? 'AJUSTE FINO DE LA ANIMACIÓN DE GOL (relativo al Marcador)'
+      : 'AJUSTE DE COMPOSICIÓN — ANIMACIÓN DE GOL';
     golAdjustBox.appendChild(golAdjustTitle);
     const golAdjustBody = document.createElement('div');
     golAdjustBox.appendChild(golAdjustBody);
     renderCompositionControl(golAdjustBody, golData, golOnDirty || (() => {}), {
       title: '',
-      note: 'Mueve y escala la animación de GOL como una sola unidad.',
+      note: golRelativeToScoreboard
+        ? 'La animación de GOL ya acompaña automáticamente la posición y escala del MARCADOR. Esto es solo el ajuste fino propio de GOL; RESET no mueve el Marcador.'
+        : 'Mueve y escala la animación de GOL como una sola unidad.',
       ...(golSaveOptions || {}),
       elementSpec: { kind: 'composition', dataPath: [], xKey: 'compositionOffsetX', yKey: 'compositionOffsetY', scaleKey: 'compositionScale' },
     });
+    if (onPreviewGol) {
+      const previewRow = document.createElement('div');
+      previewRow.className = 'clock-buttons';
+      previewRow.appendChild(mkBtn('PREVIEW GOL (ver la animación en el monitor PREVIEW)', onPreviewGol));
+      golAdjustBox.appendChild(previewRow);
+    }
     container.appendChild(golAdjustBox);
   }
 
@@ -306,6 +321,7 @@ export function renderScoreboardClockPanel(container, data, sendPatch, { onGoalP
   // equipo se vuelva a elegir como local o visitante (en cualquier lado),
   // "master-control/js/main.js" autocompleta el color guardado. Volver a
   // apretar el boton con un color distinto pisa la asignacion anterior.
+  if (hideTeamColorAssign) return () => clearInterval(interval);
   const colorBox = document.createElement('div');
   // "clock-box-team-color" (2026-08-28, pedido explicito del usuario:
   // ocultar TODO control de color de camiseta/equipo del panel de MARCADOR

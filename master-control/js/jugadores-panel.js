@@ -11,11 +11,110 @@
 // teamId actualmente elegido en el Marcador (scoreboardData.teamA/teamB),
 // y cada columna opera sobre el plantel de ESE equipo.
 import { teamName } from '../../shared/teams.js';
+import { ARGENTINA_STREAMERS_THEME_ID } from '../../shared/themes.js';
 
 const TIPO_CARGA = { MANUAL: 'manual', WEB: 'web' };
 
+// ARGENTINA STREAMERS (2026-10-08, pedido explicito del usuario): cada lado
+// elige su fuente (WEB = CONVOCADOS de la rama elegida / MANUAL) y la
+// eleccion persiste con el plantel del EQUIPO (PUT .../preferencias). Solo
+// los dos equipos propios tienen datos en la web; su rama por defecto sale
+// del equipo. GLA conserva su flujo de siempre (gla.futbol), sin cambios.
+const RAMA_POR_EQUIPO = { 'argentina-streamers': 'masculino', 'argentina-streamers-fem': 'femenino' };
+const RAMA_LABELS = { masculino: 'MASCULINO', femenino: 'FEMENINO' };
+
 function emptyRow() {
   return { dorsal: '', nombre: '', apellido: '', apodo: '' };
+}
+
+function normalizeName(value) {
+  return String(value || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+function playerKey(jugador) {
+  return normalizeName(jugador.nombreCompleto || [jugador.nombre, jugador.apellido].filter(Boolean).join(' ') || jugador.apodo);
+}
+
+// "CARGAR LISTA": un jugador por linea, en orden. El numero inicial de la
+// linea ES EL DORSAL (2026-10-09, corregido -- pedido explicito del usuario:
+// "no me tomó las dorsales"; antes se descartaba como numeracion de lista):
+// "1- X", "18-X", "2 - X", "22 – X", "3 — X", "16. X", "21) X", "11 X",
+// "#10 X", "(10) X". Sin numero inicial -> sin dorsal (nunca se inventa).
+// Viñetas y espacios se limpian; las tildes se conservan. Primer palabra ->
+// nombre, resto -> apellido (editables despues como cualquier fila).
+const LIST_BULLET = /^[-–—•·*▪►>]+\s*/u;
+const LIST_DORSAL = /^(?:#\s*|\(\s*)?(\d{1,3})\s*\)?\s*(?:[.)\-–—:º°]+\s*|\s+)(?=\S)/u;
+export function parsePastedList(text) {
+  const jugadores = [];
+  const avisos = [];
+  const seen = new Map();
+  for (const raw of String(text || '').split(/\r?\n/)) {
+    let line = raw.trim();
+    while (LIST_BULLET.test(line)) line = line.replace(LIST_BULLET, '');
+    let dorsal = '';
+    const match = line.match(LIST_DORSAL);
+    if (match) {
+      dorsal = String(Number(match[1]));
+      line = line.slice(match[0].length);
+    }
+    line = line.replace(/\s+/g, ' ').trim();
+    if (!line || !/\p{L}/u.test(line)) continue;
+    const words = line.split(' ');
+    const jugador = { dorsal, nombre: words[0], apellido: words.slice(1).join(' '), apodo: '' };
+    const key = playerKey(jugador);
+    if (seen.has(key)) {
+      if (seen.get(key).dorsal !== dorsal) avisos.push(`${line} aparece dos veces en la lista con distinto dorsal — se usó la primera línea (#${seen.get(key).dorsal || 'sin dorsal'}).`);
+      continue;
+    }
+    seen.set(key, jugador);
+    jugadores.push(jugador);
+  }
+  return { jugadores, avisos };
+}
+
+function displayNameOf(jugador) {
+  return [jugador.nombre, jugador.apellido].filter(Boolean).join(' ') || jugador.apodo || jugador.nombreCompleto || '';
+}
+
+// Fusiona la lista pegada con el plantel actual (Argentina Streamers):
+// jugador nuevo -> se agrega al final; jugador ya cargado (mismo nombre,
+// sin importar mayusculas/tildes) -> solo se completa/actualiza su dorsal
+// (avisando si cambia uno que ya tenia), nunca se duplica. "nombreTV" se
+// descarta al cambiar el dorsal para que el servidor lo regenere ("18. X",
+// lo que leen Formacion/Tarjetas/Cambios). Dorsales repetidos entre
+// jugadores DISTINTOS se informan, nunca se fusionan ni se pisan.
+function mergeListaEnPlantel(draft, parsed) {
+  const avisos = [...parsed.avisos];
+  let agregados = 0;
+  let actualizados = 0;
+  const byKey = new Map(draft.map((j) => [playerKey(j), j]).filter(([key]) => key));
+  for (const jugador of parsed.jugadores) {
+    const existing = byKey.get(playerKey(jugador));
+    if (!existing) {
+      draft.push(jugador);
+      byKey.set(playerKey(jugador), jugador);
+      agregados += 1;
+      continue;
+    }
+    if (!jugador.dorsal || String(existing.dorsal || '').trim() === jugador.dorsal) continue;
+    if (String(existing.dorsal || '').trim()) {
+      avisos.push(`${displayNameOf(existing)}: dorsal ${existing.dorsal} reemplazado por ${jugador.dorsal} (según la lista).`);
+    }
+    existing.dorsal = jugador.dorsal;
+    delete existing.nombreTV;
+    actualizados += 1;
+  }
+  const porDorsal = new Map();
+  for (const j of draft) {
+    const dorsal = String(j.dorsal || '').trim();
+    if (!dorsal) continue;
+    if (!porDorsal.has(dorsal)) porDorsal.set(dorsal, []);
+    porDorsal.get(dorsal).push(displayNameOf(j));
+  }
+  for (const [dorsal, nombres] of porDorsal) {
+    if (nombres.length > 1) avisos.push(`DORSAL ${dorsal} REPETIDO: ${nombres.join(' / ')} — revisalo.`);
+  }
+  return { agregados, actualizados, avisos };
 }
 
 export function renderJugadoresPanel(container, scoreboardData) {
@@ -47,6 +146,7 @@ export function renderJugadoresPanel(container, scoreboardData) {
       .jug-status.success { color: #7ed67e; }
       .jug-status.error { color: #e88; }
       .jug-status.loading { color: #e5a93b; }
+      .jug-status.warning { color: #f0c060; }
       .jug-empty { font-size: 12px; color: #888; font-style: italic; }
       .jug-note { font-size: 11px; color: #888; line-height: 1.4; }
       .jug-count { font-size: 11px; color: #888; }
@@ -72,9 +172,10 @@ export function renderJugadoresPanel(container, scoreboardData) {
   columns.className = 'jug-columns';
   root.appendChild(columns);
 
+  const isArgentina = document.body.dataset.theme === ARGENTINA_STREAMERS_THEME_ID;
   const state = {
-    local: { tipo: TIPO_CARGA.MANUAL, draft: [], status: null, loaded: false },
-    visitante: { tipo: TIPO_CARGA.MANUAL, draft: [], status: null, loaded: false },
+    local: { tipo: TIPO_CARGA.MANUAL, rama: null, draft: [], status: null, avisos: [], loaded: false, snapshot: null, listaTexto: '' },
+    visitante: { tipo: TIPO_CARGA.MANUAL, rama: null, draft: [], status: null, avisos: [], loaded: false, snapshot: null, listaTexto: '' },
   };
 
   function teamIdFor(side) {
@@ -87,19 +188,56 @@ export function renderJugadoresPanel(container, scoreboardData) {
     try {
       const res = await fetch(`/api/planteles/${encodeURIComponent(teamId)}`);
       const body = await res.json().catch(() => null);
-      if (res.ok && body?.ok && body.snapshot?.jugadores?.length) {
-        state[side].draft = body.snapshot.jugadores.map((j) => ({ ...j }));
+      if (res.ok && body?.ok && body.snapshot) {
+        state[side].snapshot = body.snapshot;
+        state[side].draft = (body.snapshot.jugadores || []).map((j) => ({ ...j }));
       } else {
         state[side].draft = [];
       }
     } catch {
       state[side].draft = [];
     }
+    if (isArgentina) {
+      const prefs = state[side].snapshot?.preferencias || {};
+      state[side].tipo = prefs.modoCarga
+        || (state[side].snapshot?.fuente === 'argentina-streamers-web' ? TIPO_CARGA.WEB : TIPO_CARGA.MANUAL);
+      state[side].rama = prefs.ramaWeb || state[side].snapshot?.ramaWeb || RAMA_POR_EQUIPO[teamId] || null;
+    }
     state[side].loaded = true;
     renderColumn(side);
   }
 
-  async function guardarLista(side) {
+  async function guardarPreferencias(side) {
+    const teamId = teamIdFor(side);
+    if (!teamId || !isArgentina) return;
+    try {
+      await fetch(`/api/planteles/${encodeURIComponent(teamId)}/preferencias`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ modoCarga: state[side].tipo, ...(state[side].rama ? { ramaWeb: state[side].rama } : {}) }),
+      });
+    } catch {
+      // Sin red: la eleccion queda solo en pantalla hasta el proximo intento.
+    }
+  }
+
+  // "CARGAR LISTA" (Argentina Streamers): agrega los jugadores pegados al
+  // final de la lista actual (sin duplicar; a los ya cargados les completa
+  // el dorsal) y la guarda de inmediato.
+  async function importarLista(side) {
+    const parsed = parsePastedList(state[side].listaTexto);
+    const { agregados, actualizados, avisos } = mergeListaEnPlantel(state[side].draft, parsed);
+    state[side].avisos = avisos;
+    if (!agregados && !actualizados) {
+      state[side].status = { kind: 'error', text: 'LA LISTA NO TIENE CAMBIOS (vacía, o esos jugadores ya están cargados con el mismo dorsal).' };
+      renderColumn(side);
+      return;
+    }
+    state[side].listaTexto = '';
+    await guardarLista(side, `LISTA IMPORTADA Y GUARDADA — ${agregados} jugador(es) nuevo(s), ${actualizados} dorsal(es) completado(s) en jugadores ya cargados`);
+  }
+
+  async function guardarLista(side, successText) {
     const teamId = teamIdFor(side);
     if (!teamId) return;
     state[side].status = { kind: 'loading', text: 'Guardando...' };
@@ -113,8 +251,9 @@ export function renderJugadoresPanel(container, scoreboardData) {
       });
       const body = await res.json().catch(() => null);
       if (!res.ok || !body?.ok) throw new Error(body?.error || `HTTP ${res.status}`);
+      state[side].snapshot = body.snapshot;
       state[side].draft = body.snapshot.jugadores.map((j) => ({ ...j }));
-      state[side].status = { kind: 'success', text: `LISTA GUARDADA Y ASIGNADA A ${teamName(teamId) || teamId}` };
+      state[side].status = { kind: 'success', text: successText || `LISTA GUARDADA Y ASIGNADA A ${teamName(teamId) || teamId}` };
     } catch (error) {
       state[side].status = { kind: 'error', text: 'ERROR AL GUARDAR', detail: error.message };
     }
@@ -124,16 +263,41 @@ export function renderJugadoresPanel(container, scoreboardData) {
   async function sincronizarWeb(side) {
     const teamId = teamIdFor(side);
     if (!teamId) return;
-    state[side].status = { kind: 'loading', text: 'Sincronizando...' };
+    state[side].status = { kind: 'loading', text: isArgentina ? 'Consultando CONVOCADOS en argentinastreamers.com...' : 'Sincronizando...' };
     renderColumn(side);
     try {
-      const res = await fetch(`/api/planteles/${encodeURIComponent(teamId)}/sync-web`, { method: 'POST' });
+      const rama = isArgentina ? state[side].rama : null;
+      const url = `/api/planteles/${encodeURIComponent(teamId)}/sync-web${rama ? `?rama=${encodeURIComponent(rama)}` : ''}`;
+      const res = await fetch(url, { method: 'POST' });
       const body = await res.json().catch(() => null);
+      // Argentina Streamers: vacio / error / equipo sin datos web llegan con
+      // ok:false + mensaje y el plantel actual NO cambia (ni aca ni en el
+      // servidor).
+      if (isArgentina && body && body.ok === false && body.mensaje) {
+        let text = body.mensaje;
+        if (body.ultimoValido) {
+          text += ` (último dato válido: ${body.ultimoValido.cantidad} convocados del ${new Date(body.ultimoValido.fecha).toLocaleString('es-AR', { hour12: false })})`;
+        }
+        state[side].status = { kind: 'error', text, detail: body.detalle };
+        renderColumn(side);
+        return;
+      }
       if (!res.ok || !body?.ok) throw new Error(body?.error || `HTTP ${res.status}`);
+      state[side].snapshot = body.snapshot;
       state[side].draft = body.snapshot.jugadores.map((j) => ({ ...j }));
-      state[side].status = { kind: 'success', text: `PLANTEL ACTUALIZADO DESDE LA WEB (${body.snapshot.jugadores.length} jugadores)` };
+      const partido = body.partido ? ` — partido ${new Date(body.partido.fecha).toLocaleDateString('es-AR')} vs ${body.partido.rival}` : '';
+      state[side].status = {
+        kind: 'success',
+        text: isArgentina
+          ? `CONVOCADOS ${RAMA_LABELS[body.rama] || ''} CARGADOS (${body.snapshot.jugadores.length} jugadores${partido})`
+          : `PLANTEL ACTUALIZADO DESDE LA WEB (${body.snapshot.jugadores.length} jugadores)`,
+      };
     } catch (error) {
-      state[side].status = { kind: 'error', text: 'NO SE PUDO OBTENER DESDE LA WEB', detail: error.message };
+      state[side].status = {
+        kind: 'error',
+        text: isArgentina ? 'NO SE PUDO ACTUALIZAR — SE CONSERVAN LOS ÚLTIMOS DATOS VÁLIDOS' : 'NO SE PUDO OBTENER DESDE LA WEB',
+        detail: error.message,
+      };
     }
     renderColumn(side);
   }
@@ -172,12 +336,19 @@ export function renderJugadoresPanel(container, scoreboardData) {
       btn.className = 'jug-tipo-btn';
       btn.classList.toggle('active', state[side].tipo === tipo);
       btn.textContent = label2;
-      btn.addEventListener('click', () => { state[side].tipo = tipo; renderColumn(side); });
+      btn.addEventListener('click', () => {
+        state[side].tipo = tipo;
+        state[side].status = null;
+        renderColumn(side);
+        guardarPreferencias(side);
+      });
       tipoRow.appendChild(btn);
     }
     box.appendChild(tipoRow);
 
-    if (state[side].tipo === TIPO_CARGA.WEB) {
+    if (isArgentina && state[side].tipo === TIPO_CARGA.WEB) {
+      box.appendChild(buildArgentinaWebSection(side, teamId));
+    } else if (state[side].tipo === TIPO_CARGA.WEB) {
       const webActions = document.createElement('div');
       webActions.className = 'jug-actions';
       const syncBtn = document.createElement('button');
@@ -200,6 +371,12 @@ export function renderJugadoresPanel(container, scoreboardData) {
       status.textContent = state[side].status.text;
       if (state[side].status.detail) status.title = state[side].status.detail;
       box.appendChild(status);
+    }
+    for (const aviso of state[side].avisos || []) {
+      const warning = document.createElement('p');
+      warning.className = 'jug-status warning';
+      warning.textContent = `⚠ ${aviso}`;
+      box.appendChild(warning);
     }
 
     if (!state[side].loaded) {
@@ -233,22 +410,27 @@ export function renderJugadoresPanel(container, scoreboardData) {
       const dorsalInput = document.createElement('input');
       dorsalInput.placeholder = '#';
       dorsalInput.value = jugador.dorsal || '';
-      dorsalInput.addEventListener('input', () => { jugador.dorsal = dorsalInput.value; });
+      // Argentina Streamers: editar dorsal/nombre/apodo descarta el
+      // "nombreTV" guardado para que el servidor lo regenere al guardar
+      // ("18. X", lo que leen Formacion/Tarjetas/Cambios) -- antes quedaba
+      // el viejo (sin el dorsal nuevo). GLA conserva su nombreTV de siempre.
+      const touchName = () => { if (isArgentina) delete jugador.nombreTV; };
+      dorsalInput.addEventListener('input', () => { jugador.dorsal = dorsalInput.value; touchName(); });
 
       const nombreInput = document.createElement('input');
       nombreInput.placeholder = 'Nombre';
       nombreInput.value = jugador.nombre || '';
-      nombreInput.addEventListener('input', () => { jugador.nombre = nombreInput.value; });
+      nombreInput.addEventListener('input', () => { jugador.nombre = nombreInput.value; touchName(); });
 
       const apellidoInput = document.createElement('input');
       apellidoInput.placeholder = 'Apellido';
       apellidoInput.value = jugador.apellido || '';
-      apellidoInput.addEventListener('input', () => { jugador.apellido = apellidoInput.value; });
+      apellidoInput.addEventListener('input', () => { jugador.apellido = apellidoInput.value; touchName(); });
 
       const apodoInput = document.createElement('input');
       apodoInput.placeholder = 'Apodo / nombre TV (opcional)';
       apodoInput.value = jugador.apodo || '';
-      apodoInput.addEventListener('input', () => { jugador.apodo = apodoInput.value; });
+      apodoInput.addEventListener('input', () => { jugador.apodo = apodoInput.value; touchName(); });
 
       const removeBtn = document.createElement('button');
       removeBtn.type = 'button';
@@ -264,6 +446,10 @@ export function renderJugadoresPanel(container, scoreboardData) {
       rowsWrap.appendChild(row);
     });
     box.appendChild(rowsWrap);
+
+    if (isArgentina && state[side].tipo === TIPO_CARGA.MANUAL) {
+      box.appendChild(buildCargarListaSection(side));
+    }
 
     const actions = document.createElement('div');
     actions.className = 'jug-actions';
@@ -289,6 +475,96 @@ export function renderJugadoresPanel(container, scoreboardData) {
     actions.appendChild(saveBtn);
 
     box.appendChild(actions);
+  }
+
+  // CARGAR DESDE LA WEB (Argentina Streamers): CONVOCADOS de la rama. Solo
+  // los equipos propios tienen rama (y datos) en la web; cualquier otro
+  // equipo informa que no hay datos y conserva su lista manual.
+  function buildArgentinaWebSection(side, teamId) {
+    const wrap = document.createElement('div');
+    wrap.style.display = 'flex';
+    wrap.style.flexDirection = 'column';
+    wrap.style.gap = '8px';
+    const hasWebData = !!RAMA_POR_EQUIPO[teamId];
+
+    if (hasWebData) {
+      const ramaRow = document.createElement('div');
+      ramaRow.className = 'jug-tipo-carga';
+      for (const rama of ['masculino', 'femenino']) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'jug-tipo-btn';
+        btn.classList.toggle('active', state[side].rama === rama);
+        btn.textContent = `CONVOCADOS ${RAMA_LABELS[rama]}`;
+        btn.addEventListener('click', () => {
+          state[side].rama = rama;
+          renderColumn(side);
+          guardarPreferencias(side);
+        });
+        ramaRow.appendChild(btn);
+      }
+      wrap.appendChild(ramaRow);
+    }
+
+    const actions = document.createElement('div');
+    actions.className = 'jug-actions';
+    const syncBtn = document.createElement('button');
+    syncBtn.type = 'button';
+    syncBtn.className = 'jug-btn primary';
+    syncBtn.textContent = 'ACTUALIZAR DATOS / CARGAR DESDE WEB';
+    syncBtn.disabled = state[side].status?.kind === 'loading';
+    syncBtn.addEventListener('click', () => sincronizarWeb(side));
+    actions.appendChild(syncBtn);
+    wrap.appendChild(actions);
+
+    const note = document.createElement('p');
+    note.className = 'jug-note';
+    note.textContent = hasWebData
+      ? 'Fuente: sección CONVOCADOS de argentinastreamers.com (rama elegida arriba). Si la web todavía no publica convocados, la lista actual se conserva y no se inventa ningún jugador.'
+      : 'NO HAY DATOS WEB PARA ESTE EQUIPO — argentinastreamers.com solo publica Argentina Streamers (masculino/femenino). Usá CARGA MANUAL; la lista actual se conserva.';
+    wrap.appendChild(note);
+
+    const partido = state[side].snapshot?.partidoWeb;
+    if (state[side].snapshot?.fuente === 'argentina-streamers-web') {
+      const meta = document.createElement('p');
+      meta.className = 'jug-note';
+      const fecha = state[side].snapshot.ultimaActualizacion ? new Date(state[side].snapshot.ultimaActualizacion).toLocaleString('es-AR', { hour12: false }) : '';
+      meta.textContent = `Lista actual: convocados ${RAMA_LABELS[state[side].snapshot.ramaWeb] || ''}${partido ? ` del partido vs ${partido.rival}` : ''} (cargada ${fecha}).`;
+      wrap.appendChild(meta);
+    }
+    return wrap;
+  }
+
+  function buildCargarListaSection(side) {
+    const wrap = document.createElement('div');
+    wrap.style.display = 'flex';
+    wrap.style.flexDirection = 'column';
+    wrap.style.gap = '6px';
+    const label = document.createElement('p');
+    label.className = 'jug-note';
+    label.textContent = 'CARGAR LISTA: pegá un jugador por línea; el número inicial es el DORSAL ("18- Kito Shelby", "16. Facu Navajas", "11 Ian Diaz"). Sin número se importa sin dorsal. Se agregan al final sin duplicar (a los ya cargados se les completa el dorsal) y se guardan al importar.';
+    const textarea = document.createElement('textarea');
+    textarea.rows = 5;
+    textarea.placeholder = '1- JUAN PÉREZ\n18-MARTÍN LÓPEZ\nNICOLÁS GÓMEZ';
+    textarea.value = state[side].listaTexto;
+    textarea.style.background = '#111';
+    textarea.style.border = '1px solid #444';
+    textarea.style.color = '#fff';
+    textarea.style.borderRadius = '4px';
+    textarea.style.padding = '6px';
+    textarea.style.fontSize = '12px';
+    textarea.addEventListener('input', () => { state[side].listaTexto = textarea.value; });
+    const importBtn = document.createElement('button');
+    importBtn.type = 'button';
+    importBtn.className = 'jug-btn primary';
+    importBtn.textContent = 'CARGAR LISTA';
+    importBtn.disabled = state[side].status?.kind === 'loading';
+    importBtn.addEventListener('click', () => importarLista(side));
+    const actions = document.createElement('div');
+    actions.className = 'jug-actions';
+    actions.appendChild(importBtn);
+    wrap.append(label, textarea, actions);
+    return wrap;
   }
 
   renderColumn('local');

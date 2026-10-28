@@ -172,62 +172,6 @@ body {
 }
 .mc-theme-banner[hidden] { display: none; }
 
-/* PERFIL DE PARTIDO (2026-09-05) -- misma franja de ancho completo que el
-   banner de arriba, pero siempre visible en Argentina Streamers (oculta
-   por completo con [hidden] en GLA, ver setupMatchProfileBar en main.js). */
-.mc-profile-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  background: #14202c;
-  border-bottom: 2px solid var(--gold-dim);
-  padding: 10px 16px;
-}
-.mc-profile-bar[hidden] { display: none; }
-.mc-profile-label {
-  font-family: var(--font-display);
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: .5px;
-  color: var(--gold-bright);
-  white-space: nowrap;
-}
-.mc-profile-select {
-  background: #0d1620;
-  color: #fff;
-  border: 1px solid var(--border-1);
-  border-radius: 4px;
-  padding: 6px 10px;
-  font-family: var(--font-display);
-  font-size: 12px;
-  font-weight: 700;
-  min-width: 220px;
-}
-.btn-profile {
-  font-family: var(--font-display);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: .5px;
-  padding: 8px 12px;
-  border-radius: 4px;
-  border: 1px solid var(--gold-dim);
-  background: transparent;
-  color: var(--gold-bright);
-  cursor: pointer;
-  white-space: nowrap;
-}
-.btn-profile:hover { background: var(--hover-bg); }
-.btn-profile:disabled { opacity: .4; cursor: not-allowed; }
-.btn-profile-danger { border-color: #c0392b; color: #ff6b5e; }
-.btn-profile-danger:hover { background: rgba(192, 57, 41, .15); }
-.mc-profile-status {
-  font-size: 11px;
-  font-weight: 700;
-  color: #9fd88a;
-  white-space: nowrap;
-}
-
 .btn-stop-all {
   font-family: var(--font-display);
   font-size: 13px;
@@ -384,6 +328,29 @@ body {
     border-top: 1px solid var(--border-1);
   }
 }
+
+/* "PREVIEW | PROGRAM" (2026-09-27, pedido explicito del usuario): toggle
+   simple arriba del monitor -- mismos colores/convencion "on-air" (dorado)
+   que ya usa el resto del panel para el estado activo. */
+.monitor-mode-toggle {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.monitor-mode-btn {
+  flex: 1;
+  background: transparent;
+  border: 1px solid var(--border-1);
+  color: var(--grey);
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.monitor-mode-btn:hover { background: var(--hover-bg); }
+.monitor-mode-btn.active { border-color: var(--gold); color: var(--gold-bright); background: rgba(212, 175, 55, 0.1); }
 
 .preview-frame {
   position: relative;
@@ -821,6 +788,10 @@ body[data-theme='argentinaStreamers'] .clock-box-team-color {
 .btn-update:hover { background: var(--hover-bg); }
 .btn-out { background: #1c1c1e; border: 1px solid var(--border-3); color: var(--grey); }
 .btn-out:hover { background: var(--border-1); color: var(--white); }
+/* PREVIEW (2026-09-27): deliberadamente NEUTRO, sin dorado -- no dispara
+   onAir, no deberia leerse visualmente como una accion "en vivo". */
+.btn-preview { background: transparent; border: 1px solid var(--border-3); color: var(--grey); }
+.btn-preview:hover { background: var(--hover-bg); color: var(--white); }
 .formation-editor {
   display: grid;
   gap: 18px;
@@ -1524,6 +1495,19 @@ body[data-theme='argentinaStreamers'] .clock-box-team-color {
 }
 .marcador-entretiempo-toggle:hover { background: var(--hover-bg); }
 .marcador-entretiempo-toggle:disabled { opacity: 0.5; cursor: default; }
+/* SHOOTOUT on-air (2026-09-27): mismo indicador (punto dorado) que ya usa
+   ".marcador-subnav-btn.on-air" arriba, aplicado a este toggle puntual. */
+.shootout-toggle.on-air { border: 1px solid var(--gold); background: rgba(212, 175, 55, 0.12); }
+.shootout-toggle.on-air::after {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold-bright);
+  margin-left: 7px;
+  vertical-align: middle;
+}
 
 /* "FIN DEL CONTADOR" / PERSONALIZADO de periodo: mismo look que
    ".clock-manual input" pero mas anchos (necesitan mostrar "MM:SS" o

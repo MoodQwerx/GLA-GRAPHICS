@@ -16,6 +16,8 @@
 // desde el navegador de Master Control) para evitar CORS y no repetir el
 // pedido por cada cliente conectado.
 
+import { loadPersistentValue, schedulePersistentWrite } from './persistence.js';
+
 const GLA_FUTBOL_URL = 'https://gla.futbol/';
 const FETCH_TIMEOUT_MS = 15000;
 
@@ -184,9 +186,44 @@ function normalizeTeamAlias(str) {
   return words.join(' ');
 }
 
-const LIGHTNING_TOURNAMENT_NAME = 'relampago #2 2026';
+// ACTUALIZADOR DE DATOS (2026-10-21, pedido explicito del usuario):
+// edicion del TORNEO de la que toman datos TODOS los syncs de GLA con
+// FUENTE = TORNEO (Goleadores/Asistidores/Jugadores en modo torneo,
+// Posiciones Torneo, Grupos A/B, Resultados grupos/playoffs, Estrellas en
+// modo torneo). Unica configuracion central, persistida; reemplaza el
+// "Relampago #3" que estaba fijo en codigo (sigue siendo el default, asi
+// nada cambia hasta que el operador elija otra edicion).
+// Identificacion robusta: el "id" estable que gla.futbol publica para cada
+// torneo en "product.lightningTournaments[]" (relevado en vivo el
+// 2026-10-21); solo si ese id no aparece se acepta, como respaldo, una
+// coincidencia UNICA por numero de edicion en el nombre ("Relámpago #N").
+export const GLA_TORNEO_EDICIONES = [
+  { key: 'relampago-1', label: 'GLA RELÁMPAGO #1', numero: 1, webId: '6a559debf3f5e6129751867a' },
+  { key: 'relampago-2', label: 'GLA RELÁMPAGO #2', numero: 2, webId: '6a73a391f5c10432af94421b' },
+  { key: 'relampago-3', label: 'GLA RELÁMPAGO #3', numero: 3, webId: '6a8471c223d8726062c726ff' },
+  { key: 'relampago-4', label: 'GLA RELÁMPAGO #4', numero: 4, webId: '6ac2dcf72e0f4806ee6bfe60' },
+];
+const DEFAULT_TORNEO_EDICION = 'relampago-3';
 
-export function findLightningTournament(product) {
+let glaDataSource = await loadPersistentValue('gla_data_source', 'gla-data-source.json', {});
+if (!glaDataSource || typeof glaDataSource !== 'object') glaDataSource = {};
+
+export function getTorneoEdicion() {
+  return GLA_TORNEO_EDICIONES.find((e) => e.key === glaDataSource.torneoEdicion)
+    || GLA_TORNEO_EDICIONES.find((e) => e.key === DEFAULT_TORNEO_EDICION);
+}
+
+// Solo guarda la preferencia: NO dispara ningun sync (el operador
+// actualiza cada modulo con su propio ACTUALIZAR DESDE WEB).
+export function setTorneoEdicion(key) {
+  const edicion = GLA_TORNEO_EDICIONES.find((e) => e.key === key);
+  if (!edicion) throw new Error(`Edición desconocida: ${key}`);
+  glaDataSource = { ...glaDataSource, torneoEdicion: edicion.key, actualizado: new Date().toISOString() };
+  schedulePersistentWrite('gla_data_source', glaDataSource);
+  return edicion;
+}
+
+function lightningCandidates(product) {
   const candidates = [];
   if (Array.isArray(product?.lightningTournaments)) candidates.push(...product.lightningTournaments);
   if (Array.isArray(product?.seasons)) {
@@ -194,9 +231,47 @@ export function findLightningTournament(product) {
       if (Array.isArray(season?.tournaments)) candidates.push(...season.tournaments);
     }
   }
-  const tournament = candidates.find((item) => normalizeKey(item?.name) === normalizeKey(LIGHTNING_TOURNAMENT_NAME))
-    || candidates.find((item) => normalizeKey(item?.name).includes('relampago 2'));
-  if (!tournament) throw new Error('No se encontro el torneo Relampago #2 2026 en gla.futbol.');
+  return candidates;
+}
+
+function relampagoNumber(name) {
+  const match = normalizeKey(name).match(/relampago\s*#?\s*(\d+)/);
+  return match ? Number(match[1]) : null;
+}
+
+// Una edicion "anunciada" pero todavia sin nada cargado (ej. Relampago #4
+// el 2026-10-21: existe, status "upcoming", 0 equipos/grupos/partidos/
+// estadisticas) no es una fuente valida: se informa y se conserva lo que
+// ya estaba cargado, nunca se pisa con tablas vacias.
+function hasPublishedData(tournament) {
+  const lists = [tournament?.teams, tournament?.groups, tournament?.knockoutMatches, tournament?.tournamentStandings];
+  const stats = tournament?.stats && typeof tournament.stats === 'object' ? Object.values(tournament.stats) : [];
+  return [...lists, ...stats].some((list) => Array.isArray(list) && list.length > 0);
+}
+
+export function resolveTorneoEdicion(product, edicion = getTorneoEdicion()) {
+  const candidates = lightningCandidates(product);
+  let tournament = candidates.find((item) => item?.id && item.id === edicion.webId) || null;
+  let metodo = 'id';
+  if (!tournament) {
+    const byNumber = candidates.filter((item) => relampagoNumber(item?.name) === edicion.numero);
+    if (byNumber.length === 1) {
+      tournament = byNumber[0];
+      metodo = 'nombre';
+    }
+  }
+  return { tournament, metodo, publicado: !!tournament && hasPublishedData(tournament) };
+}
+
+export function findLightningTournament(product) {
+  const edicion = getTorneoEdicion();
+  const { tournament, publicado } = resolveTorneoEdicion(product, edicion);
+  if (!tournament) {
+    throw new Error(`${edicion.label} no existe en gla.futbol (id ${edicion.webId}) — se conservan los datos actuales. Elegí otra edición en ACTUALIZADOR DE DATOS.`);
+  }
+  if (!publicado) {
+    throw new Error(`${edicion.label} ("${tournament.name}") todavía no publica datos en gla.futbol (estado: ${tournament.status || 'sin estado'}) — se conservan los datos actuales.`);
+  }
   return tournament;
 }
 

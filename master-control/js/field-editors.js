@@ -96,13 +96,20 @@ export function renderFields(container, fields, data, onDirty, { hideAdjustFor }
       wrap.appendChild(textarea);
     } else if (field.type === FIELD_TYPES.SELECT) {
       const select = document.createElement('select');
+      const currentValue = data[field.key] ?? '';
       for (const opt of field.options) {
+        // "visible" (2026-09-26, MOSTRAR/OCULTAR EQUIPOS -- ver
+        // shared/teams.js): generico, no especifico de equipos -- cualquier
+        // "options" con "visible:false" en una entrada la salta aca, salvo
+        // que sea el valor YA seleccionado (pedido explicito: "no romper
+        // ese estado, simplemente evitar ofrecerlo en nuevas selecciones").
+        if (opt.visible === false && opt.id !== currentValue) continue;
         const option = document.createElement('option');
         option.value = opt.id;
         option.textContent = opt.label;
         select.appendChild(option);
       }
-      select.value = data[field.key] ?? '';
+      select.value = currentValue;
       select.addEventListener('change', () => {
         data[field.key] = select.value;
         onDirty();

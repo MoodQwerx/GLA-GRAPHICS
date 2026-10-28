@@ -3,7 +3,7 @@ import { applyFittedText, updateFittedTextWithTransition, readTextAdjust } from 
 import { resolveTeamTokens } from '../../../shared/text-tokens.js';
 import { getActiveThemeId } from '../theme-client.js';
 import { DEFAULT_THEME_ID } from '../../../shared/themes.js';
-import { GLA_SEGOE_BOLD_FAMILY } from '../program-fonts.js';
+import { GLA_SEGOE_BOLD_FAMILY, withGlaSegoeRegular } from '../program-fonts.js';
 
 const VIDEO_SRC = '/assets/zocalos/zocalo-corto-simple-alpha.mp4';
 
@@ -53,9 +53,9 @@ export default function renderShortSimple(contentEl, data, justTaken, onOneShotE
   // ver el mismo criterio en program/js/renderers/longSimple.js.
   const family = isArgentinaStreamers ? undefined : GLA_SEGOE_BOLD_FAMILY;
 
-  updateFittedTextWithTransition(textEl, newText, oldText, {
+  updateFittedTextWithTransition(textEl, newText, oldText, withGlaSegoeRegular({
     maxFont: TEXT_MAX_FONT, minFont: TEXT_MIN_FONT, maxWidth, weight: 800, family,
-  }, readTextAdjust(data.textAdjust, 'text'), !justTaken);
+  }), readTextAdjust(data.textAdjust, 'text'), !justTaken);
 
   contentEl._prevText = newText;
 }

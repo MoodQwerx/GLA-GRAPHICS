@@ -1,4 +1,12 @@
 import { TEAM_OPTIONS, crestFile, teamName } from '../../shared/teams.js';
+import { createGlaTorneoSourceNote, glaTorneoLabel } from './gla-torneo-source.js';
+// EQUIPOS VISIBLES (2026-10-21, pedido explicito del usuario, SOLO GLA):
+// un equipo oculto en EQUIPOS no se ofrece para nuevas selecciones; el ya
+// elegido se sigue mostrando (ocultar no borra ni rompe estados guardados).
+function isHiddenGlaOption(opt, currentId) {
+  return document.body.dataset.theme === 'gla' && opt.visible === false && opt.id !== (currentId || '');
+}
+
 import { escapeHtml } from '../../shared/dom-utils.js';
 import { mountAdjustControl } from './field-editors.js';
 
@@ -27,11 +35,14 @@ const ADJUST_COLUMNS = [
 // nunca renumeradas) aca, aunque el asset de Program solo tenga
 // casilleros para 6 (pagina 1, posiciones 1-6) o 5 (pagina 2, posiciones
 // 7-11) a la vez -- ver PAGINAS mas abajo y program/js/renderers/posiciones.js.
-const TOTAL_ROWS = 11;
+// 11 -> 16 filas + "POSICIONES 12-16" (2026-10-22): la liga de gla.futbol
+// ya tiene 16 equipos (ver POSICIONES_ROWS en server/glaFutbolSync.js).
+const TOTAL_ROWS = 16;
 
 const PAGINAS = [
   { id: 'pagina1', label: 'POSICIONES 1-6', desde: 1, hasta: 6 },
   { id: 'pagina2', label: 'POSICIONES 7-11', desde: 7, hasta: 11 },
+  { id: 'pagina3', label: 'POSICIONES 12-16', desde: 12, hasta: 16 },
 ];
 
 // Mismo orden/nombres de columna que el asset real (ver overlay.css /
@@ -50,7 +61,7 @@ const STAT_COLS = [
 ];
 
 function teamOptionsMarkup(selectedId) {
-  return `<option value="">Sin equipo</option>` + TEAM_OPTIONS.map((opt) => (
+  return `<option value="">Sin equipo</option>` + TEAM_OPTIONS.filter((opt) => !isHiddenGlaOption(opt, selectedId)).map((opt) => (
     `<option value="${opt.id}" ${opt.id === selectedId ? 'selected' : ''}>${opt.label}</option>`
   )).join('');
 }
@@ -105,7 +116,9 @@ export function renderPosicionesPanel(containerEl, data, onChanged, options = {}
   const totalRows = options.totalRows || TOTAL_ROWS;
   const paginas = options.paginas || PAGINAS;
   const syncEndpoint = options.syncEndpoint || '/api/posiciones/sync-web';
-  const tableLabel = options.tableLabel || 'TABLA GLOBAL';
+  // "torneoSource" (2026-10-21, ACTUALIZADOR DE DATOS): el titulo y la
+  // leyenda salen de la edicion central, ya no de un "#3" fijo.
+  const tableLabel = options.torneoSource ? `TABLA DE TORNEO — ${glaTorneoLabel()}` : (options.tableLabel || 'TABLA GLOBAL');
   const saveOptions = options.saveOptions;
   if (!Array.isArray(data.filas) || data.filas.length !== totalRows) {
     data.filas = Array.from({ length: totalRows }, (_, i) => (
@@ -142,9 +155,9 @@ export function renderPosicionesPanel(containerEl, data, onChanged, options = {}
       if (!res.ok || !body?.ok) throw new Error(body?.error || `HTTP ${res.status}`);
       data.filas = body.filas;
       data.ultimaActualizacionWeb = body.ultimaActualizacionWeb;
-      setSyncStatus({ kind: 'success', text: 'DATOS ACTUALIZADOS', unmatchedTeams: body.unmatchedTeams || [] });
+      setSyncStatus({ kind: 'success', text: `DATOS ACTUALIZADOS${body.edicion ? ` (${body.edicion.label})` : ''}`, unmatchedTeams: body.unmatchedTeams || [] });
     } catch (err) {
-      setSyncStatus({ kind: 'error', text: 'ERROR AL ACTUALIZAR', detail: err.message });
+      setSyncStatus({ kind: 'error', text: options.torneoSource ? `ERROR AL ACTUALIZAR — ${err.message}` : 'ERROR AL ACTUALIZAR', detail: err.message });
     }
     onChanged();
     render();
@@ -164,6 +177,7 @@ export function renderPosicionesPanel(containerEl, data, onChanged, options = {}
         <button type="button" class="performance-sync-btn" id="pos-sync-btn" ${syncStatus?.kind === 'loading' ? 'disabled' : ''}>ACTUALIZAR DESDE WEB</button>
         ${statusMarkup}
         ${updatedMarkup}
+        ${options.torneoSource ? `<span class="performance-sync-updated-at gla-torneo-source">FUENTE ACTUAL: ${escapeHtml(glaTorneoLabel())}</span>` : ''}
       </div>
       ${warningMarkup}
     `;
@@ -461,7 +475,7 @@ export function renderPosicionesTorneoPanel(containerEl, data, onChanged, saveOp
     totalRows: 6,
     paginas: [{ id: 'pagina1', label: 'POSICIONES 1-6', desde: 1, hasta: 6 }],
     syncEndpoint: '/api/posiciones-torneo/sync-web',
-    tableLabel: 'TABLA DE TORNEO — GLA RELAMPAGO #2',
+    torneoSource: true,
     saveOptions,
   });
 }

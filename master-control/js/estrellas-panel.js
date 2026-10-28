@@ -2,6 +2,7 @@ import { crestFile, teamName } from '../../shared/teams.js';
 import { formatPlayerName, PLAYER_NAME_FORMAT } from '../../shared/player-name-format.js';
 import { mountAdjustControl } from './field-editors.js';
 import { ARGENTINA_STREAMERS_THEME_ID } from '../../shared/themes.js';
+import { createGlaTorneoSourceNote, glaTorneoLabel } from './gla-torneo-source.js';
 
 // "AJUSTE DE TEXTOS" (2026-08-15, auditoria completa): Estrellas tiene
 // estructura FIJA (2 jugadores, siempre los mismos 8 campos + el titulo),
@@ -46,7 +47,7 @@ function snapshotFromData(data) {
   ]));
 }
 
-export function renderEstrellasPanel(containerEl, data, scoreboardData, onChanged, saveOptions) {
+export function renderEstrellasPanel(containerEl, data, scoreboardData, onChanged, saveOptions, siblingTables) {
   // "isArgentina" (2026-09-10, pedido explicito del usuario: "Estrellas...
   // misma lógica de Ficha Jugador" -- identidad ESTABLE por jugadorId, no
   // solo texto). Declarado ARRIBA de todo (no cerca de "loadRosterOptions",
@@ -137,6 +138,32 @@ export function renderEstrellasPanel(containerEl, data, scoreboardData, onChange
     </section>
   `;
 
+  // TÍTULO MANUAL (2026-10-09, pedido explicito del usuario, SOLO Argentina
+  // Streamers): texto libre, independiente de jugadores/estadisticas (ni la
+  // carga de jugadores ni "ESTRELLA POR"/web lo tocan). Vacio = titulo por
+  // defecto. GLA conserva su titulo fijo de siempre.
+  if (isArgentina) {
+    if (typeof data.titulo !== 'string') data.titulo = 'LOS MEJORES DE CADA EQUIPO';
+    const tituloField = document.createElement('div');
+    tituloField.className = 'estrellas-format-field';
+    const tituloLabel = document.createElement('label');
+    tituloLabel.htmlFor = 'est-titulo';
+    tituloLabel.textContent = 'TÍTULO';
+    const tituloInput = document.createElement('input');
+    tituloInput.type = 'text';
+    tituloInput.id = 'est-titulo';
+    tituloInput.className = 'est-input-text';
+    tituloInput.maxLength = 60;
+    tituloInput.value = data.titulo;
+    tituloInput.placeholder = 'LOS MEJORES DE CADA EQUIPO';
+    tituloInput.addEventListener('input', () => {
+      data.titulo = tituloInput.value;
+      onChanged();
+    });
+    tituloField.append(tituloLabel, tituloInput);
+    containerEl.prepend(tituloField);
+  }
+
   const syncRow = document.createElement('div');
   syncRow.className = 'performance-sync';
   const syncButton = document.createElement('button');
@@ -166,17 +193,19 @@ export function renderEstrellasPanel(containerEl, data, scoreboardData, onChange
       document.getElementById('est-visitante-a').value = data.visitanteA ?? 0;
       document.getElementById('est-visitante-pj').value = data.visitantePJ ?? 0;
       syncStatus.className = 'performance-sync-status success';
-      syncStatus.textContent = 'MEJORES JUGADORES ACTUALIZADOS';
+      syncStatus.textContent = `MEJORES JUGADORES ACTUALIZADOS${body.edicion ? ` (${body.edicion.label})` : ''}`;
       onChanged();
     } catch (error) {
       syncStatus.className = 'performance-sync-status error';
-      syncStatus.textContent = 'ERROR AL ACTUALIZAR';
+      syncStatus.textContent = data.fuente === 'torneo' ? `ERROR AL ACTUALIZAR — ${error.message}` : 'ERROR AL ACTUALIZAR';
       syncStatus.title = error.message;
     } finally {
       syncButton.disabled = false;
     }
   });
   syncRow.append(syncButton, syncStatus);
+  // ACTUALIZADOR DE DATOS (2026-10-21, solo GLA con FUENTE = TORNEO).
+  if (!isArgentina && data.fuente === 'torneo') syncRow.appendChild(createGlaTorneoSourceNote());
   // "isArgentina" (2026-09-10, pedido explicito del usuario: "Estrellas...
   // misma lógica de Ficha Jugador" -- el sync de gla.futbol de arriba es
   // exclusivo de GLA, nunca funciono para Argentina Streamers, que tiene su
@@ -194,10 +223,168 @@ export function renderEstrellasPanel(containerEl, data, scoreboardData, onChange
     asSyncSection.style.alignItems = 'stretch';
     asSyncSection.style.gap = '8px';
 
+    // ESTRELLA POR (2026-10-08, pedido explicito del usuario): por cada lado
+    // con equipo web (Argentina Streamers -> MASCULINO, Argentina Streamers
+    // FEM -> FEMENINO): GOLES = primer jugador de la tabla de GOLEADORES de
+    // esa rama, ASISTENCIAS = primero de ASISTIDORES, AMBOS = primero de
+    // CONTRIBUCIONES (G+A) de ESTADISTICAS. Para GOLES/ASISTENCIAS se manda
+    // el primer jugador de las tablas LOCALES de esos modulos (ya
+    // actualizadas por el operador); los numeros G/A/PJ salen del perfil
+    // web del elegido. Un lado con rival no se toca (carga manual), y
+    // vacio/error tampoco pisan nada. Cambiar el criterio recalcula desde el
+    // cache (no consulta la web); el boton ACTUALIZAR DESDE WEB si la relee.
+    const CRITERIO_LABELS = { goles: 'GOLES', asistencias: 'ASISTENCIAS', ambos: 'AMBOS (G+A)' };
+    if (!CRITERIO_LABELS[data.estrellaPor]) data.estrellaPor = 'ambos';
+
+    const criterioField = document.createElement('label');
+    criterioField.className = 'estrellas-format-field';
+    const criterioLabel = document.createElement('span');
+    criterioLabel.textContent = 'ESTRELLA POR (equipos con datos web)';
+    criterioLabel.style.color = '#d5a753';
+    criterioLabel.style.fontSize = '12px';
+    criterioLabel.style.fontWeight = '700';
+    const criterioSelect = document.createElement('select');
+    criterioSelect.className = 'estrellas-format-select';
+    for (const [value, label] of Object.entries(CRITERIO_LABELS)) {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = label;
+      criterioSelect.appendChild(option);
+    }
+    criterioSelect.value = data.estrellaPor;
+    criterioField.append(criterioLabel, criterioSelect);
+
+    const leaderButton = document.createElement('button');
+    leaderButton.type = 'button';
+    leaderButton.className = 'performance-sync-btn';
+    leaderButton.textContent = 'ACTUALIZAR DESDE WEB';
+    const leaderStatusEl = document.createElement('div');
+    leaderStatusEl.style.display = 'flex';
+    leaderStatusEl.style.flexDirection = 'column';
+    leaderStatusEl.style.gap = '4px';
+
+    // Primer jugador de la tabla LOCAL de un modulo (Goleadores/Asistidores)
+    // para una rama: la tabla visible si esa es su rama, si no el slot
+    // guardado de esa rama. Mismo orden que el grafico (mayor numero
+    // primero, empates en orden de carga). Filas del equipo de la OTRA rama
+    // se ignoran (datos mezclados de una version anterior).
+    const RAMA_TEAM = { masculino: 'argentina-streamers', femenino: 'argentina-streamers-fem' };
+    function localLeader(moduleData, rama, statKey) {
+      if (!moduleData) return null;
+      const rows = moduleData.ramaWeb === rama ? moduleData.jugadores : moduleData.snapshotsRama?.[rama]?.jugadores;
+      const otherTeam = RAMA_TEAM[rama === 'masculino' ? 'femenino' : 'masculino'];
+      const valid = (Array.isArray(rows) ? rows : []).filter((row) => row && String(row.nombre || '').trim() && row.teamId !== otherTeam);
+      if (!valid.length) return null;
+      let best = valid[0];
+      for (const row of valid) if ((Number(row[statKey]) || 0) > (Number(best[statKey]) || 0)) best = row;
+      return { webId: best.webId || null, nombre: best.nombre, count: Number(best[statKey]) || 0 };
+    }
+    function lideresLocales() {
+      const out = {};
+      for (const rama of ['masculino', 'femenino']) {
+        out[rama] = {
+          goles: localLeader(siblingTables?.goleadores, rama, 'g'),
+          asistencias: localLeader(siblingTables?.asistidores, rama, 'a'),
+        };
+      }
+      return out;
+    }
+
+    function applyLeader(side, result) {
+      const prefix = side === 'local' ? 'local' : 'visitante';
+      data[`${prefix}Jugador`] = result.jugador;
+      data[`${prefix}Nombre`] = formatPlayerName(result.jugador, data.formatoJugador);
+      data[`${prefix}G`] = result.g ?? 0;
+      data[`${prefix}A`] = result.a ?? 0;
+      data[`${prefix}PJ`] = result.pj ?? 0;
+      data[`${prefix}JugadorId`] = '';
+      data[`${prefix}JugadorWebId`] = result.jugador?.webId || '';
+    }
+
+    const ORIGEN_LABELS = { goles: 'GOLEADORES', asistencias: 'ASISTIDORES', ambos: 'CONTRIBUCIONES G+A' };
+    function leaderLine(label, result) {
+      const line = document.createElement('span');
+      const kind = result.status === 'ok' ? 'success' : (result.status === 'manual' ? '' : 'error');
+      line.className = `performance-sync-status ${kind}`;
+      if (result.status === 'ok') {
+        const nombre = formatPlayerName(result.jugador, data.formatoJugador);
+        const origen = result.origenEstrella === 'tabla-local' ? 'tabla local' : 'web';
+        line.textContent = `${label}: 1° de ${ORIGEN_LABELS[result.criterio]} ${result.rama.toUpperCase()} (${origen}) — ${nombre} · G ${result.g} · A ${result.a} · PJ ${result.pj}`;
+      } else {
+        line.textContent = `${label}: ${result.mensaje}`;
+        if (result.detalle) line.title = result.detalle;
+      }
+      return line;
+    }
+
+    async function cargarEstrellas(forzar) {
+      leaderButton.disabled = true;
+      criterioSelect.disabled = true;
+      leaderStatusEl.innerHTML = '';
+      const loading = document.createElement('span');
+      loading.className = 'performance-sync-status loading';
+      loading.textContent = forzar ? 'Consultando ESTADÍSTICAS en argentinastreamers.com...' : 'Calculando estrella...';
+      leaderStatusEl.appendChild(loading);
+      try {
+        const query = `teamA=${encodeURIComponent(teamA)}&teamB=${encodeURIComponent(teamB)}&criterio=${encodeURIComponent(data.estrellaPor)}${forzar ? '&forzar=1' : ''}`;
+        const response = await fetch(`/api/argentina-streamers/estrellas/sync-web?${query}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lideresLocales: lideresLocales() }),
+        });
+        const body = await response.json().catch(() => null);
+        if (!response.ok || !body?.ok) throw new Error(body?.error || `HTTP ${response.status}`);
+        leaderStatusEl.innerHTML = '';
+        let changed = false;
+        for (const [side, label] of [['local', 'LOCAL'], ['visitante', 'VISITANTE']]) {
+          const result = body.lados?.[side];
+          if (!result) continue;
+          if (result.status === 'ok') {
+            applyLeader(side, result);
+            changed = true;
+          }
+          leaderStatusEl.appendChild(leaderLine(label, result));
+        }
+        if (changed) {
+          localNombreInput.value = data.localNombre || '';
+          localGInput.value = data.localG ?? 0;
+          localAInput.value = data.localA ?? 0;
+          localPJInput.value = data.localPJ ?? 0;
+          visitanteNombreInput.value = data.visitanteNombre || '';
+          visitanteGInput.value = data.visitanteG ?? 0;
+          visitanteAInput.value = data.visitanteA ?? 0;
+          visitantePJInput.value = data.visitantePJ ?? 0;
+          data.ultimaActualizacionWeb = new Date().toISOString();
+          saveActiveSnapshot();
+          onChanged();
+        }
+      } catch (error) {
+        leaderStatusEl.innerHTML = '';
+        const line = document.createElement('span');
+        line.className = 'performance-sync-status error';
+        line.textContent = 'NO SE PUDO ACTUALIZAR — SE CONSERVAN LOS DATOS ACTUALES';
+        line.title = error.message;
+        leaderStatusEl.appendChild(line);
+      } finally {
+        leaderButton.disabled = false;
+        criterioSelect.disabled = false;
+      }
+    }
+
+    leaderButton.addEventListener('click', () => cargarEstrellas(true));
+    criterioSelect.addEventListener('change', () => {
+      data.estrellaPor = criterioSelect.value;
+      onChanged();
+      cargarEstrellas(false);
+    });
+
+    // Sync puntual del jugador ELEGIDO del plantel (funcionalidad anterior,
+    // se conserva como opcion secundaria): estadisticas de ese jugador en
+    // la rama de su equipo.
     const asSyncButton = document.createElement('button');
     asSyncButton.type = 'button';
     asSyncButton.className = 'performance-sync-btn';
-    asSyncButton.textContent = 'ACTUALIZAR DESDE ARGENTINASTREAMERS.COM';
+    asSyncButton.textContent = 'ACTUALIZAR STATS DEL JUGADOR ELEGIDO DEL PLANTEL';
 
     const localStatusEl = document.createElement('div');
     const visitanteStatusEl = document.createElement('div');
@@ -306,7 +493,7 @@ export function renderEstrellasPanel(containerEl, data, scoreboardData, onChange
       }
     });
 
-    asSyncSection.append(asSyncButton, localStatusEl, visitanteStatusEl);
+    asSyncSection.append(criterioField, leaderButton, leaderStatusEl, asSyncButton, localStatusEl, visitanteStatusEl);
     containerEl.prepend(asSyncSection);
     refreshAsStatus();
   } else {
@@ -318,7 +505,7 @@ export function renderEstrellasPanel(containerEl, data, scoreboardData, onChange
     const wrap = document.createElement('div');
     wrap.className = 'field';
     const lbl = document.createElement('label');
-    lbl.textContent = label;
+    lbl.textContent = isArgentina && key === 'titulo' ? 'Título' : label;
     wrap.appendChild(lbl);
     mountAdjustControl(wrap, data, key, onChanged, saveOptions);
     adjustSection.appendChild(wrap);
@@ -546,7 +733,7 @@ export function renderEstrellasPanel(containerEl, data, scoreboardData, onChange
 
   // Callback de cambio
   function handleInput() {
-    data.titulo = 'LOS MEJORES DE CADA EQUIPO';
+    if (!isArgentina) data.titulo = 'LOS MEJORES DE CADA EQUIPO';
     data.localNombre = localNombreInput.value;
     data.localG = parseInt(localGInput.value) || 0;
     data.localA = parseInt(localAInput.value) || 0;

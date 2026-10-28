@@ -6,7 +6,7 @@ import { elapsedMs, formatClock, parseClockLimit } from '../../../shared/clock.j
 // texto libre editado desde master-control/js/scoreboard-clock-panel.js;
 // si esta vacio o mal formado se usa este default, nunca se rompe el reloj.
 const DEFAULT_CLOCK_END_MS = 15 * 60 * 1000;
-import { colorHex } from '../../../shared/team-colors.js';
+import { teamColorHex } from '../../../shared/team-colors.js';
 import { crestFile, teamAbbr } from '../../../shared/teams.js';
 import { sponsorFile } from '../../../shared/sponsors.js';
 import { applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
@@ -60,18 +60,18 @@ function setCrest(imgEl, crestId) {
 
 function updateOverlay(el, data) {
   const {
-    teamA, teamB, scoreA, scoreB, teamAColor, teamBColor, clock, period, sponsor,
+    teamA, teamB, scoreA, scoreB, clock, period, sponsor,
   } = data;
 
   const ta = data.textAdjust;
   const teamAEl = el.querySelector('.ov-team-a');
   applyPlainTextAdjust(teamAEl.querySelector('.ov-name'), teamA ? teamAbbr(teamA) : 'LOCAL', readTextAdjust(ta, 'nameA'));
-  teamAEl.querySelector('.ov-dot').style.background = colorHex(teamAColor);
+  teamAEl.querySelector('.ov-dot').style.background = teamColorHex(data, 'A');
   setCrest(teamAEl.querySelector('.ov-crest'), teamA);
 
   const teamBEl = el.querySelector('.ov-team-b');
   applyPlainTextAdjust(teamBEl.querySelector('.ov-name'), teamB ? teamAbbr(teamB) : 'VISITANTE', readTextAdjust(ta, 'nameB'));
-  teamBEl.querySelector('.ov-dot').style.background = colorHex(teamBColor);
+  teamBEl.querySelector('.ov-dot').style.background = teamColorHex(data, 'B');
   setCrest(teamBEl.querySelector('.ov-crest'), teamB);
 
   // "scoreA"/"scoreB" (2026-08-15, auditoria completa): antes un unico

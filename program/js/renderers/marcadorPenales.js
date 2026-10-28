@@ -2,7 +2,6 @@ import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { getProgramFontFamily } from '../program-fonts.js';
 import { crestFile, teamAbbr, teamName } from '../../../shared/teams.js';
 import { sponsorFile } from '../../../shared/sponsors.js';
-import { PENALTY_KICK_STATUS } from '../../../shared/constants.js';
 import { resolveVsDisplayName } from '../../../shared/broadcast-names.js';
 import { getActiveThemeId } from '../theme-client.js';
 import { ARGENTINA_STREAMERS_THEME_ID } from '../../../shared/themes.js';
@@ -64,16 +63,6 @@ function kickDotsHtml(count, adjustPrefix) {
     html += `<span class="ov-pen-kick" data-kick="${i}" data-adjust="${adjustPrefix}${i + 1}"></span>`;
   }
   return html;
-}
-
-// Resultado de la TANDA DE PENALES (2026-08-31, corrección explícita del
-// usuario): cuenta unicamente los intentos en 'scored' -- nada que ver con
-// el resultado del partido (sb.scoreA/scoreB). Se recalcula en cada pasada
-// a partir de "data.kicksA/kicksB" (la fuente de verdad son los circulos,
-// nunca un numero tipeado a mano), asi que cambiar cualquier intento
-// (vacio<->verde<->rojo) actualiza el resultado solo, sin logica aparte.
-function countScored(kicks) {
-  return (kicks || []).filter((k) => k.status === PENALTY_KICK_STATUS.SCORED).length;
 }
 
 // Orden de capas (de atras hacia adelante), preparado para cuando el
@@ -140,9 +129,14 @@ function setCrest(imgEl, crestId) {
 // Sin nombre/escudo propios (se leen en vivo de "scoreboard", 5to
 // argumento, ver program/js/main.js, igual que marcadorEntretiempo). Ya
 // no muestra color de camiseta (eso queda unicamente en el marcador
-// principal). El resultado (".ov-pen-scoreA/B") es pura cuenta de
-// "kicksA/kicksB" (ver countScored arriba) -- NO tiene relacion con el
-// resultado del partido.
+// principal). El resultado (".ov-pen-scoreA/B") es el resultado REGLAMENTARIO
+// del partido (2026-09-27, pedido explicito del usuario: "los penales son
+// visualmente independientes del resultado del partido... el score principal
+// debe seguir mostrando 2-2, no sumar los goles de la tanda" -- reemplaza
+// una decision anterior, 2026-08-31, que hacia lo contrario) -- se lee en
+// vivo de "sb.scoreA/scoreB" (scoreboard), NUNCA de "kicksA/kicksB". Los
+// circulos (".ov-pen-kicks") siguen siendo la unica fuente de verdad del
+// desarrollo de la tanda en si, sin cambios.
 export default function renderMarcadorPenales(contentEl, data, justTaken, onOneShotEnded, allData) {
   if (!contentEl._gfxBuilt) {
     buildStructure(contentEl, data.kicksA.length);
@@ -187,20 +181,22 @@ export default function renderMarcadorPenales(contentEl, data, justTaken, onOneS
   const teamAEl = contentEl.querySelector('.ov-pen-teamA');
   applyPlainTextAdjust(teamAEl.querySelector('.ov-pen-name'), teamAbbr(sb.teamA), readTextAdjust(ta, 'nameA'));
   setCrest(teamAEl.querySelector('.ov-pen-crest'), sb.teamA);
-  applyPlainTextAdjust(contentEl.querySelector('.ov-pen-scoreA'), String(countScored(data.kicksA)), readTextAdjust(ta, 'scoreA'));
+  applyPlainTextAdjust(contentEl.querySelector('.ov-pen-scoreA'), String(sb.scoreA ?? '0'), readTextAdjust(ta, 'scoreA'));
   paintKicks(contentEl.querySelector('.ov-pen-kicksA'), data.kicksA);
 
   const teamBEl = contentEl.querySelector('.ov-pen-teamB');
   applyPlainTextAdjust(teamBEl.querySelector('.ov-pen-name'), teamAbbr(sb.teamB), readTextAdjust(ta, 'nameB'));
   setCrest(teamBEl.querySelector('.ov-pen-crest'), sb.teamB);
-  applyPlainTextAdjust(contentEl.querySelector('.ov-pen-scoreB'), String(countScored(data.kicksB)), readTextAdjust(ta, 'scoreB'));
+  applyPlainTextAdjust(contentEl.querySelector('.ov-pen-scoreB'), String(sb.scoreB ?? '0'), readTextAdjust(ta, 'scoreB'));
   paintKicks(contentEl.querySelector('.ov-pen-kicksB'), data.kicksB);
 
   // Sponsor: mismo fade-swap que Zocalo VS Compacto (ver
   // program/js/renderers/vs.js) -- catalogo/logica reutilizados tal cual,
-  // sin inventar un mecanismo nuevo.
+  // sin inventar un mecanismo nuevo. Argentina Streamers no tiene sponsor
+  // dinamico en Penales (2026-10-09, pedido explicito del usuario): aunque
+  // "data.sponsor" conserve un valor viejo, nunca se pinta.
   const sponsorEl = contentEl.querySelector('.ov-pen-sponsor');
-  const sponsorFileSrc = sponsorFile('vs_compact', data.sponsor);
+  const sponsorFileSrc = getActiveThemeId() === ARGENTINA_STREAMERS_THEME_ID ? null : sponsorFile('vs_compact', data.sponsor);
   if (sponsorFileSrc) {
     const currentSrc = sponsorEl.getAttribute('src');
     if (!currentSrc) {

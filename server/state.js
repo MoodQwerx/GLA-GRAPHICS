@@ -72,6 +72,30 @@ function persist() {
   schedulePersistentWrite('master_control_state', toSave);
 }
 
+// GOL RELATIVO AL MARCADOR (2026-10-21, pedido explicito del usuario, SOLO
+// GLA -- ver composedCompositionData en program/js/visual-compose.js).
+// Hasta hoy "gol.compositionOffsetX/Y/Scale" de GLA era ABSOLUTO (el
+// operador lo alineaba a mano copiando los valores del Marcador); desde
+// ahora es el ajuste fino RELATIVO al Marcador. Migracion UNICA, sin cambio
+// visual: relativo = gol - marcador (escala: gol / marcador), con los
+// valores vigentes. Solo corre si el "gol" de GLA ya guardado no trae la
+// marca "golRelativoMarcador" (que los defaults nuevos de "gol" ya
+// incluyen): un estado nuevo, o uno ya migrado, nunca se toca.
+{
+  const rawGol = isThemedFormat(persisted.gol) ? persisted.gol[DEFAULT_THEME_ID] : persisted.gol;
+  if (rawGol && typeof rawGol === 'object' && rawGol.golRelativoMarcador !== true) {
+    const gol = state.gol.byTheme[DEFAULT_THEME_ID];
+    const sb = state.scoreboard.byTheme[DEFAULT_THEME_ID];
+    const before = { x: gol.compositionOffsetX || 0, y: gol.compositionOffsetY || 0, s: gol.compositionScale || 1 };
+    gol.compositionOffsetX = before.x - (sb.compositionOffsetX || 0);
+    gol.compositionOffsetY = before.y - (sb.compositionOffsetY || 0);
+    gol.compositionScale = Math.round((before.s / (sb.compositionScale || 1)) * 10000) / 10000;
+    gol.golRelativoMarcador = true;
+    persist();
+    console.log(`[GLA] GOL pasa a ajuste relativo al Marcador: ${JSON.stringify(before)} -> ${JSON.stringify({ x: gol.compositionOffsetX, y: gol.compositionOffsetY, s: gol.compositionScale })}`);
+  }
+}
+
 function assertModule(moduleId) {
   if (!state[moduleId]) {
     throw new Error(`Modulo desconocido: ${moduleId}`);
@@ -166,24 +190,90 @@ function resolveSlotTeamId(gruposData, slot) {
   return grupo?.filas?.[filaIndex]?.teamId || '';
 }
 
-// Actualiza EXCLUSIVAMENTE "encuentros[i].teamA/teamB" de los 9 partidos
-// mapeados -- todo lo demas de cada encuentro (hora, titulo, status,
-// scoreA/B, penales, o cualquier campo futuro) queda exactamente como
-// estaba, nunca se reemplaza el objeto completo (pedido explicito: "no
-// hacer match = {...nuevoMatch} si eso pisa datos existentes"). Devuelve
-// el nuevo "effectiveModuleState('sideTable', ...)" para que el llamador
-// (server/index.js) lo transmita, o "null" si no habia nada que
-// actualizar (sideTable todavia sin sus 9 encuentros cargados -- no
-// fabrica encuentros nuevos).
+// PARTIDOS: MODOS EVENTO / SORTEO (2026-10-22, pedido explicito del
+// usuario, SOLO GLA). "encuentros" sigue siendo SIEMPRE la lista del modo
+// ACTIVO (la que leen el renderer, Preview y Program, sin cambios); la del
+// modo inactivo queda guardada aparte en "partidosEvento"/"partidosSorteo"
+// ({ encuentros, tanda }) y se intercambia al cambiar de modo (ver
+// master-control/js/resultados-panel.js) -- EVENTO vuelve exactamente como
+// estaba. Desde hoy Grupos alimenta SOLO al SORTEO: EVENTO ya no se
+// reescribe al cambiar un slot. SORTEO son exactamente 9 partidos, con
+// horario inicial fijo (12:30 a 20:30); nunca se fabrica un decimo.
+const SORTEO_HORAS = ['12:30', '13:30', '14:30', '15:30', '16:30', '17:30', '18:30', '19:30', '20:30'];
+
+function newSorteoEncuentro(index) {
+  return {
+    id: `sorteo-p${index + 1}`, teamA: '', teamB: '', scoreA: '0', scoreB: '0',
+    status: 'hora', hora: SORTEO_HORAS[index], titulo: '', penalesA: '', penalesB: '',
+  };
+}
+
+// SABADO (2026-10-23, pedido explicito del usuario: el modo "sorteo" se ve
+// como SÁBADO -- id interno sin cambios -- y suma un PRIMER partido MANUAL a
+// las 11:00, 100% editable, que no depende de Grupos). Id estable propio:
+// la sincronizacion de abajo nunca lo toca (solo actualiza "sorteo-p1..p9").
+const SABADO_MANUAL_ID = 'sabado-manual-1100';
+
+function newSabadoManual() {
+  return {
+    id: SABADO_MANUAL_ID, teamA: '', teamB: '', scoreA: '0', scoreB: '0',
+    status: 'hora', hora: '11:00', titulo: '', penalesA: '', penalesB: '',
+  };
+}
+
+// Devuelve la lista del SORTEO/SABADO (activa o guardada) creandola o
+// completandola si hace falta, siempre como [manual 11:00, P1..P9]. Migracion
+// segura: cada automatico se reconoce por su id estable (o, si viniera sin
+// id, por su posicion de antes) y se conserva TAL CUAL (resultado, estado,
+// titulo, hora); nunca se borra ni resetea nada. "autos" son los 9
+// automaticos en orden P1..P9. "changed" avisa si se tuvo que tocar algo.
+function ensureSorteoEncuentros(sideTableData) {
+  let changed = false;
+  let list;
+  if (sideTableData.modoPartidos === 'sorteo') {
+    if (!Array.isArray(sideTableData.encuentros)) { sideTableData.encuentros = []; changed = true; }
+    list = sideTableData.encuentros;
+  } else {
+    const stash = sideTableData.partidosSorteo;
+    if (!stash || typeof stash !== 'object' || !Array.isArray(stash.encuentros)) {
+      sideTableData.partidosSorteo = { encuentros: [], tanda: 'tanda1' };
+      changed = true;
+    }
+    list = sideTableData.partidosSorteo.encuentros;
+  }
+  const valid = list.filter((e) => e && typeof e === 'object');
+  const manual = valid.find((e) => e.id === SABADO_MANUAL_ID) || newSabadoManual();
+  const sinId = valid.filter((e) => !e.id);
+  const autos = SORTEO_HORAS.map((_, i) => {
+    const id = `sorteo-p${i + 1}`;
+    const byId = valid.find((e) => e.id === id);
+    if (byId) return byId;
+    const legacy = sinId.shift();
+    return legacy ? Object.assign(legacy, { id }) : newSorteoEncuentro(i);
+  });
+  const next = [manual, ...autos];
+  if (next.length !== list.length || next.some((e, i) => e !== list[i])) {
+    list.splice(0, list.length, ...next);
+    changed = true;
+  }
+  return { list, autos, changed };
+}
+
+// Actualiza EXCLUSIVAMENTE "teamA/teamB" de los 9 partidos del SORTEO --
+// todo lo demas de cada encuentro (id, hora, titulo, status, scoreA/B,
+// penales, o cualquier campo futuro) queda exactamente como estaba, nunca
+// se reemplaza el objeto completo. Un slot vacio deja el equipo vacio
+// (TBD), nunca otro equipo. Devuelve el nuevo
+// "effectiveModuleState('sideTable', ...)" para que el llamador
+// (server/index.js) lo transmita, o "null" si no cambio nada.
 export function syncBracketCrestsFromGrupos() {
   const gruposData = ensureThemeData('grupos', DEFAULT_THEME_ID);
   const sideTableData = ensureThemeData('sideTable', DEFAULT_THEME_ID);
-  if (!Array.isArray(sideTableData.encuentros) || sideTableData.encuentros.length === 0) return null;
+  const { autos, changed: created } = ensureSorteoEncuentros(sideTableData);
 
-  let changed = false;
+  let changed = created;
   BRACKET_SLOT_MAP.forEach((slots, index) => {
-    const encuentro = sideTableData.encuentros[index];
-    if (!encuentro) return; // menos de 9 encuentros cargados -- no fabrica el resto
+    const encuentro = autos[index];
     const teamA = resolveSlotTeamId(gruposData, slots.teamA);
     const teamB = resolveSlotTeamId(gruposData, slots.teamB);
     if (encuentro.teamA !== teamA) { encuentro.teamA = teamA; changed = true; }

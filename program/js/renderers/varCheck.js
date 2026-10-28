@@ -2,6 +2,7 @@ import { sponsorFile } from '../../../shared/sponsors.js';
 import { applyFittedText, readTextAdjust } from '../text-fit.js';
 import { mountThemedAlphaVideo, resolveImageSrc } from '../theme-assets.js';
 import { getActiveThemeId } from '../theme-client.js';
+import { withGlaSegoeRegular } from '../program-fonts.js';
 
 const VIDEO_SRC = '/assets/var/var-chequeo-alpha.mp4';
 const MOTIVO_IMAGE_SRC = '/assets/var/zocalo-cortito-brackets.png';
@@ -91,9 +92,9 @@ export default function renderVarCheck(contentEl, data, justTaken) {
 
   if (motivoText) {
     const maxWidth = isArgentinaStreamers ? (500 - 40) : (368 - 24);
-    applyFittedText(textEl, motivoText, {
+    applyFittedText(textEl, motivoText, withGlaSegoeRegular({
       maxFont: 40, minFont: 14, maxWidth, weight: 800,
-    }, readTextAdjust(data.textAdjust, 'motivo'));
+    }), readTextAdjust(data.textAdjust, 'motivo'));
 
     if (!motivoEl.classList.contains('is-visible')) {
       motivoEl.classList.add('is-visible');
