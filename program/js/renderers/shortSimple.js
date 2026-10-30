@@ -1,3 +1,4 @@
+import { glaAssetPath } from '../../../shared/asset-registry.js';
 import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { applyFittedText, updateFittedTextWithTransition, readTextAdjust } from '../text-fit.js';
 import { resolveTeamTokens } from '../../../shared/text-tokens.js';
@@ -5,7 +6,7 @@ import { getActiveThemeId } from '../theme-client.js';
 import { DEFAULT_THEME_ID } from '../../../shared/themes.js';
 import { GLA_SEGOE_BOLD_FAMILY, withGlaSegoeRegular } from '../program-fonts.js';
 
-const VIDEO_SRC = '/assets/zocalos/zocalo-corto-simple-alpha.mp4';
+const VIDEO_SRC = glaAssetPath('shortSimple', 'principal');
 
 const TEXT_MAX_FONT = 40;
 const TEXT_MIN_FONT = 18;

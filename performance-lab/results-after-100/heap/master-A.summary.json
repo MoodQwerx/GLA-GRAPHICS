@@ -1,0 +1,97 @@
+{
+  "totalMB": 6.89,
+  "nodeCount": 88463,
+  "closures": 4545,
+  "arrays": 1681,
+  "detachedNodes": 2,
+  "detachedKB": 1.3,
+  "detachedTop": [
+    [
+      "<canvas>",
+      2
+    ]
+  ],
+  "HTMLVideoElement": 2,
+  "HTMLCanvasElement": 2,
+  "HTMLImageElement": 2,
+  "WebGLRenderingContext": 13,
+  "HTMLDivElement": 2,
+  "EventListener": 1349,
+  "topObjects": [
+    [
+      "system / ExternalStringData",
+      826,
+      1857.2
+    ],
+    [
+      "blink::HeapHashTableBacking<blink::HashTable<std::pair<blink::String, blink::Tex",
+      36,
+      468.3
+    ],
+    [
+      "system / FunctionTemplateInfo",
+      3395,
+      212.1
+    ],
+    [
+      "blink::UniqueElementData",
+      1149,
+      125.7
+    ],
+    [
+      "Object",
+      3514,
+      100.1
+    ],
+    [
+      "blink::StyleRule",
+      1153,
+      93.3
+    ],
+    [
+      "blink::ImmutableCSSPropertyValueSet",
+      642,
+      82.9
+    ],
+    [
+      "system / ArrayList",
+      200,
+      75.6
+    ],
+    [
+      "Text",
+      876,
+      75.3
+    ],
+    [
+      "blink::MutableCSSPropertyValueSet",
+      669,
+      67.9
+    ],
+    [
+      "blink::ComputedStyleBase::StyleSurroundData",
+      192,
+      58.5
+    ],
+    [
+      "ShadowRoot",
+      302,
+      56.6
+    ],
+    [
+      "blink::HeapHashTableBacking<blink::HashTable<blink::FontDescription, blink::KeyV",
+      4,
+      51.3
+    ],
+    [
+      "blink::PlainTextNode",
+      42,
+      50.9
+    ],
+    [
+      "system / PropertyCell",
+      2571,
+      50.2
+    ]
+  ]
+}

@@ -1,3 +1,4 @@
+import { glaAssetPath } from '../../../shared/asset-registry.js';
 import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { getProgramFontFamily } from '../program-fonts.js';
 import { crestFile, teamAbbr, teamName } from '../../../shared/teams.js';
@@ -7,7 +8,7 @@ import { getActiveThemeId } from '../theme-client.js';
 import { ARGENTINA_STREAMERS_THEME_ID } from '../../../shared/themes.js';
 import { applyPlainTextAdjust, readTextAdjust, toBroadcastUpper } from '../text-fit.js';
 
-const VIDEO_SRC = '/assets/marcador/marcador-penales-alpha.mp4';
+const VIDEO_SRC = glaAssetPath('marcadorPenales', 'principal');
 
 const TITLE_MAX_FONT = 22; // limite real: zocalo semi-transparente del asset mide 27px de alto (y900-927 nativos)
 const TITLE_MIN_FONT = 14;

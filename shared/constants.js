@@ -10,6 +10,9 @@ export const WS_MSG = {
   // cambio sin refrescar, mismo mecanismo de broadcast que ya usan
   // TAKE/UPDATE/OUT (ver shared/themes.js, server/theme.js).
   THEME_UPDATE: 'THEME_UPDATE',
+  // RECURSO GRÁFICO (SOFTX): versión de cada archivo registrado (cache
+  // busting) + rutas cambiadas por un RECARGAR. Ver server/asset-resources.js.
+  ASSET_VERSIONS: 'ASSET_VERSIONS',
   // Cliente (Master Control) -> servidor
   TAKE: 'TAKE',
   OUT: 'OUT',

@@ -1,10 +1,11 @@
+import { glaAssetPath } from '../../../shared/asset-registry.js';
 import { sponsorFile } from '../../../shared/sponsors.js';
 import { applyFittedText, updateFittedTextWithTransition, readTextAdjust } from '../text-fit.js';
 import { resolveTeamTokens } from '../../../shared/text-tokens.js';
 import { mountThemedAlphaVideo, resolveImageSrc } from '../theme-assets.js';
 
-const VIDEO_SRC = '/assets/zocalos/zocalo-final-alpha.mp4';
-const LOGO_SRC = '/assets/images/gla-logo.png';
+const VIDEO_SRC = glaAssetPath('zocaloFinal', 'principal');
+const LOGO_SRC = glaAssetPath('zocaloFinal', 'logoImagen');
 
 const TEXTO1_MAX_FONT = 50;
 const TEXTO1_MIN_FONT = 22;

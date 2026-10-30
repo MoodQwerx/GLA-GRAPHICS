@@ -1,0 +1,314 @@
+{
+  "config": {
+    "NAV_CYCLES": 100,
+    "TAKE_ROUNDS": 25,
+    "GOALS": 200
+  },
+  "tests": [
+    {
+      "name": "navegacion-paneles",
+      "ok": true,
+      "fails": [],
+      "checks": {
+        "masterNodesPct": 0,
+        "masterListenersPct": 0,
+        "masterIntervalsDelta": 0,
+        "programNodesDelta": 0,
+        "programListenersDelta": 0,
+        "programIntervalsDelta": 0,
+        "masterDetachedDelta": 0,
+        "masterClosuresDelta": 0
+      },
+      "before": {
+        "label": "A0 navegación",
+        "master": {
+          "nodes": 778,
+          "listeners": 124,
+          "heapMB": 2.18,
+          "timers": {
+            "intervals": 0,
+            "timeouts": 1
+          }
+        },
+        "program": {
+          "nodes": 535,
+          "listeners": 49,
+          "heapMB": 1.25,
+          "timers": {
+            "intervals": 2,
+            "timeouts": 0
+          }
+        }
+      },
+      "after": {
+        "label": "A fin",
+        "master": {
+          "nodes": 778,
+          "listeners": 124,
+          "heapMB": 2.48,
+          "timers": {
+            "intervals": 0,
+            "timeouts": 1
+          }
+        },
+        "program": {
+          "nodes": 535,
+          "listeners": 49,
+          "heapMB": 1.3,
+          "timers": {
+            "intervals": 2,
+            "timeouts": 0
+          }
+        }
+      },
+      "series": [
+        {
+          "label": "A ciclo 50",
+          "master": {
+            "nodes": 778,
+            "listeners": 124,
+            "heapMB": 2.43,
+            "timers": {
+              "intervals": 0,
+              "timeouts": 1
+            }
+          },
+          "program": {
+            "nodes": 535,
+            "listeners": 49,
+            "heapMB": 1.28,
+            "timers": {
+              "intervals": 2,
+              "timeouts": 0
+            }
+          }
+        },
+        {
+          "label": "A ciclo 100",
+          "master": {
+            "nodes": 778,
+            "listeners": 124,
+            "heapMB": 2.47,
+            "timers": {
+              "intervals": 0,
+              "timeouts": 1
+            }
+          },
+          "program": {
+            "nodes": 535,
+            "listeners": 49,
+            "heapMB": 1.3,
+            "timers": {
+              "intervals": 2,
+              "timeouts": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "take-out-repetidos",
+      "ok": true,
+      "fails": [],
+      "checks": {
+        "masterNodesPct": 0,
+        "masterListenersPct": 0,
+        "masterIntervalsDelta": 0,
+        "programNodesDelta": 0,
+        "programListenersDelta": 0,
+        "programIntervalsDelta": 0,
+        "programDetachedDelta": 0,
+        "programClosuresDelta": 0,
+        "onAirAlFinal": 0,
+        "programNodesRonda0a1": 0
+      },
+      "before": {
+        "label": "B ronda 1",
+        "master": {
+          "nodes": 778,
+          "listeners": 124,
+          "heapMB": 2.61,
+          "timers": {
+            "intervals": 0,
+            "timeouts": 1
+          }
+        },
+        "program": {
+          "nodes": 535,
+          "listeners": 49,
+          "heapMB": 1.38,
+          "timers": {
+            "intervals": 2,
+            "timeouts": 0
+          }
+        }
+      },
+      "after": {
+        "label": "B fin",
+        "master": {
+          "nodes": 778,
+          "listeners": 124,
+          "heapMB": 3.37,
+          "timers": {
+            "intervals": 0,
+            "timeouts": 1
+          }
+        },
+        "program": {
+          "nodes": 535,
+          "listeners": 49,
+          "heapMB": 1.8,
+          "timers": {
+            "intervals": 2,
+            "timeouts": 0
+          }
+        }
+      },
+      "series": [
+        {
+          "label": "B ronda 1",
+          "master": {
+            "nodes": 778,
+            "listeners": 124,
+            "heapMB": 2.61,
+            "timers": {
+              "intervals": 0,
+              "timeouts": 1
+            }
+          },
+          "program": {
+            "nodes": 535,
+            "listeners": 49,
+            "heapMB": 1.38,
+            "timers": {
+              "intervals": 2,
+              "timeouts": 0
+            }
+          }
+        },
+        {
+          "label": "B ronda 5",
+          "master": {
+            "nodes": 778,
+            "listeners": 124,
+            "heapMB": 2.75,
+            "timers": {
+              "intervals": 0,
+              "timeouts": 1
+            }
+          },
+          "program": {
+            "nodes": 535,
+            "listeners": 49,
+            "heapMB": 1.46,
+            "timers": {
+              "intervals": 2,
+              "timeouts": 0
+            }
+          }
+        },
+        {
+          "label": "B ronda 10",
+          "master": {
+            "nodes": 778,
+            "listeners": 124,
+            "heapMB": 3.1,
+            "timers": {
+              "intervals": 0,
+              "timeouts": 1
+            }
+          },
+          "program": {
+            "nodes": 535,
+            "listeners": 49,
+            "heapMB": 1.65,
+            "timers": {
+              "intervals": 2,
+              "timeouts": 0
+            }
+          }
+        },
+        {
+          "label": "B ronda 20",
+          "master": {
+            "nodes": 778,
+            "listeners": 124,
+            "heapMB": 3.36,
+            "timers": {
+              "intervals": 0,
+              "timeouts": 1
+            }
+          },
+          "program": {
+            "nodes": 535,
+            "listeners": 49,
+            "heapMB": 1.79,
+            "timers": {
+              "intervals": 2,
+              "timeouts": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "goles-en-vivo",
+      "ok": true,
+      "fails": [],
+      "checks": {
+        "masterNodesPct": 0.24,
+        "masterListenersPct": 0,
+        "masterIntervalsDelta": 0,
+        "programNodesDelta": 2,
+        "programListenersDelta": 0,
+        "programIntervalsDelta": 0,
+        "estructuraSinReconstruir": true,
+        "eventos": 103,
+        "score": "1-100"
+      },
+      "before": {
+        "label": "C0 goles",
+        "master": {
+          "nodes": 843,
+          "listeners": 124,
+          "heapMB": 3.37,
+          "timers": {
+            "intervals": 0,
+            "timeouts": 1
+          }
+        },
+        "program": {
+          "nodes": 599,
+          "listeners": 49,
+          "heapMB": 1.8,
+          "timers": {
+            "intervals": 3,
+            "timeouts": 0
+          }
+        }
+      },
+      "after": {
+        "label": "C fin",
+        "master": {
+          "nodes": 845,
+          "listeners": 124,
+          "heapMB": 3.95,
+          "timers": {
+            "intervals": 0,
+            "timeouts": 1
+          }
+        },
+        "program": {
+          "nodes": 601,
+          "listeners": 49,
+          "heapMB": 2.06,
+          "timers": {
+            "intervals": 3,
+            "timeouts": 0
+          }
+        }
+      },
+      "builds0": "v1"
+    }
+  ]
+}

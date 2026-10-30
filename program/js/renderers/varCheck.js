@@ -1,11 +1,12 @@
+import { glaAssetPath } from '../../../shared/asset-registry.js';
 import { sponsorFile } from '../../../shared/sponsors.js';
 import { applyFittedText, readTextAdjust } from '../text-fit.js';
 import { mountThemedAlphaVideo, resolveImageSrc } from '../theme-assets.js';
 import { getActiveThemeId } from '../theme-client.js';
 import { withGlaSegoeRegular } from '../program-fonts.js';
 
-const VIDEO_SRC = '/assets/var/var-chequeo-alpha.mp4';
-const MOTIVO_IMAGE_SRC = '/assets/var/zocalo-cortito-brackets.png';
+const VIDEO_SRC = glaAssetPath('varCheck', 'principal');
+const MOTIVO_IMAGE_SRC = glaAssetPath('varCheck', 'motivo');
 
 export default function renderVarCheck(contentEl, data, justTaken) {
   if (!contentEl._gfxBuilt) {

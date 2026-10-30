@@ -8,6 +8,8 @@ import { waitForProgramFonts } from './program-fonts.js';
 import { setActiveThemeId as setRendererActiveThemeId, getActiveThemeId as getRendererActiveThemeId } from './theme-client.js';
 import { ARGENTINA_STREAMERS_THEME_ID } from '../../shared/themes.js';
 import { applyComposition, applyElementAdjustRegistry } from './visual-compose.js';
+import { setAssetVersions } from './asset-versions.js';
+import { modulesUsingPath } from '../../shared/asset-registry.js';
 import {
   HOT_MODULE_IDS, HOT_VARIANT_FIELD, isHotModule, MAX_WARM_SLOTS,
   trackWarm, markPlaying, markWarm, untrack, listEvictable, snapshot as hotPoolSnapshot,
@@ -260,6 +262,38 @@ function finishOut(id) {
   cancelExitCleanup(id);
   target.root.classList.add('is-hidden');
   teardownContent(target.content, id);
+  if (pendingAssetReload.delete(id)) rebuildModuleAssets(id);
+}
+
+// RECURSO GRÁFICO / RECARGAR (SOFTX): un archivo reemplazado se vuelve a
+// montar con su URL nueva sin mandar nada al aire. Si el módulo está al aire
+// (o saliendo), se espera a que termine de salir: el próximo TAKE ya usa el
+// recurso nuevo y la salida en curso nunca se corta.
+const pendingAssetReload = new Set();
+
+function rebuildModuleAssets(id) {
+  const target = els[id];
+  if (!target) return;
+  const content = target.content;
+  const wasWarm = isHotModule(id) && content._gfxBuilt;
+  teardownContent(content, id, { force: true });
+  if (!wasWarm) return;
+  const data = latestData[id] || {};
+  renderers[id](content, data, false, () => handleOneShotEnded(id), latestData);
+  const field = HOT_VARIANT_FIELD[id];
+  trackWarm(id, id, field ? data[field] : undefined);
+}
+
+function reloadAssetsForPaths(paths) {
+  const systemId = getRendererActiveThemeId();
+  const ids = new Set(paths.flatMap((assetPath) => modulesUsingPath(systemId, assetPath)));
+  for (const id of ids) {
+    const target = els[id];
+    if (!target) continue;
+    const busy = lastStatus[id] === MODULE_STATUS.ON || !target.root.classList.contains('is-hidden');
+    if (busy) pendingAssetReload.add(id);
+    else rebuildModuleAssets(id);
+  }
 }
 
 // transitionend no esta garantizado si una transicion se interrumpe muchas
@@ -632,6 +666,9 @@ ws = connect({
           renderers[id](els[id].content, latestData[id] || {}, false, () => handleOneShotEnded(id), latestData);
         }
       }
+    } else if (msg.type === WS_MSG.ASSET_VERSIONS) {
+      setAssetVersions(msg.versions);
+      if (msg.changedPaths?.length) reloadAssetsForPaths(msg.changedPaths);
     } else if (msg.type === WS_MSG.THEME_UPDATE) {
       setRendererActiveThemeId(msg.themeId);
     } else if (msg.type === WS_MSG.STATE_SNAPSHOT) {

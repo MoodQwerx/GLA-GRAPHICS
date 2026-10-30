@@ -1,3 +1,4 @@
+import { glaAssetPath } from '../../../shared/asset-registry.js';
 import { elapsedMs, formatClock, parseClockLimit } from '../../../shared/clock.js';
 
 // "FIN DEL CONTADOR" (2026-08-15, pedido explicito del usuario): default
@@ -12,7 +13,7 @@ import { sponsorFile } from '../../../shared/sponsors.js';
 import { applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
 import { mountThemedAlphaVideo } from '../theme-assets.js';
 
-const VIDEO_SRC = '/assets/marcador/marcador-principal-alpha.mp4';
+const VIDEO_SRC = glaAssetPath('scoreboard', 'principal');
 
 function buildStructure(el) {
   el.innerHTML = `

@@ -1,8 +1,13 @@
-# LIVE GRAPHICS
+# SOFTX
 
-Software de graficas ("CG"/overlay) para transmisiones en vivo. Incluye un **Master Control** (panel de operador) y un **Program/Overlay** (la salida que se agrega en OBS como Browser Source), sincronizados en tiempo real.
+**SOFTX** (antes LIVE GRAPHICS / GLA GRAPHICS) es el software base de graficas ("CG"/overlay) para transmisiones en vivo. Incluye un **Master Control** (panel de operador) y un **Program/Overlay** (la salida que se agrega en OBS/vMix como Browser Source), sincronizados en tiempo real.
 
-El software (LIVE GRAPHICS) ya no esta atado a una sola competencia: cada transmision se configura eligiendo un **theme** desde el selector superior del Master Control. Hoy existe **GRAN LIGA RELAMPAGO** (GLA, con sus datos de `gla.futbol`, listo y en uso) y esta preparado **ARGENTINA STREAMERS** (en preparacion, todavia sin assets definitivos). Ver [docs/THEMES.md](docs/THEMES.md) para la arquitectura completa.
+SOFTX inicia uno de dos sistemas, elegido al arrancar y fijo durante toda la ejecucion:
+
+1. **ARGENTINA STREAMERS**
+2. **GLA RELAMPAGO** (GRAN LIGA RELAMPAGO, con sus datos de `gla.futbol`)
+
+Ya no existe selector de theme en el Master Control: para usar el otro sistema se cierra SOFTX y se vuelve a iniciar. Los datos, equipos, presets y assets de cada sistema estan separados. Ver [docs/THEMES.md](docs/THEMES.md) para la arquitectura interna (internamente cada sistema sigue siendo un "theme").
 
 Identidad visual: dorado + negro, estetica broadcast premium inspirada en graficas deportivas de nivel Mundial, sin copiar diseños existentes.
 
@@ -17,13 +22,27 @@ En local, todos los datos configurados por el operador se guardan bajo `data/` (
 
 ## Como arrancar
 
-1. Doble click en [start.bat](start.bat).
+1. Doble click en **`START SOFTX.bat`**: muestra "BIENVENIDO A SOFTX" y pregunta que software usar (**[1] ARGENTINA STREAMERS** / **[2] GLA RELÁMPAGO** / **[3] BAULETI vs BALANZA**).
+   - Accesos directos: **`START GLA RELÁMPAGO.bat`**, **`START ARGENTINA STREAMERS.bat`** y **`START BAULETI VS BALANZA.bat`** inician ese sistema sin preguntar.
+   - Los tres usan el mismo arranque ([start.bat](start.bat), que tambien acepta `start.bat gla` / `start.bat argentinaStreamers` / `start.bat bauletiBalanza`).
 2. La primera vez instala dependencias automaticamente (puede tardar unos segundos).
-3. El servidor arranca en una ventana aparte (minimizada) y se abre el **Master Control** en el navegador.
-4. La ventana principal de `start.bat` queda mostrando las direcciones y un menu:
+3. El servidor arranca en una ventana aparte (minimizada) con el sistema elegido (`node server/index.js --system=gla|argentinaStreamers|bauletiBalanza`) y, cuando responde, se abre el **Master Control** en el navegador.
+4. La ventana de SOFTX queda mostrando el sistema activo, las direcciones y un menu:
    - **[P]** vuelve a abrir el Master Control en el navegador.
-   - **[Q]** cierra todo el software (servidor incluido) y termina — no hace falta abrir otro archivo para apagarlo.
+   - **[Q]** cierra SOFTX (servidor incluido). Al volver a abrir `START SOFTX.bat` pregunta de nuevo que sistema usar.
 5. Si esa ventana se cerro de otra forma y el servidor quedo corriendo, ejecutar [end.bat](end.bat) para cerrarlo manualmente.
+
+Por consola: `npm run start:gla`, `npm run start:as`, `npm run start:bb`, o `npm start` (usa el ultimo sistema iniciado). Tambien se puede definir `SOFTX_SYSTEM=gla|argentinaStreamers|bauletiBalanza`.
+
+## Recurso grafico (reemplazar assets sin tocar codigo)
+
+Cada modulo con un asset externo tiene, debajo de sus controles, la seccion plegable **RECURSO GRÁFICO** (o **RECURSOS GRÁFICOS** si tiene varios: ej. TARJETA → AMARILLA / ROJA / AZUL). Por recurso muestra el archivo actual, la carpeta, el formato esperado (ej. `MP4 H.264 con alfa apilado · 1920x2160 · 30 FPS`) y lo que tiene el archivo real.
+
+1. **ABRIR CARPETA**: abre el Explorador de Windows en la carpeta real del archivo y lo deja seleccionado (si falta, abre igual la carpeta).
+2. Reemplazar el archivo **con el mismo nombre**.
+3. **RECARGAR**: analiza el archivo nuevo (existe, formato, resolucion, FPS, duracion, alfa) y muestra **ADVERTENCIA** si algo cambio respecto del recurso anterior (ej. `ADVERTENCIA: EL VIDEO NUEVO ES 25 FPS. EL RECURSO ANTERIOR ERA 30 FPS.`). No bloquea, no convierte nada y **no manda el modulo al aire**: actualiza Preview y deja Program listo para el proximo TAKE (si el modulo esta al aire, el cambio se aplica cuando sale).
+
+No hace falta borrar cache, reiniciar el navegador ni renombrar: cada URL de asset lleva una version derivada del archivo real (`?v=`), que cambia con el RECARGAR. El registro central de recursos (sistema → modulo → recurso, ej. `gla.tarjeta.roja`) esta en [shared/asset-registry.js](shared/asset-registry.js); el navegador solo envia ese ID, nunca una ruta.
 
 ## Actualizaciones desde `gla.futbol`
 
@@ -62,12 +81,14 @@ Cada grafica usa el asset original entregado por el usuario (nunca una recreacio
 ## Estructura del proyecto
 
 ```
-LIVE_GRAPHICS/
-├── start.bat              # Levanta todo el entorno (menu P/Q para abrir Master Control o cerrar todo)
+SOFTX/ (carpeta del repo: GLA-GRAPHICS)
+├── START SOFTX.bat        # Pregunta que sistema usar y arranca SOFTX
+├── START GLA RELÁMPAGO.bat / START ARGENTINA STREAMERS.bat / START BAULETI VS BALANZA.bat   # Arranque directo de cada sistema
+├── start.bat              # Arranque unico que usan los tres (selector, servidor, menu P/Q)
 ├── end.bat                # Cierra el servidor (lo mismo que hace la opcion Q de start.bat)
 ├── server/                # Servidor Express + WebSocket (estado autoritativo)
 ├── data/                  # Cache/fallback local de datos del operador (ignorada por Git)
-├── shared/                # Constantes, schema de modulos, manifest de themes y utilidades compartidas
+├── shared/                # Constantes, schema de modulos, manifest de themes, registro central de recursos graficos (asset-registry.js) y utilidades compartidas
 ├── master-control/        # UI del operador
 ├── program/                # Overlay que se captura en OBS/vMix (renderers de video con alfa en program/js/renderers/)
 ├── assets/                 # Assets en uso, servidos en runtime:

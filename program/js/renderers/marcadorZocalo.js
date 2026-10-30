@@ -1,3 +1,4 @@
+import { glaAssetPath } from '../../../shared/asset-registry.js';
 import { elapsedMs, formatClock, parseClockLimit } from '../../../shared/clock.js';
 import { applyFittedText, applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
 import { resolveImageSrc } from '../theme-assets.js';
@@ -15,7 +16,7 @@ const DEFAULT_CLOCK_END_MS = 6 * 60 * 1000;
 // La query identifica el binario vigente del PNG. No aplica ningun efecto
 // visual: evita que una sesion larga de Program conserve decodificada una
 // revision anterior del mismo path, que tenia alfa parcial en la pieza.
-const IMG_SRC = '/assets/marcador/marcador-zocalo.png?v=35dc2afe';
+const IMG_SRC = glaAssetPath('marcadorZocalo', 'principal');
 
 // Zona util real de ".ov-zocalo-titulo" (323px) menos margen de seguridad,
 // mismo criterio que el titulo de Marcador de Penales (marcadorPenales.js).

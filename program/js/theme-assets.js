@@ -17,8 +17,9 @@
 import { DEFAULT_THEME_ID, getThemeAsset } from '../../shared/themes.js';
 import { getActiveThemeId } from './theme-client.js';
 import { createAlphaVideo } from './alpha-video.js';
+import { versionedAssetUrl } from './asset-versions.js';
 
-export function resolveVideoSrc(moduleId, fallbackForGla, variant) {
+function resolveVideoPath(moduleId, fallbackForGla, variant) {
   const themeId = getActiveThemeId();
   if (themeId === DEFAULT_THEME_ID) return fallbackForGla || null;
   const asset = getThemeAsset(themeId, moduleId);
@@ -27,13 +28,19 @@ export function resolveVideoSrc(moduleId, fallbackForGla, variant) {
   return asset.video || null;
 }
 
+// SOFTX (2026-10-29): toda ruta resuelta sale versionada (cache busting de
+// RECURSO GRÁFICO, ver program/js/asset-versions.js).
+export function resolveVideoSrc(moduleId, fallbackForGla, variant) {
+  return versionedAssetUrl(resolveVideoPath(moduleId, fallbackForGla, variant));
+}
+
 export function resolveImageSrc(moduleId, fallbackForGla, variant) {
   const themeId = getActiveThemeId();
-  if (themeId === DEFAULT_THEME_ID) return fallbackForGla || null;
+  if (themeId === DEFAULT_THEME_ID) return versionedAssetUrl(fallbackForGla || null);
   const asset = getThemeAsset(themeId, moduleId);
   if (!asset) return null;
-  if (variant) return asset.variants?.[variant] || null;
-  return asset.image || null;
+  if (variant) return versionedAssetUrl(asset.variants?.[variant] || null);
+  return versionedAssetUrl(asset.image || null);
 }
 
 // Monta un alpha-video SOLO si hay una fuente real resuelta para el

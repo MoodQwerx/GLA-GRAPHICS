@@ -125,36 +125,30 @@ body {
 .conn.on { border-color: var(--gold); color: var(--gold-bright); }
 .conn.off { border-color: #6b2020; color: #d16c6c; }
 
-/* SELECTOR DE THEME (2026-08-20, sistema multi-theme, pedido explícito:
-   "arriba de TODO en Master Control... debe estar en la barra/header
-   superior y permanecer visible independientemente del módulo
-   seleccionado"). Vive en .mc-header, entre la marca y el estado de
-   conexión -- nunca se desmonta al cambiar de módulo/tab. */
-.mc-theme-select-box {
+/* SISTEMA ACTIVO (SOFTX): solo indicador, fijo durante toda la ejecución
+   (reemplaza al antiguo selector de THEME, mismo lugar del header). */
+.mc-system-box {
   display: flex;
   align-items: center;
   gap: 10px;
 }
-.mc-theme-label {
+.mc-system-label {
   font-family: var(--font-display);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 1.5px;
   color: var(--grey);
 }
-.mc-theme-select {
+.mc-system-badge {
   font-family: var(--font-display);
   font-size: 13px;
   font-weight: 800;
   letter-spacing: .5px;
   color: var(--gold-bright);
-  background: var(--surface-select);
   border: 1px solid var(--gold);
   border-radius: 4px;
   padding: 7px 12px;
-  cursor: pointer;
 }
-.mc-theme-select:disabled { opacity: .6; cursor: default; }
 
 /* Banner "THEME EN PREPARACIÓN / ASSETS PENDIENTES" (sección 4, pedido
    explícito) -- ocupa todo el ancho, debajo del header, visible sin
@@ -171,6 +165,21 @@ body {
   padding: 10px 16px;
 }
 .mc-theme-banner[hidden] { display: none; }
+
+/* "SOFTX NECESITA REINICIARSE": el servidor corre código más viejo que el
+   que está en disco (ver /api/version en server/index.js). */
+.mc-restart-banner {
+  background: #4a0f12;
+  border-bottom: 2px solid #ff4d57;
+  color: #ffd0d3;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: .5px;
+  text-align: center;
+  padding: 10px 16px;
+}
+.mc-restart-banner[hidden] { display: none; }
 
 .btn-stop-all {
   font-family: var(--font-display);
@@ -1101,6 +1110,88 @@ body[data-theme='argentinaStreamers'] .clock-box-team-color {
 .composition-container {
   margin-top: 22px;
 }
+
+/* RECURSO GRÁFICO (SOFTX): sección plegable, cerrada por defecto, debajo
+   del ajuste de composición. Ver master-control/js/asset-resources-panel.js. */
+.asset-resource-container { margin-top: 14px; }
+.asset-res {
+  border: 1px solid var(--border-3);
+  border-radius: 6px;
+  background: var(--surface-panel);
+}
+.asset-res-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  list-style: none;
+  min-width: 0;
+}
+.asset-res-summary::-webkit-details-marker { display: none; }
+.asset-res-summary::before { content: '▸'; color: var(--gold); font-size: 12px; }
+.asset-res[open] > .asset-res-summary::before { content: '▾'; }
+.asset-res-title {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--gold-bright);
+  white-space: nowrap;
+}
+.asset-res-summary-file {
+  font-size: 11px;
+  color: var(--grey);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.asset-res-warn-dot { color: #e5a93b; font-size: 13px; }
+.asset-res-note {
+  margin: 0 14px 10px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--grey);
+}
+.asset-res-row {
+  display: grid;
+  gap: 4px;
+  margin: 0 14px 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-2);
+  border-radius: 5px;
+  background: var(--surface-1);
+  min-width: 0;
+}
+.asset-res-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; min-width: 0; }
+.asset-res-label { font-size: 11px; font-weight: 800; letter-spacing: 1px; color: var(--gold); }
+.asset-res-file {
+  font-size: 12px;
+  color: var(--white);
+  overflow-wrap: anywhere;
+}
+.asset-res-line { font-size: 11px; color: var(--grey); overflow-wrap: anywhere; }
+.asset-res-warning { font-size: 11px; font-weight: 700; color: #e5a93b; overflow-wrap: anywhere; }
+.asset-res-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.asset-res-btn {
+  background: var(--surface-select);
+  color: var(--white);
+  border: 1px solid var(--border-3);
+  border-radius: 4px;
+  padding: 7px 12px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .5px;
+  cursor: pointer;
+}
+.asset-res-btn:hover { background: var(--hover-bg); }
+.asset-res-btn.primary { border-color: var(--gold); color: var(--gold-bright); }
+.asset-res-btn:disabled { opacity: .5; cursor: default; }
+.asset-res-status { font-size: 11px; line-height: 1.45; white-space: pre-line; overflow-wrap: anywhere; }
+.asset-res-status:empty { display: none; }
+.asset-res-status.success { color: #7ed67e; }
+.asset-res-status.warning { color: #e5a93b; }
+.asset-res-status.error { color: #e88; }
 .composition-adjust {
   display: grid;
   gap: 8px;

@@ -1,3 +1,4 @@
+import { glaAssetPath } from '../../../shared/asset-registry.js';
 import { elapsedMs, formatClock } from '../../../shared/clock.js';
 import { applyFittedText, applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
 import { resolveImageSrc } from '../theme-assets.js';
@@ -7,7 +8,7 @@ import { withGlaSegoeRegular } from '../program-fonts.js';
 // usaba antes) — ver program/css/overlay.css para las coordenadas medidas
 // con lectura de alfa real sobre el PNG. Logica de datos sin cambios:
 // mismo campo "addedMinutes" y mismo reloj compartido (shared/clock.js).
-const IMG_SRC = '/assets/marcador/marcador-tiempo-adicional.png';
+const IMG_SRC = glaAssetPath('marcadorTiempoAdicional', 'principal');
 
 // Chip de "+minutos" mas angosto que en el asset anterior (34px reales);
 // mismo criterio de auto-ajuste que el resto de los textos variables.

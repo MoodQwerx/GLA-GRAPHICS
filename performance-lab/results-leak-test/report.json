@@ -1,0 +1,455 @@
+{
+  "config": {
+    "CYCLES": 5,
+    "PARTIDOS_CYCLES": 5,
+    "WEB_UPDATES": 3,
+    "RELOADS": 5,
+    "MAX_NODES_PCT": 5,
+    "MAX_LISTENERS_PCT": 5,
+    "MAX_DETACHED": 200
+  },
+  "tests": [
+    {
+      "name": "paneles-criticos",
+      "ok": true,
+      "fails": [],
+      "checks": {
+        "nodesPct": 0.19,
+        "listenersPct": 0,
+        "detachedDelta": 0,
+        "intervalsDelta": 0,
+        "torneoListeners": 0,
+        "programNodesDelta": 5,
+        "programListenersDelta": 0,
+        "programVideosDelta": 0
+      },
+      "before": {
+        "label": "A0 paneles inicio",
+        "master": {
+          "nodes": 2633,
+          "listeners": 277,
+          "heapMB": 2.47,
+          "timers": {
+            "intervals": 0,
+            "timeouts": 1
+          },
+          "videos": 0,
+          "webgl": 0,
+          "torneoListeners": 0
+        },
+        "program": {
+          "nodes": 2207,
+          "listeners": 68,
+          "heapMB": 1.37,
+          "timers": {
+            "intervals": 3,
+            "timeouts": 0
+          },
+          "videos": 11,
+          "webgl": 11
+        }
+      },
+      "after": {
+        "label": "A fin",
+        "master": {
+          "nodes": 2638,
+          "listeners": 277,
+          "heapMB": 2.66,
+          "timers": {
+            "intervals": 0,
+            "timeouts": 1
+          },
+          "videos": 0,
+          "webgl": 0,
+          "torneoListeners": 0
+        },
+        "program": {
+          "nodes": 2212,
+          "listeners": 68,
+          "heapMB": 1.37,
+          "timers": {
+            "intervals": 3,
+            "timeouts": 0
+          },
+          "videos": 11,
+          "webgl": 11
+        }
+      },
+      "detBefore": {
+        "detachedNodes": 2,
+        "closures": 4599,
+        "heapMB": 7.65,
+        "EventListener": 1367
+      },
+      "detAfter": {
+        "detachedNodes": 2,
+        "closures": 4599,
+        "heapMB": 7.78,
+        "EventListener": 1367
+      },
+      "series": []
+    },
+    {
+      "name": "partidos",
+      "ok": true,
+      "fails": [],
+      "checks": {
+        "nodesPct": 0,
+        "listenersPct": 0,
+        "detachedDelta": 0,
+        "intervalsDelta": 0,
+        "torneoListeners": 0,
+        "programNodesDelta": 0,
+        "programListenersDelta": 0,
+        "programVideosDelta": 0
+      },
+      "before": {
+        "label": "B0 partidos inicio",
+        "master": {
+          "nodes": 2638,
+          "listeners": 277,
+          "heapMB": 2.65,
+          "timers": {
+            "intervals": 0,
+            "timeouts": 1
+          },
+          "videos": 0,
+          "webgl": 0,
+          "torneoListeners": 0
+        },
+        "program": {
+          "nodes": 2212,
+          "listeners": 68,
+          "heapMB": 1.37,
+          "timers": {
+            "intervals": 3,
+            "timeouts": 0
+          },
+          "videos": 11,
+          "webgl": 11
+        }
+      },
+      "after": {
+        "label": "B fin",
+        "master": {
+          "nodes": 2638,
+          "listeners": 277,
+          "heapMB": 2.67,
+          "timers": {
+            "intervals": 0,
+            "timeouts": 1
+          },
+          "videos": 0,
+          "webgl": 0,
+          "torneoListeners": 0
+        },
+        "program": {
+          "nodes": 2212,
+          "listeners": 68,
+          "heapMB": 1.37,
+          "timers": {
+            "intervals": 3,
+            "timeouts": 0
+          },
+          "videos": 11,
+          "webgl": 11
+        }
+      },
+      "detBefore": {
+        "detachedNodes": 2,
+        "closures": 4599,
+        "heapMB": 7.78,
+        "EventListener": 1367
+      },
+      "detAfter": {
+        "detachedNodes": 2,
+        "closures": 4599,
+        "heapMB": 7.81,
+        "EventListener": 1367
+      },
+      "series": []
+    },
+    {
+      "name": "actualizar-web",
+      "ok": false,
+      "fails": [
+        "nodos +93.25%",
+        "listeners +106.14%"
+      ],
+      "checks": {
+        "nodesPct": 93.25,
+        "listenersPct": 106.14,
+        "detachedDelta": 80,
+        "intervalsDelta": 0,
+        "torneoListeners": 0,
+        "programNodesDelta": 6,
+        "programListenersDelta": 0,
+        "programVideosDelta": 0
+      },
+      "before": {
+        "label": "C0 web inicio",
+        "master": {
+          "nodes": 2638,
+          "listeners": 277,
+          "heapMB": 2.67,
+          "timers": {
+            "intervals": 0,
+            "timeouts": 1
+          },
+          "videos": 0,
+          "webgl": 0,
+          "torneoListeners": 0
+        },
+        "program": {
+          "nodes": 2212,
+          "listeners": 68,
+          "heapMB": 1.37,
+          "timers": {
+            "intervals": 3,
+            "timeouts": 0
+          },
+          "videos": 11,
+          "webgl": 11
+        }
+      },
+      "after": {
+        "label": "C fin",
+        "master": {
+          "nodes": 5098,
+          "listeners": 571,
+          "heapMB": 2.97,
+          "timers": {
+            "intervals": 0,
+            "timeouts": 4
+          },
+          "videos": 0,
+          "webgl": 0,
+          "torneoListeners": 0
+        },
+        "program": {
+          "nodes": 2218,
+          "listeners": 68,
+          "heapMB": 1.45,
+          "timers": {
+            "intervals": 3,
+            "timeouts": 0
+          },
+          "videos": 11,
+          "webgl": 11
+        }
+      },
+      "detBefore": {
+        "detachedNodes": 2,
+        "closures": 4599,
+        "heapMB": 7.8,
+        "EventListener": 1367
+      },
+      "detAfter": {
+        "detachedNodes": 82,
+        "closures": 4996,
+        "heapMB": 8.94,
+        "EventListener": 2248
+      },
+      "series": [],
+      "webClicks": {
+        "goleadores": 3,
+        "asistidores": 3,
+        "jugadores": 3,
+        "sideTable": 0,
+        "grupos": 0,
+        "estrellas": 3,
+        "posiciones": 3
+      }
+    },
+    {
+      "name": "todas-las-pestanas",
+      "ok": true,
+      "fails": [],
+      "checks": {
+        "nodesPct": -32.79,
+        "listenersPct": -37.89,
+        "detachedDelta": -338,
+        "intervalsDelta": 0,
+        "torneoListeners": 0,
+        "programNodesDelta": 0,
+        "programListenersDelta": 0,
+        "programVideosDelta": 0
+      },
+      "before": {
+        "label": "E0 todas inicio",
+        "master": {
+          "nodes": 3943,
+          "listeners": 446,
+          "heapMB": 2.93,
+          "timers": {
+            "intervals": 0,
+            "timeouts": 2
+          },
+          "videos": 0,
+          "webgl": 0,
+          "torneoListeners": 0
+        },
+        "program": {
+          "nodes": 2218,
+          "listeners": 68,
+          "heapMB": 1.44,
+          "timers": {
+            "intervals": 3,
+            "timeouts": 0
+          },
+          "videos": 11,
+          "webgl": 11
+        }
+      },
+      "after": {
+        "label": "E fin",
+        "master": {
+          "nodes": 2650,
+          "listeners": 277,
+          "heapMB": 3.13,
+          "timers": {
+            "intervals": 0,
+            "timeouts": 1
+          },
+          "videos": 0,
+          "webgl": 0,
+          "torneoListeners": 0
+        },
+        "program": {
+          "nodes": 2218,
+          "listeners": 68,
+          "heapMB": 1.46,
+          "timers": {
+            "intervals": 3,
+            "timeouts": 0
+          },
+          "videos": 11,
+          "webgl": 11
+        }
+      },
+      "detBefore": {
+        "detachedNodes": 340,
+        "closures": 4834,
+        "heapMB": 8.59,
+        "EventListener": 1873
+      },
+      "detAfter": {
+        "detachedNodes": 2,
+        "closures": 4605,
+        "heapMB": 8.51,
+        "EventListener": 1366
+      },
+      "series": [],
+      "tabs": [
+        "bug",
+        "__marcador_group__",
+        "marcadorPenales",
+        "tarjeta",
+        "cambios",
+        "varCheck",
+        "replay",
+        "longDouble",
+        "shortSimple",
+        "shortDouble",
+        "zocaloCompuesto",
+        "formacionEquipos",
+        "vsPrepartido",
+        "vsResultado",
+        "estrellas",
+        "charts",
+        "grupos",
+        "goleadores",
+        "asistidores",
+        "jugadores",
+        "sideTable",
+        "posiciones",
+        "posicionesTorneo",
+        "abreviaturas",
+        "jugadoresAdmin",
+        "actualizadorDatos"
+      ]
+    },
+    {
+      "name": "recargar",
+      "ok": true,
+      "fails": [],
+      "checks": {
+        "nodesPct": 0,
+        "listenersPct": 0,
+        "detachedDelta": 0,
+        "intervalsDelta": 0,
+        "torneoListeners": 0,
+        "programNodesDelta": 0,
+        "programListenersDelta": 0,
+        "programVideosDelta": 0
+      },
+      "before": {
+        "label": "D0 recargar inicio",
+        "master": {
+          "nodes": 2650,
+          "listeners": 277,
+          "heapMB": 3.15,
+          "timers": {
+            "intervals": 0,
+            "timeouts": 1
+          },
+          "videos": 0,
+          "webgl": 0,
+          "torneoListeners": 0
+        },
+        "program": {
+          "nodes": 2218,
+          "listeners": 68,
+          "heapMB": 1.46,
+          "timers": {
+            "intervals": 3,
+            "timeouts": 0
+          },
+          "videos": 11,
+          "webgl": 11
+        }
+      },
+      "after": {
+        "label": "D fin",
+        "master": {
+          "nodes": 2650,
+          "listeners": 277,
+          "heapMB": 3.19,
+          "timers": {
+            "intervals": 0,
+            "timeouts": 1
+          },
+          "videos": 0,
+          "webgl": 0,
+          "torneoListeners": 0
+        },
+        "program": {
+          "nodes": 2218,
+          "listeners": 68,
+          "heapMB": 1.5,
+          "timers": {
+            "intervals": 3,
+            "timeouts": 0
+          },
+          "videos": 11,
+          "webgl": 11
+        }
+      },
+      "detBefore": {
+        "detachedNodes": 2,
+        "closures": 4605,
+        "heapMB": 8.54,
+        "EventListener": 1366
+      },
+      "detAfter": {
+        "detachedNodes": 2,
+        "closures": 4606,
+        "heapMB": 8.66,
+        "EventListener": 1366
+      },
+      "series": [],
+      "reloadsOk": 5,
+      "programResourceEntries": 1
+    }
+  ]
+}

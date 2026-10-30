@@ -2,10 +2,11 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
-<title>LIVE GRAPHICS — Program / Overlay</title>
+<title>SOFTX — Program / Overlay</title>
 <link rel="icon" type="image/png" sizes="64x64" href="/assets/images/gla-favicon.png" />
 <link rel="stylesheet" href="css/theme.css?v=2" />
 <link rel="stylesheet" href="css/overlay.css?v=24" />
+<link rel="stylesheet" href="css/bb.css" />
 </head>
 <body>
 <div id="stage">
@@ -73,6 +74,16 @@
   <div id="mod-asistidores" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
   <div id="mod-jugadores" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
   <div id="mod-fichaJugador" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+
+  <!-- CHARTS (SOFTX / GLA): placa estadistica sin asset -->
+  <div id="mod-charts" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>
+  <!-- BAULETI vs BALANZA (SOFTX [3]): piezas CSS propias, ver css/bb.css.
+       Orden = capas: las placas de pantalla completa (VS, Formación) tapan al
+       Marcador y a la Tarjeta, que siguen al aire y reaparecen al salir. -->
+  <div id="mod-bbMarcador" class="gfx gfx-fullstage bb-root is-hidden"><div class="content"></div></div>
+  <div id="mod-bbTarjeta" class="gfx gfx-fullstage bb-root is-hidden"><div class="content"></div></div>
+  <div id="mod-bbVs" class="gfx gfx-fullstage bb-root is-hidden"><div class="content"></div></div>
+  <div id="mod-bbFormacion" class="gfx gfx-fullstage bb-root is-hidden"><div class="content"></div></div>
 
   <!-- BRACKETS (2026-09-02, handoff de un agente concurrente -- ver docs/PATCH_SHARED_CLAUDE.md) -->
   <div id="mod-cronogramaHoy" class="gfx gfx-fullstage is-hidden"><div class="content"></div></div>

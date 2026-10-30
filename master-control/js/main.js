@@ -24,6 +24,13 @@ import { renderZocaloSponsorsPanel } from './zocalo-sponsors-panel.js';
 import { renderCompositionControl } from './composition-control.js';
 import { renderPresetsControl, savePresetEntry } from './presets-helper.js';
 import { renderEquiposPanel } from './equipos-panel.js';
+import { renderAssetResources } from './asset-resources-panel.js';
+import { renderChartsPanel } from './charts-panel.js';
+import { renderBbMarcadorPanel } from './bb/bb-marcador-panel.js';
+import { renderBbFormacionPanel } from './bb/bb-formacion-panel.js';
+import { renderBbPlantelesPanel } from './bb/bb-planteles-panel.js';
+import { renderBbEquiposPanel } from './bb/bb-equipos-panel.js';
+import { createPanelLifecycle, setCurrentPanelLifecycle } from './panel-lifecycle.js';
 import { renderJugadoresPanel } from './jugadores-panel.js';
 import { renderZocaloEscudosPanel } from './zocalo-escudos-panel.js';
 import { renderPenalesPanel } from './penales-panel.js';
@@ -32,7 +39,7 @@ import { renderActualizadorDatosPanel } from './actualizador-datos-panel.js';
 import { loadGlaTorneoEdicion, setGlaTorneoEdicion } from './gla-torneo-source.js';
 import { updateLocalTeamCatalog, teamName } from '../../shared/teams.js';
 import { CUSTOM_COLOR_ID, colorHex, normalizeHexColor } from '../../shared/team-colors.js';
-import { listThemes, isThemeReady, getTheme, getModuleAssetStatus, DEFAULT_THEME_ID, ARGENTINA_STREAMERS_THEME_ID } from '../../shared/themes.js';
+import { isThemeReady, getTheme, getModuleAssetStatus, DEFAULT_THEME_ID, ARGENTINA_STREAMERS_THEME_ID, BAULETI_BALANZA_THEME_ID } from '../../shared/themes.js';
 import { ADJUST_REGISTRY } from '../../shared/adjust-registry.js';
 
 // Draft local por modulo: lo que el operador esta editando. Se inicializa
@@ -53,7 +60,7 @@ let draftThemeId = null;
 // de que el servidor confirme, así Master Control y Program siempre
 // terminan de acuerdo.
 let activeThemeId = DEFAULT_THEME_ID;
-const themeSelect = document.getElementById('theme-select');
+const systemBadge = document.getElementById('system-badge');
 const themeBanner = document.getElementById('theme-pending-banner');
 
 // BANCO GLOBAL DE PRESETS DE ZOCALOS (2026-09-27, pedido explicito del
@@ -139,22 +146,15 @@ fetch('/api/lower-third-presets')
 // ya guardados en disco y sus endpoints del servidor quedan intactos e
 // ignorados (sin migracion). PRESETS de texto no tienen relacion con esto.
 
-function populateThemeSelect() {
-  if (!themeSelect) return;
-  themeSelect.innerHTML = '';
-  for (const theme of listThemes()) {
-    const option = document.createElement('option');
-    option.value = theme.id;
-    option.textContent = theme.name;
-    themeSelect.appendChild(option);
-  }
-}
-
+// SOFTX: el sistema (GLA RELÁMPAGO / ARGENTINA STREAMERS) se elige al
+// arrancar y queda fijo -- el panel solo lo muestra, no lo puede cambiar.
 function applyThemeUI(themeId) {
   activeThemeId = themeId;
   document.body.dataset.theme = themeId;
   loadThemeLowerThirdBank(themeId);
-  if (themeSelect) themeSelect.value = themeId;
+  const systemName = getTheme(themeId).name;
+  if (systemBadge) systemBadge.textContent = systemName;
+  document.title = `SOFTX — ${systemName} — Master Control`;
   if (themeBanner) {
     const ready = isThemeReady(themeId);
     themeBanner.hidden = ready;
@@ -162,13 +162,6 @@ function applyThemeUI(themeId) {
       themeBanner.textContent = `THEME EN PREPARACIÓN / ASSETS PENDIENTES — ${getTheme(themeId).name} todavía no tiene sus piezas gráficas cargadas.`;
     }
   }
-}
-
-populateThemeSelect();
-if (themeSelect) {
-  themeSelect.addEventListener('change', () => {
-    ws.send({ type: WS_MSG.SET_THEME, themeId: themeSelect.value });
-  });
 }
 
 for (const id of MODULE_IDS) {
@@ -192,7 +185,7 @@ loadGlaTorneoEdicion();
 // Orden de categorias en el panel (broadcast: lo mas usado en vivo primero).
 // Orden pedido explicitamente: Mosca arriba de todo, Marcador justo
 // debajo, despues el resto sin cambios (2026-08-15).
-const CATEGORY_ORDER = ['Mosca', 'Marcador', 'Eventos', 'VAR / Replay', 'Zocalos', 'Placas', 'Grupos', 'Tablas', 'Brackets', 'General'];
+const CATEGORY_ORDER = ['Partido', 'Mosca', 'Marcador', 'Eventos', 'VAR / Replay', 'Zocalos', 'Placas', 'Charts', 'Grupos', 'Tablas', 'Brackets', 'General'];
 
 // "MARCADOR unificado" (2026-08-15, pedido explicito del usuario): en vez
 // de varias tabs sueltas en la navegacion (Marcador principal, Tiempo
@@ -250,7 +243,15 @@ function isArgentinaLiveModule(moduleId) {
 // persistidos, oculto de toda navegacion (antes solo se ocultaba para GLA,
 // ver GLA_HIDDEN_MODULES mas abajo -- ahora se oculta siempre, para
 // cualquier theme).
-const HIDDEN_FROM_NAV_IDS = new Set(['gol', 'zocaloFinal', 'zocaloFinalDiv', 'zocaloCompuestoLogo']);
+const HIDDEN_FROM_NAV_IDS = new Set(['gol', 'zocaloFinal', 'zocaloFinalDiv', 'zocaloCompuestoLogo', 'bbTarjeta']);
+
+// BAULETI vs BALANZA (SOFTX [3], 2026-10-30): sus módulos "bb*" solo existen
+// en su navegación y el resto de los módulos no aparece en la suya. TARJETA
+// no tiene pestaña: la dispara el panel del MARCADOR (como GOL en GLA).
+const isBbModuleId = (id) => /^bb[A-Z]/.test(id);
+const isBbTheme = () => activeThemeId === BAULETI_BALANZA_THEME_ID;
+// Ganchos del panel BxB visible (estado de la placa de tarjeta, etc.).
+let bbPanelHooks = null;
 
 // VAR: textos predefinidos para "Texto Motivo" (2026-08-15, pedido
 // explicito del usuario). Las claves matchean los "id" de las opciones de
@@ -289,9 +290,16 @@ function updateAssetBadge(moduleId) {
 const fieldsContainer = document.getElementById('fields-container');
 const extraContainer = document.getElementById('extra-container');
 const compositionContainer = document.getElementById('composition-container');
+const assetResourceContainer = document.getElementById('asset-resource-container');
 const marcadorSubnav = document.getElementById('marcador-subnav');
 const connStatus = document.getElementById('conn-status');
-let panelCleanup = null;
+// Ciclo de vida del panel visible (ver panel-lifecycle.js). "panelScope.cleanup = fn"
+// SUMA un cleanup (nunca pisa uno anterior del mismo render).
+let panelLifecycle = createPanelLifecycle();
+setCurrentPanelLifecycle(panelLifecycle);
+const panelScope = {
+  set cleanup(fn) { panelLifecycle.onCleanup(fn); },
+};
 const takeBtn = document.getElementById('btn-take');
 const updateBtn = document.getElementById('btn-update');
 const outBtn = document.getElementById('btn-out');
@@ -799,6 +807,8 @@ function buildTabs() {
   const ARGENTINA_STREAMERS_HIDDEN_MODULES = new Set([
     'sideTable', 'posiciones', 'posicionesTorneo',
     'grupos', 'zocaloCompuesto',
+    // CHARTS: exclusivo de GLA (datos de gla.futbol).
+    'charts',
   ]);
   // "fichaJugador" (2026-09-02, pedido explicito del usuario: "GLA debe
   // conservar exactamente sus modulos, navegacion y comportamiento") --
@@ -837,14 +847,21 @@ function buildTabs() {
     if (MARCADOR_SUBSECTION_IDS.has(id) || HIDDEN_FROM_NAV_IDS.has(id)) continue;
     if (activeThemeId === ARGENTINA_STREAMERS_THEME_ID && ARGENTINA_STREAMERS_HIDDEN_MODULES.has(id)) continue;
     if (activeThemeId === DEFAULT_THEME_ID && GLA_HIDDEN_MODULES.has(id)) continue;
+    if (isBbModuleId(id) !== isBbTheme()) continue;
     const cat = MODULES[id].category || 'Otros';
     if (!byCategory.has(cat)) byCategory.set(cat, []);
     byCategory.get(cat).push(id);
   }
 
   if (!byCategory.has('General')) byCategory.set('General', []);
+  if (isBbTheme()) {
+    // BxB: PLANTELES antes que EQUIPOS; abre en MARCADOR.
+    byCategory.get('General').push('jugadoresAdmin', 'abreviaturas');
+    if (!isBbModuleId(activeId) && activeId !== 'abreviaturas' && activeId !== 'jugadoresAdmin') activeId = 'bbMarcador';
+  } else {
   byCategory.get('General').push('abreviaturas');
   byCategory.get('General').push('jugadoresAdmin');
+  }
   if (activeThemeId === DEFAULT_THEME_ID) byCategory.get('General').push('actualizadorDatos');
 
   const orderedCategories = [
@@ -1256,11 +1273,40 @@ function resolveCrestTeamTarget(entry, data) {
   };
 }
 
+// Contexto de los paneles BxB (master-control/js/bb/): mismo ws/draft/
+// autoguardado/Preview que el resto del Master; todo lo que registran queda
+// atado al ciclo de vida del panel visible.
+function bbPanelContext() {
+  const lifecycle = panelLifecycle;
+  return {
+    lifecycle,
+    draft,
+    isOn: (id) => serverState[id]?.status === MODULE_STATUS.ON,
+    autosave: (id) => scheduleAutoSave(id),
+    sendLive(id) {
+      ws.send({ type: WS_MSG.UPDATE, moduleId: id, data: draft[id], isExplicitUpdate: true });
+      sendPreviewUpdateIfActive(id);
+      // VS y Formación toman los equipos del Marcador.
+      if (id === 'bbMarcador' && (previewedModuleId === 'bbVs' || previewedModuleId === 'bbFormacion')) sendPreviewSnapshot(previewedModuleId);
+    },
+    take: (id) => ws.send({ type: WS_MSG.TAKE, moduleId: id, data: draft[id] }),
+    out: (id) => ws.send({ type: WS_MSG.OUT, moduleId: id }),
+    preview(id) {
+      previewedModuleId = id;
+      sendPreviewSnapshot(id);
+    },
+    setHooks(hooks) {
+      bbPanelHooks = hooks;
+      lifecycle.onCleanup(() => { if (bbPanelHooks === hooks) bbPanelHooks = null; });
+    },
+  };
+}
+
 function renderPanel() {
-  if (panelCleanup) {
-    panelCleanup();
-    panelCleanup = null;
-  }
+  panelLifecycle.destroy();
+  panelLifecycle = createPanelLifecycle();
+  setCurrentPanelLifecycle(panelLifecycle);
+  assetResourceContainer.innerHTML = '';
 
   mcPanel.scrollTop = 0;
 
@@ -1281,7 +1327,12 @@ function renderPanel() {
     updateBtn.style.display = 'none';
     outBtn.style.display = 'none';
     previewBtn.style.display = 'none';
-    panelCleanup = renderEquiposPanel(extraContainer, {
+    if (isBbTheme()) {
+      renderBbEquiposPanel(extraContainer, { lifecycle: panelLifecycle });
+      updatePanelStatus();
+      return;
+    }
+    panelScope.cleanup = renderEquiposPanel(extraContainer, {
       themeId: activeThemeId,
       teamColors: activeThemeId === DEFAULT_THEME_ID ? glaTeamColors : null,
     });
@@ -1303,7 +1354,7 @@ function renderPanel() {
     updateBtn.style.display = 'none';
     outBtn.style.display = 'none';
     previewBtn.style.display = 'none';
-    panelCleanup = renderActualizadorDatosPanel(extraContainer);
+    panelScope.cleanup = renderActualizadorDatosPanel(extraContainer);
     updatePanelStatus();
     return;
   }
@@ -1319,7 +1370,13 @@ function renderPanel() {
     updateBtn.style.display = 'none';
     outBtn.style.display = 'none';
     previewBtn.style.display = 'none';
-    panelCleanup = renderJugadoresPanel(extraContainer, draft.scoreboard);
+    if (isBbTheme()) {
+      panelTitle.textContent = 'Planteles';
+      renderBbPlantelesPanel(extraContainer, { lifecycle: panelLifecycle });
+      updatePanelStatus();
+      return;
+    }
+    panelScope.cleanup = renderJugadoresPanel(extraContainer, draft.scoreboard);
     updatePanelStatus();
     return;
   }
@@ -1341,7 +1398,7 @@ function renderPanel() {
   // criterio que MARCADOR): ACTUALIZAR queda redundante ahi tambien, ver
   // "sendFormacionLive" mas abajo. "ALWAYS_LIVE_MODULE_IDS" (mismo dia,
   // ronda de correcciones siguiente): VAR Chequeo y Replay, mismo criterio.
-  if (MARCADOR_SUBSECTION_IDS.has(activeId) || activeId === 'formacionEquipos' || ALWAYS_LIVE_MODULE_IDS.has(activeId) || isArgentinaLiveModule(activeId)) {
+  if (MARCADOR_SUBSECTION_IDS.has(activeId) || activeId === 'formacionEquipos' || ALWAYS_LIVE_MODULE_IDS.has(activeId) || isArgentinaLiveModule(activeId) || activeId === 'bbMarcador') {
     updateBtn.style.display = 'none';
   }
 
@@ -1588,7 +1645,7 @@ function renderPanel() {
 
   extraContainer.innerHTML = '';
   if (activeId === 'scoreboard') {
-    panelCleanup = renderScoreboardClockPanel(extraContainer, draft[activeId], (patch) => {
+    panelScope.cleanup = renderScoreboardClockPanel(extraContainer, draft[activeId], (patch) => {
       ws.send({ type: WS_MSG.UPDATE, moduleId: activeId, data: patch });
       sendPreviewUpdateIfActive(activeId);
     }, {
@@ -1619,7 +1676,7 @@ function renderPanel() {
     // que "sendMarcadorSubsectionLive" -- manda el draft completo con
     // "isExplicitUpdate:true" en vez de esperar el debounce+freeze de
     // "scheduleAutoSave". Scoped a este unico modulo (no toca el resto).
-    panelCleanup = renderFormationListPanel(extraContainer, draft[activeId], draft.scoreboard, () => {
+    panelScope.cleanup = renderFormationListPanel(extraContainer, draft[activeId], draft.scoreboard, () => {
       ws.send({ type: WS_MSG.UPDATE, moduleId: idForThisRender, data: draft[idForThisRender], isExplicitUpdate: true });
       sendPreviewUpdateIfActive(idForThisRender);
     }, {
@@ -1687,7 +1744,7 @@ function renderPanel() {
       });
     }
   } else if (activeId === 'shortDouble') {
-    panelCleanup = renderShortDoublePanel(extraContainer, draft[activeId], () => {
+    panelScope.cleanup = renderShortDoublePanel(extraContainer, draft[activeId], () => {
       scheduleAutoSave(idForThisRender);
     }, buildSaveOptions('shortDouble'));
     // TALENTOS (nombre AS de este modulo, 2026-10-08): banco EXCLUSIVO
@@ -1790,7 +1847,7 @@ function renderPanel() {
       },
       onDirty: () => scheduleAutoSave('zocaloFinal'),
     });
-    panelCleanup = renderZocaloSponsorsPanel(extraContainer, draft[activeId], () => scheduleAutoSave(idForThisRender));
+    panelScope.cleanup = renderZocaloSponsorsPanel(extraContainer, draft[activeId], () => scheduleAutoSave(idForThisRender));
   } else if (activeId === 'zocaloFinalDiv') {
     renderZocaloEscudosPanel(extraContainer, draft.zocaloFinalDiv, () => scheduleAutoSave('zocaloFinalDiv'));
     renderPresetsControl(extraContainer, draft.zocaloFinalDiv, {
@@ -1808,7 +1865,7 @@ function renderPanel() {
       },
       onDirty: () => scheduleAutoSave('zocaloFinalDiv'),
     });
-    panelCleanup = renderZocaloSponsorsPanel(extraContainer, draft[activeId], () => scheduleAutoSave(idForThisRender));
+    panelScope.cleanup = renderZocaloSponsorsPanel(extraContainer, draft[activeId], () => scheduleAutoSave(idForThisRender));
   } else if (activeId === 'zocaloCompuesto') {
     // Panel de escudos SOLO tiene sentido en tipo EQUIPOS -- en LOGO no se
     // muestra (pedido explicito: "al cambiar TIPO... no dejar ambas
@@ -1856,7 +1913,7 @@ function renderPanel() {
         onDirty: () => scheduleAutoSave('zocaloCompuesto'),
       });
     }
-    panelCleanup = renderZocaloSponsorsPanel(extraContainer, draft[activeId], () => scheduleAutoSave(idForThisRender));
+    panelScope.cleanup = renderZocaloSponsorsPanel(extraContainer, draft[activeId], () => scheduleAutoSave(idForThisRender));
   } else if (activeId === 'vsPrepartido') {
     renderPresetsControl(extraContainer, draft.vsPrepartido, {
       presetKey: 'titlePresets',
@@ -1891,37 +1948,39 @@ function renderPanel() {
   } else if (activeId === 'zocaloVs') {
     // ZÓCALO VS (2026-10-09): todo en vivo (sin ACTUALIZAR); cambiar de
     // variante vuelve a armar el panel para mostrar los ajustes de esa variante.
-    panelCleanup = renderZocaloVsPanel(extraContainer, draft[activeId], draft.scoreboard, () => {
+    panelScope.cleanup = renderZocaloVsPanel(extraContainer, draft[activeId], draft.scoreboard, () => {
       sendMarcadorSubsectionLive(idForThisRender);
     }, { onVarianteChange: () => renderPanel() });
+  } else if (activeId === 'charts') {
+    panelScope.cleanup = renderChartsPanel(extraContainer, draft[activeId], draft.scoreboard, () => scheduleAutoSave(idForThisRender));
   } else if (activeId === 'grupos') {
     // GLA (2026-10-23): puntos y VALIDAR WEB van en vivo (Grupos reordena
     // en Preview y Program sin ACTUALIZAR); el resto sigue con autosave.
-    panelCleanup = renderGruposPanel(extraContainer, draft[activeId], () => {
+    panelScope.cleanup = renderGruposPanel(extraContainer, draft[activeId], () => {
       scheduleAutoSave(idForThisRender);
     }, buildSaveOptions(activeId), {
       onLive: activeThemeId === DEFAULT_THEME_ID ? () => sendMarcadorSubsectionLive(idForThisRender) : null,
     });
   } else if (activeId === 'sideTable') {
-    panelCleanup = renderResultadosPanel(extraContainer, draft[activeId], () => {
+    panelScope.cleanup = renderResultadosPanel(extraContainer, draft[activeId], () => {
       scheduleAutoSave(idForThisRender);
     }, buildSaveOptions(activeId));
   } else if (activeId === 'estrellas') {
     // Tablas locales de Goleadores/Asistidores (Argentina Streamers,
     // "ESTRELLA POR" GOLES/ASISTENCIAS usa su primer jugador por rama).
-    panelCleanup = renderEstrellasPanel(extraContainer, draft[activeId], draft['scoreboard'], () => {
+    panelScope.cleanup = renderEstrellasPanel(extraContainer, draft[activeId], draft['scoreboard'], () => {
       scheduleAutoSave(idForThisRender);
     }, buildSaveOptions(activeId), { goleadores: draft.goleadores, asistidores: draft.asistidores });
   } else if (activeId === 'posiciones') {
-    panelCleanup = renderPosicionesPanel(extraContainer, draft[activeId], () => {
+    panelScope.cleanup = renderPosicionesPanel(extraContainer, draft[activeId], () => {
       scheduleAutoSave(idForThisRender);
     }, { saveOptions: buildSaveOptions(activeId) });
   } else if (activeId === 'posicionesTorneo') {
-    panelCleanup = renderPosicionesTorneoPanel(extraContainer, draft[activeId], () => {
+    panelScope.cleanup = renderPosicionesTorneoPanel(extraContainer, draft[activeId], () => {
       scheduleAutoSave(idForThisRender);
     }, buildSaveOptions(activeId));
   } else if (isRosterEvent) {
-    panelCleanup = renderMatchRosterPanel(fieldsContainer, draft[activeId], draft.scoreboard, activeId, () => {
+    panelScope.cleanup = renderMatchRosterPanel(fieldsContainer, draft[activeId], draft.scoreboard, activeId, () => {
       scheduleAutoSave(idForThisRender);
       renderPanel();
     });
@@ -1934,11 +1993,11 @@ function renderPanel() {
     const argentinaCtx = activeThemeId === ARGENTINA_STREAMERS_THEME_ID
       ? { siblingData: draft, scheduleAutoSave }
       : undefined;
-    panelCleanup = renderPerformanceTablePanel(extraContainer, draft[activeId], activeId, () => {
+    panelScope.cleanup = renderPerformanceTablePanel(extraContainer, draft[activeId], activeId, () => {
       scheduleAutoSave(idForThisRender);
     }, buildSaveOptions(activeId), argentinaCtx);
   } else if (activeId === 'fichaJugador') {
-    panelCleanup = renderFichaJugadorPanel(extraContainer, draft[activeId], draft.scoreboard, () => {
+    panelScope.cleanup = renderFichaJugadorPanel(extraContainer, draft[activeId], draft.scoreboard, () => {
       scheduleAutoSave(idForThisRender);
     }, buildSaveOptions(activeId));
   } else if (activeId === 'cronogramaHoy') {
@@ -1948,7 +2007,7 @@ function renderPanel() {
     // escudo despues de cambiar de equipo pisaba la posicion del equipo
     // ANTERIOR. Al cambiar de equipo se vuelve a armar el acordeon.
     let crestTeams = `${draft[activeId].teamLocal}|${draft[activeId].teamVisitante}`;
-    panelCleanup = renderCronogramaHoyPanel(fieldsContainer, draft[activeId], () => {
+    panelScope.cleanup = renderCronogramaHoyPanel(fieldsContainer, draft[activeId], () => {
       scheduleAutoSave(idForThisRender);
       const nextTeams = `${draft[idForThisRender].teamLocal}|${draft[idForThisRender].teamVisitante}`;
       if (nextTeams !== crestTeams && activeId === idForThisRender) {
@@ -1959,11 +2018,11 @@ function renderPanel() {
   } else if (activeId === 'resultadosParciales') {
     // TÍTULO con selector ENTRETIEMPO/RESULTADO FINAL/MANUAL: SOLO
     // Argentina Streamers (2026-10-08); GLA conserva su campo de texto libre.
-    panelCleanup = renderResultadosParcialesPanel(fieldsContainer, draft[activeId], () => {
+    panelScope.cleanup = renderResultadosParcialesPanel(fieldsContainer, draft[activeId], () => {
       scheduleAutoSave(idForThisRender);
     }, { tituloConSelector: activeThemeId === ARGENTINA_STREAMERS_THEME_ID }) || (() => {});
   } else if (activeId === 'historial') {
-    panelCleanup = renderHistorialPanel(fieldsContainer, draft[activeId], () => {
+    panelScope.cleanup = renderHistorialPanel(fieldsContainer, draft[activeId], () => {
       scheduleAutoSave(idForThisRender);
     }, buildSaveOptions(activeId)) || (() => {});
   } else if (activeId === 'zocaloCompuestoEquipos') {
@@ -1971,12 +2030,16 @@ function renderPanel() {
     // Argentina Streamers -- comparte el banco global con Largo Doble y
     // Corto Simple (null mientras el banco no llego: el panel muestra
     // "cargando" en vez de permitir guardar sobre una lista parcial).
-    panelCleanup = renderZocaloCompuestoPanel(extraContainer, draft[activeId], draft.scoreboard, () => {
+    panelScope.cleanup = renderZocaloCompuestoPanel(extraContainer, draft[activeId], draft.scoreboard, () => {
       scheduleAutoSave(idForThisRender);
     }, buildSaveOptions(activeId), {
       holder: themeLowerThirdBank.loaded ? themeLowerThirdBank : null,
       onDirty: saveThemeLowerThirdBank,
     });
+  } else if (activeId === 'bbMarcador') {
+    renderBbMarcadorPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'bbFormacion') {
+    renderBbFormacionPanel(extraContainer, bbPanelContext());
   } else if (mod.autoRunClock) {
     // "FIN DEL CONTADOR" (2026-08-15, pedido explicito del usuario): solo
     // Marcador Zocalo lo pidio (default 06:00) -- Tiempo Adicional sigue
@@ -1984,7 +2047,7 @@ function renderPanel() {
     const clockOptions = activeId === 'marcadorZocalo'
       ? { limitKey: 'clockEndText', defaultLimitText: '06:00', onDirty: () => scheduleAutoSave(idForThisRender) }
       : {};
-    panelCleanup = renderLiveClockDisplay(extraContainer, draft[activeId], mod.autoRunClock, clockOptions);
+    panelScope.cleanup = renderLiveClockDisplay(extraContainer, draft[activeId], mod.autoRunClock, clockOptions);
   }
 
   takeBtn.textContent = mod.oneShot ? 'REPRODUCIR' : 'TOMAR AL AIRE';
@@ -2009,7 +2072,24 @@ function renderPanel() {
     renderModuleAdjustAccordion(compositionContainer, activeId, draft[activeId]);
   }
 
+  // RECURSO GRÁFICO (SOFTX): solo aparece si el módulo tiene recursos
+  // registrados para el sistema activo (shared/asset-registry.js).
+  panelScope.cleanup = renderAssetResources(assetResourceContainer, activeId, {
+    isOnAir: (moduleId) => serverState[moduleId]?.status === MODULE_STATUS.ON,
+    onReloaded: previewAfterAssetReload,
+  });
+
   updatePanelStatus();
+}
+
+// RECARGAR muestra el resultado en el monitor Preview (nunca en Program).
+function previewAfterAssetReload(moduleId) {
+  if (moduleId === 'gol') {
+    ws.send({ type: 'PREVIEW_MODULE', moduleId: 'gol', data: draft.gol, allData: draft, replay: true });
+    return;
+  }
+  previewedModuleId = activeId;
+  sendPreviewSnapshot(activeId);
 }
 
 function updatePanelStatus() {
@@ -2023,11 +2103,29 @@ function updatePanelStatus() {
   panelStatus.className = isOn ? 'status-pill on' : 'status-pill off';
 }
 
+// SOFTX NECESITA REINICIARSE (2026-10-30): Master se sirve siempre desde
+// disco, el servidor no. Si el backend corre código viejo (o es anterior a
+// /api/version, que entonces da 404) se avisa en vez de dejar que los
+// módulos nuevos fallen con "No existe el endpoint". Se chequea al conectar.
+const restartBanner = document.getElementById('softx-restart-banner');
+async function checkBackendVersion() {
+  let stale = false;
+  try {
+    const res = await fetch('/api/version');
+    if (res.status === 404) stale = true;
+    else if (res.ok) stale = Boolean((await res.json()).stale);
+  } catch { return; }
+  if (!restartBanner) return;
+  restartBanner.hidden = !stale;
+  if (stale) restartBanner.textContent = 'SOFTX NECESITA REINICIARSE — el servidor está corriendo una versión vieja del código. Cerrá SOFTX (Q en la ventana START) y volvé a abrir START.';
+}
+
 const ws = connect({
   onOpen() {
     connStatus.textContent = 'CONECTADO';
     connStatus.className = 'conn on';
     wsConnected = true;
+    checkBackendVersion();
   },
   onClose() {
     connStatus.textContent = 'SIN CONEXION...';
@@ -2042,7 +2140,7 @@ const ws = connect({
       // SELECT (ver TEAM_OPTIONS en shared/modules.js) -- sin esto, elegir
       // ARGENTINA STREAMERS seguía mostrando el desplegable de equipos de
       // GLA hasta cambiar de tab y volver.
-      if (activeId === 'abreviaturas' || activeId === 'jugadoresAdmin' || activeId === 'zocaloFinalDiv' || activeId === 'zocaloCompuesto' || activeId === 'scoreboard') {
+      if (activeId === 'abreviaturas' || activeId === 'jugadoresAdmin' || activeId === 'zocaloFinalDiv' || activeId === 'zocaloCompuesto' || activeId === 'scoreboard' || (isBbTheme() && isBbModuleId(activeId))) {
         renderPanel();
       }
     } else if (msg.type === 'GLA_TORNEO_EDICION_UPDATE') {
@@ -2160,6 +2258,7 @@ const ws = connect({
       }
       updateTabStates();
       if (msg.moduleId === activeId) updatePanelStatus();
+      bbPanelHooks?.onModuleUpdate?.(msg.moduleId);
       if (msg.moduleId === 'scoreboard' && activeId === 'estrellas') {
         renderPanel();
       }

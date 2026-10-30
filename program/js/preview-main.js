@@ -7,6 +7,9 @@ import { initStageScale } from './stage-scale.js';
 import { waitForProgramFonts } from './program-fonts.js';
 import { setActiveThemeId } from './theme-client.js';
 import { applyComposition, applyElementAdjustRegistry } from './visual-compose.js';
+import { setAssetVersions } from './asset-versions.js';
+import { modulesUsingPath } from '../../shared/asset-registry.js';
+import { getActiveThemeId } from './theme-client.js';
 
 // Bus visual de PREVIEW (2026-09-26, pedido explicito, seccion 7): pagina
 // totalmente separada de program/js/main.js (el output real que alimenta
@@ -22,6 +25,8 @@ await waitForProgramFonts();
 
 const els = {};
 let shownId = null;
+// Último PREVIEW mostrado: RECARGAR (SOFTX) lo vuelve a montar con el archivo nuevo.
+let lastPreview = null;
 
 for (const id of MODULE_IDS) {
   const root = document.getElementById(`mod-${id}`);
@@ -71,6 +76,7 @@ function showPreview(moduleId, data, allData, replay = false) {
     teardown(els[shownId]);
   }
   shownId = moduleId;
+  lastPreview = { moduleId, data, allData };
   const safeData = data || {};
   const safeAllData = allData || {};
   renderers[moduleId](target.content, safeData, isNewModule || replay, () => {}, safeAllData);
@@ -92,6 +98,15 @@ connect({
   onMessage(msg) {
     if (msg.type === 'PREVIEW_MODULE') {
       showPreview(msg.moduleId, msg.data, msg.allData, msg.replay === true);
+    } else if (msg.type === WS_MSG.ASSET_VERSIONS) {
+      setAssetVersions(msg.versions);
+      const affected = (msg.changedPaths || []).some((assetPath) => modulesUsingPath(getActiveThemeId(), assetPath).includes(shownId));
+      if (affected && lastPreview && els[shownId]) {
+        const { moduleId, data, allData } = lastPreview;
+        teardown(els[moduleId]);
+        shownId = null;
+        showPreview(moduleId, data, allData);
+      }
     } else if (msg.type === 'TEAM_CATALOG_UPDATE') {
       updateLocalTeamCatalog(msg.catalog);
     } else if (msg.type === WS_MSG.THEME_UPDATE) {

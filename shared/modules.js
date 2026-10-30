@@ -1604,6 +1604,103 @@ export const MODULES = {
     },
   },
 
+  // CHARTS (SOFTX / GLA, 2026-10-29): placa estadística de partido
+  // (PREVIA / ENTRETIEMPO / FIN DE PARTIDO) diseñada en CSS, sin asset, con
+  // datos de gla.futbol (server/charts.js). "chart" es el snapshot ya
+  // normalizado del partido elegido; "tipo" solo cambia cómo se dibuja.
+  charts: {
+    id: 'charts',
+    label: 'CHARTS',
+    category: 'Charts',
+    layer: 'fullscreen',
+    fields: [],
+    defaults: {
+      torneo: '',
+      dia: '',
+      partido: '',
+      tipo: 'entretiempo', // 'previa' | 'entretiempo' | 'final'
+      chart: null,
+      ultimaActualizacionWeb: '',
+    },
+  },
+
+  // BAULETI vs BALANZA (SOFTX [3], 2026-10-30): módulos propios del
+  // sistema, dibujados en CSS (program/css/bb.css) y operados con paneles
+  // dedicados (master-control/js/bb/). Ocultos en GLA y Argentina Streamers.
+  // "bbMarcador" es además la fuente del PARTIDO: equipos, reloj, período y
+  // "matchEvents" (incidencias, ver shared/bb-match.js).
+  bbMarcador: {
+    id: 'bbMarcador',
+    label: 'MARCADOR',
+    category: 'Partido',
+    layer: 'scoreboard',
+    live: true,
+    fields: [],
+    defaults: {
+      teamA: 'bauleti',
+      teamB: 'balanza',
+      scoreA: 0,
+      scoreB: 0,
+      clock: emptyClock(),
+      clockEndText: '20:00',
+      period: '1T',
+      extraMinutes: 0,
+      showExtra: false,
+      showCrests: true,
+      matchEvents: [],
+      penalties: { active: false, local: [], visitante: [] },
+    },
+  },
+
+  // FORMACIÓN 6v6: "equipos[teamId]" guarda esquema, titulares (arquero
+  // primero, después las líneas de defensa a ataque) y suplentes como IDs
+  // de PLANTELES, más "plantel" = copia de los datos visibles de esos
+  // jugadores (dorsal/nombre/foto) que el panel refresca desde PLANTELES.
+  bbFormacion: {
+    id: 'bbFormacion',
+    label: 'FORMACIÓN',
+    category: 'Placas',
+    layer: 'fullscreen',
+    fields: [],
+    defaults: {
+      side: 'local',
+      titulo: 'FORMACIÓN',
+      mostrarSuplentes: true,
+      equipos: {},
+    },
+  },
+
+  bbVs: {
+    id: 'bbVs',
+    label: 'VS PREPARTIDO',
+    category: 'Placas',
+    layer: 'fullscreen',
+    fields: [
+      { key: 'evento', label: 'Texto superior (evento)', type: FIELD_TYPES.TEXT },
+      { key: 'detalle', label: 'Texto inferior (fecha / sede / hora)', type: FIELD_TYPES.TEXT },
+    ],
+    defaults: {
+      evento: 'PARTIDO DEL AÑO',
+      detalle: '',
+    },
+  },
+
+  // Placa chica de tarjeta (abajo a la izquierda). La dispara el panel del
+  // Marcador al registrar una tarjeta; "event" es la copia del evento de
+  // matchEvents (más la foto del jugador). Sale sola a los "autoOutSec"
+  // segundos (0 = manual).
+  bbTarjeta: {
+    id: 'bbTarjeta',
+    label: 'TARJETA',
+    category: 'Partido',
+    layer: 'event',
+    fields: [],
+    defaults: {
+      event: null,
+      autoOutSec: 7,
+    },
+  },
+
 };
 
 export const MODULE_IDS = Object.keys(MODULES);

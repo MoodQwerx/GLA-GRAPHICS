@@ -1,6 +1,6 @@
 # Instrucciones para agentes
 
-Este archivo es el punto de entrada común para cualquier agente que trabaje en GLA Broadcast Graphics System: Codex, Claude Code, Gemini CLI u otras herramientas equivalentes. Aplica a todo el repositorio.
+Este archivo es el punto de entrada común para cualquier agente que trabaje en SOFTX (antes GLA Broadcast Graphics System / LIVE GRAPHICS): Codex, Claude Code, Gemini CLI u otras herramientas equivalentes. Aplica a todo el repositorio.
 
 ## Autoridad y lectura obligatoria
 

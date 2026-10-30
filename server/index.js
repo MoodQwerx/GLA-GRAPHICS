@@ -2,6 +2,7 @@ import express from 'express';
 import http from 'node:http';
 import path from 'node:path';
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
@@ -22,6 +23,7 @@ import {
 import {
   getTeamCatalog, updateTeamAbbreviation, resetTeamAbbreviation, setTeamVisibility,
   updateThemeTeam, getThemeCrestDir, updateGlaTeam, listGlaCrestFiles, setGlaTeamOrder,
+  listThemeCrestFiles, setThemeTeamOrder,
 } from './teams.js';
 import { getSponsorsCatalog } from './sponsors.js';
 import {
@@ -59,13 +61,43 @@ import {
 } from './argentinaStreamersSync.js';
 import { refreshArgentinaStreamersWebData, summarizeWebData } from './argentinaStreamersWebData.js';
 import { flushPersistence, getPersistenceStatus } from './persistence.js';
-import { getActiveThemeId, setActiveThemeId } from './theme.js';
+import { getActiveThemeId, getSystemLaunchSource } from './theme.js';
+import { chartsCatalog, buildChart } from './charts.js';
+import { registerBauletiBalanzaRoutes } from './bauleti-balanza.js';
+import { initAssetResources, getAssetVersions, describeModuleAssets, reloadAsset, openAssetFolder } from './asset-resources.js';
 import { listThemes, getTheme, ARGENTINA_STREAMERS_THEME_ID } from '../shared/themes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, '..');
 const PORT = process.env.PORT || process.env.GLA_PORT || 4400;
 const HOST = '0.0.0.0';
+
+// VERSIÓN DEL BACKEND (SOFTX, 2026-10-30): Node carga server/ y shared/ UNA
+// vez al arrancar, mientras que Master/Program se sirven siempre desde disco.
+// Si se actualiza el código sin reiniciar SOFTX quedan "frontend nuevo +
+// backend viejo" y los módulos nuevos fallan con 404. buildId = hash del
+// código cargado al arrancar; /api/version lo compara con el código actual
+// en disco (stale) y Master muestra "SOFTX NECESITA REINICIARSE".
+function hashBackendCode() {
+  const hash = crypto.createHash('sha1');
+  const files = [];
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.name.endsWith('.js')) files.push(full);
+    }
+  };
+  walk(path.join(root, 'server'));
+  walk(path.join(root, 'shared'));
+  for (const file of files.sort()) {
+    hash.update(path.relative(root, file));
+    hash.update(fs.readFileSync(file));
+  }
+  return hash.digest('hex').slice(0, 12);
+}
+const BUILD_ID = hashBackendCode();
+const STARTED_AT = new Date().toISOString();
 
 const app = express();
 app.use(express.json());
@@ -129,7 +161,15 @@ app.get('/api/persistence/status', (req, res) => {
 // Control Y Program al mismo tiempo sin refrescar -- un POST REST no le
 // avisaría a Program.
 app.get('/api/themes', (req, res) => {
-  res.json({ ok: true, themes: listThemes(), activeThemeId: getActiveThemeId() });
+  res.json({ ok: true, themes: listThemes(), activeThemeId: getActiveThemeId(), systemFixed: true, launchSource: getSystemLaunchSource() });
+});
+
+// Healthcheck de START (pid + sistema + código al día) y chequeo de Master
+// al conectar. Rehashear ~0,5 MB solo pasa en estos pedidos puntuales.
+app.get('/api/version', (req, res) => {
+  let diskBuildId = BUILD_ID;
+  try { diskBuildId = hashBackendCode(); } catch (err) { console.error('[SOFTX] No se pudo leer el código en disco:', err.message); }
+  res.json({ ok: true, buildId: BUILD_ID, diskBuildId, stale: diskBuildId !== BUILD_ID, pid: process.pid, startedAt: STARTED_AT, system: getActiveThemeId() });
 });
 
 // PERFILES DE PARTIDO (2026-09-05, ver server/match-profiles.js): listado
@@ -143,7 +183,7 @@ app.get('/api/match-profiles', async (req, res) => {
     const profiles = await listMatchProfiles();
     res.json({ ok: true, profiles, activeSlug: getActiveMatchProfileSlug() });
   } catch (err) {
-    console.error('[GLA] Error listando perfiles de partido:', err.message);
+    console.error('[SOFTX] Error listando perfiles de partido:', err.message);
     res.status(500).json({ ok: false, error: err.message });
   }
 });
@@ -230,6 +270,10 @@ app.post('/api/teams/team', (req, res) => {
       name: typeof name === 'string' ? name : undefined,
       abbr: typeof abbr === 'string' ? abbr : undefined,
       visible: typeof visible === 'boolean' ? visible : undefined,
+      // BAULETI vs BALANZA: escudo de su carpeta y color propio (server/teams.js
+      // los ignora para Argentina Streamers).
+      crestFile: typeof body.crestFile === 'string' ? body.crestFile : undefined,
+      color: typeof body.color === 'string' ? body.color : undefined,
     });
     broadcast({ type: 'TEAM_CATALOG_UPDATE', catalog });
     res.json({ ok: true, catalog });
@@ -241,9 +285,10 @@ app.post('/api/teams/team', (req, res) => {
 // ORDEN DE EQUIPOS de GLA (2026-10-22): lista completa de teamId en el
 // orden arrastrado en EQUIPOS; todos los desplegables lo toman del catalogo.
 app.post('/api/teams/order', (req, res) => {
-  if (getActiveThemeId() !== 'gla') return res.status(409).json({ ok: false, error: 'El orden manual de equipos es solo de GRAN LIGA RELÁMPAGO.' });
+  const themeId = getActiveThemeId();
+  if (themeId !== 'gla' && themeId !== 'bauletiBalanza') return res.status(409).json({ ok: false, error: 'Este sistema no tiene orden manual de equipos.' });
   try {
-    const catalog = setGlaTeamOrder(req.body?.order);
+    const catalog = themeId === 'gla' ? setGlaTeamOrder(req.body?.order) : setThemeTeamOrder(themeId, req.body?.order);
     broadcast({ type: 'TEAM_CATALOG_UPDATE', catalog });
     res.json({ ok: true, catalog });
   } catch (err) {
@@ -254,6 +299,7 @@ app.post('/api/teams/order', (req, res) => {
 // ESCUDOS DISPONIBLES de GLA (2026-10-21): archivos de assets/crests/ para
 // el selector "ESCUDO" de EQUIPOS. Solo nombres de archivo, nunca rutas.
 app.get('/api/teams/crest-files', (req, res) => {
+  if (getActiveThemeId() === 'bauletiBalanza') return res.json({ ok: true, files: listThemeCrestFiles('bauletiBalanza') });
   if (getActiveThemeId() !== 'gla') return res.json({ ok: true, files: [] });
   res.json({ ok: true, files: listGlaCrestFiles() });
 });
@@ -279,7 +325,7 @@ function isLoopbackRequest(req) {
 
 app.post('/api/teams/open-crest-folder', (req, res) => {
   if (process.platform !== 'win32' || process.env.RENDER) {
-    return res.status(409).json({ ok: false, code: 'OPEN_FOLDER_NOT_AVAILABLE', error: 'OPEN_FOLDER_NOT_AVAILABLE: solo disponible corriendo LIVE GRAPHICS localmente en Windows.' });
+    return res.status(409).json({ ok: false, code: 'OPEN_FOLDER_NOT_AVAILABLE', error: 'OPEN_FOLDER_NOT_AVAILABLE: solo disponible corriendo SOFTX localmente en Windows.' });
   }
   if (!isLoopbackRequest(req)) {
     return res.status(409).json({ ok: false, code: 'OPEN_FOLDER_NOT_AVAILABLE', error: 'OPEN_FOLDER_NOT_AVAILABLE: solo se puede abrir la carpeta desde esta misma computadora (127.0.0.1).' });
@@ -291,11 +337,42 @@ app.post('/api/teams/open-crest-folder', (req, res) => {
   }
   try {
     const child = spawn('explorer.exe', [dir], { detached: true, stdio: 'ignore', windowsHide: false });
-    child.on('error', (err) => console.error('[GLA] No se pudo abrir el Explorador:', err.message));
+    child.on('error', (err) => console.error('[SOFTX] No se pudo abrir el Explorador:', err.message));
     child.unref();
     res.json({ ok: true, carpeta: dir });
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// RECURSO GRÁFICO (SOFTX, ver server/asset-resources.js): el navegador
+// manda solo IDs del registro central; la ruta real la resuelve el servidor.
+app.get('/api/assets/module/:moduleId', async (req, res) => {
+  try {
+    res.json({ ok: true, system: getActiveThemeId(), assets: await describeModuleAssets(req.params.moduleId) });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.post('/api/assets/open-folder', (req, res) => {
+  if (process.platform !== 'win32' || process.env.RENDER || !isLoopbackRequest(req)) {
+    return res.status(409).json({ ok: false, code: 'OPEN_FOLDER_NOT_AVAILABLE', error: 'ABRIR CARPETA solo funciona con SOFTX corriendo en esta misma computadora con Windows.' });
+  }
+  try {
+    res.json({ ok: true, ...openAssetFolder(req.body?.assetId) });
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, error: err.message });
+  }
+});
+
+app.post('/api/assets/reload', async (req, res) => {
+  try {
+    const result = await reloadAsset(req.body?.assetId);
+    broadcast({ type: WS_MSG.ASSET_VERSIONS, versions: getAssetVersions(), changedPaths: [result.path] });
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    res.status(err.status || 500).json({ ok: false, error: err.message });
   }
 });
 
@@ -336,7 +413,7 @@ function registerSyncRoute(path, moduleId, syncFn, dataKey) {
       broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId, moduleState });
       res.json({ ok: true, ...result, ultimaActualizacionWeb, ...torneoEdicionInfo(moduleId === 'posicionesTorneo') });
     } catch (err) {
-      console.error(`[GLA] Error sincronizando ${moduleId} desde gla.futbol:`, err.message);
+      console.error(`[SOFTX] Error sincronizando ${moduleId} desde gla.futbol:`, err.message);
       res.status(502).json({ ok: false, error: err.message, ...torneoEdicionInfo(moduleId === 'posicionesTorneo') });
     }
   });
@@ -411,7 +488,7 @@ function registerPerformanceSyncRoute(path, moduleId, syncFn) {
       broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId, moduleState });
       res.json({ ok: true, ...result, fuente, snapshots, ultimaActualizacionWeb, ...torneoEdicionInfo(fuente === 'torneo') });
     } catch (err) {
-      console.error(`[GLA] Error sincronizando ${moduleId}/${fuente} desde gla.futbol:`, err.message);
+      console.error(`[SOFTX] Error sincronizando ${moduleId}/${fuente} desde gla.futbol:`, err.message);
       res.status(502).json({ ok: false, error: err.message, ...torneoEdicionInfo(fuente === 'torneo') });
     }
   });
@@ -465,7 +542,7 @@ for (const moduleId of ['goleadores', 'asistidores', 'jugadores']) {
       broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId, moduleState });
       res.json({ ok: true, ...result, ultimaActualizacionWeb });
     } catch (err) {
-      console.error(`[GLA] Error sincronizando ${moduleId} desde argentinastreamers.com:`, err.message);
+      console.error(`[SOFTX] Error sincronizando ${moduleId} desde argentinastreamers.com:`, err.message);
       res.status(502).json({ ok: false, status: 'error', error: err.message });
     }
   });
@@ -494,7 +571,7 @@ app.post('/api/argentina-streamers/historial/sync-web', async (req, res) => {
     broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId: 'historial', moduleState });
     res.json({ ok: true, ...result, ultimaActualizacionWeb });
   } catch (err) {
-    console.error('[GLA] Error sincronizando historial desde argentinastreamers.com:', err.message);
+    console.error('[SOFTX] Error sincronizando historial desde argentinastreamers.com:', err.message);
     res.status(502).json({ ok: false, error: err.message });
   }
 });
@@ -523,7 +600,7 @@ app.post('/api/argentina-streamers/ficha/sync-web', async (req, res) => {
   try {
     res.json({ ok: true, ...(await refreshFichaJugadores(req.query.rama)) });
   } catch (err) {
-    console.error('[GLA] Error actualizando Ficha Jugador desde argentinastreamers.com:', err.message);
+    console.error('[SOFTX] Error actualizando Ficha Jugador desde argentinastreamers.com:', err.message);
     res.status(502).json({ ok: false, error: err.message });
   }
 });
@@ -536,7 +613,7 @@ app.post('/api/argentina-streamers/ficha/perfil', async (req, res) => {
   try {
     res.json({ ok: true, ...(await fichaPerfilJugador(req.query.rama, webId)) });
   } catch (err) {
-    console.error('[GLA] Error leyendo perfil de jugador en argentinastreamers.com:', err.message);
+    console.error('[SOFTX] Error leyendo perfil de jugador en argentinastreamers.com:', err.message);
     res.status(502).json({ ok: false, error: err.message });
   }
 });
@@ -573,7 +650,7 @@ app.post('/api/argentina-streamers/estrellas/sync-web', async (req, res) => {
     });
     res.json({ ok: true, ...result });
   } catch (err) {
-    console.error('[GLA] Error sincronizando Estrellas desde argentinastreamers.com:', err.message);
+    console.error('[SOFTX] Error sincronizando Estrellas desde argentinastreamers.com:', err.message);
     res.status(502).json({ ok: false, error: err.message });
   }
 });
@@ -638,7 +715,7 @@ app.post('/api/planteles/:teamId/jugadores/:jugadorId/sync-web', async (req, res
     const result = await syncFichaJugadorStats(teamId, jugadorId, req.body?.webId || null, req.body?.rama || null);
     res.json({ ok: true, ...result });
   } catch (err) {
-    console.error(`[GLA] Error sincronizando Ficha Jugador (${teamId}/${jugadorId}) desde argentinastreamers.com:`, err.message);
+    console.error(`[SOFTX] Error sincronizando Ficha Jugador (${teamId}/${jugadorId}) desde argentinastreamers.com:`, err.message);
     try {
       const themeId = getActiveThemeId();
       const jugador = findPlayer(themeId, teamId, jugadorId);
@@ -667,7 +744,7 @@ app.post('/api/planteles/:teamId/sync-web', async (req, res) => {
     const snapshot = await syncRosterFromWeb(req.params.teamId);
     res.json({ ok: true, snapshot });
   } catch (err) {
-    console.error(`[GLA] Error sincronizando plantel ${req.params.teamId}:`, err.message);
+    console.error(`[SOFTX] Error sincronizando plantel ${req.params.teamId}:`, err.message);
     res.status(502).json({ ok: false, error: err.message });
   }
 });
@@ -687,6 +764,36 @@ function conservarSlotsSorteo(filasActuales, grupoWeb) {
   return mismos ? { ...grupoWeb, filas: actuales.map((id) => web.find((f) => f.teamId === id)) } : grupoWeb;
 }
 
+registerBauletiBalanzaRoutes(app, { getActiveThemeId, getTeamCatalog, getRoster, getModuleState, isLoopbackRequest });
+
+// CHARTS (SOFTX / GLA, ver server/charts.js): catálogo de torneos/días/
+// partidos y armado de la placa estadística desde gla.futbol. Solo GLA;
+// el panel guarda el resultado en el draft del módulo (autoguardado).
+app.get('/api/charts/catalog', async (req, res) => {
+  if (!requireGlaTheme(res)) return;
+  try {
+    const data = await chartsCatalog(String(req.query.torneo || ''), { fresh: req.query.fresh === '1', catalog: getTeamCatalog(getActiveThemeId()) });
+    res.json({ ok: true, ...data });
+  } catch (err) {
+    console.error('[SOFTX] Error leyendo partidos de gla.futbol (CHARTS):', err.message);
+    res.status(502).json({ ok: false, error: err.message });
+  }
+});
+
+app.post('/api/charts/sync-web', async (req, res) => {
+  if (!requireGlaTheme(res)) return;
+  const { torneo, partido } = req.body || {};
+  if (!torneo || !partido) return res.status(400).json({ ok: false, error: 'Elegí torneo y partido.' });
+  try {
+    const halfMs = parseClockLimit(getModuleState('scoreboard').data.clockEndText, 15 * 60 * 1000) || 15 * 60 * 1000;
+    const chart = await buildChart({ torneoKey: String(torneo), partidoKey: String(partido), halfSeconds: Math.round(halfMs / 1000), catalog: getTeamCatalog(getActiveThemeId()) });
+    res.json({ ok: true, chart });
+  } catch (err) {
+    console.error('[SOFTX] Error armando CHARTS desde gla.futbol:', err.message);
+    res.status(502).json({ ok: false, error: err.message });
+  }
+});
+
 app.post('/api/grupos/sync-web', async (req, res) => {
   if (!requireGlaTheme(res)) return;
   try {
@@ -704,7 +811,7 @@ app.post('/api/grupos/sync-web', async (req, res) => {
     if (sideTableState) broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId: 'sideTable', moduleState: sideTableState, syncedFromGrupos: true });
     res.json({ ok: true, ...result, ultimaActualizacionWeb, ...torneoEdicionInfo(true) });
   } catch (err) {
-    console.error('[GLA] Error sincronizando grupos:', err.message);
+    console.error('[SOFTX] Error sincronizando grupos:', err.message);
     res.status(502).json({ ok: false, error: err.message, ...torneoEdicionInfo(true) });
   }
 });
@@ -729,7 +836,7 @@ app.post('/api/grupos/web-update', async (req, res) => {
     broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId: 'grupos', moduleState });
     res.json({ ok: true, gruposWeb, unmatchedTeams: result.unmatchedTeams });
   } catch (err) {
-    console.error('[GLA] GRUPOS modo WEB:', err.message);
+    console.error('[SOFTX] GRUPOS modo WEB:', err.message);
     res.status(err.sinDatos ? 200 : 502).json({ ok: false, error: err.message, sinDatos: !!err.sinDatos });
   }
 });
@@ -748,7 +855,7 @@ app.post('/api/grupos/validar-web', async (req, res) => {
     const result = await validarDesempateGrupo(grupoKey === 'grupo1' ? 'A' : 'B', teamIds);
     res.json({ ok: true, ...result, validadoEn: new Date().toISOString() });
   } catch (err) {
-    console.error('[GLA] VALIDAR WEB grupos:', err.message);
+    console.error('[SOFTX] VALIDAR WEB grupos:', err.message);
     res.status(err.sinDatos ? 200 : 502).json({ ok: false, error: err.message, sinDatos: !!err.sinDatos });
   }
 });
@@ -767,7 +874,7 @@ for (const fase of ['grupos', 'playoffs']) {
       broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId: 'sideTable', moduleState });
       res.json({ ok: true, ...result, fase, snapshotsWeb, ultimaActualizacionWeb, ...torneoEdicionInfo(true) });
     } catch (err) {
-      console.error(`[GLA] Error sincronizando resultados/${fase}:`, err.message);
+      console.error(`[SOFTX] Error sincronizando resultados/${fase}:`, err.message);
       res.status(502).json({ ok: false, error: err.message, ...torneoEdicionInfo(true) });
     }
   });
@@ -816,7 +923,7 @@ app.post('/api/estrellas/sync-web', async (req, res) => {
     broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId: 'estrellas', moduleState });
     res.json({ ok: true, ...result, ...patch, ...torneoEdicionInfo(fuente === 'torneo') });
   } catch (err) {
-    console.error('[GLA] Error sincronizando estrellas:', err.message);
+    console.error('[SOFTX] Error sincronizando estrellas:', err.message);
     res.status(502).json({ ok: false, error: err.message, ...torneoEdicionInfo(req.query.fuente === 'torneo') });
   }
 });
@@ -843,7 +950,7 @@ app.use('/api', (req, res) => {
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
-  console.error('[GLA] Error no manejado en una ruta:', err);
+  console.error('[SOFTX] Error no manejado en una ruta:', err);
   if (res.headersSent) return;
   if (req.path.startsWith('/api/')) {
     res.status(500).json({ ok: false, error: err.message || 'Error interno del servidor' });
@@ -851,6 +958,8 @@ app.use((err, req, res, next) => {
     res.status(500).send('Error interno del servidor');
   }
 });
+
+await initAssetResources();
 
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: WS_PATH });
@@ -912,12 +1021,15 @@ function checkTiempoAdicionalAutoTake() {
       isAutoSave: false, isExplicitUpdate: true,
     });
   } catch (err) {
-    console.error('[GLA] Error en TAKE automático de Tiempo Adicional:', err.message);
+    console.error('[SOFTX] Error en TAKE automático de Tiempo Adicional:', err.message);
   }
 }
 setInterval(checkTiempoAdicionalAutoTake, 400);
 
 wss.on('connection', (socket) => {
+  // Versiones de recursos ANTES del snapshot: el primer render de Program ya
+  // usa las URLs versionadas (cache busting, ver program/js/asset-versions.js).
+  socket.send(JSON.stringify({ type: WS_MSG.ASSET_VERSIONS, versions: getAssetVersions(), changedPaths: [] }));
   socket.send(JSON.stringify({ type: WS_MSG.STATE_SNAPSHOT, state: getSnapshot(), theme: getActiveThemeId() }));
   socket.send(JSON.stringify({ type: 'TEAM_CATALOG_UPDATE', catalog: getTeamCatalog(getActiveThemeId()) }));
   socket.send(JSON.stringify({ type: WS_MSG.ACTIVE_MATCH_PROFILE_UPDATE, slug: getActiveMatchProfileSlug(), name: null }));
@@ -941,7 +1053,7 @@ wss.on('connection', (socket) => {
             { abbr: reset ? '' : String(abbr || '') },
           );
         } catch (err) {
-          console.error('[GLA] Error actualizando abreviatura:', err.message);
+          console.error('[SOFTX] Error actualizando abreviatura:', err.message);
         }
       }
       return;
@@ -953,7 +1065,7 @@ wss.on('connection', (socket) => {
         try {
           applyTeamChange(id, () => setTeamVisibility(id, visible !== false), { visible: visible !== false });
         } catch (err) {
-          console.error('[GLA] Error actualizando visibilidad de equipo:', err.message);
+          console.error('[SOFTX] Error actualizando visibilidad de equipo:', err.message);
         }
       }
       return;
@@ -967,7 +1079,7 @@ wss.on('connection', (socket) => {
         const presets = setThemeLowerThirdPresets(msg.themeId, msg.presets);
         broadcast({ type: 'THEME_LOWER_THIRD_PRESETS_UPDATE', themeId: msg.themeId, presets });
       } catch (err) {
-        console.error('[GLA] Error guardando presets de zócalos del theme:', err.message);
+        console.error('[SOFTX] Error guardando presets de zócalos del theme:', err.message);
       }
       return;
     }
@@ -1000,24 +1112,11 @@ wss.on('connection', (socket) => {
       return;
     }
 
-    // THEME GLOBAL (2026-08-20): el theme activo no pertenece a ningún
-    // "moduleId" -- se resuelve antes del chequeo de MODULE_IDS de abajo,
-    // y se difunde a TODOS los clientes (Master Control y Program) para
-    // que ninguno necesite refrescar (sección 8, pedido explícito).
+    // SOFTX: el sistema queda fijo durante toda la ejecución (se elige al
+    // arrancar, ver server/theme.js). Un SET_THEME (cliente viejo cacheado)
+    // se ignora explícitamente.
     if (msg.type === WS_MSG.SET_THEME) {
-      try {
-        const themeId = setActiveThemeId(msg.themeId);
-        // El estado (por módulo) y el catálogo de equipos son POR THEME
-        // (secciones 9/12, pedido explícito) -- cambiar de theme no solo
-        // avisa "cambió el theme", también tiene que entregar los datos
-        // reales de ESE theme a todos los clientes conectados, para
-        // cualquier módulo que ya esté al aire (sección 2: sin refresh).
-        broadcast({ type: WS_MSG.THEME_UPDATE, themeId });
-        broadcast({ type: WS_MSG.STATE_SNAPSHOT, state: getSnapshot(), theme: themeId });
-        broadcast({ type: 'TEAM_CATALOG_UPDATE', catalog: getTeamCatalog(themeId) });
-      } catch (err) {
-        console.error('[GLA] Error cambiando theme:', err.message);
-      }
+      console.warn(`[SOFTX] Cambio de sistema ignorado ("${msg.themeId}"): esta instancia es ${getTheme(getActiveThemeId()).name} hasta cerrar SOFTX.`);
       return;
     }
 
@@ -1044,7 +1143,7 @@ wss.on('connection', (socket) => {
         broadcast({ type: WS_MSG.STATE_SNAPSHOT, state: getSnapshot(), theme: getActiveThemeId(), forceDraftResync: true });
         broadcast({ type: WS_MSG.ACTIVE_MATCH_PROFILE_UPDATE, slug, name: profile.name });
       } catch (err) {
-        console.error('[GLA] Error aplicando perfil de partido:', err.message);
+        console.error('[SOFTX] Error aplicando perfil de partido:', err.message);
       }
       return;
     }
@@ -1052,7 +1151,7 @@ wss.on('connection', (socket) => {
     if (msg.type === WS_MSG.SAVE_MATCH_PROFILE) {
       const slug = getActiveMatchProfileSlug();
       if (!slug) {
-        console.error('[GLA] SAVE_MATCH_PROFILE sin perfil activo -- ignorado.');
+        console.error('[SOFTX] SAVE_MATCH_PROFILE sin perfil activo -- ignorado.');
         return;
       }
       try {
@@ -1060,7 +1159,7 @@ wss.on('connection', (socket) => {
         const profiles = await listMatchProfiles();
         broadcast({ type: WS_MSG.PROFILE_LIST_UPDATE, profiles, activeSlug: slug });
       } catch (err) {
-        console.error('[GLA] Error guardando perfil de partido activo:', err.message);
+        console.error('[SOFTX] Error guardando perfil de partido activo:', err.message);
       }
       return;
     }
@@ -1078,7 +1177,7 @@ wss.on('connection', (socket) => {
         broadcast({ type: WS_MSG.PROFILE_LIST_UPDATE, profiles, activeSlug: slug });
         broadcast({ type: WS_MSG.ACTIVE_MATCH_PROFILE_UPDATE, slug, name: String(name).trim() });
       } catch (err) {
-        console.error('[GLA] Error creando perfil de partido nuevo:', err.message);
+        console.error('[SOFTX] Error creando perfil de partido nuevo:', err.message);
       }
       return;
     }
@@ -1092,7 +1191,7 @@ wss.on('connection', (socket) => {
         const profiles = await listMatchProfiles();
         broadcast({ type: WS_MSG.PROFILE_LIST_UPDATE, profiles, activeSlug: getActiveMatchProfileSlug() });
       } catch (err) {
-        console.error('[GLA] Error eliminando perfil de partido:', err.message);
+        console.error('[SOFTX] Error eliminando perfil de partido:', err.message);
       }
       return;
     }
@@ -1112,7 +1211,7 @@ wss.on('connection', (socket) => {
           isAutoSave: false, isExplicitUpdate: true, isPositionCommit: true, elementSpec,
         });
       } catch (err) {
-        console.error('[GLA] Error confirmando posición:', err.message);
+        console.error('[SOFTX] Error confirmando posición:', err.message);
       }
       return;
     }
@@ -1146,7 +1245,7 @@ wss.on('connection', (socket) => {
       else if (type === WS_MSG.UPDATE) moduleState = applyUpdate(moduleId, data);
       else return;
     } catch (err) {
-      console.error('[GLA] Error aplicando comando:', err.message);
+      console.error('[SOFTX] Error aplicando comando:', err.message);
       return;
     }
 
@@ -1201,10 +1300,12 @@ server.listen(PORT, HOST, () => {
   // 127.0.0.1 2/2) -- ver informe de auditoria, seccion 5/10/C. Es solo el
   // texto informativo de esta consola; el bind real sigue en HOST
   // ("0.0.0.0", sin cambios) asi que Render/otro host no se ve afectado.
-  console.log(`[GLA] Servidor activo en http://127.0.0.1:${PORT}`);
-  console.log(`[GLA] Master Control:  http://127.0.0.1:${PORT}/master`);
-  console.log(`[GLA] Program/Overlay: http://127.0.0.1:${PORT}/program`);
-  console.log(`[GLA] Persistencia: ${getPersistenceStatus().activeBackend}`);
+  console.log(`[SOFTX] Sistema: ${getTheme(getActiveThemeId()).name} (${getSystemLaunchSource()})`);
+  console.log(`[SOFTX] Servidor activo en http://127.0.0.1:${PORT}`);
+  console.log(`[SOFTX] Master Control:  http://127.0.0.1:${PORT}/master`);
+  console.log(`[SOFTX] Program/Overlay: http://127.0.0.1:${PORT}/program`);
+  console.log(`[SOFTX] Persistencia: ${getPersistenceStatus().activeBackend}`);
+  console.log(`[SOFTX] Código: build ${BUILD_ID} · PID ${process.pid}`);
 });
 
 // LOGGING DE CRASH (2026-09-26, pedido explicito del usuario: "el server
@@ -1223,12 +1324,12 @@ server.listen(PORT, HOST, () => {
 const CRASH_LOG_PATH = path.join(process.env.GLA_DATA_DIR || path.join(process.cwd(), 'data'), 'server-crashes.log');
 function logCrash(kind, error) {
   const line = `[${new Date().toISOString()}] ${kind}: ${error?.stack || error?.message || String(error)}\n`;
-  console.error(`[GLA CRASH] ${line.trimEnd()}`);
+  console.error(`[SOFTX CRASH] ${line.trimEnd()}`);
   try {
     fs.mkdirSync(path.dirname(CRASH_LOG_PATH), { recursive: true });
     fs.appendFileSync(CRASH_LOG_PATH, line);
   } catch (writeError) {
-    console.error('[GLA CRASH] No se pudo escribir server-crashes.log:', writeError.message);
+    console.error('[SOFTX CRASH] No se pudo escribir server-crashes.log:', writeError.message);
   }
 }
 
@@ -1262,11 +1363,11 @@ let shuttingDown = false;
 async function shutdown(signal) {
   if (shuttingDown) return;
   shuttingDown = true;
-  console.log(`[GLA] ${signal}: guardando estado pendiente...`);
+  console.log(`[SOFTX] ${signal}: guardando estado pendiente...`);
   try {
     await flushPersistence();
   } catch (error) {
-    console.error('[GLA] Error al vaciar persistencia durante el cierre:', error.message);
+    console.error('[SOFTX] Error al vaciar persistencia durante el cierre:', error.message);
   }
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(0), 3000).unref();

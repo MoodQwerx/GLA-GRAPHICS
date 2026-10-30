@@ -1,3 +1,4 @@
+import { glaAssetPath } from '../../../shared/asset-registry.js';
 import { mountThemedAlphaVideo, resolveImageSrc } from '../theme-assets.js';
 import { teamColorHex } from '../../../shared/team-colors.js';
 import { crestFile, teamAbbr } from '../../../shared/teams.js';
@@ -5,7 +6,7 @@ import { applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
 import { getActiveThemeId } from '../theme-client.js';
 import { ARGENTINA_STREAMERS_THEME_ID } from '../../../shared/themes.js';
 
-const VIDEO_SRC = '/assets/marcador/marcador-entretiempo-alpha.mp4';
+const VIDEO_SRC = glaAssetPath('marcadorEntretiempo', 'principal');
 
 function buildStructure(el) {
   // Argentina Streamers entrego este asset como imagen estatica (PNG), no

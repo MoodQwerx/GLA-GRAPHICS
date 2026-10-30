@@ -3,6 +3,7 @@ import { teamName } from '../../shared/teams.js';
 import { ARGENTINA_STREAMERS_THEME_ID, getThemeAsset } from '../../shared/themes.js';
 import { mountAdjustControl } from './field-editors.js';
 import { renderCompositionControl } from './composition-control.js';
+import { currentPanelLifecycle } from './panel-lifecycle.js';
 
 // GLA conserva 6 (asset original, sin cambios). Argentina Streamers pasa a
 // 11 titulares (2026-09-03, pedido explicito: "una formacion de futbol
@@ -640,6 +641,8 @@ export function renderFormationListPanel(container, data, scoreboardData, onDirt
       container.appendChild(panel);
       customInput.focus();
       document.addEventListener('mousedown', onOutsideClick, true);
+      // Panel destruido con el desplegable abierto: liberar el listener de document.
+      currentPanelLifecycle()?.onCleanup(closePanel);
     }
 
     trigger.addEventListener('click', () => {

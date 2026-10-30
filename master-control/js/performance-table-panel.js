@@ -290,7 +290,7 @@ export function renderPerformanceTablePanel(container, data, moduleId, onDirty, 
         // BUG real (2026-10-08): un servidor viejo ignoraba "?rama=" y
         // devolvia la tabla MASCULINA aunque se pidiera FEMENINO -- nunca
         // se guarda una tabla de otra rama en el slot equivocado.
-        setWebSyncStatus({ kind: 'error', text: `EL SERVIDOR DEVOLVIÓ DATOS DE OTRA RAMA (${String(body.rama || 'desconocida').toUpperCase()}) — NO SE APLICARON. Reiniciá LIVE GRAPHICS.` });
+        setWebSyncStatus({ kind: 'error', text: `EL SERVIDOR DEVOLVIÓ DATOS DE OTRA RAMA (${String(body.rama || 'desconocida').toUpperCase()}) — NO SE APLICARON. Reiniciá SOFTX.` });
       } else {
         // Se guarda en el slot de la rama PEDIDA (aunque el operador haya
         // cambiado de pestaña mientras esperaba) y solo se muestra si esa

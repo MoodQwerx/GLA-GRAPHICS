@@ -1,0 +1,5 @@
+{"label":"round-1","totalMB":7.94,"nodeCount":96311,"detachedNodes":2,"closures":4553,"EventListener":1359}
+{"label":"round-10","totalMB":8.44,"nodeCount":102084,"detachedNodes":2,"closures":4553,"EventListener":1365}
+{"label":"round-25","totalMB":8.62,"nodeCount":107435,"detachedNodes":2,"closures":4553,"EventListener":1365}
+{"label":"round-50","totalMB":8.89,"nodeCount":116749,"detachedNodes":2,"closures":4554,"EventListener":1365}
+{"label":"round-100","totalMB":9.33,"nodeCount":133916,"detachedNodes":2,"closures":4554,"EventListener":1365}

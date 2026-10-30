@@ -1,12 +1,13 @@
+import { glaAssetPath } from '../../../shared/asset-registry.js';
 import { getProgramFontFamily, withGlaSegoeRegular } from '../program-fonts.js';
 import { crestFile } from '../../../shared/teams.js';
 import { readTextAdjust, toBroadcastUpper } from '../text-fit.js';
 import { mountThemedAlphaVideo } from '../theme-assets.js';
 
 const VIDEO_BY_TIPO = {
-  amarilla: '/assets/eventos/tarjeta-amarilla-alpha.mp4',
-  roja: '/assets/eventos/tarjeta-roja-alpha.mp4',
-  azul: '/assets/eventos/tarjeta-azul-alpha.mp4',
+  amarilla: glaAssetPath('tarjeta', 'amarilla'),
+  roja: glaAssetPath('tarjeta', 'roja'),
+  azul: glaAssetPath('tarjeta', 'azul'),
 };
 
 // Ancho real de ".ov-tarjeta-jugador" (ver overlay.css): recorrido a

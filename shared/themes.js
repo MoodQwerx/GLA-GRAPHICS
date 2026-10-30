@@ -24,6 +24,10 @@
 
 export const DEFAULT_THEME_ID = 'gla';
 export const ARGENTINA_STREAMERS_THEME_ID = 'argentinaStreamers';
+// SOFTX [3] (2026-10-30): BAULETI vs BALANZA. Paquete gráfico propio
+// dibujado en CSS (program/css/bb.css), módulos propios "bb*" (ver
+// shared/modules.js) y datos aislados por theme como los otros dos.
+export const BAULETI_BALANZA_THEME_ID = 'bauletiBalanza';
 
 // Catálogo de módulos con asset gráfico propio (pedido explícito, sección
 // 12) -- nombres DESCRIPTIVOS de referencia; la clave real que usa cada
@@ -86,72 +90,15 @@ export const THEMES = {
     // Fuente de datos externa asociada a este theme (sección 10):
     // gla.futbol pertenece EXCLUSIVAMENTE a este theme.
     dataSource: 'gla-futbol',
-    // Espejo de las rutas YA hardcodeadas en cada renderer (ver grep de
-    // "VIDEO_SRC"/"IMG_SRC" en program/js/renderers/*.js) -- documentado
-    // acá para que el manifest sea la fuente de verdad el día que se
-    // migren los renderers, pero HOY los renderers siguen usando su
-    // propia constante, no esto.
-    assets: {
-      scoreboard: { video: '/assets/marcador/marcador-principal-alpha.mp4' },
-      marcadorTiempoAdicional: { image: '/assets/marcador/marcador-tiempo-adicional.png' },
-      marcadorEntretiempo: { video: '/assets/marcador/marcador-entretiempo-alpha.mp4' },
-      marcadorPenales: { video: '/assets/marcador/marcador-penales-alpha.mp4' },
-      marcadorZocalo: { image: '/assets/marcador/marcador-zocalo.png' },
-      tarjeta: {
-        video: '/assets/eventos/tarjeta-amarilla-alpha.mp4',
-        variants: {
-          amarilla: '/assets/eventos/tarjeta-amarilla-alpha.mp4',
-          roja: '/assets/eventos/tarjeta-roja-alpha.mp4',
-          azul: '/assets/eventos/tarjeta-azul-alpha.mp4',
-        },
-      },
-      cambios: { video: '/assets/eventos/cambios-alpha.mp4' },
-      gol: { video: '/assets/eventos/gol-alpha.mp4' },
-      varCheck: { video: '/assets/var/var-chequeo-alpha.mp4', image: '/assets/var/zocalo-cortito-brackets.png' },
-      replay: { video: '/assets/replay/replay-sponsor-alpha.mp4' },
-      bug: { video: '/assets/mosca/mosca-localstrike-alpha.mp4' },
-      longDouble: { video: '/assets/zocalos/zocalo-largo-doble-alpha.mp4' },
-      shortSimple: { video: '/assets/zocalos/zocalo-corto-simple-alpha.mp4' },
-      shortDouble: { video: '/assets/zocalos/zocalo-corto-doble-alpha.mp4' },
-      zocaloCompuesto: { image: '/assets/images/gla-logo.png' },
-      zocaloCompuestoEquipos: { video: '/assets/zocalos/zocalo-final-div-alpha.mp4' },
-      zocaloCompuestoLogo: { video: '/assets/zocalos/zocalo-final-alpha.mp4', image: '/assets/images/gla-logo.png' },
-      zocaloFinal: { video: '/assets/zocalos/zocalo-final-alpha.mp4', image: '/assets/images/gla-logo.png' },
-      zocaloFinalDiv: { video: '/assets/zocalos/zocalo-final-div-alpha.mp4' },
-      vs: {
-        variants: {
-          normal: '/assets/zocalos/zocalo-vs-alpha.mp4',
-          alto: '/assets/zocalos/zocalo-vs-renglon-alto-alpha.mp4',
-          medio: '/assets/zocalos/zocalo-vs-renglon-medio-alpha.mp4',
-          fino: '/assets/zocalos/zocalo-vs-renglon-fino-alpha.mp4',
-        },
-      },
-      vsPrepartido: { video: '/assets/placas/vs-prepartido-alpha.mp4' },
-      vsResultado: { video: '/assets/placas/vs-resultado-alpha.mp4' },
-      formacionEquipos: {
-        video: '/assets/placas/formacion-equipos.mp4',
-        image: '/assets/placas/formacion-camisetas.png',
-      },
-      estrellas: { video: '/assets/placas/estrellas-alpha.mp4' },
-      grupos: { image: '/assets/tablas/resultados-sin-vs.png' },
-      goleadores: { image: '/assets/tablas/resultados-sin-vs.png' },
-      asistidores: { image: '/assets/tablas/resultados-sin-vs.png' },
-      jugadores: { image: '/assets/tablas/resultados-sin-vs.png' },
-      sideTable: { image: '/assets/tablas/resultados-sin-vs.png' },
-      posiciones: {
-        variants: {
-          pagina1: '/assets/tablas/posiciones-alpha.mp4',
-          pagina2: '/assets/tablas/posiciones-5-alpha.mp4',
-        },
-      },
-      posicionesTorneo: {
-        variants: {
-          pagina1: '/assets/tablas/posiciones-alpha.mp4',
-          pagina2: '/assets/tablas/posiciones-5-alpha.mp4',
-        },
-      },
-      sponsors: { folder: '/assets/sponsors' },
-    },
+    // SOFTX (2026-10-29): las rutas reales de GLA viven SOLO en el registro
+    // central shared/asset-registry.js (RECURSO GRÁFICO) y los renderers las
+    // leen de ahí. Acá queda únicamente el estado "ready" por módulo que usa
+    // el indicador de asset pendiente de Master Control (getModuleAssetStatus).
+    assets: Object.fromEntries([
+      'scoreboard', 'marcadorTiempoAdicional', 'marcadorEntretiempo', 'marcadorPenales', 'marcadorZocalo', 'tarjeta', 'cambios', 'gol', 'varCheck', 'replay', 'bug', 'longDouble', 'shortSimple', 'shortDouble', 'zocaloCompuesto', 'zocaloCompuestoEquipos', 'zocaloCompuestoLogo', 'zocaloFinal', 'zocaloFinalDiv', 'vs', 'vsPrepartido', 'vsResultado', 'formacionEquipos', 'estrellas', 'grupos', 'goleadores', 'asistidores', 'jugadores', 'sideTable', 'posiciones', 'posicionesTorneo', 'sponsors',
+      // CHARTS no usa asset (placa dibujada en CSS): siempre lista en GLA.
+      'charts',
+    ].map((moduleId) => [moduleId, { status: 'ready' }])),
   },
 
   argentinaStreamers: {
@@ -400,6 +347,30 @@ export const THEMES = {
       },
     },
   },
+};
+
+// BAULETI vs BALANZA (SOFTX [3], 2026-10-30). Sin assets de video: cada
+// módulo "bb*" es una pieza CSS (program/css/bb.css) que nace de los mismos
+// tokens de identidad. Equipos con catálogo manual propio (server/teams.js,
+// carpeta assets/themes/bauleti-balanza/escudos/): "file" se resuelve recién
+// cuando el PNG existe; mientras tanto los renderers muestran un monograma.
+THEMES.bauletiBalanza = {
+  id: BAULETI_BALANZA_THEME_ID,
+  name: 'BAULETI vs BALANZA',
+  shortName: 'BxB',
+  ready: true,
+  dataSource: 'manual',
+  palette: {
+    primary: '#08080A',
+    accent: '#D4A84B',
+    base: '#F7F4EC',
+  },
+  teams: [
+    { id: 'bauleti', name: 'BAULETI', abbr: 'BAU', file: '/assets/themes/bauleti-balanza/escudos/bauleti.png' },
+    { id: 'balanza', name: 'BALANZA', abbr: 'BAL', file: '/assets/themes/bauleti-balanza/escudos/balanza.png' },
+  ],
+  assets: Object.fromEntries(['bbMarcador', 'bbFormacion', 'bbVs', 'bbTarjeta']
+    .map((moduleId) => [moduleId, { status: 'ready' }])),
 };
 
 export function listThemes() {

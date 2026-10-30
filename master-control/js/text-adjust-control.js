@@ -20,6 +20,7 @@
 // aire" ya los resuelve el mismo pipeline de auto-guardado que usa
 // cualquier otro campo de texto (scheduleAutoSave -> UPDATE).
 import { renderSavePositionControl } from './save-position-control.js';
+import { currentPanelLifecycle } from './panel-lifecycle.js';
 
 const STEP_PX = 2;
 // Intensidad "0.5" (BLOQUE 1, 2026-09-09, pedido explicito del usuario):
@@ -77,6 +78,8 @@ function repeatButton(label, title, onFire) {
   });
   btn.addEventListener('mouseup', stop);
   btn.addEventListener('mouseleave', stop);
+  // Si el panel se destruye con el botón apretado no llega "mouseup".
+  currentPanelLifecycle()?.onCleanup(stop);
   return btn;
 }
 

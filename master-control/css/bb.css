@@ -1,0 +1,117 @@
+/* BAULETI vs BALANZA (SOFTX [3]): paneles de Master Control
+   (master-control/js/bb/). Solo clases "bb-*": no toca ningún panel de GLA
+   ni de Argentina Streamers. */
+
+.bb-panel { display: flex; flex-direction: column; gap: 14px; }
+.bb-desc { margin: 0; font-size: 12px; line-height: 1.45; color: #a9a9a9; }
+.bb-sec { background: #171717; border: 1px solid #2f2f2f; border-radius: 6px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.bb-sec-title { margin: 0; font-size: 12px; letter-spacing: 0.12em; color: #d6aa4e; font-weight: 800; }
+.bb-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
+.bb-actions.center { justify-content: center; }
+.bb-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.bb-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.bb-field.grow { flex: 1 1 160px; }
+.bb-field.check { flex-direction: row; align-items: center; gap: 8px; font-size: 12px; color: #ddd; }
+.bb-field > span { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; color: #999; }
+.bb-field.check > span { font-size: 11px; color: #ccc; }
+.bb-field input[type="text"], .bb-field input[type="number"], .bb-field select,
+.bb-pl-add input, .bb-sec select {
+  background: #0f0f0f; border: 1px solid #4a4a4a; color: #fff; padding: 7px 8px; border-radius: 4px; font-size: 12px; font-weight: 700; min-width: 0;
+}
+.bb-field input[type="color"] { width: 54px; height: 32px; padding: 0; border: 1px solid #4a4a4a; background: #0f0f0f; border-radius: 4px; }
+.bb-mmss, .bb-num { width: 90px; text-align: center; font-family: monospace; }
+.bb-abbr { text-transform: uppercase; text-align: center; width: 70px; }
+
+.bb-btn { background: #2b2b2b; color: #e6e6e6; border: 1px solid #4d4d4d; padding: 8px 12px; border-radius: 4px; font-size: 11px; font-weight: 800; letter-spacing: 0.04em; cursor: pointer; }
+.bb-btn:hover:not(:disabled) { background: #3a3a3a; color: #fff; }
+.bb-btn:disabled { opacity: 0.45; cursor: default; }
+.bb-btn.primary { background: #d6aa4e; color: #111; border-color: #d6aa4e; }
+.bb-btn.primary:hover:not(:disabled) { background: #f0c66a; color: #000; }
+.bb-btn.danger { border-color: #7a3333; color: #f0b0b0; }
+.bb-btn.active, .bb-btn.period.active { background: #d6aa4e; color: #111; border-color: #d6aa4e; }
+.bb-btn.mini { padding: 4px 8px; font-size: 11px; }
+.bb-btn.goal { background: #1f3a24; border-color: #3f8a4c; color: #c9f5d0; font-size: 13px; padding: 10px 18px; }
+.bb-btn.card { min-width: 82px; }
+.bb-btn.card.yellow { border-color: #f5c518; color: #f5c518; }
+.bb-btn.card.red { border-color: #e1262e; color: #ff8f94; }
+.bb-btn.card.blue { border-color: #1f72e6; color: #8cb8ff; }
+
+.bb-status { font-size: 12px; color: #bbb; min-height: 14px; }
+.bb-status.ok { color: #7ed67e; }
+.bb-status.error { color: #ef8a8a; }
+.bb-pill { font-size: 11px; font-weight: 800; padding: 6px 10px; border-radius: 999px; background: #262626; color: #aaa; align-self: center; }
+.bb-pill.on { background: #6b1d1d; color: #ffd6d6; }
+.bb-folder { font-size: 11px; color: #8c8c8c; word-break: break-all; }
+
+/* Reloj */
+.bb-clock-row { display: flex; align-items: center; gap: 16px; }
+.bb-clock-display { font-family: 'Consolas', monospace; font-size: 46px; font-weight: 800; color: #f3d78f; background: #0b0b0b; border: 1px solid #3a3326; padding: 4px 18px; border-radius: 6px; min-width: 190px; text-align: center; }
+.bb-clock-display.running { color: #7ee08a; border-color: #2f6b38; }
+.bb-periods { display: flex; gap: 8px; }
+.bb-btn.period { font-size: 14px; padding: 10px 16px; }
+
+/* Goles y tarjetas */
+.bb-goals { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: start; }
+.bb-goal-side { display: flex; flex-direction: column; gap: 8px; align-items: center; background: #101010; border: 1px solid #2c2c2c; border-radius: 6px; padding: 10px; }
+.bb-goal-team { font-size: 13px; font-weight: 800; color: #eee; text-align: center; }
+.bb-goal-num { font-family: 'Consolas', monospace; font-size: 44px; font-weight: 800; color: #f3d78f; line-height: 1; }
+.bb-goal-sep { font-size: 36px; color: #555; align-self: center; }
+.bb-picker { border: 2px solid #d6aa4e; border-radius: 6px; background: #0e0e0e; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+.bb-picker.card.yellow { border-color: #f5c518; }
+.bb-picker.card.red { border-color: #e1262e; }
+.bb-picker.card.blue { border-color: #1f72e6; }
+.bb-picker-title { font-size: 12px; font-weight: 800; letter-spacing: 0.06em; color: #f3d78f; }
+.bb-picker-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.bb-pick { text-align: left; background: #1d1d1d; border: 1px solid #444; color: #f2f2f2; padding: 10px; border-radius: 4px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.bb-pick b { color: #d6aa4e; display: inline-block; min-width: 26px; }
+.bb-pick:hover { background: #2c2a24; border-color: #d6aa4e; }
+
+/* Incidencias */
+.bb-ev-list { display: flex; flex-direction: column; gap: 4px; max-height: 300px; overflow-y: auto; }
+.bb-ev-row { display: grid; grid-template-columns: 22px 70px 52px 1fr auto; gap: 8px; align-items: center; background: #121212; border: 1px solid #262626; border-radius: 4px; padding: 5px 8px; font-size: 12px; }
+.bb-ev-icon { font-size: 14px; text-align: center; }
+.bb-ev-icon.card { width: 11px; height: 15px; border-radius: 2px; justify-self: center; }
+.bb-ev-icon.card.yellow { background: #f5c518; }
+.bb-ev-icon.card.red { background: #e1262e; }
+.bb-ev-icon.card.blue { background: #1f72e6; }
+.bb-ev-min { font-family: monospace; color: #f3d78f; }
+.bb-ev-team { font-weight: 800; color: #ccc; }
+.bb-ev-who { color: #eee; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Equipos */
+.bb-eq-list { display: flex; flex-direction: column; gap: 10px; }
+.bb-eq-row { display: grid; grid-template-columns: 34px 52px 1fr; gap: 10px; align-items: center; background: #1f1f1f; border: 1px solid #333; border-radius: 6px; padding: 10px; }
+.bb-eq-row.is-hidden-team { opacity: 0.6; }
+.bb-eq-row.is-pending { border-color: #d6aa4e; }
+.bb-eq-order { display: flex; flex-direction: column; gap: 4px; }
+.bb-eq-crest { width: 52px; height: 52px; object-fit: contain; }
+.bb-eq-mono { display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid #d6aa4e; color: #f3d78f; font-weight: 800; font-size: 14px; background: #0c0c0c; }
+.bb-eq-fields { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
+.bb-eq-fields .bb-field:first-child { flex: 1 1 160px; }
+.bb-eq-meta { grid-column: 2 / -1; font-size: 10px; color: #888; }
+
+/* Planteles */
+.bb-pl-list { display: flex; flex-direction: column; gap: 6px; }
+.bb-pl-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; background: #1c1c1c; border: 1px solid #2f2f2f; border-radius: 6px; padding: 8px; }
+.bb-pl-row.is-inactive { opacity: 0.55; }
+.bb-pl-thumb { width: 52px; height: 52px; object-fit: contain; object-position: 50% 100%; background: linear-gradient(180deg, #2a2a2a, #111); border-top: 2px solid #d6aa4e; flex: 0 0 52px; }
+.bb-pl-thumb.empty { display: flex; align-items: center; justify-content: center; color: #6b5a33; font-weight: 800; font-size: 18px; }
+.bb-pl-dorsal { width: 56px; text-align: center; }
+.bb-pl-warn { flex-basis: 100%; font-size: 11px; color: #e7b35a; }
+.bb-pl-add { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.bb-pl-add input:nth-child(2) { flex: 1 1 200px; }
+
+/* Formación */
+.bb-slots { display: flex; flex-direction: column; gap: 8px; }
+.bb-slot-line { display: grid; grid-template-columns: 130px 1fr; gap: 10px; align-items: center; }
+.bb-slot-label { font-size: 11px; font-weight: 800; letter-spacing: 0.06em; color: #d6aa4e; }
+.bb-slot-selects { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; }
+.bb-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.bb-chip { background: #1d1d1d; border: 1px solid #444; color: #ccc; padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; cursor: pointer; }
+.bb-chip.on { background: #3a3220; border-color: #d6aa4e; color: #f3d78f; }
+
+@media (max-width: 900px) {
+  .bb-grid2, .bb-goals { grid-template-columns: 1fr; }
+  .bb-goal-sep { display: none; }
+  .bb-slot-line { grid-template-columns: 1fr; }
+}

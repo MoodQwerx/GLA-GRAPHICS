@@ -1,0 +1,92 @@
+{
+  "totalMB": 5.27,
+  "nodeCount": 90119,
+  "closures": 2694,
+  "arrays": 1043,
+  "detachedNodes": 0,
+  "detachedKB": 0,
+  "detachedTop": [],
+  "HTMLVideoElement": 1,
+  "HTMLCanvasElement": 1,
+  "HTMLImageElement": 1,
+  "WebGLRenderingContext": 12,
+  "HTMLDivElement": 1,
+  "EventListener": 733,
+  "topObjects": [
+    [
+      "system / ExternalStringData",
+      767,
+      1125.3
+    ],
+    [
+      "blink::AnimationFrameTimingInfo",
+      1808,
+      268.4
+    ],
+    [
+      "system / FunctionTemplateInfo",
+      2977,
+      185.9
+    ],
+    [
+      "Object",
+      5352,
+      147.2
+    ],
+    [
+      "blink::StyleRule",
+      1089,
+      116.7
+    ],
+    [
+      "blink::UniqueElementData",
+      1011,
+      110.6
+    ],
+    [
+      "blink::ImmutableCSSPropertyValueSet",
+      822,
+      86.6
+    ],
+    [
+      "blink::HeapHashTableBacking<blink::HashTable<std::pair<blink::String, blink::Tex",
+      6,
+      78
+    ],
+    [
+      "system / ArrayList",
+      154,
+      68.4
+    ],
+    [
+      "blink::MutableCSSPropertyValueSet",
+      667,
+      67.7
+    ],
+    [
+      "Text",
+      681,
+      58.5
+    ],
+    [
+      "ShadowRoot",
+      299,
+      56.1
+    ],
+    [
+      "blink::CSSSelector::RareData",
+      787,
+      55.3
+    ],
+    [
+      "system / DoubleStringCache",
+      1,
+      48
+    ],
+    [
+      "blink::ComputedStyleBase::StyleSurroundData",
+      148,
+      45.1
+    ]
+  ]
+}

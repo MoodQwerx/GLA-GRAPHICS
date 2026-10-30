@@ -1,4 +1,5 @@
 import { scheduleTakePlay } from './take-scheduler.js';
+import { versionedAssetUrl } from './asset-versions.js';
 
 // Compositor reutilizable de video con canal alfa real para el Program.
 //
@@ -159,7 +160,7 @@ function setupGl(canvas) {
 // a program/js/main.js que tiene que sacarse solo del aire.
 export function createAlphaVideo(el, src, { onEnded, moduleId } = {}) {
   el.innerHTML = `
-    <video class="alpha-video-src" src="${src}" muted playsinline preload="auto"></video>
+    <video class="alpha-video-src" src="${versionedAssetUrl(src)}" muted playsinline preload="auto"></video>
     <canvas class="alpha-video-canvas" width="${FRAME_W}" height="${FRAME_H}"></canvas>
   `;
 
@@ -571,7 +572,7 @@ export function createAlphaVideo(el, src, { onEnded, moduleId } = {}) {
 // a un escenario de rafaga real, aplicar el mismo patron que
 // "createAlphaVideo" de arriba (token + scheduleTakePlay).
 export function createPlainVideo(el, src, { onEnded } = {}) {
-  el.innerHTML = `<video class="plain-video" src="${src}" muted playsinline preload="auto"></video>`;
+  el.innerHTML = `<video class="plain-video" src="${versionedAssetUrl(src)}" muted playsinline preload="auto"></video>`;
   const video = el.querySelector('.plain-video');
   video.muted = true;
   if (onEnded) video.addEventListener('ended', onEnded);

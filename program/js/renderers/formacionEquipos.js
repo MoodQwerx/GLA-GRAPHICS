@@ -1,3 +1,5 @@
+import { glaAssetPath } from '../../../shared/asset-registry.js';
+import { versionedAssetUrl } from '../asset-versions.js';
 import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { getActiveThemeId } from '../theme-client.js';
 import { crestFile, teamName } from '../../../shared/teams.js';
@@ -6,9 +8,9 @@ import { normalizePlayers } from '../../../shared/player-lists.js';
 import { teamColorHex } from '../../../shared/team-colors.js';
 import { applyElementAdjust, applyPlainTextAdjust, readTextAdjust, toBroadcastUpper } from '../text-fit.js';
 
-const VIDEO_SRC = '/assets/placas/formacion-equipos.mp4';
-const SHIRTS_BASE_SRC = '/assets/placas/formacion-camisetas.png';
-const SHIRTS_WHITE_SRC = '/assets/placas/formacion-camisetas-blancas.png';
+const VIDEO_SRC = glaAssetPath('formacionEquipos', 'principal');
+const SHIRTS_BASE_SRC = glaAssetPath('formacionEquipos', 'camisetas');
+const SHIRTS_WHITE_SRC = glaAssetPath('formacionEquipos', 'camisetasBlancas');
 // GLA conserva su asset original (6 camisetas, sin arquero dibujado) tal
 // cual estaba. Argentina Streamers pasa a 11 (2026-09-03, pedido explicito
 // del usuario: "una formacion de futbol tiene que permitir 11 titulares")
@@ -26,8 +28,8 @@ function getStarterLimit() {
 
 function resolveFormationShirts(teamId) {
   const themeId = getActiveThemeId();
-  if (themeId === DEFAULT_THEME_ID) return SHIRTS_BASE_SRC;
-  return getThemeAsset(themeId, 'formacionEquipos')?.formationAssetsByTeam?.[teamId] || null;
+  if (themeId === DEFAULT_THEME_ID) return versionedAssetUrl(SHIRTS_BASE_SRC);
+  return versionedAssetUrl(getThemeAsset(themeId, 'formacionEquipos')?.formationAssetsByTeam?.[teamId] || null);
 }
 
 function setCrest(img, teamId) {
@@ -62,9 +64,9 @@ function buildStructure(el, starterLimit, isGla) {
   el.innerHTML = `
     <div class="av-target"></div>
     <div class="gfx-overlay">
-      <img class="ov-formacion-shirts" src="${SHIRTS_BASE_SRC}" alt="" />
+      <img class="ov-formacion-shirts" src="${versionedAssetUrl(SHIRTS_BASE_SRC)}" alt="" />
       <div class="ov-formacion-shirts-wrap">
-        <img class="ov-formacion-shirts-white" src="${SHIRTS_WHITE_SRC}" alt="" />
+        <img class="ov-formacion-shirts-white" src="${versionedAssetUrl(SHIRTS_WHITE_SRC)}" alt="" />
         <div class="ov-formacion-shirts-tint"></div>
       </div>
       ${slots}

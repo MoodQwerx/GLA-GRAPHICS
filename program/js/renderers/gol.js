@@ -1,6 +1,7 @@
+import { glaAssetPath } from '../../../shared/asset-registry.js';
 import { mountThemedAlphaVideo } from '../theme-assets.js';
 
-const VIDEO_SRC = '/assets/eventos/gol-alpha.mp4';
+const VIDEO_SRC = glaAssetPath('gol', 'principal');
 
 // oneShot: el video tiene su propia animacion de entrada Y salida adentro
 // (el festejo "GOOOL" aparece y se retira solo). Cuando termina, avisa via

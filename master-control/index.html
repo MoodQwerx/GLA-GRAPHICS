@@ -3,23 +3,25 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>LIVE GRAPHICS — Master Control</title>
+<title>SOFTX — Master Control</title>
 <link rel="icon" type="image/png" sizes="64x64" href="/assets/images/gla-favicon.png" />
 <link rel="stylesheet" href="/program/css/theme.css" />
 <link rel="stylesheet" href="css/master.css" />
+<link rel="stylesheet" href="css/bb.css" />
 </head>
 <body>
 <header class="mc-header">
-  <div class="mc-brand">LIVE GRAPHICS <span>MASTER CONTROL</span></div>
-  <div class="mc-theme-select-box">
-    <label for="theme-select" class="mc-theme-label">THEME:</label>
-    <select id="theme-select" class="mc-theme-select"></select>
+  <div class="mc-brand">SOFTX <span>MASTER CONTROL</span></div>
+  <div class="mc-system-box" title="Sistema elegido al iniciar SOFTX. Para usar el otro, cerrá SOFTX y volvé a iniciarlo.">
+    <span class="mc-system-label">SISTEMA:</span>
+    <span id="system-badge" class="mc-system-badge">—</span>
   </div>
   <div class="mc-header-actions">
     <div id="conn-status" class="conn off">CONECTANDO...</div>
   </div>
 </header>
 <div id="theme-pending-banner" class="mc-theme-banner" hidden></div>
+<div id="softx-restart-banner" class="mc-restart-banner" hidden></div>
 
 <div class="mc-body">
   <nav id="tab-bar" class="tab-bar"></nav>
@@ -36,6 +38,7 @@
     <div id="fields-container" class="fields-container"></div>
     <div id="extra-container" class="extra-container"></div>
     <div id="composition-container" class="composition-container"></div>
+    <div id="asset-resource-container" class="asset-resource-container"></div>
 
     <div class="actions-bar">
       <button id="btn-out" type="button" class="btn btn-out">SACAR DEL AIRE</button>

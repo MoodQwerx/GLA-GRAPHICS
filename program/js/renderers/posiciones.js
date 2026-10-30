@@ -1,3 +1,4 @@
+import { glaAssetPath } from '../../../shared/asset-registry.js';
 import { crestFile, teamName } from '../../../shared/teams.js';
 import { applyFittedText, fitFontSize, readTextAdjust, toBroadcastUpper } from '../text-fit.js';
 import { mountThemedAlphaVideo } from '../theme-assets.js';
@@ -16,9 +17,9 @@ import { withGlaSegoeRegular } from '../program-fonts.js';
 // "pagina3" (2026-10-22, la liga ya tiene 16 equipos): mismo asset y
 // mismas 5 filas que pagina2, para las posiciones 12-16.
 const PAGINAS = {
-  pagina1: { src: '/assets/tablas/posiciones-alpha.mp4', rows: 6, desde: 1, hasta: 6 },
-  pagina2: { src: '/assets/tablas/posiciones-5-alpha.mp4', rows: 5, desde: 7, hasta: 11 },
-  pagina3: { src: '/assets/tablas/posiciones-5-alpha.mp4', rows: 5, desde: 12, hasta: 16 },
+  pagina1: { src: glaAssetPath('posiciones', 'pagina1'), rows: 6, desde: 1, hasta: 6 },
+  pagina2: { src: glaAssetPath('posiciones', 'pagina2'), rows: 5, desde: 7, hasta: 11 },
+  pagina3: { src: glaAssetPath('posiciones', 'pagina2'), rows: 5, desde: 12, hasta: 16 },
 };
 
 function paginaConfig(data) {

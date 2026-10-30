@@ -19,6 +19,7 @@
 // en el DOM, y se relanza playFromStart() aunque no sea un TAKE nuevo
 // (justTaken=false) para que el cambio de tipo se vea como una entrada
 // real, no como un frame congelado en negro.
+import { glaAssetPath } from '../../../shared/asset-registry.js';
 import { crestFile, teamName } from '../../../shared/teams.js';
 import { sponsorFile } from '../../../shared/sponsors.js';
 import { updateFittedTextWithTransition, readTextAdjust } from '../text-fit.js';
@@ -29,10 +30,10 @@ import { DEFAULT_THEME_ID } from '../../../shared/themes.js';
 import { GLA_SEGOE_BOLD_FAMILY, withGlaSegoeRegular } from '../program-fonts.js';
 
 const VIDEO_SRC = {
-  equipos: '/assets/zocalos/zocalo-final-div-alpha.mp4',
-  logo: '/assets/zocalos/zocalo-final-alpha.mp4',
+  equipos: glaAssetPath('zocaloCompuesto', 'equipos'),
+  logo: glaAssetPath('zocaloCompuesto', 'logo'),
 };
-const LOGO_SRC = '/assets/images/gla-logo.png';
+const LOGO_SRC = glaAssetPath('zocaloCompuesto', 'logoImagen');
 
 const TEXTO1_MAX_FONT = 50;
 const TEXTO1_MIN_FONT = 22;

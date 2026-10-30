@@ -1,9 +1,10 @@
+import { glaAssetPath } from '../../../shared/asset-registry.js';
 import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { crestFile, teamName } from '../../../shared/teams.js';
 import { resolveVsDisplayName } from '../../../shared/broadcast-names.js';
 import { updateFittedTextWithTransition, readTextAdjust } from '../text-fit.js';
 
-const VIDEO_SRC = '/assets/placas/vs-prepartido-alpha.mp4';
+const VIDEO_SRC = glaAssetPath('vsPrepartido', 'principal');
 const DEFAULT_TITULO = 'PRÓXIMO PARTIDO';
 
 const NAME_MAX_FONT = 42;

@@ -1,3 +1,4 @@
+import { glaAssetPath } from '../../../shared/asset-registry.js';
 import { crestFile, teamName } from '../../../shared/teams.js';
 import { sponsorFile } from '../../../shared/sponsors.js';
 import { applyFittedText, fitFontSize, readTextAdjust, toBroadcastUpper } from '../text-fit.js';
@@ -5,10 +6,10 @@ import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { getActiveThemeId } from '../theme-client.js';
 
 const VIDEO_BY_RENGLON = {
-  normal: '/assets/zocalos/zocalo-vs-alpha.mp4',
-  alto: '/assets/zocalos/zocalo-vs-renglon-alto-alpha.mp4',
-  medio: '/assets/zocalos/zocalo-vs-renglon-medio-alpha.mp4',
-  fino: '/assets/zocalos/zocalo-vs-renglon-fino-alpha.mp4',
+  normal: glaAssetPath('vs', 'normal'),
+  alto: glaAssetPath('vs', 'alto'),
+  medio: glaAssetPath('vs', 'medio'),
+  fino: glaAssetPath('vs', 'fino'),
 };
 
 // Anchos reales de ".ov-vs-teamA/B", ".ov-vs-goalA/B" y ".ov-vs-status"

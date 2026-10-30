@@ -2,6 +2,67 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [Unreleased] - 2026-10-30 (102)
+
+### Agregado — SOFTX [3] BAULETI vs BALANZA, FASE 1 (GLA y Argentina Streamers sin cambios)
+
+- Tercer sistema `bauletiBalanza`: opción [3] en START SOFTX, `START BAULETI VS BALANZA.bat`, `npm run start:bb`, `--system=bauletiBalanza`. Mismo servidor y estado por theme; datos aislados de GLA y AS.
+- Identidad visual negra/dorada en `program/css/bb.css`: tokens `--bb-*` (color, bordes, sombras, tipografías, tiempos, curvas, escalonado) y librería de keyframes; contrato de entrada/salida por elemento (--d/--o), solo transform/opacity/clip-path.
+- Módulos: VS PREPARTIDO (`bbVs`), FORMACIÓN 6v6 (`bbFormacion`), MARCADOR (`bbMarcador`, reloj/períodos/adicional/goles con autor/tarjetas) y placa de TARJETA (`bbTarjeta`, sale sola por fin de animación). Paneles en `master-control/js/bb/` sobre el ciclo de vida de paneles.
+- EQUIPOS BxB: escudo de su carpeta, color y orden (server/teams.js, solo para este sistema; el catálogo de GLA y AS sale idéntico). PLANTELES BxB: jugadores con ID estable, dorsal, posición, activo y foto PNG por equipo (ABRIR CARPETA DE FOTOS, AUTO-ASIGNAR por dorsal/nombre).
+- Incidencias centrales `matchEvents` (`shared/bb-match.js`): goal / yellowCard / redCard / blueCard con equipo, jugador, minuto, período y timestamp; resultado derivado de los goles; penales preparados en el estado. `GET /api/bb/match` para el futuro CHARTS.
+- `performance-lab/bb-leak-test.mjs`: navegación, TAKE/OUT y goles en vivo con control de nodos/listeners/heap/timers.
+
+## [Unreleased] - 2026-10-30 (101)
+
+### Corregido — START: nunca más "frontend nuevo + backend viejo"
+
+- Causa: CHARTS daba "No existe el endpoint GET /api/charts/catalog" porque el SOFTX del puerto 4400 era un Node arrancado antes de agregar CHARTS (Node carga el código al iniciar; Master se sirve siempre desde disco) y nunca se había reiniciado.
+- `start.bat`: antes de arrancar cierra el PID del `.pid` y además todo `node server/index.js` que escuche el puerto (si lo ocupa otro programa, avisa y no lo toca), espera a que el puerto quede LIBRE y recién abre Master Control cuando `/api/version` responde con el PID recién lanzado, el sistema elegido y el código al día. El [Q] de una ventana START vieja ya no cierra el servidor de otra ventana.
+- `end.bat`: solo mata el PID del `.pid` si sigue siendo `node.exe` (un `.pid` viejo puede apuntar a otro programa).
+- `GET /api/version` (`buildId` = hash del código de `server/` y `shared/` cargado al arrancar, `stale` si el código en disco cambió) y aviso **SOFTX NECESITA REINICIARSE** en Master Control al conectar (también si el servidor es anterior a este endpoint).
+
+## [Unreleased] - 2026-10-29 (100)
+
+### Agregado — CHARTS: placas estadísticas de partido (GLA / SOFTX; Argentina Streamers sin cambios)
+
+- Módulo nuevo `charts` (categoría **Charts**): PREVIA, ENTRETIEMPO y FIN DE PARTIDO, diseñadas en CSS sin asset (`program/js/renderers/charts.js`, sección "CHARTS" de `program/css/overlay.css`), con entrada estilo broadcast (barrido diagonal, apertura del panel y textos/números/marcadores/barras escalonados) solo en el TAKE real, y salida con desplazamiento + fundido.
+- Datos de gla.futbol (`server/charts.js`, `GET /api/charts/catalog`, `POST /api/charts/sync-web`, solo GLA): torneos GLA RELÁMPAGO #1–#4 y SUPERCOPA, días y partidos; por partido resultado oficial, penales, walkover, goles con minuto/asistencia, goles en contra (acreditados al rival), penales en juego, tarjetas amarillas/rojas/azules con minuto y MVP; para PREVIA tabla de Liga de la temporada, goleador/asistidor de cada equipo e historial del año entre ambos.
+- Panel `master-control/js/charts-panel.js`: TORNEO → DÍA → PARTIDO (★ Marcador, ● en juego, preselección del partido en juego) → TIPO; ACTUALIZAR DESDE WEB, USAR PARTIDO DEL MARCADOR, REFRESCAR LISTA; errores y torneos sin partidos informados en el panel sin perder el último chart cargado. Oculto en Argentina Streamers (`ARGENTINA_STREAMERS_HIDDEN_MODULES`).
+
+### Verificado
+
+- Relámpago #4 contra la web real: 14 partidos con día/hora/fase/estado, equipos mapeados a escudos locales; final OMI 4-3 DOU (ENTRETIEMPO y FIN DE PARTIDO con MVP), semifinal BRG 0-0 OMI (penales 2-3), PREVIA con historial excluyendo el propio partido, SUPERCOPA "todavía no publica partidos". PREVIEW, TAKE, ACTUALIZAR al aire, OUT (DOM liberado), persistencia tras reiniciar el servidor. Argentina Streamers: sin pestaña CHARTS, API 409, smoke test sin errores.
+
+## [Unreleased] - 2026-10-29 (99)
+
+### Cambiado — SOFTX: nombre del software, sistema fijo al arrancar y START por sistema
+
+- El software pasa a llamarse **SOFTX** (títulos de Master Control/Program/Preview, header del panel, consola de arranque, logs del servidor `[SOFTX]`, `package.json` → `softx`, README/AGENTS/.agents/THEMES). Nombres internos que no se ven (`.gla-server.pid`, `GLA_PORT`, `gla-nav-order`, `window.__gla*`) se conservan por compatibilidad.
+- **Sin selector de THEME en Master Control**: el header muestra `SISTEMA: <nombre>` (solo lectura). El sistema se fija al arrancar con `node server/index.js --system=gla|argentinaStreamers` o `SOFTX_SYSTEM`; sin argumento (`npm start`) usa el último sistema iniciado (`data/active-theme.json`, misma clave de siempre). El servidor ignora `SET_THEME`. `/api/themes` informa `systemFixed` y `launchSource`.
+- **START SOFTX.bat** (pregunta: [1] ARGENTINA STREAMERS / [2] GLA RELÁMPAGO), **START GLA RELÁMPAGO.bat** y **START ARGENTINA STREAMERS.bat** (directos). Los tres llaman a `start.bat [sistema]`, único arranque: espera a que el servidor responda con el sistema elegido antes de abrir Master Control (si otra instancia ocupa el puerto, avisa en vez de abrir un panel equivocado). `npm run start:gla` / `start:as`.
+
+### Agregado — RECURSO GRÁFICO por módulo (registro central, ABRIR CARPETA, RECARGAR, validación)
+
+- `shared/asset-registry.js`: registro central sistema → módulo → recurso (ID `gla.tarjeta.roja`, ruta, tipo, alfa). GLA declara ahí sus rutas reales (las que usaba cada renderer) y los renderers las leen con `glaAssetPath()`; el espejo de rutas GLA (desactualizado en varios módulos) de `shared/themes.js` quedó reducido al estado "ready" del indicador. Argentina Streamers se deriva del manifest existente de `shared/themes.js` (sin copiar rutas ni tocar sus assets).
+- Sección plegable **RECURSO GRÁFICO / RECURSOS GRÁFICOS** en cada módulo con asset (recursos separados, ej. TARJETA: AMARILLA/ROJA/AZUL; MARCADOR PRINCIPAL incluye GOL). Muestra archivo, carpeta, formato esperado y análisis real del archivo.
+- **ABRIR CARPETA** (`POST /api/assets/open-folder`): Explorer con el archivo seleccionado (`/select,`), o la carpeta si falta. Solo IDs registrados del sistema activo, solo loopback/Windows.
+- **RECARGAR** (`POST /api/assets/reload`): analiza el archivo (PNG/JPG/MP4/MOV sin dependencias: formato, códec, resolución, FPS, duración, alfa/alfa apilado), muestra ADVERTENCIAS contra el recurso anterior (línea base persistida en `data/asset-baselines.json`, se crea sola) sin bloquear ni convertir, y difunde `ASSET_VERSIONS`. Program reconstruye el módulo fuera del aire (si está al aire, al salir); Preview se actualiza. No manda nada al aire.
+- **Cache busting**: cada URL de recurso registrado lleva `?v=<fecha+tamaño del archivo>` (`program/js/asset-versions.js`, aplicado en `resolveVideoSrc`/`resolveImageSrc`/`createAlphaVideo`/`createPlainVideo`; los dos assets usados desde CSS — fondo de Partidos y máscara de Formación — via variables CSS con la ruta de siempre como respaldo).
+
+### Corregido — EQUIPOS (GLA): layout y color PERSONALIZADO
+
+- Cada fila en dos líneas: handle (alto completo, más fácil de arrastrar) · escudo · NOMBRE (todo el ancho libre; antes la columna medía 0 px) · ABREVIATURA · GUARDAR; debajo COLOR · VISIBLE · ESCUDO. Argentina Streamers conserva su layout.
+- El bloque HEX/paleta solo aparece con **PERSONALIZADO** (antes `display:flex` anulaba `hidden` y se veía siempre). Vista previa del color, HEX con o sin `#`. Misma fuente de verdad de siempre (`scoreboard.teamColorAssignments` + `teamColorCustomHex`).
+
+### Verificado
+
+- Git: trabajo sobre `main` = `origin/main` = `07dc24d` (fetch/pull al día). Backup previo en `../GLA-GRAPHICS-backup-pre-softx-2026-10-29/`.
+- Regresión de URLs de assets por módulo y variante (50 combinaciones por sistema, TAKE real en Program) contra el código anterior: 0 diferencias en GLA y en Argentina Streamers (solo se agrega `?v=`), sin errores de consola.
+- START SOFTX → [2] GLA y → [1] AS, START GLA RELÁMPAGO directo; `SET_THEME` ignorado; sin selector.
+- RECURSO GRÁFICO con reemplazo real conservando el nombre: Marcador (video 25 FPS → advertencia de FPS y duración, Program precargó y tomó el nuevo; con el módulo al aire se aplicó al salir), Tiempo Adicional (PNG, Preview y Program) y Tarjeta Roja (módulo con 3 recursos); originales restaurados y verificados por hash. ABRIR CARPETA abrió la carpeta con el archivo seleccionado; IDs inventados / de otro sistema / rutas rechazados.
+- EQUIPOS en instancia aislada: sin superposiciones con nombres de 1 a 56 caracteres y abreviaturas de 2 a 4; preset/PERSONALIZADO/paleta/HEX/HEX inválido/vuelta a preset/recuperación del HEX; arrastre real con el mouse; persistencia tras refresh y reinicio.
+
 ## [Unreleased] - 2026-10-23 (98)
 
 ### Agregado — GRUPOS: modos MANUAL / WEB (GRAN LIGA RELÁMPAGO; Argentina Streamers sin cambios)

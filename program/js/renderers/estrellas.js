@@ -1,10 +1,11 @@
+import { glaAssetPath } from '../../../shared/asset-registry.js';
 import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { crestFile, teamName } from '../../../shared/teams.js';
 import { applyFittedText, applyPlainTextAdjust, readTextAdjust, measureTextWidth, toBroadcastUpper } from '../text-fit.js';
 import { getActiveThemeId } from '../theme-client.js';
 import { ARGENTINA_STREAMERS_THEME_ID } from '../../../shared/themes.js';
 
-const VIDEO_SRC = '/assets/placas/estrellas-alpha.mp4';
+const VIDEO_SRC = glaAssetPath('estrellas', 'principal');
 
 // Dimensiones de los textos medidos de forma real
 // NAME agrandado de 28/14 (2026-08-06, pedido explicito del usuario:

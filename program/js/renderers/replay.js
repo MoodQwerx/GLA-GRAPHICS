@@ -1,7 +1,8 @@
+import { glaAssetPath } from '../../../shared/asset-registry.js';
 import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { sponsorFile } from '../../../shared/sponsors.js';
 
-const VIDEO_SRC = '/assets/replay/replay-sponsor-alpha.mp4';
+const VIDEO_SRC = glaAssetPath('replay', 'principal');
 
 function buildStructure(el) {
   el.innerHTML = `

@@ -1,9 +1,10 @@
+import { glaAssetPath } from '../../../shared/asset-registry.js';
 import { mountThemedAlphaVideo, resolveImageSrc } from '../theme-assets.js';
 import { crestFile, teamName } from '../../../shared/teams.js';
 import { resolveVsDisplayName } from '../../../shared/broadcast-names.js';
 import { updateFittedTextWithTransition, applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
 
-const VIDEO_SRC = '/assets/placas/vs-resultado-alpha.mp4';
+const VIDEO_SRC = glaAssetPath('vsResultado', 'principal');
 const DEFAULT_TITULO = 'RESULTADO';
 
 const NAME_MAX_FONT = 42;

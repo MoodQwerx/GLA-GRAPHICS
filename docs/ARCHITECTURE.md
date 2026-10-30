@@ -157,6 +157,21 @@ Los dos PNG vienen con un corrimiento de calibracion respecto del marco real del
 
 El Master Control no necesita cambios de codigo para el panel generico: el tab (agrupado por `category`), los campos y el flujo Take/Update/Out se generan solos a partir de `shared/modules.js`. Solo hace falta tocar `master-control/js/main.js` si el modulo necesita un panel a medida (como el reloj del Marcador o `live-clock-display`).
 
+## PERFORMANCE / PANEL LIFECYCLE
+
+Master Control se usa durante horas sin refrescar: cada panel tiene que liberar todo lo que creó al cambiar de módulo. La auditoría del 2026-10-29 (`PERFORMANCE_AUDIT.md`) encontró que un `Set` de callbacks de un módulo compartido retenía cada panel anterior (+3.720 nodos DOM y +289 listeners por ronda de uso).
+
+Mecanismo: `master-control/js/panel-lifecycle.js`. `renderPanel()` destruye el ciclo de vida del panel anterior y crea uno nuevo; `panelScope.cleanup = fn` suma un cleanup (nunca pisa otro del mismo render). Helpers compartidos que se usan dentro de un panel pueden tomar `currentPanelLifecycle()` y registrar ahí su liberación (`onCleanup`, `listen` con `AbortSignal`, `setInterval`, `setTimeout`).
+
+Reglas:
+
+- Todo listener que un panel agrega fuera de su propio DOM (`window`, `document`, otro módulo) se registra con `lifecycle.listen(...)` o se remueve en un cleanup.
+- Todo `setInterval` (y todo `setTimeout` que pueda sobrevivir al panel) se crea con el ciclo de vida o se limpia en el cleanup que devuelve el panel.
+- Toda suscripción a un módulo compartido devuelve/registra su `unsubscribe`; un `Set`/`Map` de callbacks de módulo debe borrar a sus suscriptores (ver `gla-torneo-source.js`: suscripción atada al ciclo de vida + `WeakRef` al elemento).
+- No guardar nodos DOM de un panel en variables de módulo/singletons; si hace falta una referencia "al panel visible", limpiarla en el cleanup.
+- Un nodo desconectado retiene su `parentNode`: guardar UN `<span>` de un panel destruido retiene el panel entero.
+- Verificación: `node performance-lab/master-leak-test.mjs` (ciclos de paneles críticos, Partidos, ACTUALIZAR DESDE WEB y RECARGAR; falla si nodos/listeners crecen más de 5% o si quedan nodos desconectados retenidos).
+
 ## Persistencia
 
 `server/persistence.js` centraliza cuatro claves (`master_control_state`, `team_abbreviations`, `gla_futbol_rosters`, `gla_lower_third_context`). Supabase es la fuente durable cuando esta configurado; los JSON bajo `data/` son seed, cache y fallback local. Las escrituras son asincronas, agrupadas, atomicas en disco y conservan un valor anterior. El contrato de estado no cambia: `data` se restaura y `status` siempre arranca en `OUT`. Ver [PERSISTENCE.md](PERSISTENCE.md).

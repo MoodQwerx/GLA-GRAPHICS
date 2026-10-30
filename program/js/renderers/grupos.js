@@ -1,3 +1,4 @@
+import { glaAssetPath } from '../../../shared/asset-registry.js';
 import { crestFile, teamName } from '../../../shared/teams.js';
 import { applyFittedText, applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
 import { resolveImageSrc } from '../theme-assets.js';
@@ -9,8 +10,8 @@ import { DEFAULT_THEME_ID } from '../../../shared/themes.js';
 // usuario) — mismo criterio que marcadorZocalo.js/marcadorTiempoAdicional.js:
 // <img class="gfx-bg-image"> a resolucion nativa, sin transform ni recorte.
 const IMG_SRC = {
-  grupo1: '/assets/grupos/grupo-1.png',
-  grupo2: '/assets/grupos/grupo-2.png',
+  grupo1: glaAssetPath('grupos', 'grupo1'),
+  grupo2: glaAssetPath('grupos', 'grupo2'),
 };
 
 // Cantidad y posicion de filas medidas directamente sobre el canal alfa/color

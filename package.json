@@ -1,12 +1,15 @@
 {
-  "name": "gla-broadcast-graphics",
+  "name": "softx",
   "version": "0.1.0",
-  "description": "Sistema de graficas de transmision (Master Control + Program/Overlay) para stream de futbol",
+  "description": "SOFTX: software base de graficas de transmision (Master Control + Program/Overlay) para ARGENTINA STREAMERS y GLA RELAMPAGO",
   "type": "module",
   "private": true,
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
+    "start:gla": "node server/index.js --system=gla",
+    "start:as": "node server/index.js --system=argentinaStreamers",
+    "start:bb": "node server/index.js --system=bauletiBalanza",
     "test:persistence": "node scripts/test-persistence.mjs",
     "migrate:theme-layouts": "node scripts/migrate-theme-layouts.mjs",
     "migrate:theme-layouts:apply": "node scripts/migrate-theme-layouts.mjs --apply"

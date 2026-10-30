@@ -18,7 +18,7 @@ if (!['auto', 'local', 'supabase'].includes(requestedBackend)) {
   throw new Error(`GLA_PERSISTENCE_BACKEND invalido: ${requestedBackend}`);
 }
 if (requestedBackend === 'supabase' && !supabaseConfigured) {
-  console.error('[GLA PERSISTENCIA] Supabase fue solicitado pero faltan SUPABASE_URL/SUPABASE_SECRET_KEY. Se usara fallback local.');
+  console.error('[SOFTX PERSISTENCIA] Supabase fue solicitado pero faltan SUPABASE_URL/SUPABASE_SECRET_KEY. Se usara fallback local.');
 }
 
 const entries = new Map();
@@ -55,7 +55,7 @@ async function readJson(filename) {
     return JSON.parse(await fs.readFile(filePath(filename), 'utf8'));
   } catch (error) {
     if (error.code !== 'ENOENT') {
-      console.error(`[GLA PERSISTENCIA] No se pudo leer data/${filename}:`, error.message);
+      console.error(`[SOFTX PERSISTENCIA] No se pudo leer data/${filename}:`, error.message);
     }
     return undefined;
   }
@@ -147,7 +147,7 @@ function recordError(error) {
   status.lastErrorAt = new Date(now).toISOString();
   status.lastError = error.message;
   if (error.message !== lastCloudErrorMessage || now - lastCloudErrorLoggedAt >= 30_000) {
-    console.error('[GLA PERSISTENCIA] Cloud no disponible; estado conservado en memoria y fallback local activo:', error.message);
+    console.error('[SOFTX PERSISTENCIA] Cloud no disponible; estado conservado en memoria y fallback local activo:', error.message);
     lastCloudErrorLoggedAt = now;
     lastCloudErrorMessage = error.message;
   }
@@ -179,7 +179,7 @@ export async function loadPersistentValue(key, filename, defaultValue = {}) {
         const seededAt = await writeCloud(key, value, null);
         cloudValue = clone(value);
         recordSuccess(seededAt);
-        console.log(`[GLA PERSISTENCIA] Cloud vacio: data/${filename} inicializo la clave ${key}.`);
+        console.log(`[SOFTX PERSISTENCIA] Cloud vacio: data/${filename} inicializo la clave ${key}.`);
       }
     } catch (error) {
       recordError(error);
@@ -210,7 +210,7 @@ async function flushEntry(key, entry) {
       await writeJsonAtomic(entry.filename, value);
     } catch (error) {
       localError = error;
-      console.error(`[GLA PERSISTENCIA] No se pudo guardar data/${entry.filename}:`, error.message);
+      console.error(`[SOFTX PERSISTENCIA] No se pudo guardar data/${entry.filename}:`, error.message);
     }
 
     if (useSupabase && supabaseConfigured) {

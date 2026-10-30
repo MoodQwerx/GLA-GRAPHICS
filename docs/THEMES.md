@@ -1,4 +1,6 @@
-# Sistema multi-theme (LIVE GRAPHICS)
+# Sistema multi-theme (SOFTX)
+
+> **SOFTX (2026-10-29):** el software pasó a llamarse SOFTX y el theme ya no se elige desde Master Control. Cada ejecución inicia UN sistema (ARGENTINA STREAMERS o GLA RELÁMPAGO) con `node server/index.js --system=<id>` (o `SOFTX_SYSTEM`), elegido desde START SOFTX.bat o los starts directos, y queda fijo hasta cerrar SOFTX (`SET_THEME` se ignora). Las rutas de assets de GLA viven en `shared/asset-registry.js` (registro central de RECURSO GRÁFICO); las de Argentina Streamers siguen en el manifest de `shared/themes.js`, del que el registro las deriva. Lo que sigue describe la arquitectura interna de themes, que no cambió.
 
 Etapa 1: 2026-08-20 (selector + manifest esqueleto, placeholder inerte).
 Etapa 2: 2026-08-25, pedido explícito: "no quiero solamente un placeholder... quiero ARGENTINA STREAMERS OPERATIVO AHORA, solamente sin sus assets gráficos definitivos". Este documento describe el estado ACTUAL (operativo) del sistema multi-theme, no un diseño pendiente.
@@ -81,7 +83,7 @@ Presets (zócalos, resultados, títulos, posiciones): viven dentro del mismo `da
 
 ## Theme activo (servidor, global) y sincronización en vivo
 
-`server/theme.js`: una variable en memoria, persistida en `data/active-theme.json` (nunca toca `master-control-state.json`). Cambiar de theme es un mensaje WS (`SET_THEME`) que dispara, en este orden, a **todos** los clientes conectados: `THEME_UPDATE` + `STATE_SNAPSHOT` (con `theme`) + `TEAM_CATALOG_UPDATE`. Program fuerza un `teardownContent()` de cada módulo montado cuando detecta un cambio real de theme, así el próximo render vuelve a resolver assets desde cero (sin refrescar la página). Master Control resincroniza el `draft` completo (todos los módulos) cuando el snapshot trae un theme distinto al que tenía cargado.
+`server/theme.js`: fijado al arrancar con `--system=` / `SOFTX_SYSTEM` (sin argumento, el último sistema guardado en `data/active-theme.json`; nunca toca `master-control-state.json`). **Desde SOFTX (2026-10-29) el theme no cambia durante la ejecución: el servidor ignora `SET_THEME`.** Histórico: cambiar de theme era un mensaje WS (`SET_THEME`) que disparaba, en este orden, a **todos** los clientes conectados: `THEME_UPDATE` + `STATE_SNAPSHOT` (con `theme`) + `TEAM_CATALOG_UPDATE`. Program fuerza un `teardownContent()` de cada módulo montado cuando detecta un cambio real de theme, así el próximo render vuelve a resolver assets desde cero (sin refrescar la página). Master Control resincroniza el `draft` completo (todos los módulos) cuando el snapshot trae un theme distinto al que tenía cargado.
 
 `GET /api/themes` (lista completa + activo) y `GET /api/teams` (catálogo del theme activo) sirven también para debug/curl.
 
@@ -146,3 +148,16 @@ assets/themes/argentina-streamers/
 5. Si necesita datos externos propios, sumar su `dataSource` y sus propias rutas `*/sync-web` con el mismo criterio que `requireGlaTheme`.
 
 Nunca hace falta duplicar Master Control, Program, el servidor, ni el catálogo de módulos.
+
+
+## BAULETI vs BALANZA (`bauletiBalanza`, SOFTX [3], 2026-10-30)
+
+Tercer sistema. Misma infraestructura (servidor, estado por theme, Master, Program, planteles, persistencia); módulos y piezas propias:
+
+- **Arranque**: opción [3] de START SOFTX, `START BAULETI VS BALANZA.bat`, `start.bat bauletiBalanza`, `npm run start:bb` o `--system=bauletiBalanza` (alias `bxb`, `bauleti-balanza`).
+- **Módulos** `bbMarcador`, `bbFormacion`, `bbVs`, `bbTarjeta` (`shared/modules.js`): solo aparecen en la navegación de BxB; GLA y Argentina Streamers no los ven, y BxB no ve ningún otro módulo. Navegación: MARCADOR · FORMACIÓN · VS PREPARTIDO · PLANTELES · EQUIPOS (TARJETA se dispara desde MARCADOR).
+- **Identidad visual**: `program/css/bb.css` — tokens `--bb-*` (negros, dorados, texto, bordes, sombras, tipografías, tiempos, curvas, escalonado) y librería de keyframes. Piezas dibujadas en CSS, sin assets de video. Contrato de animación documentado en la cabecera del archivo.
+- **Equipos**: catálogo manual propio (`shared/themes.js` + `theme-team-overrides.json`) con nombre, abreviatura, escudo (cualquier PNG de `assets/themes/bauleti-balanza/escudos/`), color, visible y orden. Sin PNG, las piezas muestran un monograma dorado.
+- **Planteles**: almacén central de SOFTX (`player-rosters.json`, separado por theme). Lo propio de BxB va en `metadata` del jugador: `{ foto, posicion, activo }`. Fotos PNG en `assets/themes/bauleti-balanza/jugadores/<teamId>/` (botón ABRIR CARPETA DE FOTOS).
+- **Partido / incidencias**: `bbMarcador.data` es la fuente del partido (equipos, reloj, período, adicional, `matchEvents`, `penalties`). Modelo en `shared/bb-match.js`; interfaz para CHARTS: `GET /api/bb/match`.
+- **Endpoints propios** (`server/bauleti-balanza.js`, 409 fuera de BxB): `GET /api/bb/fotos/:teamId`, `POST /api/bb/fotos/:teamId/open-folder`, `GET /api/bb/match`.

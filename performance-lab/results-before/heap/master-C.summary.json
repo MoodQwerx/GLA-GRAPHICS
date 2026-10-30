@@ -1,0 +1,141 @@
+{
+  "totalMB": 116.44,
+  "nodeCount": 1612169,
+  "closures": 39734,
+  "arrays": 2361,
+  "detachedNodes": 42586,
+  "detachedKB": 8831.1,
+  "detachedTop": [
+    [
+      "<input type=\"text\" placeholder=\"0\" disabled=\"\">",
+      1800
+    ],
+    [
+      "<div>",
+      1748
+    ],
+    [
+      "<div class=\"field\">",
+      1656
+    ],
+    [
+      "<label>",
+      1656
+    ],
+    [
+      "<input type=\"text\" placeholder=\"Ej: 3\">",
+      900
+    ],
+    [
+      "<input type=\"text\" placeholder=\"Ej: 1\">",
+      900
+    ],
+    [
+      "<input type=\"text\" placeholder=\"Ej: 18:00 o 20:30\">",
+      900
+    ],
+    [
+      "<option value=\"ns-team\">",
+      828
+    ],
+    [
+      "<option value=\"omi-team\">",
+      828
+    ],
+    [
+      "<option value=\"oxen-fc\">",
+      828
+    ],
+    [
+      "<option value=\"LA ESQUINA\">",
+      828
+    ],
+    [
+      "<option value=\"calambres\">",
+      828
+    ]
+  ],
+  "HTMLVideoElement": 2,
+  "HTMLCanvasElement": 2,
+  "HTMLImageElement": 2,
+  "WebGLRenderingContext": 13,
+  "HTMLDivElement": 2,
+  "EventListener": 88065,
+  "topObjects": [
+    [
+      "blink::UniqueElementData",
+      192767,
+      21083.9
+    ],
+    [
+      "ShadowRoot",
+      54502,
+      10219.1
+    ],
+    [
+      "Text",
+      117777,
+      10121.5
+    ],
+    [
+      "<slot pseudo=\"-internal-option-slot\">",
+      45700,
+      8568.8
+    ],
+    [
+      "blink::HeapHashTableBacking<blink::HashTable<blink::AtomicString, blink::KeyValu",
+      54238,
+      7221.1
+    ],
+    [
+      "<span pseudo=\"-internal-option-label-container\" aria-hidden=\"true\">",
+      45700,
+      4641.4
+    ],
+    [
+      "blink::NodeRareData",
+      118065,
+      4113.5
+    ],
+    [
+      "blink::FlatTreeNodeData",
+      91407,
+      2856.5
+    ],
+    [
+      "blink::HeapVectorBacking<cppgc::internal::BasicMember<blink::Node, cppgc::intern",
+      97412,
+      2191.6
+    ],
+    [
+      "system / ExternalStringData",
+      1462,
+      2153
+    ],
+    [
+      "blink::SlotAssignment",
+      48703,
+      1902.5
+    ],
+    [
+      "blink::MutableCSSPropertyValueSet",
+      17676,
+      1795.2
+    ],
+    [
+      "blink::TreeOrderedMap",
+      57232,
+      1788.5
+    ],
+    [
+      "blink::TreeOrderedMap::MapEntry",
+      54315,
+      1697.3
+    ],
+    [
+      "blink::NodeRareData::DataFieldWrapper<gfx::Vector2dF>",
+      71519,
+      1676.2
+    ]
+  ]
+}

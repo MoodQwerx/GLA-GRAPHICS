@@ -2,7 +2,7 @@
 
 ## Producto
 
-Sistema local de gráficas para transmisiones de fútbol:
+SOFTX: sistema local de gráficas para transmisiones de fútbol. Cada ejecución inicia un único sistema, fijo hasta cerrar (ARGENTINA STREAMERS, GLA RELÁMPAGO o BAULETI vs BALANZA; internamente un "theme"), elegido con START SOFTX.bat / START GLA RELÁMPAGO.bat / START ARGENTINA STREAMERS.bat / START BAULETI VS BALANZA.bat (start.bat -> node server/index.js --system=...):
 
 - **Master Control** en `/master-control/` (acceso abreviado `/master`): operación, carga de datos, estado al aire y Preview Monitor.
 - **Program** en `/program/`: salida transparente 1920×1080 para OBS, vMix o Browser Source equivalente.
@@ -13,7 +13,7 @@ No hay build step. Se sirven HTML, CSS y módulos ES nativos. Node.js 18 o super
 ## Mapa real
 
 - `server/`: HTTP, WebSocket, catálogo de equipos y estado autoritativo.
-- `shared/`: protocolo, schema de módulos, relojes, equipos, colores, escape y cliente WebSocket.
+- `shared/`: protocolo, schema de módulos, relojes, equipos, colores, escape, cliente WebSocket y registro central de recursos gráficos (`asset-registry.js`, rutas de assets por sistema/módulo/recurso).
 - `master-control/`: interfaz del operador y editores generados desde schema.
 - `program/`: stage broadcast, compositor de alfa, renderers y posicionamiento.
 - `assets/`: fuentes, escudos y medios procesados usados en runtime.

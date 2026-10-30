@@ -121,7 +121,29 @@ const THEME_CREST_DIRS = {
   // catalogo de GLA se sigue armando en getTeamCatalog, no en
   // manualThemeCatalog.
   gla: { dir: path.resolve(CRESTS_DIR), url: '/assets/crests/' },
+  // BAULETI vs BALANZA (SOFTX [3], 2026-10-30): carpeta propia, nunca
+  // compartida con GLA ni con Argentina Streamers.
+  bauletiBalanza: { dir: path.resolve(process.cwd(), 'assets', 'themes', 'bauleti-balanza', 'escudos'), url: '/assets/themes/bauleti-balanza/escudos/' },
 };
+
+// Themes manuales con EQUIPOS extendido (BAULETI vs BALANZA): escudo elegido
+// de la carpeta del theme ("crestFile"), color propio y orden manual, todo en
+// el mismo theme-team-overrides.json. Argentina Streamers no entra aca: su
+// catalogo sale exactamente igual que siempre.
+const EXTENDED_MANUAL_THEMES = new Set(['bauletiBalanza']);
+
+export function listThemeCrestFiles(themeId) {
+  const config = THEME_CREST_DIRS[themeId];
+  if (!config) return [];
+  try {
+    return fs.readdirSync(config.dir, { withFileTypes: true })
+      .filter((d) => d.isFile() && CREST_EXT_RE.test(d.name))
+      .map((d) => d.name)
+      .sort((a, b) => a.localeCompare(b, 'es'));
+  } catch {
+    return [];
+  }
+}
 
 // EQUIPOS EN GLA (2026-10-21, pedido explicito del usuario: "ABREVIATURAS
 // pasa a tener la logica completa de EQUIPOS"). Abreviatura y visibilidad
@@ -173,7 +195,7 @@ function slugifyFilename(base) {
 // id estable = slug del nombre de archivo, nombre propuesto desde el
 // archivo. Un slug que ya existe (mismo equipo con otro archivo) no se
 // duplica.
-function discoverThemeCrests(themeId, baseTeams) {
+function discoverThemeCrests(themeId, baseTeams, assignedFiles = []) {
   const config = THEME_CREST_DIRS[themeId];
   if (!config) return [];
   let files = [];
@@ -185,6 +207,7 @@ function discoverThemeCrests(themeId, baseTeams) {
     return [];
   }
   const knownFiles = new Set(baseTeams.map((t) => (t.file ? decodeURIComponent(t.file.split('/').pop()) : null)).filter(Boolean));
+  for (const file of assignedFiles) knownFiles.add(file);
   const knownIds = new Set(baseTeams.map((t) => t.id));
   const discovered = [];
   for (const file of files.sort((a, b) => a.localeCompare(b, 'es'))) {
@@ -207,8 +230,11 @@ function discoverThemeCrests(themeId, baseTeams) {
 function manualThemeCatalog(themeId) {
   const baseTeams = getThemeTeams(themeId);
   const overrides = themeTeamOverrides[themeId] || {};
-  const all = [...baseTeams.map((t) => ({ ...t, discovered: false })), ...discoverThemeCrests(themeId, baseTeams)];
-  return all.map((team) => {
+  const extended = EXTENDED_MANUAL_THEMES.has(themeId);
+  const crestFiles = extended ? listThemeCrestFiles(themeId) : [];
+  const assignedFiles = extended ? Object.values(overrides).map((o) => o?.crestFile).filter((f) => crestFiles.includes(f)) : [];
+  const all = [...baseTeams.map((t) => ({ ...t, discovered: false })), ...discoverThemeCrests(themeId, baseTeams, assignedFiles)];
+  const catalog = all.map((team) => {
     const o = overrides[team.id] || {};
     const name = typeof o.name === 'string' && o.name.trim() ? o.name.trim() : team.name;
     const abbr = typeof o.abbr === 'string' && o.abbr.trim() ? o.abbr.trim().toUpperCase() : team.abbr;
@@ -227,8 +253,45 @@ function manualThemeCatalog(themeId) {
       file: team.file || null,
       visible,
       pending,
+      ...(extended ? extendedTeamFields(themeId, team, o, crestFiles) : {}),
     };
   });
+  if (!extended) return catalog;
+  // Orden manual (EQUIPOS); los que nunca se ordenaron van al final, en el
+  // orden de siempre (base primero, despues los detectados en la carpeta).
+  return catalog
+    .map((team, index) => ({ team, index, rank: Number.isInteger(overrides[team.id]?.order) ? overrides[team.id].order : Infinity }))
+    .sort((a, b) => (a.rank - b.rank) || (a.index - b.index))
+    .map(({ team }) => team);
+}
+
+// Escudo efectivo: el elegido en EQUIPOS si sigue existiendo; si no, el
+// archivo propio del equipo SOLO si existe en disco (un equipo base sin PNG
+// todavia queda "sin escudo" y los renderers muestran su monograma).
+function extendedTeamFields(themeId, team, o, crestFiles) {
+  const config = THEME_CREST_DIRS[themeId];
+  const ownFile = team.file ? decodeURIComponent(team.file.split('/').pop()) : null;
+  const crestFile = crestFiles.includes(o.crestFile) ? o.crestFile : (crestFiles.includes(ownFile) ? ownFile : null);
+  return {
+    file: crestFile ? `${config.url}${encodeURIComponent(crestFile)}` : null,
+    crestFile,
+    ownFile,
+    color: typeof o.color === 'string' && /^#[0-9A-F]{6}$/i.test(o.color) ? o.color.toUpperCase() : null,
+  };
+}
+
+// Orden manual de un theme extendido: lista completa de teamId (ocultos
+// incluidos), guardada como "order" de cada equipo.
+export function setThemeTeamOrder(themeId, order) {
+  if (!EXTENDED_MANUAL_THEMES.has(themeId)) throw new Error('Este sistema no tiene orden manual de equipos.');
+  if (!Array.isArray(order)) throw new Error('Orden invalido.');
+  const ids = new Set(manualThemeCatalog(themeId).map((t) => t.id));
+  const clean = [...new Set(order.map(String))].filter((id) => ids.has(id));
+  const themeOverrides = { ...(themeTeamOverrides[themeId] || {}) };
+  clean.forEach((id, index) => { themeOverrides[id] = { ...(themeOverrides[id] || {}), order: index }; });
+  themeTeamOverrides = { ...themeTeamOverrides, [themeId]: themeOverrides };
+  schedulePersistentWrite('theme_team_overrides', themeTeamOverrides);
+  return getTeamCatalog(themeId);
 }
 
 // Guarda nombre/abreviatura/visible de un equipo de un theme manual.
@@ -243,6 +306,18 @@ export function updateThemeTeam(themeId, id, patch) {
   if (typeof patch?.name === 'string') current.name = patch.name.trim();
   if (typeof patch?.abbr === 'string') current.abbr = patch.abbr.trim().toUpperCase().slice(0, 4);
   if (typeof patch?.visible === 'boolean') current.visible = patch.visible;
+  if (EXTENDED_MANUAL_THEMES.has(themeId)) {
+    if (typeof patch?.crestFile === 'string') {
+      const crestFile = patch.crestFile.trim();
+      if (crestFile && !listThemeCrestFiles(themeId).includes(crestFile)) throw new Error(`Escudo inexistente en la carpeta del sistema: ${crestFile}`);
+      if (crestFile) current.crestFile = crestFile; else delete current.crestFile;
+    }
+    if (typeof patch?.color === 'string') {
+      const color = patch.color.trim().toUpperCase();
+      if (color && !/^#[0-9A-F]{6}$/.test(color)) throw new Error('Color invalido: usar #RRGGBB.');
+      if (color) current.color = color; else delete current.color;
+    }
+  }
   current.confirmed = true;
   themeOverrides[id] = current;
   themeTeamOverrides = { ...themeTeamOverrides, [themeId]: themeOverrides };

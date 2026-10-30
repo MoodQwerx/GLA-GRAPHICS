@@ -1,0 +1,6664 @@
+{
+  "phases": [
+    {
+      "name": "load",
+      "seconds": 12
+    },
+    {
+      "name": "idleA",
+      "seconds": 99
+    },
+    {
+      "name": "rounds",
+      "seconds": 1825
+    },
+    {
+      "name": "idleB",
+      "seconds": 106
+    },
+    {
+      "name": "stopAll",
+      "seconds": 19
+    },
+    {
+      "name": "reload",
+      "seconds": 41
+    },
+    {
+      "name": "videos-0",
+      "seconds": 36
+    },
+    {
+      "name": "videos-1",
+      "seconds": 35
+    },
+    {
+      "name": "videos-3",
+      "seconds": 36
+    },
+    {
+      "name": "videos-6",
+      "seconds": 36
+    },
+    {
+      "name": "cfg-master-program-monitor",
+      "seconds": 43
+    },
+    {
+      "name": "cfg-master-preview",
+      "seconds": 45
+    },
+    {
+      "name": "cfg-master-nomonitor",
+      "seconds": 45
+    },
+    {
+      "name": "cfg-program-only",
+      "seconds": 45
+    },
+    {
+      "name": "end",
+      "seconds": 1
+    }
+  ],
+  "server": {
+    "load": {
+      "cpuPctAvg": 0.52,
+      "cpuPctMax": 1.6,
+      "eluAvgPct": 0.49,
+      "eluMaxPct": 1.61,
+      "elMaxMs": 22.36,
+      "elP99MedianMs": 16.4,
+      "rssMB": [
+        58.9,
+        59.1
+      ],
+      "heapUsedMB": [
+        13.26,
+        13.62
+      ],
+      "gcCount": 0,
+      "gcMs": 0,
+      "timers": [
+        1,
+        1
+      ],
+      "sockets": [
+        6,
+        6
+      ],
+      "wsClients": [
+        4,
+        4
+      ],
+      "outMsgsPerSec": 0.33,
+      "outMsgsPerSecMax": 4,
+      "outKBPerSec": 3.17,
+      "outKBPerSecMax": 38.1,
+      "inMsgsPerSec": 0,
+      "inKBPerSec": 0
+    },
+    "idleA": {
+      "cpuPctAvg": 0.66,
+      "cpuPctMax": 3.2,
+      "eluAvgPct": 0.43,
+      "eluMaxPct": 3.06,
+      "elMaxMs": 21.28,
+      "elP99MedianMs": 16.2,
+      "rssMB": [
+        60,
+        60.9
+      ],
+      "heapUsedMB": [
+        13.22,
+        13.72
+      ],
+      "gcCount": 8,
+      "gcMs": 5.1,
+      "timers": [
+        1,
+        1
+      ],
+      "sockets": [
+        6,
+        6
+      ],
+      "wsClients": [
+        4,
+        4
+      ],
+      "outMsgsPerSec": 0.24,
+      "outMsgsPerSecMax": 8,
+      "outKBPerSec": 0.14,
+      "outKBPerSecMax": 7,
+      "inMsgsPerSec": 0.06,
+      "inKBPerSec": 0.02
+    },
+    "rounds": {
+      "cpuPctAvg": 1.02,
+      "cpuPctMax": 9.37,
+      "eluAvgPct": 0.84,
+      "eluMaxPct": 8.91,
+      "elMaxMs": 573.05,
+      "elP99MedianMs": 16.4,
+      "rssMB": [
+        62.7,
+        70.1
+      ],
+      "heapUsedMB": [
+        14.3,
+        15.77
+      ],
+      "gcCount": 924,
+      "gcMs": 494.4,
+      "timers": [
+        2,
+        1
+      ],
+      "sockets": [
+        6,
+        6
+      ],
+      "wsClients": [
+        4,
+        4
+      ],
+      "outMsgsPerSec": 3.95,
+      "outMsgsPerSecMax": 12,
+      "outKBPerSec": 4.44,
+      "outKBPerSecMax": 13.9,
+      "inMsgsPerSec": 0.98,
+      "inKBPerSec": 0.52
+    },
+    "idleB": {
+      "cpuPctAvg": 0.28,
+      "cpuPctMax": 4.68,
+      "eluAvgPct": 0.41,
+      "eluMaxPct": 1.17,
+      "elMaxMs": 37.52,
+      "elP99MedianMs": 16.2,
+      "rssMB": [
+        69.8,
+        69.8
+      ],
+      "heapUsedMB": [
+        15.49,
+        16
+      ],
+      "gcCount": 5,
+      "gcMs": 1.8,
+      "timers": [
+        2,
+        1
+      ],
+      "sockets": [
+        6,
+        6
+      ],
+      "wsClients": [
+        4,
+        4
+      ],
+      "outMsgsPerSec": 0.11,
+      "outMsgsPerSecMax": 4,
+      "outKBPerSec": 0.06,
+      "outKBPerSecMax": 3.5,
+      "inMsgsPerSec": 0.02,
+      "inKBPerSec": 0.01
+    },
+    "stopAll": {
+      "cpuPctAvg": 0.65,
+      "cpuPctMax": 3.06,
+      "eluAvgPct": 0.4,
+      "eluMaxPct": 0.56,
+      "elMaxMs": 38.01,
+      "elP99MedianMs": 16.4,
+      "rssMB": [
+        69.8,
+        69.8
+      ],
+      "heapUsedMB": [
+        15.41,
+        15.8
+      ],
+      "gcCount": 1,
+      "gcMs": 0.4,
+      "timers": [
+        1,
+        1
+      ],
+      "sockets": [
+        6,
+        6
+      ],
+      "wsClients": [
+        4,
+        4
+      ],
+      "outMsgsPerSec": 0.84,
+      "outMsgsPerSecMax": 16,
+      "outKBPerSec": 0.38,
+      "outKBPerSecMax": 7.2,
+      "inMsgsPerSec": 0.21,
+      "inKBPerSec": 0.01
+    },
+    "reload": {
+      "cpuPctAvg": 0.91,
+      "cpuPctMax": 3.2,
+      "eluAvgPct": 0.72,
+      "eluMaxPct": 2.39,
+      "elMaxMs": 22.43,
+      "elP99MedianMs": 16.3,
+      "rssMB": [
+        69.8,
+        69.6
+      ],
+      "heapUsedMB": [
+        15.87,
+        16.98
+      ],
+      "gcCount": 14,
+      "gcMs": 4.6,
+      "timers": [
+        1,
+        1
+      ],
+      "sockets": [
+        6,
+        6
+      ],
+      "wsClients": [
+        4,
+        4
+      ],
+      "outMsgsPerSec": 4.1,
+      "outMsgsPerSecMax": 12,
+      "outKBPerSec": 8.73,
+      "outKBPerSecMax": 26.3,
+      "inMsgsPerSec": 0.05,
+      "inKBPerSec": 0.02
+    },
+    "videos-0": {
+      "cpuPctAvg": 0.4,
+      "cpuPctMax": 4.59,
+      "eluAvgPct": 0.37,
+      "eluMaxPct": 0.58,
+      "elMaxMs": 45.91,
+      "elP99MedianMs": 16.3,
+      "rssMB": [
+        69.6,
+        69.6
+      ],
+      "heapUsedMB": [
+        16.99,
+        16.96
+      ],
+      "gcCount": 1,
+      "gcMs": 0.5,
+      "timers": [
+        1,
+        1
+      ],
+      "sockets": [
+        6,
+        5
+      ],
+      "wsClients": [
+        4,
+        4
+      ],
+      "outMsgsPerSec": 0,
+      "outMsgsPerSecMax": 0,
+      "outKBPerSec": 0,
+      "outKBPerSecMax": 0,
+      "inMsgsPerSec": 0,
+      "inKBPerSec": 0
+    },
+    "videos-1": {
+      "cpuPctAvg": 0.36,
+      "cpuPctMax": 3,
+      "eluAvgPct": 0.41,
+      "eluMaxPct": 0.82,
+      "elMaxMs": 21.64,
+      "elP99MedianMs": 16.2,
+      "rssMB": [
+        69.6,
+        68.6
+      ],
+      "heapUsedMB": [
+        17.24,
+        17.29
+      ],
+      "gcCount": 2,
+      "gcMs": 0.9,
+      "timers": [
+        2,
+        1
+      ],
+      "sockets": [
+        6,
+        6
+      ],
+      "wsClients": [
+        4,
+        4
+      ],
+      "outMsgsPerSec": 0.23,
+      "outMsgsPerSecMax": 4,
+      "outKBPerSec": 0.2,
+      "outKBPerSecMax": 3.5,
+      "inMsgsPerSec": 0.06,
+      "inKBPerSec": 0
+    },
+    "videos-3": {
+      "cpuPctAvg": 0.56,
+      "cpuPctMax": 3.09,
+      "eluAvgPct": 0.44,
+      "eluMaxPct": 1.9,
+      "elMaxMs": 27.18,
+      "elP99MedianMs": 16.4,
+      "rssMB": [
+        68.6,
+        68.6
+      ],
+      "heapUsedMB": [
+        17.3,
+        17.7
+      ],
+      "gcCount": 2,
+      "gcMs": 0.9,
+      "timers": [
+        1,
+        1
+      ],
+      "sockets": [
+        6,
+        5
+      ],
+      "wsClients": [
+        4,
+        4
+      ],
+      "outMsgsPerSec": 0.67,
+      "outMsgsPerSecMax": 12,
+      "outKBPerSec": 0.32,
+      "outKBPerSecMax": 5.8,
+      "inMsgsPerSec": 0.17,
+      "inKBPerSec": 0.01
+    },
+    "videos-6": {
+      "cpuPctAvg": 0.57,
+      "cpuPctMax": 7.79,
+      "eluAvgPct": 0.45,
+      "eluMaxPct": 2.31,
+      "elMaxMs": 21.51,
+      "elP99MedianMs": 16.3,
+      "rssMB": [
+        68.6,
+        68.6
+      ],
+      "heapUsedMB": [
+        17.71,
+        18.2
+      ],
+      "gcCount": 3,
+      "gcMs": 1.3,
+      "timers": [
+        2,
+        1
+      ],
+      "sockets": [
+        8,
+        6
+      ],
+      "wsClients": [
+        4,
+        4
+      ],
+      "outMsgsPerSec": 1.33,
+      "outMsgsPerSecMax": 24,
+      "outKBPerSec": 1.32,
+      "outKBPerSecMax": 23.7,
+      "inMsgsPerSec": 0.33,
+      "inKBPerSec": 0.01
+    },
+    "cfg-master-program-monitor": {
+      "cpuPctAvg": 0.37,
+      "cpuPctMax": 1.6,
+      "eluAvgPct": 0.41,
+      "eluMaxPct": 1.58,
+      "elMaxMs": 36.44,
+      "elP99MedianMs": 16.2,
+      "rssMB": [
+        68.8,
+        68.7
+      ],
+      "heapUsedMB": [
+        18.09,
+        18.04
+      ],
+      "gcCount": 3,
+      "gcMs": 1.1,
+      "timers": [
+        1,
+        1
+      ],
+      "sockets": [
+        6,
+        4
+      ],
+      "wsClients": [
+        4,
+        4
+      ],
+      "outMsgsPerSec": 0.57,
+      "outMsgsPerSecMax": 12,
+      "outKBPerSec": 0.27,
+      "outKBPerSecMax": 5.8,
+      "inMsgsPerSec": 0.14,
+      "inKBPerSec": 0.01
+    },
+    "cfg-master-preview": {
+      "cpuPctAvg": 0.69,
+      "cpuPctMax": 6.3,
+      "eluAvgPct": 0.59,
+      "eluMaxPct": 6.31,
+      "elMaxMs": 27.34,
+      "elP99MedianMs": 16.3,
+      "rssMB": [
+        68.8,
+        68.9
+      ],
+      "heapUsedMB": [
+        18.8,
+        19.12
+      ],
+      "gcCount": 7,
+      "gcMs": 3.3,
+      "timers": [
+        1,
+        1
+      ],
+      "sockets": [
+        9,
+        5
+      ],
+      "wsClients": [
+        3,
+        4
+      ],
+      "outMsgsPerSec": 0.71,
+      "outMsgsPerSecMax": 16,
+      "outKBPerSec": 3.81,
+      "outKBPerSecMax": 127.8,
+      "inMsgsPerSec": 0.16,
+      "inKBPerSec": 0.68
+    },
+    "cfg-master-nomonitor": {
+      "cpuPctAvg": 0.24,
+      "cpuPctMax": 3.07,
+      "eluAvgPct": 0.37,
+      "eluMaxPct": 0.81,
+      "elMaxMs": 20.73,
+      "elP99MedianMs": 16.2,
+      "rssMB": [
+        68.9,
+        68.9
+      ],
+      "heapUsedMB": [
+        19.14,
+        19.2
+      ],
+      "gcCount": 2,
+      "gcMs": 2.9,
+      "timers": [
+        1,
+        1
+      ],
+      "sockets": [
+        4,
+        3
+      ],
+      "wsClients": [
+        3,
+        3
+      ],
+      "outMsgsPerSec": 0.4,
+      "outMsgsPerSecMax": 9,
+      "outKBPerSec": 0.19,
+      "outKBPerSecMax": 4.3,
+      "inMsgsPerSec": 0.13,
+      "inKBPerSec": 0.01
+    },
+    "cfg-program-only": {
+      "cpuPctAvg": 0.66,
+      "cpuPctMax": 3.1,
+      "eluAvgPct": 0.37,
+      "eluMaxPct": 0.73,
+      "elMaxMs": 24.85,
+      "elP99MedianMs": 16.2,
+      "rssMB": [
+        68.9,
+        68.9
+      ],
+      "heapUsedMB": [
+        19.22,
+        19.34
+      ],
+      "gcCount": 2,
+      "gcMs": 0.9,
+      "timers": [
+        1,
+        1
+      ],
+      "sockets": [
+        2,
+        3
+      ],
+      "wsClients": [
+        2,
+        2
+      ],
+      "outMsgsPerSec": 0.27,
+      "outMsgsPerSecMax": 6,
+      "outKBPerSec": 0.13,
+      "outKBPerSecMax": 2.9,
+      "inMsgsPerSec": 0.13,
+      "inKBPerSec": 0.01
+    },
+    "end": {
+      "cpuPctAvg": 0,
+      "cpuPctMax": 0,
+      "eluAvgPct": 0.34,
+      "eluMaxPct": 0.34,
+      "elMaxMs": 16.05,
+      "elP99MedianMs": 16,
+      "rssMB": [
+        68.9,
+        68.9
+      ],
+      "heapUsedMB": [
+        19.35,
+        19.35
+      ],
+      "gcCount": 0,
+      "gcMs": 0,
+      "timers": [
+        1,
+        1
+      ],
+      "sockets": [
+        3,
+        3
+      ],
+      "wsClients": [
+        2,
+        2
+      ],
+      "outMsgsPerSec": 0,
+      "outMsgsPerSecMax": 0,
+      "outKBPerSec": 0,
+      "outKBPerSecMax": 0,
+      "inMsgsPerSec": 0,
+      "inKBPerSec": 0
+    }
+  },
+  "wsOutByType": {
+    "ASSET_VERSIONS": {
+      "events": 45,
+      "sends": 165,
+      "bytes": {
+        "n": 45,
+        "min": 2201,
+        "max": 2248,
+        "mean": 2241.8,
+        "median": 2248,
+        "p95": 2248,
+        "p99": 2248
+      },
+      "recipientsAvg": 3.67
+    },
+    "STATE_SNAPSHOT": {
+      "events": 5,
+      "sends": 5,
+      "bytes": {
+        "n": 5,
+        "min": 31812,
+        "max": 31825,
+        "mean": 31814.6,
+        "median": 31812,
+        "p95": 31825,
+        "p99": 31825
+      },
+      "recipientsAvg": 1
+    },
+    "TEAM_CATALOG_UPDATE": {
+      "events": 5,
+      "sends": 5,
+      "bytes": {
+        "n": 5,
+        "min": 4919,
+        "max": 4919,
+        "mean": 4919,
+        "median": 4919,
+        "p95": 4919,
+        "p99": 4919
+      },
+      "recipientsAvg": 1
+    },
+    "ACTIVE_MATCH_PROFILE_UPDATE": {
+      "events": 5,
+      "sends": 5,
+      "bytes": {
+        "n": 5,
+        "min": 62,
+        "max": 62,
+        "mean": 62,
+        "median": 62,
+        "p95": 62,
+        "p99": 62
+      },
+      "recipientsAvg": 1
+    },
+    "MODULE_UPDATE": {
+      "events": 1850,
+      "sends": 7382,
+      "bytes": {
+        "n": 1850,
+        "min": 211,
+        "max": 3561,
+        "mean": 1135.8,
+        "median": 897,
+        "p95": 3561,
+        "p99": 3561
+      },
+      "recipientsAvg": 3.99
+    },
+    "PREVIEW_MODULE": {
+      "events": 1,
+      "sends": 4,
+      "bytes": {
+        "n": 1,
+        "min": 31231,
+        "max": 31231,
+        "mean": 31231,
+        "median": 31231,
+        "p95": 31231,
+        "p99": 31231
+      },
+      "recipientsAvg": 4
+    }
+  },
+  "wsInByType": {
+    "UPDATE": {
+      "count": 241,
+      "bytes": {
+        "n": 241,
+        "min": 116,
+        "max": 884,
+        "mean": 246.8,
+        "median": 124,
+        "p95": 884,
+        "p99": 884
+      }
+    },
+    "TAKE": {
+      "count": 788,
+      "bytes": {
+        "n": 788,
+        "min": 42,
+        "max": 3521,
+        "mean": 1131.4,
+        "median": 858,
+        "p95": 3521,
+        "p99": 3521
+      }
+    },
+    "OUT": {
+      "count": 809,
+      "bytes": {
+        "n": 809,
+        "min": 30,
+        "max": 51,
+        "mean": 36.8,
+        "median": 38,
+        "p95": 39,
+        "p99": 39
+      }
+    },
+    "PREVIEW_MODULE": {
+      "count": 1,
+      "bytes": {
+        "n": 1,
+        "min": 31216,
+        "max": 31216,
+        "mean": 31216,
+        "median": 31216,
+        "p95": 31216,
+        "p99": 31216
+      }
+    }
+  },
+  "wsPerAction": {
+    "UPDATE:scoreboard": {
+      "count": 240,
+      "outEventsAvg": 1.08,
+      "sendsAvg": 4.33,
+      "bytesSentAvg": 3661.67
+    },
+    "TAKE:scoreboard": {
+      "count": 100,
+      "outEventsAvg": 1.04,
+      "sendsAvg": 4.16,
+      "bytesSentAvg": 3652.6
+    },
+    "OUT:scoreboard": {
+      "count": 100,
+      "outEventsAvg": 1,
+      "sendsAvg": 4,
+      "bytesSentAvg": 3592
+    },
+    "TAKE:tarjeta": {
+      "count": 100,
+      "outEventsAvg": 1,
+      "sendsAvg": 4,
+      "bytesSentAvg": 1328
+    },
+    "OUT:tarjeta": {
+      "count": 100,
+      "outEventsAvg": 1,
+      "sendsAvg": 4,
+      "bytesSentAvg": 1332
+    },
+    "TAKE:cambios": {
+      "count": 100,
+      "outEventsAvg": 1,
+      "sendsAvg": 4,
+      "bytesSentAvg": 1676
+    },
+    "OUT:cambios": {
+      "count": 100,
+      "outEventsAvg": 1,
+      "sendsAvg": 4,
+      "bytesSentAvg": 1680
+    },
+    "TAKE:shortSimple": {
+      "count": 100,
+      "outEventsAvg": 1,
+      "sendsAvg": 4,
+      "bytesSentAvg": 1380
+    },
+    "OUT:shortSimple": {
+      "count": 100,
+      "outEventsAvg": 1,
+      "sendsAvg": 4,
+      "bytesSentAvg": 1384
+    },
+    "TAKE:goleadores": {
+      "count": 100,
+      "outEventsAvg": 2,
+      "sendsAvg": 8,
+      "bytesSentAvg": 12988
+    },
+    "TAKE:asistidores": {
+      "count": 100,
+      "outEventsAvg": 1,
+      "sendsAvg": 4,
+      "bytesSentAvg": 6536
+    },
+    "OUT:goleadores": {
+      "count": 100,
+      "outEventsAvg": 2,
+      "sendsAvg": 8,
+      "bytesSentAvg": 12996
+    },
+    "OUT:asistidores": {
+      "count": 100,
+      "outEventsAvg": 1,
+      "sendsAvg": 4,
+      "bytesSentAvg": 6540
+    },
+    "TAKE:sideTable": {
+      "count": 100,
+      "outEventsAvg": 1,
+      "sendsAvg": 4,
+      "bytesSentAvg": 14240
+    },
+    "OUT:sideTable": {
+      "count": 100,
+      "outEventsAvg": 1,
+      "sendsAvg": 4,
+      "bytesSentAvg": 14244
+    },
+    "OUT:gol": {
+      "count": 40,
+      "outEventsAvg": 1.5,
+      "sendsAvg": 6,
+      "bytesSentAvg": 1272
+    },
+    "TAKE:gol": {
+      "count": 20,
+      "outEventsAvg": 1,
+      "sendsAvg": 4,
+      "bytesSentAvg": 844
+    },
+    "TAKE:grupos": {
+      "count": 10,
+      "outEventsAvg": 1,
+      "sendsAvg": 4,
+      "bytesSentAvg": 2452
+    },
+    "OUT:grupos": {
+      "count": 10,
+      "outEventsAvg": 1,
+      "sendsAvg": 4,
+      "bytesSentAvg": 2456
+    },
+    "TAKE:vs": {
+      "count": 10,
+      "outEventsAvg": 1,
+      "sendsAvg": 4,
+      "bytesSentAvg": 3104
+    },
+    "OUT:vs": {
+      "count": 10,
+      "outEventsAvg": 1,
+      "sendsAvg": 4,
+      "bytesSentAvg": 3108
+    },
+    "TAKE:longDouble": {
+      "count": 10,
+      "outEventsAvg": 1,
+      "sendsAvg": 4,
+      "bytesSentAvg": 7584
+    },
+    "OUT:longDouble": {
+      "count": 10,
+      "outEventsAvg": 1,
+      "sendsAvg": 4,
+      "bytesSentAvg": 7588
+    },
+    "OUT:bug": {
+      "count": 10,
+      "outEventsAvg": 1,
+      "sendsAvg": 4,
+      "bytesSentAvg": 936
+    },
+    "TAKE:bug": {
+      "count": 10,
+      "outEventsAvg": 1,
+      "sendsAvg": 4,
+      "bytesSentAvg": 932
+    }
+  },
+  "pages": {
+    "program": {
+      "load": {
+        "seconds": 10.1,
+        "fps": 144,
+        "frameP95Median": 7.1,
+        "frameMax": 8,
+        "framesOver17": 0,
+        "framesOver33": 0,
+        "framesOver50": 0,
+        "framesOver100": 0,
+        "longTasks": 0,
+        "longTaskMs": null,
+        "loafs": 0,
+        "loafBlockingMs": 0,
+        "forcedLayoutMs": 0,
+        "forcedTop": [],
+        "mainThreadBusyPct": 2.84,
+        "scriptPct": 0.25,
+        "layoutPct": 0,
+        "stylePct": 0,
+        "layoutsPerSec": 0,
+        "styleRecalcsPerSec": 0,
+        "nodes": [
+          2218,
+          2233
+        ],
+        "listeners": [
+          67,
+          67
+        ],
+        "heapMB": [
+          1.59,
+          1.97
+        ],
+        "mutationsPerSec": {
+          "bug": 1.6,
+          "zocaloCompuesto": 1.4
+        }
+      },
+      "idleA": {
+        "seconds": 98.7,
+        "fps": 143,
+        "frameP95Median": 7.1,
+        "frameMax": 201.5,
+        "framesOver17": 16,
+        "framesOver33": 5,
+        "framesOver50": 4,
+        "framesOver100": 3,
+        "longTasks": 0,
+        "longTaskMs": null,
+        "loafs": 4,
+        "loafBlockingMs": 0,
+        "forcedLayoutMs": 0,
+        "forcedTop": [],
+        "mainThreadBusyPct": 3.44,
+        "scriptPct": 0.4,
+        "layoutPct": 0.059,
+        "stylePct": 0.037,
+        "layoutsPerSec": 3.05,
+        "styleRecalcsPerSec": 6.38,
+        "nodes": [
+          2209,
+          2238
+        ],
+        "listeners": [
+          67,
+          67
+        ],
+        "heapMB": [
+          1.35,
+          1.55
+        ],
+        "mutationsPerSec": {
+          "scoreboard": 16,
+          "bug": 1.1,
+          "zocaloCompuesto": 0.7,
+          "shortSimple": 0.1
+        }
+      },
+      "rounds": {
+        "seconds": 1823.4,
+        "fps": 139.8,
+        "frameP95Median": 7.1,
+        "frameMax": 315.4,
+        "framesOver17": 499,
+        "framesOver33": 248,
+        "framesOver50": 96,
+        "framesOver100": 3,
+        "longTasks": 41,
+        "longTaskMs": {
+          "n": 41,
+          "min": 52,
+          "max": 251,
+          "mean": 72.3,
+          "median": 68,
+          "p95": 89,
+          "p99": 251
+        },
+        "loafs": 114,
+        "loafBlockingMs": 954.4,
+        "forcedLayoutMs": 0,
+        "forcedTop": [],
+        "mainThreadBusyPct": 4.93,
+        "scriptPct": 0.71,
+        "layoutPct": 0.057,
+        "stylePct": 0.335,
+        "layoutsPerSec": 4.24,
+        "styleRecalcsPerSec": 56.61,
+        "nodes": [
+          2259,
+          2216
+        ],
+        "listeners": [
+          67,
+          67
+        ],
+        "heapMB": [
+          1.64,
+          1.95
+        ],
+        "mutationsPerSec": {
+          "sideTable": 11,
+          "goleadores": 5,
+          "asistidores": 5,
+          "scoreboard": 3.2,
+          "marcadorTiempoAdicional": 2.2,
+          "bug": 1
+        }
+      },
+      "idleB": {
+        "seconds": 95.1,
+        "fps": 138.9,
+        "frameP95Median": 7.1,
+        "frameMax": 354.1,
+        "framesOver17": 10,
+        "framesOver33": 7,
+        "framesOver50": 2,
+        "framesOver100": 1,
+        "longTasks": 0,
+        "longTaskMs": null,
+        "loafs": 4,
+        "loafBlockingMs": 0,
+        "forcedLayoutMs": 0,
+        "forcedTop": [],
+        "mainThreadBusyPct": 4.12,
+        "scriptPct": 0.42,
+        "layoutPct": 0.086,
+        "stylePct": 0.03,
+        "layoutsPerSec": 5.02,
+        "styleRecalcsPerSec": 6.04,
+        "nodes": [
+          2254,
+          2214
+        ],
+        "listeners": [
+          67,
+          67
+        ],
+        "heapMB": [
+          2.14,
+          1.93
+        ],
+        "mutationsPerSec": {
+          "scoreboard": 16.4,
+          "marcadorTiempoAdicional": 4.1,
+          "bug": 1,
+          "zocaloCompuesto": 0.7,
+          "shortSimple": 0
+        }
+      },
+      "stopAll": {
+        "seconds": 12.3,
+        "fps": 139.9,
+        "frameP95Median": 7.1,
+        "frameMax": 270.8,
+        "framesOver17": 5,
+        "framesOver33": 5,
+        "framesOver50": 1,
+        "framesOver100": 1,
+        "longTasks": 0,
+        "longTaskMs": null,
+        "loafs": 2,
+        "loafBlockingMs": 0,
+        "forcedLayoutMs": 0,
+        "forcedTop": [],
+        "mainThreadBusyPct": 7.05,
+        "scriptPct": 0.28,
+        "layoutPct": 0,
+        "stylePct": 0,
+        "layoutsPerSec": 0,
+        "styleRecalcsPerSec": 0,
+        "nodes": [
+          2373,
+          2210
+        ],
+        "listeners": [
+          67,
+          67
+        ],
+        "heapMB": [
+          2.28,
+          1.93
+        ],
+        "mutationsPerSec": {
+          "scoreboard": 12,
+          "marcadorTiempoAdicional": 2.9,
+          "bug": 2.1,
+          "zocaloCompuesto": 1.1,
+          "shortSimple": 0.2
+        }
+      },
+      "reload": {
+        "seconds": 38.7,
+        "fps": 140.6,
+        "frameP95Median": 7.1,
+        "frameMax": 55.7,
+        "framesOver17": 12,
+        "framesOver33": 12,
+        "framesOver50": 1,
+        "framesOver100": 0,
+        "longTasks": 0,
+        "longTaskMs": null,
+        "loafs": 10,
+        "loafBlockingMs": 0,
+        "forcedLayoutMs": 0,
+        "forcedTop": [],
+        "mainThreadBusyPct": 5.92,
+        "scriptPct": 1.62,
+        "layoutPct": 0.008,
+        "stylePct": 0.031,
+        "layoutsPerSec": 0.41,
+        "styleRecalcsPerSec": 5.83,
+        "nodes": [
+          2210,
+          2209
+        ],
+        "listeners": [
+          67,
+          67
+        ],
+        "heapMB": [
+          1.94,
+          1.97
+        ],
+        "mutationsPerSec": {
+          "scoreboard": 11.5,
+          "tarjeta": 3.9,
+          "bug": 1.2,
+          "zocaloCompuesto": 0.9
+        }
+      },
+      "videos-0": {
+        "seconds": 32.5,
+        "fps": 139.8,
+        "frameP95Median": 7.1,
+        "frameMax": 48.7,
+        "framesOver17": 4,
+        "framesOver33": 4,
+        "framesOver50": 0,
+        "framesOver100": 0,
+        "longTasks": 0,
+        "longTaskMs": null,
+        "loafs": 3,
+        "loafBlockingMs": 0,
+        "forcedLayoutMs": 0,
+        "forcedTop": [],
+        "mainThreadBusyPct": 3.7,
+        "scriptPct": 0.29,
+        "layoutPct": 0,
+        "stylePct": 0,
+        "layoutsPerSec": 0,
+        "styleRecalcsPerSec": 0,
+        "nodes": [
+          2211,
+          2212
+        ],
+        "listeners": [
+          67,
+          67
+        ],
+        "heapMB": [
+          2.03,
+          2.03
+        ],
+        "mutationsPerSec": {
+          "bug": 1.1,
+          "zocaloCompuesto": 0.6
+        }
+      },
+      "videos-1": {
+        "seconds": 34.2,
+        "fps": 138,
+        "frameP95Median": 7.2,
+        "frameMax": 76.4,
+        "framesOver17": 7,
+        "framesOver33": 6,
+        "framesOver50": 1,
+        "framesOver100": 0,
+        "longTasks": 0,
+        "longTaskMs": null,
+        "loafs": 3,
+        "loafBlockingMs": 0,
+        "forcedLayoutMs": 0,
+        "forcedTop": [],
+        "mainThreadBusyPct": 4.03,
+        "scriptPct": 0.42,
+        "layoutPct": 0.05,
+        "stylePct": 0.023,
+        "layoutsPerSec": 1.93,
+        "styleRecalcsPerSec": 3.6,
+        "nodes": [
+          2227,
+          2234
+        ],
+        "listeners": [
+          67,
+          67
+        ],
+        "heapMB": [
+          2.13,
+          2.08
+        ],
+        "mutationsPerSec": {
+          "scoreboard": 15.6,
+          "bug": 1.1,
+          "zocaloCompuesto": 0.8
+        }
+      },
+      "videos-3": {
+        "seconds": 34.3,
+        "fps": 137.9,
+        "frameP95Median": 7.1,
+        "frameMax": 91.2,
+        "framesOver17": 12,
+        "framesOver33": 10,
+        "framesOver50": 4,
+        "framesOver100": 0,
+        "longTasks": 0,
+        "longTaskMs": null,
+        "loafs": 5,
+        "loafBlockingMs": 0,
+        "forcedLayoutMs": 0,
+        "forcedTop": [],
+        "mainThreadBusyPct": 4.67,
+        "scriptPct": 0.67,
+        "layoutPct": 0.069,
+        "stylePct": 0.03,
+        "layoutsPerSec": 2.83,
+        "styleRecalcsPerSec": 3.71,
+        "nodes": [
+          2259,
+          2236
+        ],
+        "listeners": [
+          67,
+          67
+        ],
+        "heapMB": [
+          2.19,
+          2.15
+        ],
+        "mutationsPerSec": {
+          "scoreboard": 15.6,
+          "bug": 1.3,
+          "zocaloCompuesto": 0.6,
+          "shortSimple": 0.2
+        }
+      },
+      "videos-6": {
+        "seconds": 32.5,
+        "fps": 136.3,
+        "frameP95Median": 7.2,
+        "frameMax": 173.4,
+        "framesOver17": 17,
+        "framesOver33": 13,
+        "framesOver50": 8,
+        "framesOver100": 2,
+        "longTasks": 0,
+        "longTaskMs": null,
+        "loafs": 9,
+        "loafBlockingMs": 0,
+        "forcedLayoutMs": 0,
+        "forcedTop": [],
+        "mainThreadBusyPct": 5.27,
+        "scriptPct": 0.89,
+        "layoutPct": 0.063,
+        "stylePct": 0.053,
+        "layoutsPerSec": 3.14,
+        "styleRecalcsPerSec": 5.75,
+        "nodes": [
+          2227,
+          2364
+        ],
+        "listeners": [
+          67,
+          67
+        ],
+        "heapMB": [
+          2.06,
+          1.98
+        ],
+        "mutationsPerSec": {
+          "scoreboard": 16.4,
+          "posiciones": 9.2,
+          "bug": 1.3,
+          "zocaloCompuesto": 0.9,
+          "shortSimple": 0.2,
+          "longDouble": 0.2
+        }
+      },
+      "cfg-master-program-monitor": {
+        "seconds": 42.3,
+        "fps": 139.7,
+        "frameP95Median": 7.1,
+        "frameMax": 34.7,
+        "framesOver17": 3,
+        "framesOver33": 1,
+        "framesOver50": 0,
+        "framesOver100": 0,
+        "longTasks": 0,
+        "longTaskMs": null,
+        "loafs": 0,
+        "loafBlockingMs": 0,
+        "forcedLayoutMs": 0,
+        "forcedTop": [],
+        "mainThreadBusyPct": 3.96,
+        "scriptPct": 0.59,
+        "layoutPct": 0.062,
+        "stylePct": 0.042,
+        "layoutsPerSec": 2.9,
+        "styleRecalcsPerSec": 6.07,
+        "nodes": [
+          2383,
+          2567
+        ],
+        "listeners": [
+          67,
+          67
+        ],
+        "heapMB": [
+          2.1,
+          2.37
+        ],
+        "mutationsPerSec": {
+          "scoreboard": 15.4,
+          "bug": 1.2,
+          "zocaloCompuesto": 0.7,
+          "shortSimple": 0.2
+        }
+      },
+      "cfg-master-preview": {
+        "seconds": 42.3,
+        "fps": 139.9,
+        "frameP95Median": 7.1,
+        "frameMax": 97.2,
+        "framesOver17": 3,
+        "framesOver33": 3,
+        "framesOver50": 1,
+        "framesOver100": 0,
+        "longTasks": 0,
+        "longTaskMs": null,
+        "loafs": 1,
+        "loafBlockingMs": 0,
+        "forcedLayoutMs": 0,
+        "forcedTop": [],
+        "mainThreadBusyPct": 3.95,
+        "scriptPct": 0.62,
+        "layoutPct": 0.066,
+        "stylePct": 0.06,
+        "layoutsPerSec": 3.03,
+        "styleRecalcsPerSec": 7.36,
+        "nodes": [
+          2573,
+          2502
+        ],
+        "listeners": [
+          67,
+          67
+        ],
+        "heapMB": [
+          2.43,
+          2.16
+        ],
+        "mutationsPerSec": {
+          "scoreboard": 15.5,
+          "bug": 1.2,
+          "zocaloCompuesto": 0.8,
+          "shortSimple": 0.2
+        }
+      },
+      "cfg-master-nomonitor": {
+        "seconds": 42.2,
+        "fps": 136.9,
+        "frameP95Median": 7.2,
+        "frameMax": 62.5,
+        "framesOver17": 4,
+        "framesOver33": 4,
+        "framesOver50": 1,
+        "framesOver100": 0,
+        "longTasks": 0,
+        "longTaskMs": null,
+        "loafs": 1,
+        "loafBlockingMs": 0,
+        "forcedLayoutMs": 0,
+        "forcedTop": [],
+        "mainThreadBusyPct": 2.97,
+        "scriptPct": 0.48,
+        "layoutPct": 0.054,
+        "stylePct": 0.04,
+        "layoutsPerSec": 3.05,
+        "styleRecalcsPerSec": 7.41,
+        "nodes": [
+          2504,
+          2497
+        ],
+        "listeners": [
+          67,
+          67
+        ],
+        "heapMB": [
+          2.22,
+          2.18
+        ],
+        "mutationsPerSec": {
+          "scoreboard": 15.5,
+          "bug": 1.2,
+          "zocaloCompuesto": 0.7,
+          "shortSimple": 0.2
+        }
+      },
+      "cfg-program-only": {
+        "seconds": 44.2,
+        "fps": 139,
+        "frameP95Median": 7.1,
+        "frameMax": 69.5,
+        "framesOver17": 5,
+        "framesOver33": 2,
+        "framesOver50": 2,
+        "framesOver100": 0,
+        "longTasks": 0,
+        "longTaskMs": null,
+        "loafs": 2,
+        "loafBlockingMs": 0,
+        "forcedLayoutMs": 0,
+        "forcedTop": [],
+        "mainThreadBusyPct": 3.35,
+        "scriptPct": 0.53,
+        "layoutPct": 0.045,
+        "stylePct": 0.039,
+        "layoutsPerSec": 2.92,
+        "styleRecalcsPerSec": 7.1,
+        "nodes": [
+          2499,
+          2400
+        ],
+        "listeners": [
+          67,
+          67
+        ],
+        "heapMB": [
+          2.23,
+          2.67
+        ],
+        "mutationsPerSec": {
+          "scoreboard": 14.8,
+          "bug": 1.2,
+          "zocaloCompuesto": 0.8,
+          "shortSimple": 0.2
+        }
+      }
+    },
+    "master": {
+      "load": {
+        "seconds": 10.1,
+        "fps": 144,
+        "frameP95Median": 7.1,
+        "frameMax": 8.1,
+        "framesOver17": 0,
+        "framesOver33": 0,
+        "framesOver50": 0,
+        "framesOver100": 0,
+        "longTasks": 0,
+        "longTaskMs": null,
+        "loafs": 0,
+        "loafBlockingMs": 0,
+        "forcedLayoutMs": 0,
+        "forcedTop": [],
+        "mainThreadBusyPct": 3.9,
+        "scriptPct": 0.34,
+        "layoutPct": 0.555,
+        "stylePct": 0.012,
+        "layoutsPerSec": 2.28,
+        "styleRecalcsPerSec": 2.28,
+        "nodes": [
+          3499,
+          3620
+        ],
+        "listeners": [
+          489,
+          556
+        ],
+        "heapMB": [
+          2.42,
+          2.44
+        ],
+        "mutationsPerSec": {}
+      },
+      "idleA": {
+        "seconds": 98.7,
+        "fps": 142.4,
+        "frameP95Median": 7.1,
+        "frameMax": 298.7,
+        "framesOver17": 15,
+        "framesOver33": 13,
+        "framesOver50": 7,
+        "framesOver100": 3,
+        "longTasks": 0,
+        "longTaskMs": null,
+        "loafs": 11,
+        "loafBlockingMs": 0,
+        "forcedLayoutMs": 0,
+        "forcedTop": [],
+        "mainThreadBusyPct": 4.1,
+        "scriptPct": 0.48,
+        "layoutPct": 0.121,
+        "stylePct": 0.043,
+        "layoutsPerSec": 3.39,
+        "styleRecalcsPerSec": 6.67,
+        "nodes": [
+          4608,
+          4918
+        ],
+        "listeners": [
+          841,
+          982
+        ],
+        "heapMB": [
+          2.25,
+          2.53
+        ],
+        "mutationsPerSec": {}
+      },
+      "rounds": {
+        "seconds": 1823.4,
+        "fps": 139.2,
+        "frameP95Median": 7.1,
+        "frameMax": 715.2,
+        "framesOver17": 800,
+        "framesOver33": 468,
+        "framesOver50": 278,
+        "framesOver100": 52,
+        "longTasks": 0,
+        "longTaskMs": null,
+        "loafs": 311,
+        "loafBlockingMs": 1784.9,
+        "forcedLayoutMs": 0,
+        "forcedTop": [],
+        "mainThreadBusyPct": 7.89,
+        "scriptPct": 0.84,
+        "layoutPct": 0.658,
+        "stylePct": 0.347,
+        "layoutsPerSec": 6.95,
+        "styleRecalcsPerSec": 59.16,
+        "nodes": [
+          3486,
+          374725
+        ],
+        "listeners": [
+          489,
+          29171
+        ],
+        "heapMB": [
+          2.42,
+          5.43
+        ],
+        "mutationsPerSec": {}
+      },
+      "idleB": {
+        "seconds": 93,
+        "fps": 139.7,
+        "frameP95Median": 7.1,
+        "frameMax": 416.7,
+        "framesOver17": 6,
+        "framesOver33": 3,
+        "framesOver50": 2,
+        "framesOver100": 1,
+        "longTasks": 0,
+        "longTaskMs": null,
+        "loafs": 3,
+        "loafBlockingMs": 0,
+        "forcedLayoutMs": 0,
+        "forcedTop": [],
+        "mainThreadBusyPct": 4.54,
+        "scriptPct": 0.49,
+        "layoutPct": 0.089,
+        "stylePct": 0.027,
+        "layoutsPerSec": 5.04,
+        "styleRecalcsPerSec": 6.07,
+        "nodes": [
+          376713,
+          374726
+        ],
+        "listeners": [
+          29904,
+          29171
+        ],
+        "heapMB": [
+          5.7,
+          5.46
+        ],
+        "mutationsPerSec": {}
+      },
+      "stopAll": {
+        "seconds": 20.6,
+        "fps": 91,
+        "frameP95Median": 7.1,
+        "frameMax": 5166.7,
+        "framesOver17": 10,
+        "framesOver33": 10,
+        "framesOver50": 10,
+        "framesOver100": 10,
+        "longTasks": 0,
+        "longTaskMs": null,
+        "loafs": 10,
+        "loafBlockingMs": 0,
+        "forcedLayoutMs": 0,
+        "forcedTop": [],
+        "mainThreadBusyPct": 34.86,
+        "scriptPct": 0.31,
+        "layoutPct": 0.048,
+        "stylePct": 0.043,
+        "layoutsPerSec": 1.31,
+        "styleRecalcsPerSec": 5.29,
+        "nodes": [
+          374726,
+          374723
+        ],
+        "listeners": [
+          29171,
+          29171
+        ],
+        "heapMB": [
+          5.44,
+          5.44
+        ],
+        "mutationsPerSec": {}
+      },
+      "reload": {
+        "seconds": 42.8,
+        "fps": 115.1,
+        "frameP95Median": 7.1,
+        "frameMax": 3541.8,
+        "framesOver17": 22,
+        "framesOver33": 21,
+        "framesOver50": 18,
+        "framesOver100": 18,
+        "longTasks": 0,
+        "longTaskMs": null,
+        "loafs": 19,
+        "loafBlockingMs": 0,
+        "forcedLayoutMs": 0,
+        "forcedTop": [],
+        "mainThreadBusyPct": 17.78,
+        "scriptPct": 1.66,
+        "layoutPct": 0.161,
+        "stylePct": 0.035,
+        "layoutsPerSec": 1.12,
+        "styleRecalcsPerSec": 5.67,
+        "nodes": [
+          374723,
+          374723
+        ],
+        "listeners": [
+          29171,
+          29171
+        ],
+        "heapMB": [
+          5.43,
+          5.48
+        ],
+        "mutationsPerSec": {}
+      },
+      "videos-0": {
+        "seconds": 32.5,
+        "fps": 133.2,
+        "frameP95Median": 7.1,
+        "frameMax": 548.5,
+        "framesOver17": 5,
+        "framesOver33": 5,
+        "framesOver50": 5,
+        "framesOver100": 5,
+        "longTasks": 0,
+        "longTaskMs": null,
+        "loafs": 6,
+        "loafBlockingMs": 0,
+        "forcedLayoutMs": 0,
+        "forcedTop": [],
+        "mainThreadBusyPct": 9.21,
+        "scriptPct": 0.36,
+        "layoutPct": 0.007,
+        "stylePct": 0.001,
+        "layoutsPerSec": 0.09,
+        "styleRecalcsPerSec": 0.09,
+        "nodes": [
+          374726,
+          374725
+        ],
+        "listeners": [
+          29171,
+          29171
+        ],
+        "heapMB": [
+          5.54,
+          5.5
+        ],
+        "mutationsPerSec": {}
+      },
+      "videos-1": {
+        "seconds": 34.2,
+        "fps": 133.9,
+        "frameP95Median": 7.1,
+        "frameMax": 326.3,
+        "framesOver17": 8,
+        "framesOver33": 7,
+        "framesOver50": 6,
+        "framesOver100": 5,
+        "longTasks": 0,
+        "longTaskMs": null,
+        "loafs": 6,
+        "loafBlockingMs": 0,
+        "forcedLayoutMs": 0,
+        "forcedTop": [],
+        "mainThreadBusyPct": 8.27,
+        "scriptPct": 0.48,
+        "layoutPct": 0.057,
+        "stylePct": 0.022,
+        "layoutsPerSec": 2.05,
+        "styleRecalcsPerSec": 3.71,
+        "nodes": [
+          374741,
+          374726
+        ],
+        "listeners": [
+          29171,
+          29171
+        ],
+        "heapMB": [
+          5.66,
+          5.57
+        ],
+        "mutationsPerSec": {}
+      },
+      "videos-3": {
+        "seconds": 34.3,
+        "fps": 132.3,
+        "frameP95Median": 7.1,
+        "frameMax": 402.8,
+        "framesOver17": 14,
+        "framesOver33": 12,
+        "framesOver50": 8,
+        "framesOver100": 6,
+        "longTasks": 0,
+        "longTaskMs": null,
+        "loafs": 9,
+        "loafBlockingMs": 0,
+        "forcedLayoutMs": 0,
+        "forcedTop": [],
+        "mainThreadBusyPct": 9.72,
+        "scriptPct": 0.71,
+        "layoutPct": 0.065,
+        "stylePct": 0.025,
+        "layoutsPerSec": 2.86,
+        "styleRecalcsPerSec": 3.77,
+        "nodes": [
+          374755,
+          374737
+        ],
+        "listeners": [
+          29171,
+          29171
+        ],
+        "heapMB": [
+          5.74,
+          5.63
+        ],
+        "mutationsPerSec": {}
+      },
+      "videos-6": {
+        "seconds": 32.5,
+        "fps": 129.9,
+        "frameP95Median": 7.1,
+        "frameMax": 409.9,
+        "framesOver17": 20,
+        "framesOver33": 15,
+        "framesOver50": 11,
+        "framesOver100": 8,
+        "longTasks": 0,
+        "longTaskMs": null,
+        "loafs": 12,
+        "loafBlockingMs": 0,
+        "forcedLayoutMs": 0,
+        "forcedTop": [],
+        "mainThreadBusyPct": 11.51,
+        "scriptPct": 0.95,
+        "layoutPct": 0.068,
+        "stylePct": 0.049,
+        "layoutsPerSec": 3.23,
+        "styleRecalcsPerSec": 5.81,
+        "nodes": [
+          374753,
+          374878
+        ],
+        "listeners": [
+          29171,
+          29171
+        ],
+        "heapMB": [
+          5.59,
+          5.51
+        ],
+        "mutationsPerSec": {}
+      },
+      "cfg-master-program-monitor": {
+        "seconds": 40.3,
+        "fps": 140.6,
+        "frameP95Median": 7.1,
+        "frameMax": 27.9,
+        "framesOver17": 5,
+        "framesOver33": 0,
+        "framesOver50": 0,
+        "framesOver100": 0,
+        "longTasks": 0,
+        "longTaskMs": null,
+        "loafs": 0,
+        "loafBlockingMs": 0,
+        "forcedLayoutMs": 0,
+        "forcedTop": [],
+        "mainThreadBusyPct": 4.86,
+        "scriptPct": 0.69,
+        "layoutPct": 0.065,
+        "stylePct": 0.04,
+        "layoutsPerSec": 3.1,
+        "styleRecalcsPerSec": 6.4,
+        "nodes": [
+          374901,
+          375016
+        ],
+        "listeners": [
+          29171,
+          29171
+        ],
+        "heapMB": [
+          5.67,
+          6.22
+        ],
+        "mutationsPerSec": {}
+      },
+      "cfg-master-preview": {
+        "seconds": 44.3,
+        "fps": 140.2,
+        "frameP95Median": 7.1,
+        "frameMax": 83.4,
+        "framesOver17": 5,
+        "framesOver33": 5,
+        "framesOver50": 2,
+        "framesOver100": 0,
+        "longTasks": 1,
+        "longTaskMs": {
+          "n": 1,
+          "min": 79,
+          "max": 79,
+          "mean": 79,
+          "median": 79,
+          "p95": 79,
+          "p99": 79
+        },
+        "loafs": 2,
+        "loafBlockingMs": 32,
+        "forcedLayoutMs": 2.3,
+        "forcedTop": [
+          [
+            "shared/ws-client.js:DOMWebSocket.onmessage",
+            2.3
+          ]
+        ],
+        "mainThreadBusyPct": 3.86,
+        "scriptPct": 0.66,
+        "layoutPct": 0.02,
+        "stylePct": 0.039,
+        "layoutsPerSec": 0.29,
+        "styleRecalcsPerSec": 1.63,
+        "nodes": [
+          375018,
+          372967
+        ],
+        "listeners": [
+          29171,
+          29187
+        ],
+        "heapMB": [
+          5.6,
+          5.06
+        ],
+        "mutationsPerSec": {}
+      },
+      "cfg-master-nomonitor": {
+        "seconds": 42.2,
+        "fps": 137.9,
+        "frameP95Median": 7.1,
+        "frameMax": 14.2,
+        "framesOver17": 0,
+        "framesOver33": 0,
+        "framesOver50": 0,
+        "framesOver100": 0,
+        "longTasks": 0,
+        "longTaskMs": null,
+        "loafs": 0,
+        "loafBlockingMs": 0,
+        "forcedLayoutMs": 0,
+        "forcedTop": [],
+        "mainThreadBusyPct": 2.27,
+        "scriptPct": 0.3,
+        "layoutPct": 0.003,
+        "stylePct": 0,
+        "layoutsPerSec": 0.05,
+        "styleRecalcsPerSec": 0.05,
+        "nodes": [
+          372975,
+          372980
+        ],
+        "listeners": [
+          29189,
+          29189
+        ],
+        "heapMB": [
+          5.39,
+          5.4
+        ],
+        "mutationsPerSec": {}
+      }
+    }
+  },
+  "takeLatency": {
+    "scoreboard": {
+      "clickToServer": {
+        "n": 102,
+        "min": -0.1,
+        "max": 0.6,
+        "mean": 0,
+        "median": 0,
+        "p95": 0.3,
+        "p99": 0.5
+      },
+      "serverProcessing": {
+        "n": 102,
+        "min": 1.1,
+        "max": 7.2,
+        "mean": 1.5,
+        "median": 1.2,
+        "p95": 2.6,
+        "p99": 5.6
+      },
+      "serverToProgram": {
+        "n": 102,
+        "min": 0.4,
+        "max": 1.4,
+        "mean": 0.6,
+        "median": 0.6,
+        "p95": 1,
+        "p99": 1.4
+      },
+      "clickToProgramWs": {
+        "n": 102,
+        "min": 1.4,
+        "max": 9.2,
+        "mean": 2.2,
+        "median": 1.9,
+        "p95": 3.5,
+        "p99": 7.5
+      },
+      "rendererToIsIn": {
+        "n": 102,
+        "min": 0.6,
+        "max": 5.2,
+        "mean": 1.2,
+        "median": 1,
+        "p95": 2.5,
+        "p99": 3.3
+      },
+      "clickToFirstFrame": {
+        "n": 102,
+        "min": 8.3,
+        "max": 19.7,
+        "mean": 12.8,
+        "median": 12.5,
+        "p95": 17.1,
+        "p99": 19.6
+      },
+      "clickToVideoFirstFrame": {
+        "n": 102,
+        "min": 2.5,
+        "max": 128.4,
+        "mean": 24.2,
+        "median": 8.6,
+        "p95": 74,
+        "p99": 89.1
+      },
+      "isInToNextFrame": {
+        "n": 102,
+        "min": 4.9,
+        "max": 17,
+        "mean": 9.5,
+        "median": 9.6,
+        "p95": 12.4,
+        "p99": 16.9
+      }
+    },
+    "bug": {
+      "clickToServer": {
+        "n": 11,
+        "min": -0.1,
+        "max": 0.2,
+        "mean": 0,
+        "median": 0,
+        "p95": 0.2,
+        "p99": 0.2
+      },
+      "serverProcessing": {
+        "n": 11,
+        "min": 1.1,
+        "max": 1.2,
+        "mean": 1.2,
+        "median": 1.1,
+        "p95": 1.2,
+        "p99": 1.2
+      },
+      "serverToProgram": {
+        "n": 11,
+        "min": 0.4,
+        "max": 0.7,
+        "mean": 0.5,
+        "median": 0.5,
+        "p95": 0.7,
+        "p99": 0.7
+      },
+      "clickToProgramWs": {
+        "n": 11,
+        "min": 1.6,
+        "max": 2,
+        "mean": 1.7,
+        "median": 1.7,
+        "p95": 2,
+        "p99": 2
+      },
+      "rendererToIsIn": {
+        "n": 11,
+        "min": 0.5,
+        "max": 2.2,
+        "mean": 0.7,
+        "median": 0.5,
+        "p95": 2.2,
+        "p99": 2.2
+      },
+      "clickToFirstFrame": {
+        "n": 11,
+        "min": 11.9,
+        "max": 13,
+        "mean": 12.5,
+        "median": 12.6,
+        "p95": 13,
+        "p99": 13
+      },
+      "clickToVideoFirstFrame": {
+        "n": 11,
+        "min": 16.9,
+        "max": 28.8,
+        "mean": 22,
+        "median": 21.2,
+        "p95": 28.8,
+        "p99": 28.8
+      },
+      "isInToNextFrame": {
+        "n": 11,
+        "min": 8.5,
+        "max": 10.9,
+        "mean": 10,
+        "median": 10.2,
+        "p95": 10.9,
+        "p99": 10.9
+      }
+    },
+    "shortSimple": {
+      "clickToServer": {
+        "n": 102,
+        "min": -0.1,
+        "max": 0.9,
+        "mean": 0,
+        "median": 0,
+        "p95": 0.4,
+        "p99": 0.6
+      },
+      "serverProcessing": {
+        "n": 102,
+        "min": 1,
+        "max": 6.9,
+        "mean": 1.6,
+        "median": 1.2,
+        "p95": 3.7,
+        "p99": 6.6
+      },
+      "serverToProgram": {
+        "n": 102,
+        "min": 0.4,
+        "max": 1.3,
+        "mean": 0.6,
+        "median": 0.6,
+        "p95": 1,
+        "p99": 1.3
+      },
+      "clickToProgramWs": {
+        "n": 102,
+        "min": 1.4,
+        "max": 8.5,
+        "mean": 2.3,
+        "median": 1.8,
+        "p95": 5.6,
+        "p99": 8.1
+      },
+      "rendererToIsIn": {
+        "n": 102,
+        "min": 0.5,
+        "max": 2.9,
+        "mean": 0.8,
+        "median": 0.7,
+        "p95": 1.3,
+        "p99": 2.3
+      },
+      "clickToFirstFrame": {
+        "n": 102,
+        "min": 5.7,
+        "max": 19.7,
+        "mean": 13,
+        "median": 12.5,
+        "p95": 17.5,
+        "p99": 19.4
+      },
+      "clickToVideoFirstFrame": {
+        "n": 102,
+        "min": 2.3,
+        "max": 102.5,
+        "mean": 20.1,
+        "median": 10,
+        "p95": 60.9,
+        "p99": 95.5
+      },
+      "isInToNextFrame": {
+        "n": 102,
+        "min": 3.4,
+        "max": 17.5,
+        "mean": 9.9,
+        "median": 10,
+        "p95": 12.4,
+        "p99": 17.2
+      }
+    },
+    "tarjeta": {
+      "clickToServer": {
+        "n": 100,
+        "min": -0.1,
+        "max": 1.6,
+        "mean": 0,
+        "median": 0,
+        "p95": 0.2,
+        "p99": 1.6
+      },
+      "serverProcessing": {
+        "n": 100,
+        "min": 1.1,
+        "max": 6.1,
+        "mean": 1.5,
+        "median": 1.2,
+        "p95": 3.6,
+        "p99": 6.1
+      },
+      "serverToProgram": {
+        "n": 100,
+        "min": 0.4,
+        "max": 1.2,
+        "mean": 0.6,
+        "median": 0.5,
+        "p95": 0.9,
+        "p99": 1.2
+      },
+      "clickToProgramWs": {
+        "n": 100,
+        "min": 1.4,
+        "max": 7.6,
+        "mean": 2.1,
+        "median": 1.7,
+        "p95": 4.7,
+        "p99": 7.6
+      },
+      "rendererToIsIn": {
+        "n": 100,
+        "min": 0.5,
+        "max": 2.5,
+        "mean": 0.8,
+        "median": 0.7,
+        "p95": 1.2,
+        "p99": 2.5
+      },
+      "clickToFirstFrame": {
+        "n": 100,
+        "min": 5.6,
+        "max": 23.6,
+        "mean": 13.2,
+        "median": 12.5,
+        "p95": 19.7,
+        "p99": 23.6
+      },
+      "clickToVideoFirstFrame": {
+        "n": 100,
+        "min": 2.3,
+        "max": 95.6,
+        "mean": 19.5,
+        "median": 6.6,
+        "p95": 75.2,
+        "p99": 95.6
+      },
+      "isInToNextFrame": {
+        "n": 100,
+        "min": 3.4,
+        "max": 17.6,
+        "mean": 10.4,
+        "median": 10.1,
+        "p95": 17.3,
+        "p99": 17.6
+      }
+    },
+    "cambios": {
+      "clickToServer": {
+        "n": 100,
+        "min": -0.2,
+        "max": 1.2,
+        "mean": 0,
+        "median": 0,
+        "p95": 0.4,
+        "p99": 1.2
+      },
+      "serverProcessing": {
+        "n": 100,
+        "min": 1.1,
+        "max": 7.7,
+        "mean": 1.6,
+        "median": 1.2,
+        "p95": 6.2,
+        "p99": 7.7
+      },
+      "serverToProgram": {
+        "n": 100,
+        "min": 0.4,
+        "max": 1.3,
+        "mean": 0.6,
+        "median": 0.5,
+        "p95": 1,
+        "p99": 1.3
+      },
+      "clickToProgramWs": {
+        "n": 100,
+        "min": 1.5,
+        "max": 9.3,
+        "mean": 2.2,
+        "median": 1.7,
+        "p95": 7.6,
+        "p99": 9.3
+      },
+      "rendererToIsIn": {
+        "n": 100,
+        "min": 0.6,
+        "max": 3.8,
+        "mean": 0.9,
+        "median": 0.8,
+        "p95": 1.9,
+        "p99": 3.8
+      },
+      "clickToFirstFrame": {
+        "n": 100,
+        "min": 9.2,
+        "max": 21.8,
+        "mean": 13.1,
+        "median": 12.5,
+        "p95": 19.5,
+        "p99": 21.8
+      },
+      "clickToVideoFirstFrame": {
+        "n": 100,
+        "min": 2.3,
+        "max": 93.4,
+        "mean": 22.6,
+        "median": 15.6,
+        "p95": 68,
+        "p99": 93.4
+      },
+      "isInToNextFrame": {
+        "n": 100,
+        "min": 3.8,
+        "max": 17.4,
+        "mean": 10,
+        "median": 9.9,
+        "p95": 17,
+        "p99": 17.4
+      }
+    },
+    "goleadores": {
+      "clickToServer": {
+        "n": 100,
+        "min": -0.1,
+        "max": 0.6,
+        "mean": 0,
+        "median": 0,
+        "p95": 0.2,
+        "p99": 0.6
+      },
+      "serverProcessing": {
+        "n": 100,
+        "min": 1.1,
+        "max": 12,
+        "mean": 1.5,
+        "median": 1.2,
+        "p95": 2.1,
+        "p99": 12
+      },
+      "serverToProgram": {
+        "n": 100,
+        "min": 0.5,
+        "max": 1.9,
+        "mean": 0.7,
+        "median": 0.6,
+        "p95": 0.9,
+        "p99": 1.9
+      },
+      "clickToProgramWs": {
+        "n": 100,
+        "min": 1.5,
+        "max": 13.9,
+        "mean": 2.3,
+        "median": 1.8,
+        "p95": 3.5,
+        "p99": 13.9
+      },
+      "rendererToIsIn": {
+        "n": 100,
+        "min": 1,
+        "max": 7.9,
+        "mean": 1.5,
+        "median": 1.3,
+        "p95": 2.1,
+        "p99": 7.9
+      },
+      "clickToFirstFrame": {
+        "n": 100,
+        "min": 5.8,
+        "max": 25.9,
+        "mean": 12.9,
+        "median": 12.5,
+        "p95": 19.5,
+        "p99": 25.9
+      },
+      "clickToVideoFirstFrame": null,
+      "isInToNextFrame": {
+        "n": 100,
+        "min": 2,
+        "max": 16.5,
+        "mean": 9.1,
+        "median": 9.2,
+        "p95": 11.3,
+        "p99": 16.5
+      }
+    },
+    "sideTable": {
+      "clickToServer": {
+        "n": 100,
+        "min": -0.1,
+        "max": 0.7,
+        "mean": 0.1,
+        "median": 0,
+        "p95": 0.4,
+        "p99": 0.7
+      },
+      "serverProcessing": {
+        "n": 100,
+        "min": 1.1,
+        "max": 6.2,
+        "mean": 1.5,
+        "median": 1.2,
+        "p95": 3.1,
+        "p99": 6.2
+      },
+      "serverToProgram": {
+        "n": 100,
+        "min": 0.6,
+        "max": 1.6,
+        "mean": 0.8,
+        "median": 0.7,
+        "p95": 1.4,
+        "p99": 1.6
+      },
+      "clickToProgramWs": {
+        "n": 100,
+        "min": 1.7,
+        "max": 8.5,
+        "mean": 2.3,
+        "median": 2,
+        "p95": 5,
+        "p99": 8.5
+      },
+      "rendererToIsIn": {
+        "n": 100,
+        "min": 1.6,
+        "max": 7.1,
+        "mean": 2.4,
+        "median": 2,
+        "p95": 4.8,
+        "p99": 7.1
+      },
+      "clickToFirstFrame": {
+        "n": 100,
+        "min": 7.9,
+        "max": 19.6,
+        "mean": 12.8,
+        "median": 12.5,
+        "p95": 17.4,
+        "p99": 19.6
+      },
+      "clickToVideoFirstFrame": null,
+      "isInToNextFrame": {
+        "n": 100,
+        "min": 1.2,
+        "max": 14.3,
+        "mean": 8,
+        "median": 8.5,
+        "p95": 10.7,
+        "p99": 14.3
+      }
+    },
+    "gol": {
+      "clickToServer": {
+        "n": 20,
+        "min": 2.7,
+        "max": 15.7,
+        "mean": 4.7,
+        "median": 3.5,
+        "p95": 15.7,
+        "p99": 15.7
+      },
+      "serverProcessing": {
+        "n": 20,
+        "min": 1.1,
+        "max": 3.3,
+        "mean": 1.5,
+        "median": 1.3,
+        "p95": 3.3,
+        "p99": 3.3
+      },
+      "serverToProgram": {
+        "n": 20,
+        "min": 0.4,
+        "max": 1,
+        "mean": 0.6,
+        "median": 0.6,
+        "p95": 1,
+        "p99": 1
+      },
+      "clickToProgramWs": {
+        "n": 20,
+        "min": 4.2,
+        "max": 19.8,
+        "mean": 6.7,
+        "median": 5.3,
+        "p95": 19.8,
+        "p99": 19.8
+      },
+      "rendererToIsIn": {
+        "n": 20,
+        "min": 0.3,
+        "max": 0.9,
+        "mean": 0.5,
+        "median": 0.5,
+        "p95": 0.9,
+        "p99": 0.9
+      },
+      "clickToFirstFrame": {
+        "n": 20,
+        "min": 12.4,
+        "max": 32.6,
+        "mean": 16.7,
+        "median": 15.2,
+        "p95": 32.6,
+        "p99": 32.6
+      },
+      "clickToVideoFirstFrame": {
+        "n": 20,
+        "min": 20.8,
+        "max": 39.9,
+        "mean": 25.3,
+        "median": 23.5,
+        "p95": 39.9,
+        "p99": 39.9
+      },
+      "isInToNextFrame": {
+        "n": 20,
+        "min": 6.2,
+        "max": 12.5,
+        "mean": 9.4,
+        "median": 9.5,
+        "p95": 12.5,
+        "p99": 12.5
+      }
+    },
+    "grupos": {
+      "clickToServer": {
+        "n": 10,
+        "min": -0.1,
+        "max": 0,
+        "mean": 0,
+        "median": 0,
+        "p95": 0,
+        "p99": 0
+      },
+      "serverProcessing": {
+        "n": 10,
+        "min": 1.1,
+        "max": 1.3,
+        "mean": 1.2,
+        "median": 1.2,
+        "p95": 1.3,
+        "p99": 1.3
+      },
+      "serverToProgram": {
+        "n": 10,
+        "min": 0.5,
+        "max": 0.9,
+        "mean": 0.6,
+        "median": 0.6,
+        "p95": 0.9,
+        "p99": 0.9
+      },
+      "clickToProgramWs": {
+        "n": 10,
+        "min": 1.6,
+        "max": 2,
+        "mean": 1.8,
+        "median": 1.8,
+        "p95": 2,
+        "p99": 2
+      },
+      "rendererToIsIn": {
+        "n": 10,
+        "min": 0.7,
+        "max": 4.1,
+        "mean": 1.2,
+        "median": 0.8,
+        "p95": 4.1,
+        "p99": 4.1
+      },
+      "clickToFirstFrame": {
+        "n": 10,
+        "min": 12,
+        "max": 22.3,
+        "mean": 13.6,
+        "median": 12.6,
+        "p95": 22.3,
+        "p99": 22.3
+      },
+      "clickToVideoFirstFrame": null,
+      "isInToNextFrame": {
+        "n": 10,
+        "min": 6.1,
+        "max": 19.2,
+        "mean": 10.7,
+        "median": 10.2,
+        "p95": 19.2,
+        "p99": 19.2
+      }
+    },
+    "vs": {
+      "clickToServer": {
+        "n": 10,
+        "min": -0.1,
+        "max": 0.4,
+        "mean": 0.1,
+        "median": 0,
+        "p95": 0.4,
+        "p99": 0.4
+      },
+      "serverProcessing": {
+        "n": 10,
+        "min": 1.1,
+        "max": 4.9,
+        "mean": 1.6,
+        "median": 1.2,
+        "p95": 4.9,
+        "p99": 4.9
+      },
+      "serverToProgram": {
+        "n": 10,
+        "min": 0.5,
+        "max": 1,
+        "mean": 0.7,
+        "median": 0.6,
+        "p95": 1,
+        "p99": 1
+      },
+      "clickToProgramWs": {
+        "n": 10,
+        "min": 1.6,
+        "max": 6.4,
+        "mean": 2.4,
+        "median": 1.9,
+        "p95": 6.4,
+        "p99": 6.4
+      },
+      "rendererToIsIn": {
+        "n": 10,
+        "min": 0.7,
+        "max": 2,
+        "mean": 1.1,
+        "median": 0.9,
+        "p95": 2,
+        "p99": 2
+      },
+      "clickToFirstFrame": {
+        "n": 10,
+        "min": 11.8,
+        "max": 19.7,
+        "mean": 13.7,
+        "median": 12.6,
+        "p95": 19.7,
+        "p99": 19.7
+      },
+      "clickToVideoFirstFrame": {
+        "n": 10,
+        "min": 10.7,
+        "max": 47.1,
+        "mean": 17.9,
+        "median": 14.8,
+        "p95": 47.1,
+        "p99": 47.1
+      },
+      "isInToNextFrame": {
+        "n": 10,
+        "min": 8.3,
+        "max": 15.8,
+        "mean": 10.2,
+        "median": 9.8,
+        "p95": 15.8,
+        "p99": 15.8
+      }
+    },
+    "longDouble": {
+      "clickToServer": {
+        "n": 10,
+        "min": -0.1,
+        "max": 0,
+        "mean": 0,
+        "median": 0,
+        "p95": 0,
+        "p99": 0
+      },
+      "serverProcessing": {
+        "n": 10,
+        "min": 1.1,
+        "max": 1.9,
+        "mean": 1.3,
+        "median": 1.2,
+        "p95": 1.9,
+        "p99": 1.9
+      },
+      "serverToProgram": {
+        "n": 10,
+        "min": 0.5,
+        "max": 0.8,
+        "mean": 0.7,
+        "median": 0.7,
+        "p95": 0.8,
+        "p99": 0.8
+      },
+      "clickToProgramWs": {
+        "n": 10,
+        "min": 1.6,
+        "max": 2.6,
+        "mean": 2,
+        "median": 1.9,
+        "p95": 2.6,
+        "p99": 2.6
+      },
+      "rendererToIsIn": {
+        "n": 10,
+        "min": 0.6,
+        "max": 1.3,
+        "mean": 0.8,
+        "median": 0.7,
+        "p95": 1.3,
+        "p99": 1.3
+      },
+      "clickToFirstFrame": {
+        "n": 10,
+        "min": 9.2,
+        "max": 19.6,
+        "mean": 12.9,
+        "median": 12.5,
+        "p95": 19.6,
+        "p99": 19.6
+      },
+      "clickToVideoFirstFrame": {
+        "n": 10,
+        "min": 15.7,
+        "max": 27.6,
+        "mean": 19.9,
+        "median": 18.9,
+        "p95": 27.6,
+        "p99": 27.6
+      },
+      "isInToNextFrame": {
+        "n": 10,
+        "min": 6.3,
+        "max": 17.2,
+        "mean": 10.1,
+        "median": 9.9,
+        "p95": 17.2,
+        "p99": 17.2
+      }
+    }
+  },
+  "takeDegradation": {
+    "scoreboard": {
+      "take1": 14.2998046875,
+      "take25": 12.39990234375,
+      "take50": 12.499755859375,
+      "take100": 9.099853515625,
+      "rounds1to10": {
+        "n": 10,
+        "min": 11,
+        "max": 14.9,
+        "mean": 12.6,
+        "median": 12.5,
+        "p95": 14.9,
+        "p99": 14.9
+      },
+      "rounds41to50": {
+        "n": 10,
+        "min": 10.9,
+        "max": 19.4,
+        "mean": 13.5,
+        "median": 12.6,
+        "p95": 19.4,
+        "p99": 19.4
+      },
+      "rounds91to100": {
+        "n": 10,
+        "min": 9,
+        "max": 15.3,
+        "mean": 12.7,
+        "median": 12.8,
+        "p95": 15.3,
+        "p99": 15.3
+      }
+    },
+    "bug": {
+      "take1": 12.499755859375,
+      "take25": 12.099853515625,
+      "take50": 12.099853515625,
+      "take100": 11.89990234375,
+      "rounds1to10": {
+        "n": 1,
+        "min": 12.5,
+        "max": 12.5,
+        "mean": 12.5,
+        "median": 12.5,
+        "p95": 12.5,
+        "p99": 12.5
+      },
+      "rounds41to50": {
+        "n": 1,
+        "min": 12.1,
+        "max": 12.1,
+        "mean": 12.1,
+        "median": 12.1,
+        "p95": 12.1,
+        "p99": 12.1
+      },
+      "rounds91to100": {
+        "n": 1,
+        "min": 11.9,
+        "max": 11.9,
+        "mean": 11.9,
+        "median": 11.9,
+        "p95": 11.9,
+        "p99": 11.9
+      }
+    },
+    "shortSimple": {
+      "take1": 11.599853515625,
+      "take25": 15.19970703125,
+      "take50": 12.599853515625,
+      "take100": 12.199951171875,
+      "rounds1to10": {
+        "n": 10,
+        "min": 9.8,
+        "max": 12.7,
+        "mean": 12,
+        "median": 12.5,
+        "p95": 12.7,
+        "p99": 12.7
+      },
+      "rounds41to50": {
+        "n": 10,
+        "min": 11.1,
+        "max": 16.6,
+        "mean": 12.8,
+        "median": 12.5,
+        "p95": 16.6,
+        "p99": 16.6
+      },
+      "rounds91to100": {
+        "n": 10,
+        "min": 10.9,
+        "max": 13.2,
+        "mean": 12.4,
+        "median": 12.6,
+        "p95": 13.2,
+        "p99": 13.2
+      }
+    },
+    "tarjeta": {
+      "take1": 12.399658203125,
+      "take25": 12.39990234375,
+      "take50": 12.2998046875,
+      "take100": 23.599853515625,
+      "rounds1to10": {
+        "n": 10,
+        "min": 9.6,
+        "max": 13.3,
+        "mean": 11.9,
+        "median": 12.5,
+        "p95": 13.3,
+        "p99": 13.3
+      },
+      "rounds41to50": {
+        "n": 10,
+        "min": 7.2,
+        "max": 12.6,
+        "mean": 11.8,
+        "median": 12.4,
+        "p95": 12.6,
+        "p99": 12.6
+      },
+      "rounds91to100": {
+        "n": 10,
+        "min": 12.1,
+        "max": 23.6,
+        "mean": 17.8,
+        "median": 19.6,
+        "p95": 23.6,
+        "p99": 23.6
+      }
+    },
+    "cambios": {
+      "take1": 12.89990234375,
+      "take25": 12.39990234375,
+      "take50": 12.499755859375,
+      "take100": 12.599853515625,
+      "rounds1to10": {
+        "n": 10,
+        "min": 9.7,
+        "max": 16.9,
+        "mean": 12.5,
+        "median": 12.5,
+        "p95": 16.9,
+        "p99": 16.9
+      },
+      "rounds41to50": {
+        "n": 10,
+        "min": 11.6,
+        "max": 12.7,
+        "mean": 12.4,
+        "median": 12.5,
+        "p95": 12.7,
+        "p99": 12.7
+      },
+      "rounds91to100": {
+        "n": 10,
+        "min": 11.8,
+        "max": 17.1,
+        "mean": 13.2,
+        "median": 12.7,
+        "p95": 17.1,
+        "p99": 17.1
+      }
+    },
+    "goleadores": {
+      "take1": 12.300048828125,
+      "take25": 12.599853515625,
+      "take50": 12.899658203125,
+      "take100": 5.7998046875,
+      "rounds1to10": {
+        "n": 10,
+        "min": 9.5,
+        "max": 14.9,
+        "mean": 12.2,
+        "median": 12.3,
+        "p95": 14.9,
+        "p99": 14.9
+      },
+      "rounds41to50": {
+        "n": 10,
+        "min": 9.4,
+        "max": 19.5,
+        "mean": 13.6,
+        "median": 12.7,
+        "p95": 19.5,
+        "p99": 19.5
+      },
+      "rounds91to100": {
+        "n": 10,
+        "min": 5.8,
+        "max": 25.9,
+        "mean": 13,
+        "median": 12.5,
+        "p95": 25.9,
+        "p99": 25.9
+      }
+    },
+    "sideTable": {
+      "take1": 12.199951171875,
+      "take25": 8.999755859375,
+      "take50": 17.39990234375,
+      "take100": 12.2998046875,
+      "rounds1to10": {
+        "n": 10,
+        "min": 7.9,
+        "max": 14.9,
+        "mean": 12,
+        "median": 12.5,
+        "p95": 14.9,
+        "p99": 14.9
+      },
+      "rounds41to50": {
+        "n": 10,
+        "min": 9,
+        "max": 17.4,
+        "mean": 13.3,
+        "median": 12.6,
+        "p95": 17.4,
+        "p99": 17.4
+      },
+      "rounds91to100": {
+        "n": 10,
+        "min": 9.9,
+        "max": 19.6,
+        "mean": 13.3,
+        "median": 12.5,
+        "p95": 19.6,
+        "p99": 19.6
+      }
+    },
+    "gol": {
+      "take1": 12.39990234375,
+      "take25": 17,
+      "take50": 15.099853515625,
+      "take100": 12.699951171875,
+      "rounds1to10": {
+        "n": 2,
+        "min": 12.4,
+        "max": 18.7,
+        "mean": 15.5,
+        "median": 18.7,
+        "p95": 18.7,
+        "p99": 18.7
+      },
+      "rounds41to50": {
+        "n": 2,
+        "min": 13.2,
+        "max": 15.1,
+        "mean": 14.1,
+        "median": 15.1,
+        "p95": 15.1,
+        "p99": 15.1
+      },
+      "rounds91to100": {
+        "n": 2,
+        "min": 12.7,
+        "max": 15.2,
+        "mean": 13.9,
+        "median": 15.2,
+        "p95": 15.2,
+        "p99": 15.2
+      }
+    },
+    "grupos": {
+      "take1": 12,
+      "take25": 12.5,
+      "take50": 12.599853515625,
+      "take100": 13.300048828125,
+      "rounds1to10": {
+        "n": 1,
+        "min": 12,
+        "max": 12,
+        "mean": 12,
+        "median": 12,
+        "p95": 12,
+        "p99": 12
+      },
+      "rounds41to50": {
+        "n": 1,
+        "min": 12.6,
+        "max": 12.6,
+        "mean": 12.6,
+        "median": 12.6,
+        "p95": 12.6,
+        "p99": 12.6
+      },
+      "rounds91to100": {
+        "n": 1,
+        "min": 13.3,
+        "max": 13.3,
+        "mean": 13.3,
+        "median": 13.3,
+        "p95": 13.3,
+        "p99": 13.3
+      }
+    },
+    "vs": {
+      "take1": 12.7998046875,
+      "take25": 11.7998046875,
+      "take50": 12.599853515625,
+      "take100": 12.39990234375,
+      "rounds1to10": {
+        "n": 1,
+        "min": 12.8,
+        "max": 12.8,
+        "mean": 12.8,
+        "median": 12.8,
+        "p95": 12.8,
+        "p99": 12.8
+      },
+      "rounds41to50": {
+        "n": 1,
+        "min": 12.6,
+        "max": 12.6,
+        "mean": 12.6,
+        "median": 12.6,
+        "p95": 12.6,
+        "p99": 12.6
+      },
+      "rounds91to100": {
+        "n": 1,
+        "min": 12.4,
+        "max": 12.4,
+        "mean": 12.4,
+        "median": 12.4,
+        "p95": 12.4,
+        "p99": 12.4
+      }
+    },
+    "longDouble": {
+      "take1": 9.199951171875,
+      "take25": 12.499755859375,
+      "take50": 19.599853515625,
+      "take100": 12.399658203125,
+      "rounds1to10": {
+        "n": 1,
+        "min": 9.2,
+        "max": 9.2,
+        "mean": 9.2,
+        "median": 9.2,
+        "p95": 9.2,
+        "p99": 9.2
+      },
+      "rounds41to50": {
+        "n": 1,
+        "min": 19.6,
+        "max": 19.6,
+        "mean": 19.6,
+        "median": 19.6,
+        "p95": 19.6,
+        "p99": 19.6
+      },
+      "rounds91to100": {
+        "n": 1,
+        "min": 12.4,
+        "max": 12.4,
+        "mean": 12.4,
+        "median": 12.4,
+        "p95": 12.4,
+        "p99": 12.4
+      }
+    }
+  },
+  "processes": {
+    "load": {
+      "vMix64": {
+        "cpuPctOfCore": 63.01,
+        "cpuPctOfCoreMax": 66.3,
+        "workingSetMB": [
+          579,
+          579
+        ],
+        "privateMB": [
+          1921,
+          1921
+        ],
+        "gpu3dPct": 23.58,
+        "gpu3dMax": 26.8,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          5351,
+          5351
+        ]
+      },
+      "CefBrowserInstance": {
+        "cpuPctOfCore": 1.03,
+        "cpuPctOfCoreMax": 1.3,
+        "workingSetMB": [
+          91,
+          91
+        ],
+        "privateMB": [
+          62,
+          62
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "CefSharp.BrowserSubprocess": {
+        "cpuPctOfCore": 3.82,
+        "cpuPctOfCoreMax": 6.7,
+        "workingSetMB": [
+          614,
+          614
+        ],
+        "privateMB": [
+          710,
+          710
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          1041,
+          1041
+        ]
+      },
+      "node": {
+        "cpuPctOfCore": 0.33,
+        "cpuPctOfCoreMax": 0.6,
+        "workingSetMB": [
+          59,
+          59
+        ],
+        "privateMB": [
+          66,
+          64
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-browser": {
+        "cpuPctOfCore": 10.99,
+        "cpuPctOfCoreMax": 16.5,
+        "workingSetMB": [
+          175,
+          177
+        ],
+        "privateMB": [
+          72,
+          73
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-crashpad-handler": {
+        "cpuPctOfCore": 0,
+        "cpuPctOfCoreMax": 0,
+        "workingSetMB": [
+          10,
+          10
+        ],
+        "privateMB": [
+          2,
+          2
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-gpu-process": {
+        "cpuPctOfCore": 22.04,
+        "cpuPctOfCoreMax": 24.5,
+        "workingSetMB": [
+          312,
+          137
+        ],
+        "privateMB": [
+          583,
+          401
+        ],
+        "gpu3dPct": 0.04,
+        "gpu3dMax": 0.1,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          1879,
+          1908
+        ]
+      },
+      "chrome-utility": {
+        "cpuPctOfCore": 2.67,
+        "cpuPctOfCoreMax": 5.4,
+        "workingSetMB": [
+          60,
+          60
+        ],
+        "privateMB": [
+          22,
+          22
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-renderer": {
+        "cpuPctOfCore": 7.57,
+        "cpuPctOfCoreMax": 12.4,
+        "workingSetMB": [
+          507,
+          467
+        ],
+        "privateMB": [
+          279,
+          263
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      }
+    },
+    "idleA": {
+      "vMix64": {
+        "cpuPctOfCore": 68.47,
+        "cpuPctOfCoreMax": 79.6,
+        "workingSetMB": [
+          579,
+          579
+        ],
+        "privateMB": [
+          1921,
+          1921
+        ],
+        "gpu3dPct": 22.63,
+        "gpu3dMax": 30.6,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          5351,
+          5351
+        ]
+      },
+      "CefBrowserInstance": {
+        "cpuPctOfCore": 0.68,
+        "cpuPctOfCoreMax": 4.8,
+        "workingSetMB": [
+          91,
+          91
+        ],
+        "privateMB": [
+          62,
+          62
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "CefSharp.BrowserSubprocess": {
+        "cpuPctOfCore": 2.88,
+        "cpuPctOfCoreMax": 10.2,
+        "workingSetMB": [
+          615,
+          615
+        ],
+        "privateMB": [
+          710,
+          711
+        ],
+        "gpu3dPct": 0.4,
+        "gpu3dMax": 3.2,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          1041,
+          1041
+        ]
+      },
+      "node": {
+        "cpuPctOfCore": 0.66,
+        "cpuPctOfCoreMax": 1.4,
+        "workingSetMB": [
+          62,
+          61
+        ],
+        "privateMB": [
+          66,
+          66
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-browser": {
+        "cpuPctOfCore": 1.23,
+        "cpuPctOfCoreMax": 7.8,
+        "workingSetMB": [
+          177,
+          193
+        ],
+        "privateMB": [
+          73,
+          83
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-crashpad-handler": {
+        "cpuPctOfCore": 0,
+        "cpuPctOfCoreMax": 0,
+        "workingSetMB": [
+          10,
+          10
+        ],
+        "privateMB": [
+          2,
+          2
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-gpu-process": {
+        "cpuPctOfCore": 3.82,
+        "cpuPctOfCoreMax": 30.4,
+        "workingSetMB": [
+          366,
+          151
+        ],
+        "privateMB": [
+          822,
+          627
+        ],
+        "gpu3dPct": 0.4,
+        "gpu3dMax": 3.9,
+        "videoDecodePct": 3.89,
+        "videoDecodeMax": 59.8,
+        "vramMB": [
+          2062,
+          2143
+        ]
+      },
+      "chrome-utility": {
+        "cpuPctOfCore": 0.23,
+        "cpuPctOfCoreMax": 1.1,
+        "workingSetMB": [
+          60,
+          61
+        ],
+        "privateMB": [
+          22,
+          21
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-renderer": {
+        "cpuPctOfCore": 5.37,
+        "cpuPctOfCoreMax": 30.4,
+        "workingSetMB": [
+          494,
+          419
+        ],
+        "privateMB": [
+          278,
+          210
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      }
+    },
+    "rounds": {
+      "vMix64": {
+        "cpuPctOfCore": 64.84,
+        "cpuPctOfCoreMax": 95.6,
+        "workingSetMB": [
+          579,
+          582
+        ],
+        "privateMB": [
+          1921,
+          1921
+        ],
+        "gpu3dPct": 17.83,
+        "gpu3dMax": 34,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          5351,
+          5351
+        ]
+      },
+      "CefBrowserInstance": {
+        "cpuPctOfCore": 0.67,
+        "cpuPctOfCoreMax": 5.3,
+        "workingSetMB": [
+          91,
+          94
+        ],
+        "privateMB": [
+          62,
+          63
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "CefSharp.BrowserSubprocess": {
+        "cpuPctOfCore": 2.71,
+        "cpuPctOfCoreMax": 16.5,
+        "workingSetMB": [
+          615,
+          615
+        ],
+        "privateMB": [
+          711,
+          721
+        ],
+        "gpu3dPct": 0.25,
+        "gpu3dMax": 3.2,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          1041,
+          1051
+        ]
+      },
+      "node": {
+        "cpuPctOfCore": 1.02,
+        "cpuPctOfCoreMax": 2.8,
+        "workingSetMB": [
+          63,
+          70
+        ],
+        "privateMB": [
+          68,
+          75
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-browser": {
+        "cpuPctOfCore": 0.93,
+        "cpuPctOfCoreMax": 25.2,
+        "workingSetMB": [
+          190,
+          201
+        ],
+        "privateMB": [
+          81,
+          89
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-crashpad-handler": {
+        "cpuPctOfCore": 0,
+        "cpuPctOfCoreMax": 0,
+        "workingSetMB": [
+          10,
+          10
+        ],
+        "privateMB": [
+          2,
+          2
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-gpu-process": {
+        "cpuPctOfCore": 23.67,
+        "cpuPctOfCoreMax": 53.2,
+        "workingSetMB": [
+          319,
+          473
+        ],
+        "privateMB": [
+          910,
+          1442
+        ],
+        "gpu3dPct": 2.16,
+        "gpu3dMax": 6.3,
+        "videoDecodePct": 15.82,
+        "videoDecodeMax": 49,
+        "vramMB": [
+          2219,
+          2752
+        ]
+      },
+      "chrome-utility": {
+        "cpuPctOfCore": 0.42,
+        "cpuPctOfCoreMax": 2.8,
+        "workingSetMB": [
+          61,
+          63
+        ],
+        "privateMB": [
+          21,
+          22
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-renderer": {
+        "cpuPctOfCore": 28.32,
+        "cpuPctOfCoreMax": 113.4,
+        "workingSetMB": [
+          420,
+          694
+        ],
+        "privateMB": [
+          209,
+          375
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      }
+    },
+    "idleB": {
+      "vMix64": {
+        "cpuPctOfCore": 65.99,
+        "cpuPctOfCoreMax": 81,
+        "workingSetMB": [
+          582,
+          582
+        ],
+        "privateMB": [
+          1921,
+          1921
+        ],
+        "gpu3dPct": 18.35,
+        "gpu3dMax": 29.5,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          5351,
+          5351
+        ]
+      },
+      "CefBrowserInstance": {
+        "cpuPctOfCore": 0.62,
+        "cpuPctOfCoreMax": 3.1,
+        "workingSetMB": [
+          94,
+          94
+        ],
+        "privateMB": [
+          63,
+          63
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "CefSharp.BrowserSubprocess": {
+        "cpuPctOfCore": 2.58,
+        "cpuPctOfCoreMax": 8.9,
+        "workingSetMB": [
+          631,
+          617
+        ],
+        "privateMB": [
+          736,
+          721
+        ],
+        "gpu3dPct": 0.27,
+        "gpu3dMax": 3.7,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          1051,
+          1051
+        ]
+      },
+      "node": {
+        "cpuPctOfCore": 0.29,
+        "cpuPctOfCoreMax": 1.4,
+        "workingSetMB": [
+          70,
+          70
+        ],
+        "privateMB": [
+          75,
+          75
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-browser": {
+        "cpuPctOfCore": 2.95,
+        "cpuPctOfCoreMax": 53.4,
+        "workingSetMB": [
+          201,
+          205
+        ],
+        "privateMB": [
+          89,
+          94
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-crashpad-handler": {
+        "cpuPctOfCore": 0,
+        "cpuPctOfCoreMax": 0,
+        "workingSetMB": [
+          10,
+          10
+        ],
+        "privateMB": [
+          2,
+          2
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-gpu-process": {
+        "cpuPctOfCore": 3.1,
+        "cpuPctOfCoreMax": 25.3,
+        "workingSetMB": [
+          503,
+          234
+        ],
+        "privateMB": [
+          1480,
+          1093
+        ],
+        "gpu3dPct": 0.19,
+        "gpu3dMax": 1.5,
+        "videoDecodePct": 2.2,
+        "videoDecodeMax": 25.8,
+        "vramMB": [
+          2642,
+          2642
+        ]
+      },
+      "chrome-utility": {
+        "cpuPctOfCore": 0.06,
+        "cpuPctOfCoreMax": 0.4,
+        "workingSetMB": [
+          63,
+          63
+        ],
+        "privateMB": [
+          22,
+          22
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-renderer": {
+        "cpuPctOfCore": 16.16,
+        "cpuPctOfCoreMax": 107.1,
+        "workingSetMB": [
+          622,
+          704
+        ],
+        "privateMB": [
+          357,
+          453
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      }
+    },
+    "stopAll": {
+      "vMix64": {
+        "cpuPctOfCore": 64.12,
+        "cpuPctOfCoreMax": 68.4,
+        "workingSetMB": [
+          582,
+          583
+        ],
+        "privateMB": [
+          1921,
+          1921
+        ],
+        "gpu3dPct": 21.61,
+        "gpu3dMax": 23.6,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          5351,
+          5351
+        ]
+      },
+      "CefBrowserInstance": {
+        "cpuPctOfCore": 0.59,
+        "cpuPctOfCoreMax": 1.5,
+        "workingSetMB": [
+          94,
+          94
+        ],
+        "privateMB": [
+          63,
+          63
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "CefSharp.BrowserSubprocess": {
+        "cpuPctOfCore": 3.81,
+        "cpuPctOfCoreMax": 9.6,
+        "workingSetMB": [
+          617,
+          616
+        ],
+        "privateMB": [
+          722,
+          722
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          1051,
+          1051
+        ]
+      },
+      "node": {
+        "cpuPctOfCore": 0.71,
+        "cpuPctOfCoreMax": 0.9,
+        "workingSetMB": [
+          70,
+          70
+        ],
+        "privateMB": [
+          75,
+          75
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-browser": {
+        "cpuPctOfCore": 17.65,
+        "cpuPctOfCoreMax": 62.6,
+        "workingSetMB": [
+          201,
+          201
+        ],
+        "privateMB": [
+          89,
+          89
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-crashpad-handler": {
+        "cpuPctOfCore": 0,
+        "cpuPctOfCoreMax": 0,
+        "workingSetMB": [
+          10,
+          10
+        ],
+        "privateMB": [
+          2,
+          2
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-gpu-process": {
+        "cpuPctOfCore": 6.35,
+        "cpuPctOfCoreMax": 11,
+        "workingSetMB": [
+          191,
+          189
+        ],
+        "privateMB": [
+          1112,
+          1128
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          2545,
+          2554
+        ]
+      },
+      "chrome-utility": {
+        "cpuPctOfCore": 0.08,
+        "cpuPctOfCoreMax": 0.3,
+        "workingSetMB": [
+          63,
+          63
+        ],
+        "privateMB": [
+          22,
+          22
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-renderer": {
+        "cpuPctOfCore": 68.5,
+        "cpuPctOfCoreMax": 121,
+        "workingSetMB": [
+          663,
+          659
+        ],
+        "privateMB": [
+          453,
+          450
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      }
+    },
+    "reload": {
+      "vMix64": {
+        "cpuPctOfCore": 67.64,
+        "cpuPctOfCoreMax": 75.4,
+        "workingSetMB": [
+          583,
+          582
+        ],
+        "privateMB": [
+          1921,
+          1921
+        ],
+        "gpu3dPct": 23.23,
+        "gpu3dMax": 35.7,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          5351,
+          5351
+        ]
+      },
+      "CefBrowserInstance": {
+        "cpuPctOfCore": 1.45,
+        "cpuPctOfCoreMax": 5.4,
+        "workingSetMB": [
+          94,
+          94
+        ],
+        "privateMB": [
+          63,
+          63
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "CefSharp.BrowserSubprocess": {
+        "cpuPctOfCore": 2.39,
+        "cpuPctOfCoreMax": 6,
+        "workingSetMB": [
+          616,
+          617
+        ],
+        "privateMB": [
+          722,
+          722
+        ],
+        "gpu3dPct": 0.01,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          1051,
+          1051
+        ]
+      },
+      "node": {
+        "cpuPctOfCore": 0.95,
+        "cpuPctOfCoreMax": 1.7,
+        "workingSetMB": [
+          70,
+          70
+        ],
+        "privateMB": [
+          75,
+          74
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-browser": {
+        "cpuPctOfCore": 0.73,
+        "cpuPctOfCoreMax": 1.2,
+        "workingSetMB": [
+          201,
+          201
+        ],
+        "privateMB": [
+          89,
+          89
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-crashpad-handler": {
+        "cpuPctOfCore": 0,
+        "cpuPctOfCoreMax": 0,
+        "workingSetMB": [
+          10,
+          10
+        ],
+        "privateMB": [
+          2,
+          2
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-gpu-process": {
+        "cpuPctOfCore": 15.77,
+        "cpuPctOfCoreMax": 38.5,
+        "workingSetMB": [
+          311,
+          318
+        ],
+        "privateMB": [
+          1310,
+          1158
+        ],
+        "gpu3dPct": 0.45,
+        "gpu3dMax": 2,
+        "videoDecodePct": 14.3,
+        "videoDecodeMax": 25.8,
+        "vramMB": [
+          2424,
+          2581
+        ]
+      },
+      "chrome-utility": {
+        "cpuPctOfCore": 0.16,
+        "cpuPctOfCoreMax": 0.3,
+        "workingSetMB": [
+          63,
+          63
+        ],
+        "privateMB": [
+          22,
+          22
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-renderer": {
+        "cpuPctOfCore": 54.12,
+        "cpuPctOfCoreMax": 104.8,
+        "workingSetMB": [
+          674,
+          660
+        ],
+        "privateMB": [
+          468,
+          454
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      }
+    },
+    "videos-0": {
+      "vMix64": {
+        "cpuPctOfCore": 71.32,
+        "cpuPctOfCoreMax": 79.7,
+        "workingSetMB": [
+          582,
+          582
+        ],
+        "privateMB": [
+          1921,
+          1921
+        ],
+        "gpu3dPct": 20.21,
+        "gpu3dMax": 25.5,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          5351,
+          5351
+        ]
+      },
+      "CefBrowserInstance": {
+        "cpuPctOfCore": 0.21,
+        "cpuPctOfCoreMax": 0.7,
+        "workingSetMB": [
+          94,
+          94
+        ],
+        "privateMB": [
+          63,
+          63
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "CefSharp.BrowserSubprocess": {
+        "cpuPctOfCore": 2.17,
+        "cpuPctOfCoreMax": 7.5,
+        "workingSetMB": [
+          617,
+          617
+        ],
+        "privateMB": [
+          722,
+          722
+        ],
+        "gpu3dPct": 0.22,
+        "gpu3dMax": 1.8,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          1051,
+          1051
+        ]
+      },
+      "node": {
+        "cpuPctOfCore": 0.44,
+        "cpuPctOfCoreMax": 1.8,
+        "workingSetMB": [
+          70,
+          70
+        ],
+        "privateMB": [
+          74,
+          74
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-browser": {
+        "cpuPctOfCore": 0.63,
+        "cpuPctOfCoreMax": 2,
+        "workingSetMB": [
+          201,
+          201
+        ],
+        "privateMB": [
+          89,
+          89
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-crashpad-handler": {
+        "cpuPctOfCore": 0,
+        "cpuPctOfCoreMax": 0,
+        "workingSetMB": [
+          10,
+          10
+        ],
+        "privateMB": [
+          2,
+          2
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-gpu-process": {
+        "cpuPctOfCore": 0.26,
+        "cpuPctOfCoreMax": 0.7,
+        "workingSetMB": [
+          297,
+          279
+        ],
+        "privateMB": [
+          1065,
+          1030
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          2457,
+          2457
+        ]
+      },
+      "chrome-utility": {
+        "cpuPctOfCore": 0.17,
+        "cpuPctOfCoreMax": 0.7,
+        "workingSetMB": [
+          63,
+          63
+        ],
+        "privateMB": [
+          22,
+          22
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-renderer": {
+        "cpuPctOfCore": 17.38,
+        "cpuPctOfCoreMax": 66.7,
+        "workingSetMB": [
+          661,
+          661
+        ],
+        "privateMB": [
+          454,
+          454
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      }
+    },
+    "videos-1": {
+      "vMix64": {
+        "cpuPctOfCore": 67.57,
+        "cpuPctOfCoreMax": 74.1,
+        "workingSetMB": [
+          582,
+          582
+        ],
+        "privateMB": [
+          1921,
+          1921
+        ],
+        "gpu3dPct": 18.89,
+        "gpu3dMax": 24.3,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          5351,
+          5351
+        ]
+      },
+      "CefBrowserInstance": {
+        "cpuPctOfCore": 1.08,
+        "cpuPctOfCoreMax": 3.2,
+        "workingSetMB": [
+          94,
+          94
+        ],
+        "privateMB": [
+          63,
+          63
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "CefSharp.BrowserSubprocess": {
+        "cpuPctOfCore": 3.24,
+        "cpuPctOfCoreMax": 10.5,
+        "workingSetMB": [
+          625,
+          625
+        ],
+        "privateMB": [
+          730,
+          731
+        ],
+        "gpu3dPct": 0.32,
+        "gpu3dMax": 1.7,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          1051,
+          1051
+        ]
+      },
+      "node": {
+        "cpuPctOfCore": 0.34,
+        "cpuPctOfCoreMax": 0.7,
+        "workingSetMB": [
+          70,
+          69
+        ],
+        "privateMB": [
+          75,
+          73
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-browser": {
+        "cpuPctOfCore": 0.47,
+        "cpuPctOfCoreMax": 2.1,
+        "workingSetMB": [
+          201,
+          201
+        ],
+        "privateMB": [
+          89,
+          89
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-crashpad-handler": {
+        "cpuPctOfCore": 0,
+        "cpuPctOfCoreMax": 0,
+        "workingSetMB": [
+          10,
+          10
+        ],
+        "privateMB": [
+          2,
+          2
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-gpu-process": {
+        "cpuPctOfCore": 3.33,
+        "cpuPctOfCoreMax": 15,
+        "workingSetMB": [
+          297,
+          190
+        ],
+        "privateMB": [
+          1142,
+          989
+        ],
+        "gpu3dPct": 0.11,
+        "gpu3dMax": 0.6,
+        "videoDecodePct": 1.79,
+        "videoDecodeMax": 14.3,
+        "vramMB": [
+          2435,
+          2435
+        ]
+      },
+      "chrome-utility": {
+        "cpuPctOfCore": 0.21,
+        "cpuPctOfCoreMax": 0.4,
+        "workingSetMB": [
+          63,
+          63
+        ],
+        "privateMB": [
+          22,
+          22
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-renderer": {
+        "cpuPctOfCore": 9.27,
+        "cpuPctOfCoreMax": 56.3,
+        "workingSetMB": [
+          658,
+          657
+        ],
+        "privateMB": [
+          452,
+          450
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      }
+    },
+    "videos-3": {
+      "vMix64": {
+        "cpuPctOfCore": 69.15,
+        "cpuPctOfCoreMax": 77.7,
+        "workingSetMB": [
+          582,
+          582
+        ],
+        "privateMB": [
+          1921,
+          1921
+        ],
+        "gpu3dPct": 17.93,
+        "gpu3dMax": 23.1,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          5351,
+          5351
+        ]
+      },
+      "CefBrowserInstance": {
+        "cpuPctOfCore": 0.64,
+        "cpuPctOfCoreMax": 2.1,
+        "workingSetMB": [
+          94,
+          94
+        ],
+        "privateMB": [
+          63,
+          63
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "CefSharp.BrowserSubprocess": {
+        "cpuPctOfCore": 2,
+        "cpuPctOfCoreMax": 5.9,
+        "workingSetMB": [
+          625,
+          626
+        ],
+        "privateMB": [
+          731,
+          731
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          1051,
+          1051
+        ]
+      },
+      "node": {
+        "cpuPctOfCore": 0.65,
+        "cpuPctOfCoreMax": 1.4,
+        "workingSetMB": [
+          69,
+          69
+        ],
+        "privateMB": [
+          74,
+          73
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-browser": {
+        "cpuPctOfCore": 0.45,
+        "cpuPctOfCoreMax": 1.1,
+        "workingSetMB": [
+          201,
+          201
+        ],
+        "privateMB": [
+          89,
+          89
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-crashpad-handler": {
+        "cpuPctOfCore": 0,
+        "cpuPctOfCoreMax": 0,
+        "workingSetMB": [
+          10,
+          10
+        ],
+        "privateMB": [
+          2,
+          2
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-gpu-process": {
+        "cpuPctOfCore": 9.36,
+        "cpuPctOfCoreMax": 40.8,
+        "workingSetMB": [
+          450,
+          213
+        ],
+        "privateMB": [
+          1279,
+          1024
+        ],
+        "gpu3dPct": 0.42,
+        "gpu3dMax": 2.5,
+        "videoDecodePct": 8.51,
+        "videoDecodeMax": 59.6,
+        "vramMB": [
+          2453,
+          2453
+        ]
+      },
+      "chrome-utility": {
+        "cpuPctOfCore": 0.2,
+        "cpuPctOfCoreMax": 0.4,
+        "workingSetMB": [
+          63,
+          63
+        ],
+        "privateMB": [
+          22,
+          22
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-renderer": {
+        "cpuPctOfCore": 12.61,
+        "cpuPctOfCoreMax": 40.1,
+        "workingSetMB": [
+          660,
+          660
+        ],
+        "privateMB": [
+          453,
+          453
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      }
+    },
+    "videos-6": {
+      "vMix64": {
+        "cpuPctOfCore": 70.63,
+        "cpuPctOfCoreMax": 81.6,
+        "workingSetMB": [
+          582,
+          583
+        ],
+        "privateMB": [
+          1921,
+          1921
+        ],
+        "gpu3dPct": 17.84,
+        "gpu3dMax": 23.3,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          5351,
+          5351
+        ]
+      },
+      "CefBrowserInstance": {
+        "cpuPctOfCore": 0.83,
+        "cpuPctOfCoreMax": 2.5,
+        "workingSetMB": [
+          94,
+          94
+        ],
+        "privateMB": [
+          63,
+          63
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "CefSharp.BrowserSubprocess": {
+        "cpuPctOfCore": 4.52,
+        "cpuPctOfCoreMax": 13.6,
+        "workingSetMB": [
+          634,
+          626
+        ],
+        "privateMB": [
+          739,
+          731
+        ],
+        "gpu3dPct": 0.41,
+        "gpu3dMax": 2.1,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          1051,
+          1051
+        ]
+      },
+      "node": {
+        "cpuPctOfCore": 0.54,
+        "cpuPctOfCoreMax": 1,
+        "workingSetMB": [
+          69,
+          69
+        ],
+        "privateMB": [
+          73,
+          73
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-browser": {
+        "cpuPctOfCore": 0.8,
+        "cpuPctOfCoreMax": 2.3,
+        "workingSetMB": [
+          201,
+          201
+        ],
+        "privateMB": [
+          89,
+          89
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-crashpad-handler": {
+        "cpuPctOfCore": 0,
+        "cpuPctOfCoreMax": 0,
+        "workingSetMB": [
+          10,
+          10
+        ],
+        "privateMB": [
+          2,
+          2
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-gpu-process": {
+        "cpuPctOfCore": 15.06,
+        "cpuPctOfCoreMax": 74.6,
+        "workingSetMB": [
+          424,
+          187
+        ],
+        "privateMB": [
+          1312,
+          1143
+        ],
+        "gpu3dPct": 0.5,
+        "gpu3dMax": 3.5,
+        "videoDecodePct": 10.53,
+        "videoDecodeMax": 79.9,
+        "vramMB": [
+          2600,
+          2657
+        ]
+      },
+      "chrome-utility": {
+        "cpuPctOfCore": 0.25,
+        "cpuPctOfCoreMax": 0.6,
+        "workingSetMB": [
+          63,
+          63
+        ],
+        "privateMB": [
+          22,
+          22
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-renderer": {
+        "cpuPctOfCore": 39.09,
+        "cpuPctOfCoreMax": 88.3,
+        "workingSetMB": [
+          663,
+          691
+        ],
+        "privateMB": [
+          457,
+          482
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      }
+    },
+    "cfg-master-program-monitor": {
+      "vMix64": {
+        "cpuPctOfCore": 65.61,
+        "cpuPctOfCoreMax": 76.5,
+        "workingSetMB": [
+          583,
+          582
+        ],
+        "privateMB": [
+          1921,
+          1921
+        ],
+        "gpu3dPct": 16.7,
+        "gpu3dMax": 23.2,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          5351,
+          5351
+        ]
+      },
+      "CefBrowserInstance": {
+        "cpuPctOfCore": 0.31,
+        "cpuPctOfCoreMax": 1.7,
+        "workingSetMB": [
+          94,
+          94
+        ],
+        "privateMB": [
+          63,
+          63
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "CefSharp.BrowserSubprocess": {
+        "cpuPctOfCore": 1.37,
+        "cpuPctOfCoreMax": 4.8,
+        "workingSetMB": [
+          626,
+          627
+        ],
+        "privateMB": [
+          731,
+          732
+        ],
+        "gpu3dPct": 0.3,
+        "gpu3dMax": 2.3,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          1051,
+          1051
+        ]
+      },
+      "node": {
+        "cpuPctOfCore": 0.34,
+        "cpuPctOfCoreMax": 0.7,
+        "workingSetMB": [
+          69,
+          69
+        ],
+        "privateMB": [
+          74,
+          73
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-browser": {
+        "cpuPctOfCore": 0.37,
+        "cpuPctOfCoreMax": 1,
+        "workingSetMB": [
+          202,
+          201
+        ],
+        "privateMB": [
+          90,
+          89
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-crashpad-handler": {
+        "cpuPctOfCore": 0,
+        "cpuPctOfCoreMax": 0,
+        "workingSetMB": [
+          10,
+          10
+        ],
+        "privateMB": [
+          2,
+          2
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-gpu-process": {
+        "cpuPctOfCore": 13.73,
+        "cpuPctOfCoreMax": 41.7,
+        "workingSetMB": [
+          413,
+          220
+        ],
+        "privateMB": [
+          1458,
+          1197
+        ],
+        "gpu3dPct": 0.37,
+        "gpu3dMax": 2.2,
+        "videoDecodePct": 6.76,
+        "videoDecodeMax": 49.8,
+        "vramMB": [
+          2634,
+          2634
+        ]
+      },
+      "chrome-utility": {
+        "cpuPctOfCore": 0.17,
+        "cpuPctOfCoreMax": 0.3,
+        "workingSetMB": [
+          63,
+          63
+        ],
+        "privateMB": [
+          22,
+          22
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-renderer": {
+        "cpuPctOfCore": 49.03,
+        "cpuPctOfCoreMax": 77.7,
+        "workingSetMB": [
+          665,
+          665
+        ],
+        "privateMB": [
+          455,
+          456
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      }
+    },
+    "cfg-master-preview": {
+      "vMix64": {
+        "cpuPctOfCore": 67.2,
+        "cpuPctOfCoreMax": 82.5,
+        "workingSetMB": [
+          582,
+          582
+        ],
+        "privateMB": [
+          1921,
+          1921
+        ],
+        "gpu3dPct": 16.37,
+        "gpu3dMax": 22.9,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          5351,
+          5351
+        ]
+      },
+      "CefBrowserInstance": {
+        "cpuPctOfCore": 0.54,
+        "cpuPctOfCoreMax": 2.6,
+        "workingSetMB": [
+          94,
+          94
+        ],
+        "privateMB": [
+          63,
+          63
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "CefSharp.BrowserSubprocess": {
+        "cpuPctOfCore": 3.18,
+        "cpuPctOfCoreMax": 13.9,
+        "workingSetMB": [
+          627,
+          628
+        ],
+        "privateMB": [
+          732,
+          732
+        ],
+        "gpu3dPct": 0.16,
+        "gpu3dMax": 1.6,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          1051,
+          1051
+        ]
+      },
+      "node": {
+        "cpuPctOfCore": 0.69,
+        "cpuPctOfCoreMax": 2.4,
+        "workingSetMB": [
+          69,
+          69
+        ],
+        "privateMB": [
+          74,
+          73
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-browser": {
+        "cpuPctOfCore": 0.62,
+        "cpuPctOfCoreMax": 1.7,
+        "workingSetMB": [
+          201,
+          201
+        ],
+        "privateMB": [
+          89,
+          89
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-crashpad-handler": {
+        "cpuPctOfCore": 0,
+        "cpuPctOfCoreMax": 0,
+        "workingSetMB": [
+          10,
+          10
+        ],
+        "privateMB": [
+          2,
+          2
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-gpu-process": {
+        "cpuPctOfCore": 11.62,
+        "cpuPctOfCoreMax": 45.1,
+        "workingSetMB": [
+          342,
+          189
+        ],
+        "privateMB": [
+          1024,
+          752
+        ],
+        "gpu3dPct": 0.3,
+        "gpu3dMax": 1.5,
+        "videoDecodePct": 5.62,
+        "videoDecodeMax": 33.4,
+        "vramMB": [
+          1488,
+          1488
+        ]
+      },
+      "chrome-utility": {
+        "cpuPctOfCore": 0.31,
+        "cpuPctOfCoreMax": 1.7,
+        "workingSetMB": [
+          63,
+          63
+        ],
+        "privateMB": [
+          22,
+          22
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-renderer": {
+        "cpuPctOfCore": 4.1,
+        "cpuPctOfCoreMax": 16.4,
+        "workingSetMB": [
+          668,
+          661
+        ],
+        "privateMB": [
+          462,
+          455
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      }
+    },
+    "cfg-master-nomonitor": {
+      "vMix64": {
+        "cpuPctOfCore": 62.34,
+        "cpuPctOfCoreMax": 73.5,
+        "workingSetMB": [
+          582,
+          582
+        ],
+        "privateMB": [
+          1921,
+          1921
+        ],
+        "gpu3dPct": 23.63,
+        "gpu3dMax": 28.8,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          5351,
+          5351
+        ]
+      },
+      "CefBrowserInstance": {
+        "cpuPctOfCore": 0.71,
+        "cpuPctOfCoreMax": 2.7,
+        "workingSetMB": [
+          94,
+          94
+        ],
+        "privateMB": [
+          63,
+          63
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "CefSharp.BrowserSubprocess": {
+        "cpuPctOfCore": 1.84,
+        "cpuPctOfCoreMax": 6.9,
+        "workingSetMB": [
+          628,
+          628
+        ],
+        "privateMB": [
+          732,
+          733
+        ],
+        "gpu3dPct": 0.29,
+        "gpu3dMax": 2.7,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          1051,
+          1051
+        ]
+      },
+      "node": {
+        "cpuPctOfCore": 0.25,
+        "cpuPctOfCoreMax": 0.7,
+        "workingSetMB": [
+          69,
+          69
+        ],
+        "privateMB": [
+          74,
+          73
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-browser": {
+        "cpuPctOfCore": 0.61,
+        "cpuPctOfCoreMax": 1.8,
+        "workingSetMB": [
+          202,
+          201
+        ],
+        "privateMB": [
+          89,
+          89
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-crashpad-handler": {
+        "cpuPctOfCore": 0,
+        "cpuPctOfCoreMax": 0,
+        "workingSetMB": [
+          10,
+          10
+        ],
+        "privateMB": [
+          2,
+          2
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-gpu-process": {
+        "cpuPctOfCore": 2.14,
+        "cpuPctOfCoreMax": 11.2,
+        "workingSetMB": [
+          318,
+          183
+        ],
+        "privateMB": [
+          894,
+          687
+        ],
+        "gpu3dPct": 0.75,
+        "gpu3dMax": 3.7,
+        "videoDecodePct": 8.82,
+        "videoDecodeMax": 57.5,
+        "vramMB": [
+          1362,
+          1362
+        ]
+      },
+      "chrome-utility": {
+        "cpuPctOfCore": 0.07,
+        "cpuPctOfCoreMax": 0.4,
+        "workingSetMB": [
+          63,
+          63
+        ],
+        "privateMB": [
+          22,
+          22
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-renderer": {
+        "cpuPctOfCore": 1.52,
+        "cpuPctOfCoreMax": 5.4,
+        "workingSetMB": [
+          661,
+          662
+        ],
+        "privateMB": [
+          455,
+          456
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      }
+    },
+    "cfg-program-only": {
+      "vMix64": {
+        "cpuPctOfCore": 67.58,
+        "cpuPctOfCoreMax": 75.2,
+        "workingSetMB": [
+          582,
+          583
+        ],
+        "privateMB": [
+          1921,
+          1921
+        ],
+        "gpu3dPct": 18.7,
+        "gpu3dMax": 28.6,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          5351,
+          5351
+        ]
+      },
+      "CefBrowserInstance": {
+        "cpuPctOfCore": 0.92,
+        "cpuPctOfCoreMax": 6.1,
+        "workingSetMB": [
+          94,
+          94
+        ],
+        "privateMB": [
+          63,
+          63
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "CefSharp.BrowserSubprocess": {
+        "cpuPctOfCore": 3.23,
+        "cpuPctOfCoreMax": 8.5,
+        "workingSetMB": [
+          628,
+          623
+        ],
+        "privateMB": [
+          733,
+          729
+        ],
+        "gpu3dPct": 0.37,
+        "gpu3dMax": 3.7,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          1051,
+          1052
+        ]
+      },
+      "node": {
+        "cpuPctOfCore": 0.62,
+        "cpuPctOfCoreMax": 1.5,
+        "workingSetMB": [
+          69,
+          69
+        ],
+        "privateMB": [
+          73,
+          73
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-browser": {
+        "cpuPctOfCore": 0.45,
+        "cpuPctOfCoreMax": 1.4,
+        "workingSetMB": [
+          202,
+          200
+        ],
+        "privateMB": [
+          89,
+          88
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-crashpad-handler": {
+        "cpuPctOfCore": 0.04,
+        "cpuPctOfCoreMax": 0.4,
+        "workingSetMB": [
+          10,
+          10
+        ],
+        "privateMB": [
+          2,
+          2
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-gpu-process": {
+        "cpuPctOfCore": 3.72,
+        "cpuPctOfCoreMax": 22.9,
+        "workingSetMB": [
+          178,
+          179
+        ],
+        "privateMB": [
+          675,
+          643
+        ],
+        "gpu3dPct": 0.46,
+        "gpu3dMax": 4.4,
+        "videoDecodePct": 4.43,
+        "videoDecodeMax": 44.3,
+        "vramMB": [
+          1345,
+          1345
+        ]
+      },
+      "chrome-utility": {
+        "cpuPctOfCore": 0.14,
+        "cpuPctOfCoreMax": 0.4,
+        "workingSetMB": [
+          63,
+          63
+        ],
+        "privateMB": [
+          22,
+          22
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      },
+      "chrome-renderer": {
+        "cpuPctOfCore": 3.19,
+        "cpuPctOfCoreMax": 11.4,
+        "workingSetMB": [
+          302,
+          296
+        ],
+        "privateMB": [
+          151,
+          143
+        ],
+        "gpu3dPct": 0,
+        "gpu3dMax": 0,
+        "videoDecodePct": 0,
+        "videoDecodeMax": 0,
+        "vramMB": [
+          0,
+          0
+        ]
+      }
+    }
+  },
+  "roundsDeciles": {
+    "program": [
+      {
+        "decile": 1,
+        "nodes": 2808,
+        "listeners": 67,
+        "heapMB": 2.53,
+        "mainThreadBusyPct": 4.74,
+        "framesOver33": 26,
+        "framesOver100": 1,
+        "maxFrame": 132,
+        "loafs": 13,
+        "loafMaxMs": 127.9,
+        "loafP95": 127.9,
+        "iframeOver33": 0,
+        "iframeMaxFrame": null
+      },
+      {
+        "decile": 2,
+        "nodes": 2209,
+        "listeners": 67,
+        "heapMB": 1.61,
+        "mainThreadBusyPct": 5.24,
+        "framesOver33": 24,
+        "framesOver100": 2,
+        "maxFrame": 315.4,
+        "loafs": 12,
+        "loafMaxMs": 321.3,
+        "loafP95": 321.3,
+        "iframeOver33": 0,
+        "iframeMaxFrame": null
+      },
+      {
+        "decile": 3,
+        "nodes": 2208,
+        "listeners": 67,
+        "heapMB": 1.64,
+        "mainThreadBusyPct": 4.81,
+        "framesOver33": 25,
+        "framesOver100": 0,
+        "maxFrame": 76.2,
+        "loafs": 10,
+        "loafMaxMs": 69.6,
+        "loafP95": 69.6,
+        "iframeOver33": 0,
+        "iframeMaxFrame": null
+      },
+      {
+        "decile": 4,
+        "nodes": 2209,
+        "listeners": 67,
+        "heapMB": 1.7,
+        "mainThreadBusyPct": 4.7,
+        "framesOver33": 29,
+        "framesOver100": 0,
+        "maxFrame": 69.5,
+        "loafs": 14,
+        "loafMaxMs": 72,
+        "loafP95": 72,
+        "iframeOver33": 0,
+        "iframeMaxFrame": null
+      },
+      {
+        "decile": 5,
+        "nodes": 2235,
+        "listeners": 67,
+        "heapMB": 1.86,
+        "mainThreadBusyPct": 4.88,
+        "framesOver33": 20,
+        "framesOver100": 0,
+        "maxFrame": 69.4,
+        "loafs": 7,
+        "loafMaxMs": 73.8,
+        "loafP95": 73.8,
+        "iframeOver33": 0,
+        "iframeMaxFrame": null
+      },
+      {
+        "decile": 6,
+        "nodes": 2213,
+        "listeners": 67,
+        "heapMB": 1.78,
+        "mainThreadBusyPct": 4.9,
+        "framesOver33": 26,
+        "framesOver100": 0,
+        "maxFrame": 76.5,
+        "loafs": 9,
+        "loafMaxMs": 77,
+        "loafP95": 77,
+        "iframeOver33": 0,
+        "iframeMaxFrame": null
+      },
+      {
+        "decile": 7,
+        "nodes": 2227,
+        "listeners": 67,
+        "heapMB": 1.84,
+        "mainThreadBusyPct": 5.05,
+        "framesOver33": 26,
+        "framesOver100": 0,
+        "maxFrame": 90.4,
+        "loafs": 12,
+        "loafMaxMs": 89.4,
+        "loafP95": 89.4,
+        "iframeOver33": 0,
+        "iframeMaxFrame": null
+      },
+      {
+        "decile": 8,
+        "nodes": 2210,
+        "listeners": 67,
+        "heapMB": 1.86,
+        "mainThreadBusyPct": 4.87,
+        "framesOver33": 29,
+        "framesOver100": 0,
+        "maxFrame": 83.2,
+        "loafs": 12,
+        "loafMaxMs": 87.3,
+        "loafP95": 87.3,
+        "iframeOver33": 0,
+        "iframeMaxFrame": null
+      },
+      {
+        "decile": 9,
+        "nodes": 2213,
+        "listeners": 67,
+        "heapMB": 1.91,
+        "mainThreadBusyPct": 4.99,
+        "framesOver33": 20,
+        "framesOver100": 0,
+        "maxFrame": 90.3,
+        "loafs": 15,
+        "loafMaxMs": 90.3,
+        "loafP95": 90.3,
+        "iframeOver33": 0,
+        "iframeMaxFrame": null
+      },
+      {
+        "decile": 10,
+        "nodes": 2216,
+        "listeners": 67,
+        "heapMB": 1.95,
+        "mainThreadBusyPct": 4.93,
+        "framesOver33": 23,
+        "framesOver100": 0,
+        "maxFrame": 90.3,
+        "loafs": 10,
+        "loafMaxMs": 87.8,
+        "loafP95": 87.8,
+        "iframeOver33": 0,
+        "iframeMaxFrame": null
+      }
+    ],
+    "master": [
+      {
+        "decile": 1,
+        "nodes": 40434,
+        "listeners": 3471,
+        "heapMB": 3.28,
+        "mainThreadBusyPct": 6.71,
+        "framesOver33": 44,
+        "framesOver100": 2,
+        "maxFrame": 124.9,
+        "loafs": 20,
+        "loafMaxMs": 122.1,
+        "loafP95": 122.1,
+        "iframeOver33": 44,
+        "iframeMaxFrame": 125
+      },
+      {
+        "decile": 2,
+        "nodes": 78710,
+        "listeners": 6643,
+        "heapMB": 3.39,
+        "mainThreadBusyPct": 8.31,
+        "framesOver33": 54,
+        "framesOver100": 6,
+        "maxFrame": 715.2,
+        "loafs": 40,
+        "loafMaxMs": 717.6,
+        "loafP95": 287.9,
+        "iframeOver33": 54,
+        "iframeMaxFrame": 715.3
+      },
+      {
+        "decile": 3,
+        "nodes": 114254,
+        "listeners": 8941,
+        "heapMB": 3.64,
+        "mainThreadBusyPct": 7.05,
+        "framesOver33": 48,
+        "framesOver100": 0,
+        "maxFrame": 76.4,
+        "loafs": 27,
+        "loafMaxMs": 76.1,
+        "loafP95": 73.5,
+        "iframeOver33": 48,
+        "iframeMaxFrame": 76.5
+      },
+      {
+        "decile": 4,
+        "nodes": 152132,
+        "listeners": 12138,
+        "heapMB": 3.91,
+        "mainThreadBusyPct": 7.45,
+        "framesOver33": 50,
+        "framesOver100": 9,
+        "maxFrame": 201.4,
+        "loafs": 39,
+        "loafMaxMs": 208.9,
+        "loafP95": 201.9,
+        "iframeOver33": 50,
+        "iframeMaxFrame": 201.5
+      },
+      {
+        "decile": 5,
+        "nodes": 190367,
+        "listeners": 15313,
+        "heapMB": 4.31,
+        "mainThreadBusyPct": 7.77,
+        "framesOver33": 45,
+        "framesOver100": 5,
+        "maxFrame": 215.2,
+        "loafs": 31,
+        "loafMaxMs": 227.3,
+        "loafP95": 212.9,
+        "iframeOver33": 45,
+        "iframeMaxFrame": 215.3
+      },
+      {
+        "decile": 6,
+        "nodes": 225885,
+        "listeners": 17611,
+        "heapMB": 4.41,
+        "mainThreadBusyPct": 7.74,
+        "framesOver33": 46,
+        "framesOver100": 5,
+        "maxFrame": 236.2,
+        "loafs": 28,
+        "loafMaxMs": 226.9,
+        "loafP95": 224.2,
+        "iframeOver33": 46,
+        "iframeMaxFrame": 236.2
+      },
+      {
+        "decile": 7,
+        "nodes": 264778,
+        "listeners": 21093,
+        "heapMB": 4.79,
+        "mainThreadBusyPct": 8.04,
+        "framesOver33": 47,
+        "framesOver100": 5,
+        "maxFrame": 277.8,
+        "loafs": 31,
+        "loafMaxMs": 289.2,
+        "loafP95": 256.7,
+        "iframeOver33": 47,
+        "iframeMaxFrame": 277.9
+      },
+      {
+        "decile": 8,
+        "nodes": 300305,
+        "listeners": 23391,
+        "heapMB": 4.91,
+        "mainThreadBusyPct": 7.75,
+        "framesOver33": 46,
+        "framesOver100": 4,
+        "maxFrame": 291.7,
+        "loafs": 30,
+        "loafMaxMs": 264.5,
+        "loafP95": 118.2,
+        "iframeOver33": 46,
+        "iframeMaxFrame": 291.7
+      },
+      {
+        "decile": 9,
+        "nodes": 337515,
+        "listeners": 26281,
+        "heapMB": 5.19,
+        "mainThreadBusyPct": 8.09,
+        "framesOver33": 42,
+        "framesOver100": 7,
+        "maxFrame": 333.3,
+        "loafs": 35,
+        "loafMaxMs": 340,
+        "loafP95": 298.2,
+        "iframeOver33": 42,
+        "iframeMaxFrame": 333.4
+      },
+      {
+        "decile": 10,
+        "nodes": 374725,
+        "listeners": 29171,
+        "heapMB": 5.43,
+        "mainThreadBusyPct": 8.63,
+        "framesOver33": 46,
+        "framesOver100": 9,
+        "maxFrame": 361.1,
+        "loafs": 30,
+        "loafMaxMs": 343.3,
+        "loafP95": 332.4,
+        "iframeOver33": 46,
+        "iframeMaxFrame": 361.1
+      }
+    ]
+  },
+  "rendererMemoryDuringRounds": {
+    "2688976": {
+      "privMB": [
+        54.9,
+        55
+      ],
+      "wsMB": [
+        97.9,
+        97.2
+      ],
+      "cpuPctOfCore": 0
+    },
+    "2689236": {
+      "privMB": [
+        15.5,
+        15.6
+      ],
+      "wsMB": [
+        32,
+        32.3
+      ],
+      "cpuPctOfCore": 0
+    },
+    "2689660": {
+      "privMB": [
+        46.3,
+        57.8
+      ],
+      "wsMB": [
+        105.1,
+        189.5
+      ],
+      "cpuPctOfCore": 12.01
+    },
+    "2691500": {
+      "privMB": [
+        71.8,
+        226.7
+      ],
+      "wsMB": [
+        136.6,
+        327.6
+      ],
+      "cpuPctOfCore": 16.31
+    },
+    "2691752": {
+      "privMB": [
+        20.8,
+        20.3
+      ],
+      "wsMB": [
+        48,
+        47.5
+      ],
+      "cpuPctOfCore": 0
+    }
+  },
+  "counts": [
+    {
+      "label": "A-load",
+      "program": {
+        "Nodes": 2208,
+        "JSEventListeners": 67,
+        "Documents": 1,
+        "Frames": 1,
+        "JSHeapUsedMB": 1.35,
+        "JSHeapTotalMB": 2.25,
+        "videos": 11,
+        "canvases": 13,
+        "images": 19,
+        "webgl": 11,
+        "liveCanvasesInDom": 11,
+        "videosInDom": 11
+      },
+      "master": {
+        "Nodes": 2621,
+        "JSEventListeners": 271,
+        "JSHeapUsedMB": 2.11,
+        "Documents": 2,
+        "Frames": 2
+      }
+    },
+    {
+      "label": "idleA-end",
+      "program": {
+        "Nodes": 2208,
+        "JSEventListeners": 67,
+        "Documents": 1,
+        "Frames": 1,
+        "JSHeapUsedMB": 1.43,
+        "JSHeapTotalMB": 2.5,
+        "videos": 11,
+        "canvases": 13,
+        "images": 19,
+        "webgl": 11,
+        "liveCanvasesInDom": 11,
+        "videosInDom": 11
+      },
+      "master": {
+        "Nodes": 2627,
+        "JSEventListeners": 271,
+        "JSHeapUsedMB": 2.35,
+        "Documents": 2,
+        "Frames": 2
+      }
+    },
+    {
+      "label": "round-10",
+      "program": {
+        "Nodes": 2208,
+        "JSEventListeners": 67,
+        "Documents": 1,
+        "Frames": 1,
+        "JSHeapUsedMB": 1.59,
+        "JSHeapTotalMB": 2.75,
+        "videos": 11,
+        "canvases": 13,
+        "images": 19,
+        "webgl": 11,
+        "liveCanvasesInDom": 11,
+        "videosInDom": 11
+      },
+      "master": {
+        "Nodes": 39835,
+        "JSEventListeners": 3161,
+        "JSHeapUsedMB": 3.04,
+        "Documents": 2,
+        "Frames": 2
+      }
+    },
+    {
+      "label": "round-20",
+      "program": {
+        "Nodes": 2208,
+        "JSEventListeners": 67,
+        "Documents": 1,
+        "Frames": 1,
+        "JSHeapUsedMB": 1.61,
+        "JSHeapTotalMB": 2.5,
+        "videos": 11,
+        "canvases": 13,
+        "images": 19,
+        "webgl": 11,
+        "liveCanvasesInDom": 11,
+        "videosInDom": 11
+      },
+      "master": {
+        "Nodes": 77044,
+        "JSEventListeners": 6051,
+        "JSHeapUsedMB": 3.35,
+        "Documents": 2,
+        "Frames": 2
+      }
+    },
+    {
+      "label": "round-30",
+      "program": {
+        "Nodes": 2208,
+        "JSEventListeners": 67,
+        "Documents": 1,
+        "Frames": 1,
+        "JSHeapUsedMB": 1.66,
+        "JSHeapTotalMB": 2.5,
+        "videos": 11,
+        "canvases": 13,
+        "images": 19,
+        "webgl": 11,
+        "liveCanvasesInDom": 11,
+        "videosInDom": 11
+      },
+      "master": {
+        "Nodes": 114254,
+        "JSEventListeners": 8941,
+        "JSHeapUsedMB": 3.63,
+        "Documents": 2,
+        "Frames": 2
+      }
+    },
+    {
+      "label": "round-40",
+      "program": {
+        "Nodes": 2208,
+        "JSEventListeners": 67,
+        "Documents": 1,
+        "Frames": 1,
+        "JSHeapUsedMB": 1.7,
+        "JSHeapTotalMB": 2.75,
+        "videos": 11,
+        "canvases": 13,
+        "images": 19,
+        "webgl": 11,
+        "liveCanvasesInDom": 11,
+        "videosInDom": 11
+      },
+      "master": {
+        "Nodes": 151464,
+        "JSEventListeners": 11831,
+        "JSHeapUsedMB": 3.92,
+        "Documents": 2,
+        "Frames": 2
+      }
+    },
+    {
+      "label": "round-50",
+      "program": {
+        "Nodes": 2208,
+        "JSEventListeners": 67,
+        "Documents": 1,
+        "Frames": 1,
+        "JSHeapUsedMB": 1.75,
+        "JSHeapTotalMB": 2.75,
+        "videos": 11,
+        "canvases": 13,
+        "images": 19,
+        "webgl": 11,
+        "liveCanvasesInDom": 11,
+        "videosInDom": 11
+      },
+      "master": {
+        "Nodes": 188676,
+        "JSEventListeners": 14721,
+        "JSHeapUsedMB": 4.22,
+        "Documents": 2,
+        "Frames": 2
+      }
+    },
+    {
+      "label": "round-60",
+      "program": {
+        "Nodes": 2208,
+        "JSEventListeners": 67,
+        "Documents": 1,
+        "Frames": 1,
+        "JSHeapUsedMB": 1.78,
+        "JSHeapTotalMB": 2.75,
+        "videos": 11,
+        "canvases": 13,
+        "images": 19,
+        "webgl": 11,
+        "liveCanvasesInDom": 11,
+        "videosInDom": 11
+      },
+      "master": {
+        "Nodes": 225887,
+        "JSEventListeners": 17611,
+        "JSHeapUsedMB": 4.48,
+        "Documents": 2,
+        "Frames": 2
+      }
+    },
+    {
+      "label": "round-70",
+      "program": {
+        "Nodes": 2208,
+        "JSEventListeners": 67,
+        "Documents": 1,
+        "Frames": 1,
+        "JSHeapUsedMB": 1.81,
+        "JSHeapTotalMB": 2.5,
+        "videos": 11,
+        "canvases": 13,
+        "images": 19,
+        "webgl": 11,
+        "liveCanvasesInDom": 11,
+        "videosInDom": 11
+      },
+      "master": {
+        "Nodes": 263097,
+        "JSEventListeners": 20501,
+        "JSHeapUsedMB": 4.72,
+        "Documents": 2,
+        "Frames": 2
+      }
+    },
+    {
+      "label": "round-80",
+      "program": {
+        "Nodes": 2208,
+        "JSEventListeners": 67,
+        "Documents": 1,
+        "Frames": 1,
+        "JSHeapUsedMB": 1.86,
+        "JSHeapTotalMB": 2.75,
+        "videos": 11,
+        "canvases": 13,
+        "images": 19,
+        "webgl": 11,
+        "liveCanvasesInDom": 11,
+        "videosInDom": 11
+      },
+      "master": {
+        "Nodes": 300305,
+        "JSEventListeners": 23391,
+        "JSHeapUsedMB": 4.97,
+        "Documents": 2,
+        "Frames": 2
+      }
+    },
+    {
+      "label": "round-90",
+      "program": {
+        "Nodes": 2208,
+        "JSEventListeners": 67,
+        "Documents": 1,
+        "Frames": 1,
+        "JSHeapUsedMB": 1.9,
+        "JSHeapTotalMB": 2.5,
+        "videos": 11,
+        "canvases": 13,
+        "images": 19,
+        "webgl": 11,
+        "liveCanvasesInDom": 11,
+        "videosInDom": 11
+      },
+      "master": {
+        "Nodes": 337517,
+        "JSEventListeners": 26281,
+        "JSHeapUsedMB": 5.26,
+        "Documents": 2,
+        "Frames": 2
+      }
+    },
+    {
+      "label": "round-100",
+      "program": {
+        "Nodes": 2208,
+        "JSEventListeners": 67,
+        "Documents": 1,
+        "Frames": 1,
+        "JSHeapUsedMB": 1.94,
+        "JSHeapTotalMB": 2.75,
+        "videos": 11,
+        "canvases": 13,
+        "images": 19,
+        "webgl": 11,
+        "liveCanvasesInDom": 11,
+        "videosInDom": 11
+      },
+      "master": {
+        "Nodes": 374728,
+        "JSEventListeners": 29171,
+        "JSHeapUsedMB": 5.5,
+        "Documents": 2,
+        "Frames": 2
+      }
+    },
+    {
+      "label": "idleB-end",
+      "program": {
+        "Nodes": 2208,
+        "JSEventListeners": 67,
+        "Documents": 1,
+        "Frames": 1,
+        "JSHeapUsedMB": 1.93,
+        "JSHeapTotalMB": 2.75,
+        "videos": 11,
+        "canvases": 13,
+        "images": 19,
+        "webgl": 11,
+        "liveCanvasesInDom": 11,
+        "videosInDom": 11
+      },
+      "master": {
+        "Nodes": 374728,
+        "JSEventListeners": 29171,
+        "JSHeapUsedMB": 5.46,
+        "Documents": 2,
+        "Frames": 2
+      }
+    },
+    {
+      "label": "C-afterStopAll",
+      "program": {
+        "Nodes": 2208,
+        "JSEventListeners": 67,
+        "Documents": 1,
+        "Frames": 1,
+        "JSHeapUsedMB": 1.93,
+        "JSHeapTotalMB": 2.75,
+        "videos": 11,
+        "canvases": 13,
+        "images": 19,
+        "webgl": 11,
+        "liveCanvasesInDom": 11,
+        "videosInDom": 11
+      },
+      "master": {
+        "Nodes": 374723,
+        "JSEventListeners": 29171,
+        "JSHeapUsedMB": 5.45,
+        "Documents": 2,
+        "Frames": 2
+      }
+    },
+    {
+      "label": "reload-before",
+      "program": {
+        "Nodes": 2208,
+        "JSEventListeners": 67,
+        "Documents": 1,
+        "Frames": 1,
+        "JSHeapUsedMB": 1.92,
+        "JSHeapTotalMB": 2.75,
+        "videos": 11,
+        "canvases": 13,
+        "images": 19,
+        "webgl": 11,
+        "liveCanvasesInDom": 11,
+        "videosInDom": 11
+      },
+      "master": {
+        "Nodes": 374723,
+        "JSEventListeners": 29171,
+        "JSHeapUsedMB": 5.44,
+        "Documents": 2,
+        "Frames": 2
+      }
+    },
+    {
+      "label": "reload-after",
+      "program": {
+        "Nodes": 2208,
+        "JSEventListeners": 67,
+        "Documents": 1,
+        "Frames": 1,
+        "JSHeapUsedMB": 1.96,
+        "JSHeapTotalMB": 2.75,
+        "videos": 11,
+        "canvases": 13,
+        "images": 19,
+        "webgl": 11,
+        "liveCanvasesInDom": 11,
+        "videosInDom": 11
+      },
+      "master": {
+        "Nodes": 374723,
+        "JSEventListeners": 29171,
+        "JSHeapUsedMB": 5.49,
+        "Documents": 2,
+        "Frames": 2
+      }
+    },
+    {
+      "label": "reload-onair-after",
+      "program": {
+        "Nodes": 2208,
+        "JSEventListeners": 67,
+        "Documents": 1,
+        "Frames": 1,
+        "JSHeapUsedMB": 1.96,
+        "JSHeapTotalMB": 2.75,
+        "videos": 11,
+        "canvases": 13,
+        "images": 19,
+        "webgl": 11,
+        "liveCanvasesInDom": 11,
+        "videosInDom": 11
+      },
+      "master": {
+        "Nodes": 374723,
+        "JSEventListeners": 29171,
+        "JSHeapUsedMB": 5.5,
+        "Documents": 2,
+        "Frames": 2
+      }
+    },
+    {
+      "label": "videos-0",
+      "program": {
+        "Nodes": 2208,
+        "JSEventListeners": 67,
+        "Documents": 1,
+        "Frames": 1,
+        "JSHeapUsedMB": 1.95,
+        "JSHeapTotalMB": 2.5,
+        "videos": 11,
+        "canvases": 13,
+        "images": 19,
+        "webgl": 11,
+        "liveCanvasesInDom": 11,
+        "videosInDom": 11
+      },
+      "master": {
+        "Nodes": 374723,
+        "JSEventListeners": 29171,
+        "JSHeapUsedMB": 5.48,
+        "Documents": 2,
+        "Frames": 2
+      }
+    },
+    {
+      "label": "videos-1",
+      "program": {
+        "Nodes": 2208,
+        "JSEventListeners": 67,
+        "Documents": 1,
+        "Frames": 1,
+        "JSHeapUsedMB": 1.97,
+        "JSHeapTotalMB": 2.75,
+        "videos": 11,
+        "canvases": 13,
+        "images": 19,
+        "webgl": 11,
+        "liveCanvasesInDom": 11,
+        "videosInDom": 11
+      },
+      "master": {
+        "Nodes": 374731,
+        "JSEventListeners": 29171,
+        "JSHeapUsedMB": 5.5,
+        "Documents": 2,
+        "Frames": 2
+      }
+    },
+    {
+      "label": "videos-3",
+      "program": {
+        "Nodes": 2208,
+        "JSEventListeners": 67,
+        "Documents": 1,
+        "Frames": 1,
+        "JSHeapUsedMB": 1.98,
+        "JSHeapTotalMB": 2.5,
+        "videos": 11,
+        "canvases": 13,
+        "images": 19,
+        "webgl": 11,
+        "liveCanvasesInDom": 11,
+        "videosInDom": 11
+      },
+      "master": {
+        "Nodes": 374732,
+        "JSEventListeners": 29171,
+        "JSHeapUsedMB": 5.51,
+        "Documents": 2,
+        "Frames": 2
+      }
+    },
+    {
+      "label": "videos-6",
+      "program": {
+        "Nodes": 2204,
+        "JSEventListeners": 67,
+        "Documents": 1,
+        "Frames": 1,
+        "JSHeapUsedMB": 1.97,
+        "JSHeapTotalMB": 2.75,
+        "videos": 11,
+        "canvases": 13,
+        "images": 19,
+        "webgl": 11,
+        "liveCanvasesInDom": 11,
+        "videosInDom": 11
+      },
+      "master": {
+        "Nodes": 374731,
+        "JSEventListeners": 29171,
+        "JSHeapUsedMB": 5.51,
+        "Documents": 2,
+        "Frames": 2
+      }
+    }
+  ],
+  "reloads": {
+    "ms": {
+      "n": 30,
+      "min": 2.7,
+      "max": 29,
+      "mean": 4.9,
+      "median": 3.7,
+      "p95": 7.5,
+      "p99": 29
+    },
+    "ok": 30,
+    "total": 30
+  },
+  "heap": {
+    "master-A": {
+      "totalMB": 6.88,
+      "nodeCount": 88182,
+      "closures": 4524,
+      "arrays": 1661,
+      "detachedNodes": 2,
+      "detachedKB": 1.3,
+      "detachedTop": [
+        [
+          "<canvas>",
+          2
+        ]
+      ],
+      "EventListener": 1349,
+      "HTMLDivElement": 2
+    },
+    "master-B": {
+      "totalMB": 116.56,
+      "nodeCount": 1613202,
+      "closures": 39741,
+      "arrays": 2360,
+      "detachedNodes": 42586,
+      "detachedKB": 8831.1,
+      "detachedTop": [
+        [
+          "<input type=\"text\" placeholder=\"0\" disabled=\"\">",
+          1800
+        ],
+        [
+          "<div>",
+          1748
+        ],
+        [
+          "<div class=\"field\">",
+          1656
+        ],
+        [
+          "<label>",
+          1656
+        ],
+        [
+          "<input type=\"text\" placeholder=\"Ej: 3\">",
+          900
+        ],
+        [
+          "<input type=\"text\" placeholder=\"Ej: 1\">",
+          900
+        ]
+      ],
+      "EventListener": 88065,
+      "HTMLDivElement": 2
+    },
+    "master-C": {
+      "totalMB": 116.44,
+      "nodeCount": 1612169,
+      "closures": 39734,
+      "arrays": 2361,
+      "detachedNodes": 42586,
+      "detachedKB": 8831.1,
+      "detachedTop": [
+        [
+          "<input type=\"text\" placeholder=\"0\" disabled=\"\">",
+          1800
+        ],
+        [
+          "<div>",
+          1748
+        ],
+        [
+          "<div class=\"field\">",
+          1656
+        ],
+        [
+          "<label>",
+          1656
+        ],
+        [
+          "<input type=\"text\" placeholder=\"Ej: 3\">",
+          900
+        ],
+        [
+          "<input type=\"text\" placeholder=\"Ej: 1\">",
+          900
+        ]
+      ],
+      "EventListener": 88065,
+      "HTMLDivElement": 2
+    },
+    "program-A": {
+      "totalMB": 4.23,
+      "nodeCount": 59773,
+      "closures": 2687,
+      "arrays": 1044,
+      "detachedNodes": 2,
+      "detachedKB": 1.3,
+      "detachedTop": [
+        [
+          "<canvas>",
+          2
+        ]
+      ],
+      "EventListener": 717,
+      "HTMLDivElement": 1
+    },
+    "program-B": {
+      "totalMB": 5.83,
+      "nodeCount": 90194,
+      "closures": 2695,
+      "arrays": 1043,
+      "detachedNodes": 2,
+      "detachedKB": 1.3,
+      "detachedTop": [
+        [
+          "<canvas>",
+          2
+        ]
+      ],
+      "EventListener": 733,
+      "HTMLDivElement": 1
+    },
+    "program-C": {
+      "totalMB": 5.73,
+      "nodeCount": 89275,
+      "closures": 2689,
+      "arrays": 1043,
+      "detachedNodes": 2,
+      "detachedKB": 1.3,
+      "detachedTop": [
+        [
+          "<canvas>",
+          2
+        ]
+      ],
+      "EventListener": 733,
+      "HTMLDivElement": 1
+    }
+  }
+}

@@ -5,6 +5,8 @@
 // edicion vigente (GET al abrir Master Control + broadcast
 // "GLA_TORNEO_EDICION_UPDATE" cuando cambia) para mostrarla en cada panel
 // -- la fuente de verdad es el servidor.
+import { currentPanelLifecycle } from './panel-lifecycle.js';
+
 let current = null; // { key, label, numero }
 let ediciones = [];
 const listeners = new Set();
@@ -40,18 +42,27 @@ export function glaTorneoLabel() {
 
 // Leyenda discreta "FUENTE ACTUAL: GLA RELÁMPAGO #N" junto al boton de
 // actualizar; se repinta sola si otra pestaña cambia la edicion.
-export function createGlaTorneoSourceNote() {
+// Suscripción atada al ciclo de vida del panel (se borra al cambiar de
+// panel) y sin referencia fuerte al <span>: antes cada render dejaba en
+// "listeners" una closure que retenía el panel entero desconectado.
+export function createGlaTorneoSourceNote(lifecycle = currentPanelLifecycle()) {
   const el = document.createElement('span');
   el.className = 'performance-sync-updated-at gla-torneo-source';
-  const paint = () => { el.textContent = `FUENTE ACTUAL: ${glaTorneoLabel()}`; };
+  el.textContent = `FUENTE ACTUAL: ${glaTorneoLabel()}`;
+  const ref = new WeakRef(el);
   const listener = () => {
-    if (!el.isConnected) {
+    const node = ref.deref();
+    if (!node) {
       listeners.delete(listener);
       return;
     }
-    paint();
+    node.textContent = `FUENTE ACTUAL: ${glaTorneoLabel()}`;
   };
-  paint();
   listeners.add(listener);
+  lifecycle?.onCleanup(() => listeners.delete(listener));
   return el;
+}
+
+export function glaTorneoListenerCount() {
+  return listeners.size;
 }

@@ -1,6 +1,6 @@
 # Sistema de trabajo para agentes
 
-Esta carpeta contiene instrucciones permanentes y específicas de GLA Broadcast Graphics System. `AGENTS.md` es el punto de entrada; `global-rules.md` es la fuente normativa principal. Los demás documentos agregan contexto o procedimientos sin redefinir las reglas.
+Esta carpeta contiene instrucciones permanentes y específicas de SOFTX (antes GLA Broadcast Graphics System). `AGENTS.md` es el punto de entrada; `global-rules.md` es la fuente normativa principal. Los demás documentos agregan contexto o procedimientos sin redefinir las reglas.
 
 ## Qué leer según la tarea
 

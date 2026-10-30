@@ -1,10 +1,11 @@
+import { glaAssetPath } from '../../../shared/asset-registry.js';
 import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { crestFile, teamName } from '../../../shared/teams.js';
 import { sponsorFile } from '../../../shared/sponsors.js';
 import { applyFittedText, updateFittedTextWithTransition, readTextAdjust } from '../text-fit.js';
 import { resolveTeamTokens } from '../../../shared/text-tokens.js';
 
-const VIDEO_SRC = '/assets/zocalos/zocalo-final-div-alpha.mp4';
+const VIDEO_SRC = glaAssetPath('zocaloFinalDiv', 'principal');
 
 const TEXTO1_MAX_FONT = 50;
 const TEXTO1_MIN_FONT = 22;

@@ -1,3 +1,4 @@
+import { glaAssetPath } from '../../../shared/asset-registry.js';
 import { crestFile, teamName } from '../../../shared/teams.js';
 import { applyElementAdjust, applyFittedText, applyPlainTextAdjust, readTextAdjust, toBroadcastUpper } from '../text-fit.js';
 import { resolveImageSrc } from '../theme-assets.js';
@@ -35,7 +36,7 @@ function rowCountFor(position) {
 
 const CONFIG = {
   goleadores: {
-    image: '/assets/tablas/tabla-goleadores.png',
+    image: glaAssetPath('goleadores', 'principal'),
     ranking: true,
     value: (player) => number(player.g),
     compare: (a, b) => {
@@ -44,7 +45,7 @@ const CONFIG = {
     },
   },
   asistidores: {
-    image: '/assets/tablas/tabla-asistidores.png',
+    image: glaAssetPath('asistidores', 'principal'),
     ranking: true,
     value: (player) => number(player.a),
     compare: (a, b) => {
@@ -53,7 +54,7 @@ const CONFIG = {
     },
   },
   jugadores: {
-    image: '/assets/tablas/mejores-jugadores.png',
+    image: glaAssetPath('jugadores', 'principal'),
     values: (player) => [number(player.g), number(player.a), number(player.pj)],
     // "value" (2026-09-02, SOLO se usa en modo ranking -- ver
     // "isRankingMode" mas abajo, exclusivo de Argentina Streamers): la

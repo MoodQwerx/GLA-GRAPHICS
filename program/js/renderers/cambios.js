@@ -1,9 +1,10 @@
+import { glaAssetPath } from '../../../shared/asset-registry.js';
 import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { crestFile } from '../../../shared/teams.js';
 import { updateFittedTextWithTransition, readTextAdjust } from '../text-fit.js';
 import { withGlaSegoeRegular } from '../program-fonts.js';
 
-const VIDEO_SRC = '/assets/eventos/cambios-alpha.mp4';
+const VIDEO_SRC = glaAssetPath('cambios', 'principal');
 
 const TEXT_MAX_FONT = 34;
 const TEXT_MIN_FONT = 18;

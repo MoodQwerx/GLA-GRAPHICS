@@ -33,7 +33,20 @@ function injectStyles() {
     .eq-status.error { color: #e88; }
     .eq-list { display: flex; flex-direction: column; gap: 10px; }
     .eq-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) 64px 104px auto; gap: 10px; align-items: end; background: #242424; padding: 10px 12px; border-radius: 6px; border: 1px solid #333; }
-    .eq-row.eq-row--crest { grid-template-columns: 22px 40px minmax(0, 1fr) 64px 104px 160px minmax(0, 170px) auto; }
+    /* GLA (2026-10-29): fila en 2 lineas para que NOMBRE tenga el ancho libre
+       y nada se superponga. Linea 1: handle, escudo, NOMBRE, ABREVIATURA.
+       Linea 2 (.eq-options, pasa a otra linea si no entra): COLOR, VISIBLE,
+       ESCUDO, GUARDAR. Debajo, el color PERSONALIZADO solo cuando esta elegido. */
+    .eq-row.eq-row--crest { grid-template-columns: 26px 44px minmax(0, 1fr) 84px; row-gap: 10px; }
+    .eq-row--crest > .eq-handle { grid-row: 1 / span 2; align-self: stretch; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
+    .eq-row--crest > .eq-handle:hover { background: #2e2e2e; }
+    .eq-row--crest > .eq-crest { grid-row: 1 / span 2; width: 44px; height: 44px; }
+    .eq-row--crest > .eq-options { grid-column: 3 / -1; display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; min-width: 0; }
+    .eq-options > .eq-field:nth-child(1) { flex: 1.4 1 180px; }
+    .eq-options > .eq-field:nth-child(2) { flex: 0.6 1 90px; }
+    .eq-options > .eq-field:nth-child(3) { flex: 1 1 150px; }
+    .eq-row--crest > .eq-custom-color { grid-column: 3 / -1; }
+    .eq-options > .eq-btn.primary { white-space: nowrap; margin-left: auto; }
     .eq-handle { align-self: center; cursor: grab; color: #888; font-size: 20px; line-height: 1; text-align: center; user-select: none; touch-action: none; padding: 6px 0; }
     .eq-handle:hover { color: #e5a93b; }
     .eq-row.is-dragging { outline: 2px solid #e5a93b; opacity: 0.85; }
@@ -42,12 +55,17 @@ function injectStyles() {
     .eq-color select { flex: 1; min-width: 0; }
     .eq-swatch { width: 14px; height: 14px; border-radius: 50%; border: 1px solid #777; flex: 0 0 auto; }
     .eq-custom-color { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 11px; color: #ccc; }
+    .eq-custom-color[hidden] { display: none; }
+    .eq-hex-preview { width: 30px; height: 30px; border-radius: 4px; border: 1px solid #777; flex: 0 0 auto; }
     .eq-custom-color input[type="color"] { width: 44px; height: 30px; padding: 0; border: 1px solid #555; background: #111; border-radius: 4px; cursor: pointer; }
     .eq-custom-color input.hex { width: 96px; background: #111; border: 1px solid #555; color: #fff; padding: 6px; border-radius: 4px; font-size: 12px; font-weight: 700; text-transform: uppercase; font-family: monospace; }
     .eq-custom-color input.hex.invalid { border-color: #e88; }
     .eq-row.is-hidden-team { opacity: 0.6; }
     .eq-row.is-pending { border-color: #e5a93b; }
-    @media (max-width: 900px) { .eq-row, .eq-row.eq-row--crest { grid-template-columns: 44px 1fr; } }
+    @media (max-width: 900px) {
+      .eq-row { grid-template-columns: 44px 1fr; }
+      .eq-row.eq-row--crest { grid-template-columns: 26px 44px minmax(0, 1fr) 72px; }
+    }
     .eq-crest { width: 40px; height: 40px; object-fit: contain; align-self: center; }
     .eq-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
     .eq-field span { font-size: 10px; color: #999; font-weight: 700; text-transform: uppercase; }
@@ -267,9 +285,10 @@ export function renderEquiposPanel(container, { themeId = 'argentinaStreamers', 
     crest.alt = team.name;
     if (team.file) crest.src = team.file;
 
-    const field = (label, input) => {
+    const field = (label, input, title) => {
       const wrap = document.createElement('label');
       wrap.className = 'eq-field';
+      if (title) wrap.title = title;
       const span = document.createElement('span');
       span.textContent = label;
       wrap.append(span, input);
@@ -347,20 +366,20 @@ export function renderEquiposPanel(container, { themeId = 'argentinaStreamers', 
     }
     meta.appendChild(document.createTextNode(`ID: ${team.id} · Escudo: ${fileName}${team.isCustom ? ` · Original: ${team.baseName} / ${team.baseAbbr}` : ''}`));
 
-    const cells = [
-      crest,
-      field('Nombre completo', nameInput),
-      field('Abreviatura', abbrInput),
-      field('Visible en desplegable', visibleSelect),
-    ];
+    const nameField = field('Nombre completo', nameInput);
+    const abbrField = field('Abreviatura', abbrInput);
+    const visibleField = isGla
+      ? field('Visible', visibleSelect, 'Visible en los desplegables')
+      : field('Visible en desplegable', visibleSelect);
+    let handle = null;
     if (isGla) {
-      const handle = document.createElement('span');
+      handle = document.createElement('span');
       handle.className = 'eq-handle';
       handle.textContent = '⠿';
       handle.title = 'Arrastrar para ordenar';
       handle.addEventListener('pointerdown', (event) => startSort(event, row));
-      cells.unshift(handle);
     }
+    let colorField = null;
     // COLOR DE EQUIPO (2026-10-22, SOLO GLA): se aplica al elegirlo (no
     // espera GUARDAR) y es el mismo color que recupera el Marcador.
     // PERSONALIZADO (2026-10-23): paleta + HEX editable, debajo de la fila.
@@ -405,17 +424,29 @@ export function renderEquiposPanel(container, { themeId = 'argentinaStreamers', 
       hexInput.type = 'text';
       hexInput.className = 'hex';
       hexInput.maxLength = 7;
+      hexInput.placeholder = '#12A8E0';
       hexInput.setAttribute('aria-label', `HEX, ${team.name}`);
-      customColorRow.append(customLabel, picker, hexLabel, hexInput);
+      const hexPreview = document.createElement('span');
+      hexPreview.className = 'eq-hex-preview';
+      hexPreview.title = 'Vista previa del color';
+      customColorRow.append(customLabel, picker, hexLabel, hexInput, hexPreview);
 
       const paint = () => {
         const isCustom = colorSelect.value === CUSTOM_COLOR_ID;
         swatch.style.background = isCustom ? customHex : colorHex(colorSelect.value || 'gris');
         picker.value = customHex.toLowerCase();
         hexInput.value = customHex;
+        hexPreview.style.background = customHex;
         hexInput.classList.remove('invalid');
         customColorRow.hidden = !isCustom;
       };
+      // Mientras se escribe: vista previa si el HEX ya es valido (con o sin #);
+      // se aplica recien con Enter o al salir del campo.
+      hexInput.addEventListener('input', () => {
+        const hex = normalizeHexColor(hexInput.value);
+        hexInput.classList.toggle('invalid', !hex && hexInput.value.trim() !== '');
+        if (hex) hexPreview.style.background = hex;
+      });
       paint();
       const applyCustom = (hex) => {
         customHex = hex;
@@ -439,6 +470,7 @@ export function renderEquiposPanel(container, { themeId = 'argentinaStreamers', 
         if (!hex) return;
         swatch.style.background = hex;
         hexInput.value = hex;
+        hexPreview.style.background = hex;
       });
       picker.addEventListener('change', () => {
         const hex = normalizeHexColor(picker.value);
@@ -456,11 +488,21 @@ export function renderEquiposPanel(container, { themeId = 'argentinaStreamers', 
       hexInput.addEventListener('change', commitHex);
       hexInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') commitHex(); });
       colorWrap.append(swatch, colorSelect);
-      cells.push(field('Color', colorWrap));
+      colorField = field('Color', colorWrap);
     }
-    if (crestSelect) cells.push(field('Escudo', crestSelect));
-    row.append(...cells, saveBtn, meta);
-    if (customColorRow) row.insertBefore(customColorRow, meta);
+    if (isGla) {
+      const options = document.createElement('div');
+      options.className = 'eq-options';
+      if (colorField) options.appendChild(colorField);
+      options.appendChild(visibleField);
+      if (crestSelect) options.appendChild(field('Escudo', crestSelect));
+      options.appendChild(saveBtn);
+      row.append(handle, crest, nameField, abbrField, options);
+      if (customColorRow) row.appendChild(customColorRow);
+      row.appendChild(meta);
+    } else {
+      row.append(crest, nameField, abbrField, visibleField, saveBtn, meta);
+    }
 
     // GLA: un escudo nuevo que en realidad es de un equipo existente se
     // asocia a ese equipo (no se crea un duplicado).
@@ -495,11 +537,15 @@ export function renderEquiposPanel(container, { themeId = 'argentinaStreamers', 
     return row;
   }
 
-  renderVisiblePanel = (nextStatus) => {
+  const thisPanelRender = (nextStatus) => {
     status = nextStatus;
     render();
   };
+  renderVisiblePanel = thisPanelRender;
   render();
   loadCrestFiles();
-  return () => {};
+  // Al salir de EQUIPOS el singleton no debe seguir reteniendo este panel.
+  return () => {
+    if (renderVisiblePanel === thisPanelRender) renderVisiblePanel = null;
+  };
 }

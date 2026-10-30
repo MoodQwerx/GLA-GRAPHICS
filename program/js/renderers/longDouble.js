@@ -1,9 +1,10 @@
+import { glaAssetPath } from '../../../shared/asset-registry.js';
 import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { applyFittedText, updateFittedTextWithTransition, readTextAdjust } from '../text-fit.js';
 import { resolveTeamTokens } from '../../../shared/text-tokens.js';
 import { withGlaSegoeRegular } from '../program-fonts.js';
 
-const VIDEO_SRC = '/assets/zocalos/zocalo-largo-doble-alpha.mp4';
+const VIDEO_SRC = glaAssetPath('longDouble', 'principal');
 
 const LINE1_MAX_FONT = 40;
 // MIN_FONT bajado de 22 a 18 (2026-09-10, pedido explicito del usuario:

@@ -1,7 +1,8 @@
+import { glaAssetPath } from '../../../shared/asset-registry.js';
 import { mountThemedAlphaVideo } from '../theme-assets.js';
 import { applyPlainTextAdjust, readTextAdjust } from '../text-fit.js';
 
-const VIDEO_SRC = '/assets/mosca/mosca-localstrike-alpha.mp4';
+const VIDEO_SRC = glaAssetPath('bug', 'principal');
 
 function pad2(n) {
   return String(n).padStart(2, '0');

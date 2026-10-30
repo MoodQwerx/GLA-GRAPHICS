@@ -1,0 +1,10 @@
+{
+  "program": {
+    "state": "visible",
+    "fps": 144
+  },
+  "master": {
+    "state": "visible",
+    "fps": 144
+  }
+}
