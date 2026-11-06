@@ -5,7 +5,7 @@
 // entorno SOFTX_SYSTEM) y ya no se puede cambiar desde el navegador.
 // Sin argumento (ej. "npm start"), se usa el último sistema iniciado
 // (data/active-theme.json, misma clave persistida de siempre).
-import { DEFAULT_THEME_ID, ARGENTINA_STREAMERS_THEME_ID, BAULETI_BALANZA_THEME_ID, isValidThemeId } from '../shared/themes.js';
+import { DEFAULT_THEME_ID, ARGENTINA_STREAMERS_THEME_ID, BAULETI_BALANZA_THEME_ID, COPA4N_THEME_ID, isValidThemeId } from '../shared/themes.js';
 import { loadPersistentValue, schedulePersistentWrite } from './persistence.js';
 
 const SYSTEM_ALIASES = {
@@ -18,6 +18,9 @@ const SYSTEM_ALIASES = {
   bauletibalanza: BAULETI_BALANZA_THEME_ID,
   'bauleti-balanza': BAULETI_BALANZA_THEME_ID,
   bxb: BAULETI_BALANZA_THEME_ID,
+  copa4naciones: COPA4N_THEME_ID,
+  'copa-4-naciones': COPA4N_THEME_ID,
+  c4n: COPA4N_THEME_ID,
 };
 
 export function normalizeSystemId(value) {
@@ -40,7 +43,7 @@ let launchSource;
 if (requested) {
   activeThemeId = normalizeSystemId(requested.raw);
   if (!activeThemeId) {
-    throw new Error(`[SOFTX] Sistema desconocido: "${requested.raw}". Usar --system=gla, --system=argentinaStreamers o --system=bauletiBalanza.`);
+    throw new Error(`[SOFTX] Sistema desconocido: "${requested.raw}". Usar --system=gla, --system=argentinaStreamers, --system=bauletiBalanza o --system=copa4naciones.`);
   }
   launchSource = requested.source;
   if (persisted !== activeThemeId) schedulePersistentWrite('active_theme', activeThemeId);

@@ -11,7 +11,13 @@ import { api, el, section, statusLine } from './bb-common.js';
 let lastStatus = null;
 const STATUS_TTL_MS = 10000;
 
-export function renderBbEquiposPanel(container, { lifecycle }) {
+// COPA 4 NACIONES usa este mismo panel con su theme y su texto (mismo
+// catálogo extendido en server/teams.js); por defecto, BAULETI vs BALANZA.
+const BB_DESCRIPTION = 'Equipos de BAULETI vs BALANZA. Marcador, VS, Formación, Planteles y Tarjetas usan esta lista. El escudo es cualquier PNG de la carpeta de escudos del sistema; sin escudo, las placas muestran un monograma dorado. Ocultar no borra nada.';
+
+// "pendingText": aviso de un equipo PENDIENTE (COPA lo cambia por
+// "PENDIENTE DE CONFIRMAR"; BxB conserva el suyo).
+export function renderBbEquiposPanel(container, { lifecycle, themeId = 'bauletiBalanza', description = BB_DESCRIPTION, pendingText = 'PENDIENTE: escudo nuevo detectado, confirmá sus datos.', pendingBadge = null }) {
   container.innerHTML = '';
   const root = el('div', { class: 'bb-panel' });
   container.appendChild(root);
@@ -46,7 +52,7 @@ export function renderBbEquiposPanel(container, { lifecycle }) {
 
   async function save(team, payload, okText) {
     try {
-      const data = await api('/api/teams/team', { method: 'POST', body: { theme: 'bauletiBalanza', teamId: team.id, ...payload } });
+      const data = await api('/api/teams/team', { method: 'POST', body: { theme: themeId, teamId: team.id, ...payload } });
       updateLocalTeamCatalog(data.catalog);
       if (lifecycle.destroyed) return;
       render();
@@ -99,6 +105,7 @@ export function renderBbEquiposPanel(container, { lifecycle }) {
       ]),
       crest,
       el('div', { class: 'bb-eq-fields' }, [
+        team.pending && pendingBadge ? el('span', { class: 'c4n-pending-badge', text: pendingBadge }) : null,
         field('NOMBRE', name),
         field('ABREV.', abbr),
         field('ESCUDO', crestSelect),
@@ -106,14 +113,14 @@ export function renderBbEquiposPanel(container, { lifecycle }) {
         field('VISIBLE', visible),
         el('button', { type: 'button', class: 'bb-btn primary', text: team.pending ? 'CONFIRMAR' : 'GUARDAR', onclick: doSave }),
       ]),
-      el('div', { class: 'bb-eq-meta', text: `ID: ${team.id}${team.pending ? ' · PENDIENTE: escudo nuevo detectado, confirmá sus datos.' : ''}` }),
+      el('div', { class: 'bb-eq-meta', text: `ID: ${team.id}${team.pending ? ` · ${pendingText}` : ''}` }),
     ]);
   }
 
   function render() {
     root.innerHTML = '';
     root.append(
-      el('p', { class: 'bb-desc', text: 'Equipos de BAULETI vs BALANZA. Marcador, VS, Formación, Planteles y Tarjetas usan esta lista. El escudo es cualquier PNG de la carpeta de escudos del sistema; sin escudo, las placas muestran un monograma dorado. Ocultar no borra nada.' }),
+      el('p', { class: 'bb-desc', text: description }),
       el('div', { class: 'bb-actions' }, [
         el('button', {
           type: 'button',

@@ -219,8 +219,16 @@ const fmtDur = (p) => (p.durationSec ? `${p.durationSec.toFixed(2)} s` : null);
 
 function warningsFor(asset, probe, baseline) {
   const file = asset.path.split('/').pop();
+  // Recurso todavía no entregado (COPA 4 NACIONES): PENDIENTE, no un error.
+  if (!probe.exists && asset.pending) return [];
   if (!probe.exists) return [`ADVERTENCIA: EL ARCHIVO ${file} NO EXISTE EN SU CARPETA.`];
   const out = [];
+  // COPA 4 NACIONES: medida y alfa pedidos al diseñador (shared/c4n-assets.js).
+  // Solo avisa: la pieza se puede encajar igual con AJUSTE DE CAPAS.
+  if (Array.isArray(asset.size) && probe.width && probe.height && (probe.width !== asset.size[0] || probe.height !== asset.size[1])) {
+    out.push(`ADVERTENCIA: EL PNG MIDE ${probe.width}x${probe.height}; SE PIDIÓ ${asset.size[0]}x${asset.size[1]} (se puede encajar con AJUSTE DE CAPAS).`);
+  }
+  if (asset.alpha === true && probe.hasAlpha === false) out.push('ADVERTENCIA: EL PNG NO TIENE TRANSPARENCIA (se pidió con alfa).');
   if (probe.probeError) out.push(`ADVERTENCIA: NO SE PUDO ANALIZAR EL ARCHIVO (${probe.probeError}).`);
   if (asset.kind === ASSET_KIND.ALPHA_VIDEO) {
     if (!/^(MP4|MOV)$/.test(probe.format)) out.push(`ADVERTENCIA: EL ARCHIVO NO ES UN MP4 (formato detectado: ${probe.format}). ESTE MÓDULO NECESITA ${ASSET_KIND_INFO[asset.kind].expected.toUpperCase()}.`);
@@ -241,6 +249,9 @@ function warningsFor(asset, probe, baseline) {
 }
 
 function expectedText(asset, baseline) {
+  if (Array.isArray(asset.size)) {
+    return [`PNG ${asset.size[0]}x${asset.size[1]}${asset.alpha ? ' con transparencia' : ''}`, asset.required ? 'ENTREGA DEL DISEÑADOR' : 'OPCIONAL'].join(' · ');
+  }
   const parts = [ASSET_KIND_INFO[asset.kind].expected];
   if (baseline) parts.push(...[fmtRes(baseline), fmtFps(baseline), fmtDur(baseline)].filter(Boolean));
   return parts.join(' · ');
@@ -249,6 +260,8 @@ function expectedText(asset, baseline) {
 async function describe(asset) {
   const diskPath = diskPathFor(asset.path);
   const probe = diskPath ? await probeAssetFile(diskPath) : { exists: false };
+  if (!probe.exists && asset.pending) probe.pending = true;
+  if (probe.exists && asset.pending) probe.ready = true;
   const baseline = baselines[asset.id] || null;
   return {
     id: asset.id,

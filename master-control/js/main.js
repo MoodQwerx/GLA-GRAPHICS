@@ -30,6 +30,19 @@ import { renderBbMarcadorPanel } from './bb/bb-marcador-panel.js';
 import { renderBbFormacionPanel } from './bb/bb-formacion-panel.js';
 import { renderBbPlantelesPanel } from './bb/bb-planteles-panel.js';
 import { renderBbEquiposPanel } from './bb/bb-equipos-panel.js';
+import { renderBbTarjetasPanel } from './bb/bb-tarjetas-panel.js';
+import { renderBbCambiosPanel } from './bb/bb-cambios-panel.js';
+import { renderBbVarPanel } from './bb/bb-var-panel.js';
+import { renderBbPenalesPanel } from './bb/bb-penales-panel.js';
+import { renderBbChartsPanel } from './bb/bb-charts-panel.js';
+import { renderC4nMarcadorPanel } from './c4n/c4n-marcador-panel.js';
+import { renderC4nTarjetasPanel, renderC4nCambiosPanel } from './c4n/c4n-eventos-panels.js';
+import { renderC4nFormacionPanel } from './c4n/c4n-formacion-panel.js';
+import { renderC4nPlantelesPanel } from './c4n/c4n-planteles-panel.js';
+import { renderC4nDatosPanel } from './c4n/c4n-datos-panel.js';
+import { renderC4nDataInfo, renderC4nMejoresPanel, renderC4nSponsorsPanel } from './c4n/c4n-misc-panels.js';
+import { renderC4nLayerAdjust } from './c4n/c4n-layer-adjust.js';
+import { renderC4nRankingPanel, renderC4nPosicionesPanel, renderC4nPreviaPanel, renderC4nPartidoManualPanel, renderC4nFixturePanel } from './c4n/c4n-stats-panels.js';
 import { createPanelLifecycle, setCurrentPanelLifecycle } from './panel-lifecycle.js';
 import { renderJugadoresPanel } from './jugadores-panel.js';
 import { renderZocaloEscudosPanel } from './zocalo-escudos-panel.js';
@@ -39,7 +52,7 @@ import { renderActualizadorDatosPanel } from './actualizador-datos-panel.js';
 import { loadGlaTorneoEdicion, setGlaTorneoEdicion } from './gla-torneo-source.js';
 import { updateLocalTeamCatalog, teamName } from '../../shared/teams.js';
 import { CUSTOM_COLOR_ID, colorHex, normalizeHexColor } from '../../shared/team-colors.js';
-import { isThemeReady, getTheme, getModuleAssetStatus, DEFAULT_THEME_ID, ARGENTINA_STREAMERS_THEME_ID, BAULETI_BALANZA_THEME_ID } from '../../shared/themes.js';
+import { isThemeReady, getTheme, getModuleAssetStatus, DEFAULT_THEME_ID, ARGENTINA_STREAMERS_THEME_ID, BAULETI_BALANZA_THEME_ID, COPA4N_THEME_ID } from '../../shared/themes.js';
 import { ADJUST_REGISTRY } from '../../shared/adjust-registry.js';
 
 // Draft local por modulo: lo que el operador esta editando. Se inicializa
@@ -243,15 +256,78 @@ function isArgentinaLiveModule(moduleId) {
 // persistidos, oculto de toda navegacion (antes solo se ocultaba para GLA,
 // ver GLA_HIDDEN_MODULES mas abajo -- ahora se oculta siempre, para
 // cualquier theme).
-const HIDDEN_FROM_NAV_IDS = new Set(['gol', 'zocaloFinal', 'zocaloFinalDiv', 'zocaloCompuestoLogo', 'bbTarjeta']);
+const HIDDEN_FROM_NAV_IDS = new Set(['gol', 'zocaloFinal', 'zocaloFinalDiv', 'zocaloCompuestoLogo', 'bbGol']);
 
 // BAULETI vs BALANZA (SOFTX [3], 2026-10-30): sus módulos "bb*" solo existen
-// en su navegación y el resto de los módulos no aparece en la suya. TARJETA
-// no tiene pestaña: la dispara el panel del MARCADOR (como GOL en GLA).
+// en su navegación y el resto de los módulos no aparece en la suya. GOL no
+// tiene pestaña: la dispara "GOL +" del panel del MARCADOR (como GOL en GLA).
+// TARJETAS tiene pestaña propia desde la FASE 2.
 const isBbModuleId = (id) => /^bb[A-Z]/.test(id);
 const isBbTheme = () => activeThemeId === BAULETI_BALANZA_THEME_ID;
+// COPA 4 NACIONES (SOFTX [4], 2026-11-04): mismo criterio con sus módulos
+// "c4n*". Cada sistema ve solo los suyos (GLA y Argentina Streamers, los de
+// siempre: prefijo vacío).
+const isC4nModuleId = (id) => /^c4n[A-Z]/.test(id);
+const isC4nTheme = () => activeThemeId === COPA4N_THEME_ID;
+const moduleSystemPrefix = (id) => (isBbModuleId(id) ? 'bb' : isC4nModuleId(id) ? 'c4n' : '');
+const themeSystemPrefix = () => (isBbTheme() ? 'bb' : isC4nTheme() ? 'c4n' : '');
+// C4N: pestaña de datos (no va al aire) y piezas en vivo / manejadas por su panel.
+const C4N_DATA_IDS = new Set(['c4nDatos']);
+const C4N_NO_UPDATE_IDS = new Set(['c4nMarcador', 'c4nTarjeta', 'c4nCambio']);
+const C4N_MATCH_READERS = new Set(['c4nVsPrepartido', 'c4nVsResultado', 'c4nFormacion', 'c4nStatsPrevia', 'c4nStatsEntretiempo', 'c4nStatsFinal', 'c4nZocaloCompuesto']);
 // Ganchos del panel BxB visible (estado de la placa de tarjeta, etc.).
 let bbPanelHooks = null;
+// Sin ACTUALIZAR: en vivo (Marcador, Penales) o manejados por su panel
+// (Tarjetas, Cambios mandan la placa al registrar).
+const BB_NO_UPDATE_IDS = new Set(['bbMarcador', 'bbPenales', 'bbTarjeta', 'bbCambio']);
+// Piezas que leen el partido (matchState): Preview las repinta cuando cambia
+// el Marcador.
+const BB_MATCH_READERS = new Set(['bbVs', 'bbFormacion', 'bbVsResultado', 'bbCharts', 'bbPenales']);
+
+// GRUPOS EXCLUSIVOS BxB (FASE 2): piezas que ocupan la misma zona nunca
+// quedan una encima de otra. TAKE de una saca a la que esté al aire de su
+// grupo, espera su salida (la misma animación de siempre) y recién ahí
+// entra la nueva. Fuera de los grupos (conviven): GOL (debajo del Marcador)
+// y VAR (arriba a la derecha).
+const BB_EXCLUSIVE_GROUPS = [
+  ['bbVs', 'bbFormacion', 'bbVsResultado', 'bbCharts'], // pantalla completa
+  ['bbTarjeta', 'bbCambio', 'bbZocaloLargo', 'bbZocaloCorto', 'bbZocaloCortoDoble'], // abajo a la izquierda
+  ['bbMarcador', 'bbPenales'], // arriba a la izquierda
+];
+// COPA 4 NACIONES: zona L (como en GLA: TAKE de una saca a la anterior; el
+// Preview nunca dispara la exclusión), pantalla completa, zona inferior y
+// moscas. Marcador y rotativo de sponsors conviven con todo.
+const C4N_EXCLUSIVE_GROUPS = [
+  ['c4nGoleadores', 'c4nAsistencias', 'c4nGA', 'c4nPosiciones', 'c4nPromoWeb'], // zona L
+  ['c4nFixture', 'c4nVsPrepartido', 'c4nVsResultado', 'c4nFormacion', 'c4nStatsPrevia', 'c4nStatsEntretiempo', 'c4nStatsFinal'], // pantalla completa
+  ['c4nTarjeta', 'c4nCambio', 'c4nZocaloTexto', 'c4nZocaloTextoDoble', 'c4nZocaloCorto', 'c4nZocaloCortoDoble', 'c4nZocaloCompuesto', 'c4nMejoresJugadores'], // zona inferior
+  ['c4nMoscaLogo', 'c4nMoscaTexto'], // mosca
+];
+const BB_SWAP_WAIT_MS = 750;
+let bbSwapTimer = null;
+
+function cancelBbSwap() {
+  if (bbSwapTimer) {
+    clearTimeout(bbSwapTimer);
+    bbSwapTimer = null;
+  }
+}
+
+function bbTake(id, doTake) {
+  cancelBbSwap();
+  const groups = isBbTheme() ? BB_EXCLUSIVE_GROUPS : isC4nTheme() ? C4N_EXCLUSIVE_GROUPS : [];
+  const group = groups.find((g) => g.includes(id)) || null;
+  const blockers = group ? group.filter((other) => other !== id && serverState[other]?.status === MODULE_STATUS.ON) : [];
+  if (!blockers.length) {
+    doTake();
+    return;
+  }
+  for (const other of blockers) ws.send({ type: WS_MSG.OUT, moduleId: other });
+  bbSwapTimer = setTimeout(() => {
+    bbSwapTimer = null;
+    doTake();
+  }, BB_SWAP_WAIT_MS);
+}
 
 // VAR: textos predefinidos para "Texto Motivo" (2026-08-15, pedido
 // explicito del usuario). Las claves matchean los "id" de las opciones de
@@ -847,7 +923,7 @@ function buildTabs() {
     if (MARCADOR_SUBSECTION_IDS.has(id) || HIDDEN_FROM_NAV_IDS.has(id)) continue;
     if (activeThemeId === ARGENTINA_STREAMERS_THEME_ID && ARGENTINA_STREAMERS_HIDDEN_MODULES.has(id)) continue;
     if (activeThemeId === DEFAULT_THEME_ID && GLA_HIDDEN_MODULES.has(id)) continue;
-    if (isBbModuleId(id) !== isBbTheme()) continue;
+    if (moduleSystemPrefix(id) !== themeSystemPrefix()) continue;
     const cat = MODULES[id].category || 'Otros';
     if (!byCategory.has(cat)) byCategory.set(cat, []);
     byCategory.get(cat).push(id);
@@ -858,6 +934,10 @@ function buildTabs() {
     // BxB: PLANTELES antes que EQUIPOS; abre en MARCADOR.
     byCategory.get('General').push('jugadoresAdmin', 'abreviaturas');
     if (!isBbModuleId(activeId) && activeId !== 'abreviaturas' && activeId !== 'jugadoresAdmin') activeId = 'bbMarcador';
+  } else if (isC4nTheme()) {
+    // C4N: ACTUALIZADOR DE DATOS (módulo c4nDatos), PLANTELES y EQUIPOS; abre en MARCADOR.
+    byCategory.get('General').push('jugadoresAdmin', 'abreviaturas');
+    if (!isC4nModuleId(activeId) && activeId !== 'abreviaturas' && activeId !== 'jugadoresAdmin') activeId = 'c4nMarcador';
   } else {
   byCategory.get('General').push('abreviaturas');
   byCategory.get('General').push('jugadoresAdmin');
@@ -1286,10 +1366,11 @@ function bbPanelContext() {
     sendLive(id) {
       ws.send({ type: WS_MSG.UPDATE, moduleId: id, data: draft[id], isExplicitUpdate: true });
       sendPreviewUpdateIfActive(id);
-      // VS y Formación toman los equipos del Marcador.
-      if (id === 'bbMarcador' && (previewedModuleId === 'bbVs' || previewedModuleId === 'bbFormacion')) sendPreviewSnapshot(previewedModuleId);
+      // Las piezas que leen el partido (matchState) siguen al Marcador en Preview.
+      if (id === 'bbMarcador' && BB_MATCH_READERS.has(previewedModuleId)) sendPreviewSnapshot(previewedModuleId);
+      if (id === 'c4nMarcador' && C4N_MATCH_READERS.has(previewedModuleId)) sendPreviewSnapshot(previewedModuleId);
     },
-    take: (id) => ws.send({ type: WS_MSG.TAKE, moduleId: id, data: draft[id] }),
+    take: (id) => bbTake(id, () => ws.send({ type: WS_MSG.TAKE, moduleId: id, data: draft[id] })),
     out: (id) => ws.send({ type: WS_MSG.OUT, moduleId: id }),
     preview(id) {
       previewedModuleId = id;
@@ -1329,6 +1410,20 @@ function renderPanel() {
     previewBtn.style.display = 'none';
     if (isBbTheme()) {
       renderBbEquiposPanel(extraContainer, { lifecycle: panelLifecycle });
+      updatePanelStatus();
+      return;
+    }
+    if (isC4nTheme()) {
+      // Mismo panel extendido de BxB (catálogo de server/teams.js) con el
+      // theme de COPA 4 NACIONES: nombre, abreviatura, escudo, color, orden y
+      // visible; un PNG nuevo en la carpeta de escudos es un equipo PENDIENTE.
+      renderBbEquiposPanel(extraContainer, {
+        lifecycle: panelLifecycle,
+        themeId: COPA4N_THEME_ID,
+        description: 'Selecciones de COPA 4 NACIONES. Marcador, VS, Formación, Planteles, Tablas y Estadísticas usan esta lista. Escudo = cualquier PNG de assets/themes/copa4naciones/crests/ (un PNG nuevo aparece como PENDIENTE DE CONFIRMAR). Ocultar no borra nada.',
+        pendingBadge: 'PENDIENTE DE CONFIRMAR',
+        pendingText: 'PENDIENTE DE CONFIRMAR: escudo descargado de copa4naciones.com o nuevo en la carpeta. No se usa en las gráficas hasta que lo confirmes.',
+      });
       updatePanelStatus();
       return;
     }
@@ -1376,6 +1471,12 @@ function renderPanel() {
       updatePanelStatus();
       return;
     }
+    if (isC4nTheme()) {
+      panelTitle.textContent = 'Planteles';
+      renderC4nPlantelesPanel(extraContainer, { lifecycle: panelLifecycle });
+      updatePanelStatus();
+      return;
+    }
     panelScope.cleanup = renderJugadoresPanel(extraContainer, draft.scoreboard);
     updatePanelStatus();
     return;
@@ -1398,8 +1499,15 @@ function renderPanel() {
   // criterio que MARCADOR): ACTUALIZAR queda redundante ahi tambien, ver
   // "sendFormacionLive" mas abajo. "ALWAYS_LIVE_MODULE_IDS" (mismo dia,
   // ronda de correcciones siguiente): VAR Chequeo y Replay, mismo criterio.
-  if (MARCADOR_SUBSECTION_IDS.has(activeId) || activeId === 'formacionEquipos' || ALWAYS_LIVE_MODULE_IDS.has(activeId) || isArgentinaLiveModule(activeId) || activeId === 'bbMarcador') {
+  if (MARCADOR_SUBSECTION_IDS.has(activeId) || activeId === 'formacionEquipos' || ALWAYS_LIVE_MODULE_IDS.has(activeId) || isArgentinaLiveModule(activeId) || BB_NO_UPDATE_IDS.has(activeId) || C4N_NO_UPDATE_IDS.has(activeId)) {
     updateBtn.style.display = 'none';
+  }
+  // C4N: ACTUALIZADOR DE DATOS nunca va al aire.
+  if (C4N_DATA_IDS.has(activeId)) {
+    takeBtn.style.display = 'none';
+    updateBtn.style.display = 'none';
+    outBtn.style.display = 'none';
+    previewBtn.style.display = 'none';
   }
 
   const mod = MODULES[activeId];
@@ -2040,6 +2148,43 @@ function renderPanel() {
     renderBbMarcadorPanel(extraContainer, bbPanelContext());
   } else if (activeId === 'bbFormacion') {
     renderBbFormacionPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'bbTarjeta') {
+    renderBbTarjetasPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'bbCambio') {
+    renderBbCambiosPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'bbVar') {
+    renderBbVarPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'bbPenales') {
+    renderBbPenalesPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'bbCharts') {
+    renderBbChartsPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'c4nMarcador') {
+    renderC4nMarcadorPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'c4nTarjeta') {
+    renderC4nTarjetasPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'c4nCambio') {
+    renderC4nCambiosPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'c4nFormacion') {
+    renderC4nFormacionPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'c4nDatos') {
+    renderC4nDatosPanel(extraContainer, { lifecycle: panelLifecycle });
+  } else if (activeId === 'c4nMejoresJugadores') {
+    renderC4nMejoresPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'c4nRotativoSponsors') {
+    renderC4nSponsorsPanel(extraContainer, bbPanelContext());
+  } else if (['c4nGoleadores', 'c4nAsistencias', 'c4nGA'].includes(activeId)) {
+    // COPA: FUENTE AUTOMÁTICA / MANUAL por módulo + carga manual sin JSON.
+    renderC4nRankingPanel(extraContainer, bbPanelContext(), activeId);
+  } else if (activeId === 'c4nPosiciones') {
+    renderC4nPosicionesPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'c4nStatsPrevia') {
+    renderC4nPreviaPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'c4nStatsEntretiempo' || activeId === 'c4nStatsFinal') {
+    renderC4nPartidoManualPanel(extraContainer, bbPanelContext(), activeId);
+  } else if (activeId === 'c4nFixture') {
+    renderC4nFixturePanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'c4nVsResultado') {
+    renderC4nDataInfo(extraContainer, bbPanelContext(), activeId);
   } else if (mod.autoRunClock) {
     // "FIN DEL CONTADOR" (2026-08-15, pedido explicito del usuario): solo
     // Marcador Zocalo lo pidio (default 06:00) -- Tiempo Adicional sigue
@@ -2070,6 +2215,11 @@ function renderPanel() {
     // completa = grupo VAR/sponsor, motivoGroup) y su sponsor/motivo
     // ahora viven en shared/adjust-registry.js.
     renderModuleAdjustAccordion(compositionContainer, activeId, draft[activeId]);
+  }
+  // COPA 4 NACIONES: ajuste independiente de capas (fondo PNG / contenido /
+  // texto / espaciado), en vivo -- para encajar el contenido sobre el PNG.
+  if (isC4nModuleId(activeId) && !C4N_DATA_IDS.has(activeId)) {
+    renderC4nLayerAdjust(compositionContainer, draft[activeId], () => scheduleAutoSave(idForThisRender), activeId);
   }
 
   // RECURSO GRÁFICO (SOFTX): solo aparece si el módulo tiene recursos
@@ -2140,7 +2290,7 @@ const ws = connect({
       // SELECT (ver TEAM_OPTIONS en shared/modules.js) -- sin esto, elegir
       // ARGENTINA STREAMERS seguía mostrando el desplegable de equipos de
       // GLA hasta cambiar de tab y volver.
-      if (activeId === 'abreviaturas' || activeId === 'jugadoresAdmin' || activeId === 'zocaloFinalDiv' || activeId === 'zocaloCompuesto' || activeId === 'scoreboard' || (isBbTheme() && isBbModuleId(activeId))) {
+      if (activeId === 'abreviaturas' || activeId === 'jugadoresAdmin' || activeId === 'zocaloFinalDiv' || activeId === 'zocaloCompuesto' || activeId === 'scoreboard' || (isBbTheme() && isBbModuleId(activeId)) || (isC4nTheme() && isC4nModuleId(activeId))) {
         renderPanel();
       }
     } else if (msg.type === 'GLA_TORNEO_EDICION_UPDATE') {
@@ -2259,6 +2409,11 @@ const ws = connect({
       updateTabStates();
       if (msg.moduleId === activeId) updatePanelStatus();
       bbPanelHooks?.onModuleUpdate?.(msg.moduleId);
+      // C4N: la vista del torneo la escribe SOLO el servidor; Master mantiene
+      // su copia al día (Preview y paneles la leen desde el draft).
+      if (msg.moduleId === 'c4nDatos' && isC4nTheme() && msg.moduleState?.data) {
+        draft.c4nDatos = JSON.parse(JSON.stringify(msg.moduleState.data));
+      }
       if (msg.moduleId === 'scoreboard' && activeId === 'estrellas') {
         renderPanel();
       }
@@ -2472,6 +2627,12 @@ takeBtn.addEventListener('click', () => {
     ws.send({ type: WS_MSG.TAKE, moduleId: activeId, data: draft[activeId] });
   }
 
+  // BAULETI vs BALANZA y COPA 4 NACIONES: sus propios grupos exclusivos (ver bbTake).
+  if (isBbTheme() || isC4nTheme()) {
+    bbTake(activeId, doTake);
+    return;
+  }
+
   // PLACAS DERECHA — grupo exclusivo (2026-09-04, ver definicion arriba):
   // si otro modulo del grupo ya esta al aire, lo sacamos primero y
   // esperamos a que termine de salir (misma animacion de siempre) antes
@@ -2521,6 +2682,8 @@ previewBtn.addEventListener('click', () => {
   sendPreviewSnapshot(activeId);
 });
 outBtn.addEventListener('click', () => {
+  // BxB: SACAR durante el cambio de placa cancela el TAKE que esperaba.
+  if (isBbTheme() || isC4nTheme()) cancelBbSwap();
   // Si el operador saca Formacion a mano mientras hay un cambio de equipo
   // en curso (OUT ya disparado, esperando para el TAKE automatico), hay
   // que cancelar ese TAKE pendiente -- si no, el modulo volveria solo al
@@ -2547,6 +2710,8 @@ outBtn.addEventListener('click', () => {
 // STOP ALL: saca del aire cualquier grafica activa, sin tocar los datos
 // cargados en cada draft (solo cambia el estado ON -> OUT).
 stopAllBtn.addEventListener('click', () => {
+  // Un TAKE BxB esperando la salida de otra placa no debe entrar después.
+  cancelBbSwap();
   if (formationTransitioning) {
     // Mismo motivo que en outBtn: durante la ventana de espera el estado
     // del servidor para Formacion ya es OUT (no entraria en el loop de

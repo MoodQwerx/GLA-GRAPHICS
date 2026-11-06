@@ -7,6 +7,7 @@
 // textContent que cambió; un gol cambia un número y dispara su animación
 // (roll + destello) sin reconstruir nada.
 import { elapsedMs, formatClock, parseClockLimit } from '../../../shared/clock.js';
+import { periodShort } from '../../../shared/bb-match.js';
 import { team, anim, crestHtml, escapeHtml } from './bb-common.js';
 
 const DEFAULT_LIMIT_MS = 20 * 60 * 1000;
@@ -99,7 +100,7 @@ export default function renderBbMarcador(contentEl, data, justTaken) {
 
   const limitMs = parseClockLimit(data?.clockEndText, DEFAULT_LIMIT_MS) || DEFAULT_LIMIT_MS;
   setText(refs.time, formatClock(elapsedMs(data?.clock, limitMs)));
-  setText(refs.period, String(data?.period || '').toUpperCase() || '1T');
+  setText(refs.period, periodShort(data?.period));
 
   const extra = Math.max(0, Math.round(Number(data?.extraMinutes) || 0));
   setText(refs.extraNum, `+${extra}`);

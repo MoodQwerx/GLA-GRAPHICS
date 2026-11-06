@@ -22,17 +22,17 @@ En local, todos los datos configurados por el operador se guardan bajo `data/` (
 
 ## Como arrancar
 
-1. Doble click en **`START SOFTX.bat`**: muestra "BIENVENIDO A SOFTX" y pregunta que software usar (**[1] ARGENTINA STREAMERS** / **[2] GLA RELÁMPAGO** / **[3] BAULETI vs BALANZA**).
-   - Accesos directos: **`START GLA RELÁMPAGO.bat`**, **`START ARGENTINA STREAMERS.bat`** y **`START BAULETI VS BALANZA.bat`** inician ese sistema sin preguntar.
-   - Los tres usan el mismo arranque ([start.bat](start.bat), que tambien acepta `start.bat gla` / `start.bat argentinaStreamers` / `start.bat bauletiBalanza`).
+1. Doble click en **`START SOFTX.bat`**: muestra "BIENVENIDO A SOFTX" y pregunta que software usar (**[1] ARGENTINA STREAMERS** / **[2] GLA RELÁMPAGO** / **[3] BAULETI vs BALANZA** / **[4] COPA 4 NACIONES**).
+   - Accesos directos: **`START GLA RELÁMPAGO.bat`**, **`START ARGENTINA STREAMERS.bat`** , **`START BAULETI VS BALANZA.bat`** y **`START COPA 4 NACIONES.bat`** inician ese sistema sin preguntar.
+   - Todos usan el mismo arranque ([start.bat](start.bat), que tambien acepta `start.bat gla` / `start.bat argentinaStreamers` / `start.bat bauletiBalanza` / `start.bat copa4naciones`).
 2. La primera vez instala dependencias automaticamente (puede tardar unos segundos).
-3. El servidor arranca en una ventana aparte (minimizada) con el sistema elegido (`node server/index.js --system=gla|argentinaStreamers|bauletiBalanza`) y, cuando responde, se abre el **Master Control** en el navegador.
+3. El servidor arranca en una ventana aparte (minimizada) con el sistema elegido (`node server/index.js --system=gla|argentinaStreamers|bauletiBalanza|copa4naciones`) y, cuando responde, se abre el **Master Control** en el navegador.
 4. La ventana de SOFTX queda mostrando el sistema activo, las direcciones y un menu:
    - **[P]** vuelve a abrir el Master Control en el navegador.
    - **[Q]** cierra SOFTX (servidor incluido). Al volver a abrir `START SOFTX.bat` pregunta de nuevo que sistema usar.
 5. Si esa ventana se cerro de otra forma y el servidor quedo corriendo, ejecutar [end.bat](end.bat) para cerrarlo manualmente.
 
-Por consola: `npm run start:gla`, `npm run start:as`, `npm run start:bb`, o `npm start` (usa el ultimo sistema iniciado). Tambien se puede definir `SOFTX_SYSTEM=gla|argentinaStreamers|bauletiBalanza`.
+Por consola: `npm run start:gla`, `npm run start:as`, `npm run start:bb`, `npm run start:c4n`, o `npm start` (usa el ultimo sistema iniciado). Tambien se puede definir `SOFTX_SYSTEM=gla|argentinaStreamers|bauletiBalanza|copa4naciones`.
 
 ## Recurso grafico (reemplazar assets sin tocar codigo)
 
@@ -83,8 +83,8 @@ Cada grafica usa el asset original entregado por el usuario (nunca una recreacio
 ```
 SOFTX/ (carpeta del repo: GLA-GRAPHICS)
 ├── START SOFTX.bat        # Pregunta que sistema usar y arranca SOFTX
-├── START GLA RELÁMPAGO.bat / START ARGENTINA STREAMERS.bat / START BAULETI VS BALANZA.bat   # Arranque directo de cada sistema
-├── start.bat              # Arranque unico que usan los tres (selector, servidor, menu P/Q)
+├── START GLA RELÁMPAGO.bat / START ARGENTINA STREAMERS.bat / START BAULETI VS BALANZA.bat / START COPA 4 NACIONES.bat   # Arranque directo de cada sistema
+├── start.bat              # Arranque unico que usan todos (selector, servidor, menu P/Q)
 ├── end.bat                # Cierra el servidor (lo mismo que hace la opcion Q de start.bat)
 ├── server/                # Servidor Express + WebSocket (estado autoritativo)
 ├── data/                  # Cache/fallback local de datos del operador (ignorada por Git)

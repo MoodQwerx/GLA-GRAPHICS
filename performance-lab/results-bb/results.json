@@ -1,10 +1,173 @@
 {
   "config": {
-    "NAV_CYCLES": 100,
-    "TAKE_ROUNDS": 25,
-    "GOALS": 200
+    "NAV_CYCLES": 5,
+    "TAKE_ROUNDS": 3,
+    "GOALS": 60
   },
   "tests": [
+    {
+      "name": "partido-completo",
+      "ok": true,
+      "fails": [],
+      "steps": [
+        {
+          "n": 1,
+          "desc": "equipos cargados",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "n": 2,
+          "desc": "planteles cargados",
+          "ok": true,
+          "detail": "9 jugadores BALANZA"
+        },
+        {
+          "n": 3,
+          "desc": "formación seleccionada",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "n": 4,
+          "desc": "TAKE VS",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "n": 5,
+          "desc": "OUT VS",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "n": 6,
+          "desc": "TAKE Formación",
+          "ok": true,
+          "detail": "6 fichas"
+        },
+        {
+          "n": 7,
+          "desc": "OUT Formación",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "n": 8,
+          "desc": "TAKE Marcador",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "n": 9,
+          "desc": "reloj corriendo",
+          "ok": true,
+          "detail": "00:01"
+        },
+        {
+          "n": 10,
+          "desc": "gol BAULETI suma al resultado",
+          "ok": true,
+          "detail": "marcador 1"
+        },
+        {
+          "n": 11,
+          "desc": "autor seleccionado",
+          "ok": true,
+          "detail": "9PRUEBA BAU 9"
+        },
+        {
+          "n": 12,
+          "desc": "animación GOL BAULETI",
+          "ok": true,
+          "detail": "{\"team\":\"BAULETI\",\"author\":\"9PRUEBA BAU 9\",\"word\":\"GOOOL\"}"
+        },
+        {
+          "n": 13,
+          "desc": "tarjeta amarilla",
+          "ok": true,
+          "detail": "PRUEBA BAL 4"
+        },
+        {
+          "n": 14,
+          "desc": "cambio",
+          "ok": true,
+          "detail": "{\"inName\":\"PRUEBA BAU 8\",\"cardOn\":false}"
+        },
+        {
+          "n": 15,
+          "desc": "gol BALANZA",
+          "ok": true,
+          "detail": "marcador visitante 1"
+        },
+        {
+          "n": 16,
+          "desc": "animación GOL BALANZA",
+          "ok": true,
+          "detail": "BALANZA"
+        },
+        {
+          "n": 17,
+          "desc": "tiempo adicional",
+          "ok": true,
+          "detail": "+2"
+        },
+        {
+          "n": 18,
+          "desc": "ENTRETIEMPO",
+          "ok": true,
+          "detail": "ENT"
+        },
+        {
+          "n": 19,
+          "desc": "CHART ENTRETIEMPO",
+          "ok": true,
+          "detail": "{\"score\":\"1—1\",\"kicker\":\"ENTRETIEMPO\",\"goals\":2,\"marks\":4}"
+        },
+        {
+          "n": 20,
+          "desc": "vuelta al partido (Marcador al aire)",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "n": 21,
+          "desc": "segundo tiempo",
+          "ok": true,
+          "detail": "2T 00:01"
+        },
+        {
+          "n": 22,
+          "desc": "terminar partido",
+          "ok": true,
+          "detail": "FINAL"
+        },
+        {
+          "n": 23,
+          "desc": "VS Resultado",
+          "ok": true,
+          "detail": "2-1"
+        },
+        {
+          "n": 24,
+          "desc": "CHART final",
+          "ok": true,
+          "detail": "{\"score\":\"2—1\",\"kicker\":\"FINAL DEL PARTIDO\",\"marks\":5,\"vsrOn\":false}"
+        },
+        {
+          "n": 24.5,
+          "desc": "datos coinciden (Marcador = VS Resultado = CHARTS = /api/bb/match)",
+          "ok": true,
+          "detail": "api 2-1, 5 eventos"
+        },
+        {
+          "n": 25,
+          "desc": "STOP ALL",
+          "ok": true,
+          "detail": ""
+        }
+      ]
+    },
     {
       "name": "navegacion-paneles",
       "ok": true,
@@ -16,24 +179,26 @@
         "programNodesDelta": 0,
         "programListenersDelta": 0,
         "programIntervalsDelta": 0,
+        "masterHeapDeltaMB": 0.08,
+        "programHeapDeltaMB": 0,
         "masterDetachedDelta": 0,
         "masterClosuresDelta": 0
       },
       "before": {
         "label": "A0 navegación",
         "master": {
-          "nodes": 778,
-          "listeners": 124,
-          "heapMB": 2.18,
+          "nodes": 853,
+          "listeners": 178,
+          "heapMB": 2.83,
           "timers": {
             "intervals": 0,
             "timeouts": 1
           }
         },
         "program": {
-          "nodes": 535,
-          "listeners": 49,
-          "heapMB": 1.25,
+          "nodes": 562,
+          "listeners": 58,
+          "heapMB": 1.5,
           "timers": {
             "intervals": 2,
             "timeouts": 0
@@ -43,68 +208,25 @@
       "after": {
         "label": "A fin",
         "master": {
-          "nodes": 778,
-          "listeners": 124,
-          "heapMB": 2.48,
+          "nodes": 853,
+          "listeners": 178,
+          "heapMB": 2.91,
           "timers": {
             "intervals": 0,
             "timeouts": 1
           }
         },
         "program": {
-          "nodes": 535,
-          "listeners": 49,
-          "heapMB": 1.3,
+          "nodes": 562,
+          "listeners": 58,
+          "heapMB": 1.5,
           "timers": {
             "intervals": 2,
             "timeouts": 0
           }
         }
       },
-      "series": [
-        {
-          "label": "A ciclo 50",
-          "master": {
-            "nodes": 778,
-            "listeners": 124,
-            "heapMB": 2.43,
-            "timers": {
-              "intervals": 0,
-              "timeouts": 1
-            }
-          },
-          "program": {
-            "nodes": 535,
-            "listeners": 49,
-            "heapMB": 1.28,
-            "timers": {
-              "intervals": 2,
-              "timeouts": 0
-            }
-          }
-        },
-        {
-          "label": "A ciclo 100",
-          "master": {
-            "nodes": 778,
-            "listeners": 124,
-            "heapMB": 2.47,
-            "timers": {
-              "intervals": 0,
-              "timeouts": 1
-            }
-          },
-          "program": {
-            "nodes": 535,
-            "listeners": 49,
-            "heapMB": 1.3,
-            "timers": {
-              "intervals": 2,
-              "timeouts": 0
-            }
-          }
-        }
-      ]
+      "series": []
     },
     {
       "name": "take-out-repetidos",
@@ -117,26 +239,28 @@
         "programNodesDelta": 0,
         "programListenersDelta": 0,
         "programIntervalsDelta": 0,
+        "masterHeapDeltaMB": 0.22,
+        "programHeapDeltaMB": 0.09,
         "programDetachedDelta": 0,
         "programClosuresDelta": 0,
         "onAirAlFinal": 0,
-        "programNodesRonda0a1": 0
+        "takeOutPorRonda": 10
       },
       "before": {
-        "label": "B ronda 1",
+        "label": "B0 take/out",
         "master": {
-          "nodes": 778,
-          "listeners": 124,
-          "heapMB": 2.61,
+          "nodes": 853,
+          "listeners": 178,
+          "heapMB": 2.99,
           "timers": {
             "intervals": 0,
             "timeouts": 1
           }
         },
         "program": {
-          "nodes": 535,
-          "listeners": 49,
-          "heapMB": 1.38,
+          "nodes": 562,
+          "listeners": 58,
+          "heapMB": 1.54,
           "timers": {
             "intervals": 2,
             "timeouts": 0
@@ -146,18 +270,18 @@
       "after": {
         "label": "B fin",
         "master": {
-          "nodes": 778,
-          "listeners": 124,
-          "heapMB": 3.37,
+          "nodes": 853,
+          "listeners": 178,
+          "heapMB": 3.21,
           "timers": {
             "intervals": 0,
             "timeouts": 1
           }
         },
         "program": {
-          "nodes": 535,
-          "listeners": 49,
-          "heapMB": 1.8,
+          "nodes": 562,
+          "listeners": 58,
+          "heapMB": 1.63,
           "timers": {
             "intervals": 2,
             "timeouts": 0
@@ -168,81 +292,18 @@
         {
           "label": "B ronda 1",
           "master": {
-            "nodes": 778,
-            "listeners": 124,
-            "heapMB": 2.61,
+            "nodes": 853,
+            "listeners": 178,
+            "heapMB": 3.08,
             "timers": {
               "intervals": 0,
               "timeouts": 1
             }
           },
           "program": {
-            "nodes": 535,
-            "listeners": 49,
-            "heapMB": 1.38,
-            "timers": {
-              "intervals": 2,
-              "timeouts": 0
-            }
-          }
-        },
-        {
-          "label": "B ronda 5",
-          "master": {
-            "nodes": 778,
-            "listeners": 124,
-            "heapMB": 2.75,
-            "timers": {
-              "intervals": 0,
-              "timeouts": 1
-            }
-          },
-          "program": {
-            "nodes": 535,
-            "listeners": 49,
-            "heapMB": 1.46,
-            "timers": {
-              "intervals": 2,
-              "timeouts": 0
-            }
-          }
-        },
-        {
-          "label": "B ronda 10",
-          "master": {
-            "nodes": 778,
-            "listeners": 124,
-            "heapMB": 3.1,
-            "timers": {
-              "intervals": 0,
-              "timeouts": 1
-            }
-          },
-          "program": {
-            "nodes": 535,
-            "listeners": 49,
-            "heapMB": 1.65,
-            "timers": {
-              "intervals": 2,
-              "timeouts": 0
-            }
-          }
-        },
-        {
-          "label": "B ronda 20",
-          "master": {
-            "nodes": 778,
-            "listeners": 124,
-            "heapMB": 3.36,
-            "timers": {
-              "intervals": 0,
-              "timeouts": 1
-            }
-          },
-          "program": {
-            "nodes": 535,
-            "listeners": 49,
-            "heapMB": 1.79,
+            "nodes": 562,
+            "listeners": 58,
+            "heapMB": 1.57,
             "timers": {
               "intervals": 2,
               "timeouts": 0
@@ -256,31 +317,34 @@
       "ok": true,
       "fails": [],
       "checks": {
-        "masterNodesPct": 0.24,
+        "masterNodesPct": 0.22,
         "masterListenersPct": 0,
         "masterIntervalsDelta": 0,
         "programNodesDelta": 2,
         "programListenersDelta": 0,
         "programIntervalsDelta": 0,
+        "masterHeapDeltaMB": 0.12,
+        "programHeapDeltaMB": 0.03,
         "estructuraSinReconstruir": true,
-        "eventos": 103,
-        "score": "1-100"
+        "score": "32-31",
+        "esperado": "32-31",
+        "eventos": 65
       },
       "before": {
         "label": "C0 goles",
         "master": {
-          "nodes": 843,
-          "listeners": 124,
-          "heapMB": 3.37,
+          "nodes": 920,
+          "listeners": 178,
+          "heapMB": 3.21,
           "timers": {
             "intervals": 0,
             "timeouts": 1
           }
         },
         "program": {
-          "nodes": 599,
-          "listeners": 49,
-          "heapMB": 1.8,
+          "nodes": 628,
+          "listeners": 58,
+          "heapMB": 1.63,
           "timers": {
             "intervals": 3,
             "timeouts": 0
@@ -290,25 +354,24 @@
       "after": {
         "label": "C fin",
         "master": {
-          "nodes": 845,
-          "listeners": 124,
-          "heapMB": 3.95,
+          "nodes": 922,
+          "listeners": 178,
+          "heapMB": 3.33,
           "timers": {
             "intervals": 0,
             "timeouts": 1
           }
         },
         "program": {
-          "nodes": 601,
-          "listeners": 49,
-          "heapMB": 2.06,
+          "nodes": 630,
+          "listeners": 58,
+          "heapMB": 1.66,
           "timers": {
             "intervals": 3,
             "timeouts": 0
           }
         }
-      },
-      "builds0": "v1"
+      }
     }
   ]
 }

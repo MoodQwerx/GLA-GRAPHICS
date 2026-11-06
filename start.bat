@@ -10,6 +10,7 @@ REM   start.bat                      -> pregunta que sistema usar (START SOFTX)
 REM   start.bat gla                  -> GLA RELAMPAGO directo
 REM   start.bat argentinaStreamers   -> ARGENTINA STREAMERS directo
 REM   start.bat bauletiBalanza       -> BAULETI vs BALANZA directo
+REM   start.bat copa4naciones        -> COPA 4 NACIONES directo
 REM El sistema elegido queda fijo hasta cerrar SOFTX (node server/index.js --system=...).
 set "SOFTX_SYSTEM=%~1"
 
@@ -50,6 +51,7 @@ echo.
 echo   [1] ARGENTINA STREAMERS
 echo   [2] GLA RELÁMPAGO
 echo   [3] BAULETI vs BALANZA
+echo   [4] COPA 4 NACIONES
 echo.
 echo ========================================
 echo.
@@ -58,6 +60,7 @@ set /p "OPCION=  Seleccioná una opción: "
 if "%OPCION%"=="1" set "SOFTX_SYSTEM=argentinaStreamers"
 if "%OPCION%"=="2" set "SOFTX_SYSTEM=gla"
 if "%OPCION%"=="3" set "SOFTX_SYSTEM=bauletiBalanza"
+if "%OPCION%"=="4" set "SOFTX_SYSTEM=copa4naciones"
 if "%SOFTX_SYSTEM%"=="" goto :selector
 
 :validate
@@ -68,6 +71,8 @@ if /i "%SOFTX_SYSTEM%"=="argentinaStreamers" set "SOFTX_SYSTEM=argentinaStreamer
 if /i "%SOFTX_SYSTEM%"=="argentinaStreamers" set "SYSTEM_NAME=ARGENTINA STREAMERS"
 if /i "%SOFTX_SYSTEM%"=="bauletiBalanza" set "SOFTX_SYSTEM=bauletiBalanza"
 if /i "%SOFTX_SYSTEM%"=="bauletiBalanza" set "SYSTEM_NAME=BAULETI vs BALANZA"
+if /i "%SOFTX_SYSTEM%"=="copa4naciones" set "SOFTX_SYSTEM=copa4naciones"
+if /i "%SOFTX_SYSTEM%"=="copa4naciones" set "SYSTEM_NAME=COPA 4 NACIONES"
 if "%SYSTEM_NAME%"=="" goto :badsystem
 title SOFTX - %SYSTEM_NAME%
 
@@ -176,7 +181,7 @@ exit /b 1
 :badsystem
 echo.
 echo [ERROR] Sistema desconocido: "%SOFTX_SYSTEM%".
-echo Usar: start.bat gla   /   start.bat argentinaStreamers   /   start.bat bauletiBalanza
+echo Usar: start.bat gla   /   start.bat argentinaStreamers   /   start.bat bauletiBalanza   /   start.bat copa4naciones
 echo.
 pause
 exit /b 1

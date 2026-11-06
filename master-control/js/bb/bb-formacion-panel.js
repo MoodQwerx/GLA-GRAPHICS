@@ -139,7 +139,7 @@ export function renderBbFormacionPanel(container, ctx) {
       return;
     }
     const conf = ensureConf(data, id);
-    const actives = roster.filter((p) => p.activo !== false);
+    const actives = roster.filter((p) => p.activo !== false && p.baja !== true);
     const lines = parseFormation(conf.esquema);
 
     const esquema = el('select', {

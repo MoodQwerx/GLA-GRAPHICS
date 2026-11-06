@@ -1,0 +1,1034 @@
+{
+  "config": {
+    "NAV_CYCLES": 100,
+    "TAKE_ROUNDS": 30
+  },
+  "tests": [
+    {
+      "name": "operacion-partido",
+      "ok": true,
+      "fails": [],
+      "steps": [
+        {
+          "n": 1,
+          "desc": "START COPA 4 NACIONES -> equipos",
+          "ok": true,
+          "detail": "ARG,BRA,CHI,URU,ARG,COM"
+        },
+        {
+          "n": 2,
+          "desc": "web sync (copa4naciones.com)",
+          "ok": true,
+          "detail": "{\"selecciones\":\"ok\",\"fixture\":\"ok\",\"planteles\":\"vacio\",\"tabla\":\"vacio\",\"goleadores\":\"vacio\",\"asistencias\":\"vacio\",\"ga\":\"vacio\"}"
+        },
+        {
+          "n": 3,
+          "desc": "fixture MANUAL precargado",
+          "ok": true,
+          "detail": "11 partidos"
+        },
+        {
+          "n": 4,
+          "desc": "elegir ARG vs URU -> Marcador al aire",
+          "ok": true,
+          "detail": "ARG 0 0 URU 1T 00:00 +0"
+        },
+        {
+          "n": 5,
+          "desc": "reloj",
+          "ok": true,
+          "detail": "00:01"
+        },
+        {
+          "n": 6,
+          "desc": "gol + autor (+ asistencia)",
+          "ok": true,
+          "detail": "marcador 1 · 9 PRUEBA ARG 9 · ASIST. 7 PRUEBA ARG 7"
+        },
+        {
+          "n": 7,
+          "desc": "tarjeta",
+          "ok": true,
+          "detail": "TARJETA AMARILLA · URU 1' 4 PRUEBA URU 4 URUGUAY CREADORES"
+        },
+        {
+          "n": 8,
+          "desc": "cambio (saca a la tarjeta: misma zona)",
+          "ok": true,
+          "detail": "CAMBIO · ARG 1' ENTRA 8 PRUEBA ARG 8 SALE 6 PRUEBA ARG 6"
+        },
+        {
+          "n": 9,
+          "desc": "entretiempo",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "n": 10,
+          "desc": "chart ENTRETIEMPO",
+          "ok": true,
+          "detail": "ENTRETIEMPO ARGENTINA STREAMERS URUGUAY CREADORES 1-0 5' 10' 15' 20' PRIMER TIEMPO 1' 1' 1' GOLES 1' 9 · PRUEBA ARG 9 ASIST. PRUEBA ARG 7 CAMBIOS ⇅ 1' 8 · PRUEB"
+        },
+        {
+          "n": 11,
+          "desc": "terminar (1-1, FINAL)",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "n": 12,
+          "desc": "penales en el Marcador",
+          "ok": true,
+          "detail": "PEN 2-1"
+        },
+        {
+          "n": 13,
+          "desc": "resultado guardado en el fixture",
+          "ok": true,
+          "detail": "{\"score\":{\"home\":1,\"away\":1},\"pen\":{\"home\":2,\"away\":1}}"
+        },
+        {
+          "n": 14,
+          "desc": "tabla actualizada (GXP 2 pts / PXP 1 pt)",
+          "ok": true,
+          "detail": "ARG 2 · URU 1"
+        },
+        {
+          "n": 15,
+          "desc": "VS RESULTADO con penales",
+          "ok": true,
+          "detail": "1-1 · FASE DE GRUPOS FINAL DEL PARTIDO ARGENTINA STREAMERS URUGUAY CREADORES 1 1 (2) PENALES (1)"
+        },
+        {
+          "n": 16,
+          "desc": "ESTADÍSTICAS FINAL (y sale VS Resultado)",
+          "ok": true,
+          "detail": "FINAL DEL PARTIDO ARGENTINA STREAMERS URUGUAY CREADORES 1-1 PENALES 2 - 1 10' 30' 40' PRIMER TIEMPO SEGUNDO TIEMPO ET 1'"
+        },
+        {
+          "n": 17,
+          "desc": "TABLA DE POSICIONES",
+          "ok": true,
+          "detail": "POSICIONES FASE DE GRUPOS PTS PJ G GXP PXP P DG 1 ARG 2 1 0 1 0 0 0 2 URU 1 1 0 0 1 0 0 3= BRA 0 0 0 0 0 0 0 3= CHI 0 0 "
+        },
+        {
+          "n": 18,
+          "desc": "GOLEADORES (SOFTX) y exclusión de zona L",
+          "ok": true,
+          "detail": "GOLEADORES GOLES · PARTIDOS JUGADOS 1 9PRUEBA ARG 9 1"
+        },
+        {
+          "n": 19,
+          "desc": "siguiente encuentro (BRA vs CHI)",
+          "ok": true,
+          "detail": "0-0 · BRA 0 0 CHI 1T 00:00 +0"
+        },
+        {
+          "n": 20,
+          "desc": "STOP ALL",
+          "ok": true,
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "name": "torneo-grupos-playoff",
+      "ok": true,
+      "fails": [],
+      "steps": [
+        {
+          "n": 1,
+          "desc": "tabla calculada (3/2/1/0)",
+          "ok": true,
+          "detail": "1 brasil 9 | 2= argentina 4 | 2= uruguay 4 | 4 chile 1"
+        },
+        {
+          "n": 2,
+          "desc": "empate en puntos sin desempate inventado",
+          "ok": true,
+          "detail": "1 brasil 9 | 2= argentina 4 | 2= uruguay 4 | 4 chile 1"
+        },
+        {
+          "n": 3,
+          "desc": "semis NO se completan con posiciones igualadas",
+          "ok": true,
+          "detail": "La tabla tiene posiciones igualadas o incompletas: las semifinales no se completan solas (resolvé la tabla con WEB o MANUAL)."
+        },
+        {
+          "n": 4,
+          "desc": "clasificación -> semifinales 1º vs 4º / 2º vs 3º",
+          "ok": true,
+          "detail": "SF1 brasil-chile · SF2 argentina-uruguay"
+        },
+        {
+          "n": 5,
+          "desc": "tercer puesto (perdedores de semis)",
+          "ok": true,
+          "detail": "brasil-uruguay"
+        },
+        {
+          "n": 6,
+          "desc": "final (ganadores de semis, incluye ganador por penales)",
+          "ok": true,
+          "detail": "chile-argentina"
+        },
+        {
+          "n": 7,
+          "desc": "Marcador de la final",
+          "ok": true,
+          "detail": "CHI 0 0 ARG 1T 00:00 +0"
+        },
+        {
+          "n": 8,
+          "desc": "datos de prueba restaurados",
+          "ok": true,
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "name": "todos-los-modulos-sin-png",
+      "ok": true,
+      "fails": [],
+      "steps": [
+        {
+          "n": "c4nMarcador",
+          "desc": "c4nMarcador al aire con su PNG real",
+          "ok": true,
+          "detail": "28 nodos · CHI 0 0 ARG 1T 00:00 +0"
+        },
+        {
+          "n": "c4nTarjeta",
+          "desc": "c4nTarjeta al aire con su PNG real",
+          "ok": true,
+          "detail": "28 nodos · TARJETA AMARILLA · ARG 1' 1 PRUEBA ARG 1 ARGENTINA STREAMERS"
+        },
+        {
+          "n": "c4nCambio",
+          "desc": "c4nCambio al aire con su PNG real",
+          "ok": true,
+          "detail": "31 nodos · CAMBIO · CHI 1' ENTRA 13 PRUEBA CHI 13 SALE 1 PRUEBA CHI 1"
+        },
+        {
+          "n": "c4nZocaloTexto",
+          "desc": "c4nZocaloTexto al aire con su PNG real",
+          "ok": true,
+          "detail": "12 nodos · COPA 4 NACIONES · SPEEDCAMP BUENOS AIRES"
+        },
+        {
+          "n": "c4nZocaloTextoDoble",
+          "desc": "c4nZocaloTextoDoble al aire sin PNG",
+          "ok": true,
+          "detail": "11 nodos · COPA 4 NACIONES 14 Y 15 DE NOVIEMBRE · SPEEDCAMP BUENOS AIRES"
+        },
+        {
+          "n": "c4nZocaloCorto",
+          "desc": "c4nZocaloCorto al aire con su PNG real",
+          "ok": true,
+          "detail": "12 nodos · EN INSTANTES COMENZAMOS"
+        },
+        {
+          "n": "c4nZocaloCortoDoble",
+          "desc": "c4nZocaloCortoDoble al aire sin PNG",
+          "ok": true,
+          "detail": "11 nodos · NOMBRE APELLIDO CARGO / DESCRIPCIÓN"
+        },
+        {
+          "n": "c4nZocaloCompuesto",
+          "desc": "c4nZocaloCompuesto al aire con su PNG real",
+          "ok": true,
+          "detail": "26 nodos · COPA 4 NACIONES 14 Y 15 DE NOVIEMBRE · SPEEDCAMP BUENOS AIRES"
+        },
+        {
+          "n": "c4nMoscaLogo",
+          "desc": "c4nMoscaLogo al aire con su PNG real",
+          "ok": true,
+          "detail": "8 nodos · "
+        },
+        {
+          "n": "c4nMoscaTexto",
+          "desc": "c4nMoscaTexto al aire con su PNG real",
+          "ok": true,
+          "detail": "8 nodos · "
+        },
+        {
+          "n": "c4nRotativoSponsors",
+          "desc": "c4nRotativoSponsors al aire sin PNG",
+          "ok": true,
+          "detail": "4 nodos · "
+        },
+        {
+          "n": "c4nGoleadores",
+          "desc": "c4nGoleadores al aire sin PNG",
+          "ok": true,
+          "detail": "9 nodos · GOLEADORES GOLES · PARTIDOS JUGADOS LAS ESTADÍSTICAS SE PUBLICARÁN CUA"
+        },
+        {
+          "n": "c4nAsistencias",
+          "desc": "c4nAsistencias al aire sin PNG",
+          "ok": true,
+          "detail": "9 nodos · ASISTENCIAS ASISTENCIAS · PARTIDOS JUGADOS LAS ESTADÍSTICAS SE PUBLICA"
+        },
+        {
+          "n": "c4nGA",
+          "desc": "c4nGA al aire sin PNG",
+          "ok": true,
+          "detail": "9 nodos · MEJORES JUGADORES · G+A GOLES + ASISTENCIAS · PARTIDOS JUGADOS LAS EST"
+        },
+        {
+          "n": "c4nPosiciones",
+          "desc": "c4nPosiciones al aire sin PNG",
+          "ok": true,
+          "detail": "69 nodos · POSICIONES FASE DE GRUPOS PTS PJ G GXP PXP P DG – ARG 0 0 0 0 0 0 0 – "
+        },
+        {
+          "n": "c4nPromoWeb",
+          "desc": "c4nPromoWeb al aire sin PNG",
+          "ok": true,
+          "detail": "13 nodos · SEGUÍ LA COPA Fixture, resultados, tabla y estadísticas en vivo C4N CO"
+        },
+        {
+          "n": "c4nMejoresJugadores",
+          "desc": "c4nMejoresJugadores al aire con su PNG real",
+          "ok": true,
+          "detail": "31 nodos · JUGADORES A SEGUIR 3PRUEBA CHI 3 5GOLES 5PRUEBA ARG 5 5GOLES"
+        },
+        {
+          "n": "c4nFixture",
+          "desc": "c4nFixture al aire sin PNG",
+          "ok": true,
+          "detail": "75 nodos · FIXTURE · SÁBADO 14 COPA 4 NACIONES · SPEEDCAMP BUENOS AIRES 11:00 ARG"
+        },
+        {
+          "n": "c4nVsPrepartido",
+          "desc": "c4nVsPrepartido al aire con su PNG real",
+          "ok": true,
+          "detail": "36 nodos · PRIMER PARTIDO DE LA JORNADA SELECCIÓN CHILENA DE CREADORES ARGENTINA "
+        },
+        {
+          "n": "c4nVsResultado",
+          "desc": "c4nVsResultado al aire con su PNG real",
+          "ok": true,
+          "detail": "44 nodos · GRAN FINAL EN JUEGO · 1T SELECCIÓN CHILENA DE CREADORES ARGENTINA STRE"
+        },
+        {
+          "n": "c4nFormacion",
+          "desc": "c4nFormacion al aire sin PNG",
+          "ok": true,
+          "detail": "131 nodos · FORMACIÓN SELECCIÓN CHILENA DE CREADORES ESQUEMA 4-3-3 1 PRUEBA CHI 1 "
+        },
+        {
+          "n": "c4nStatsPrevia",
+          "desc": "c4nStatsPrevia al aire sin PNG",
+          "ok": true,
+          "detail": "143 nodos · PREVIA SELECCIÓN CHILENA DE CREADORES ARGENTINA STREAMERS VS 1º POSICI"
+        },
+        {
+          "n": "c4nStatsEntretiempo",
+          "desc": "c4nStatsEntretiempo al aire sin PNG",
+          "ok": true,
+          "detail": "81 nodos · ENTRETIEMPO SELECCIÓN CHILENA DE CREADORES ARGENTINA STREAMERS 0-0 5' "
+        },
+        {
+          "n": "c4nStatsFinal",
+          "desc": "c4nStatsFinal al aire sin PNG",
+          "ok": true,
+          "detail": "90 nodos · FINAL DEL PARTIDO SELECCIÓN CHILENA DE CREADORES ARGENTINA STREAMERS 0"
+        }
+      ]
+    },
+    {
+      "name": "fase2-alcance",
+      "ok": true,
+      "fails": [],
+      "steps": [
+        {
+          "n": 1,
+          "desc": "navegación: 24 módulos + ACTUALIZADOR, sin los descartados, con FIXTURE",
+          "ok": true,
+          "detail": "25 pestañas c4n"
+        },
+        {
+          "n": 2,
+          "desc": "Program / Preview / RECURSO GRÁFICO sin los descartados; fixture.png 1500×950",
+          "ok": true,
+          "detail": "{\"domRemoved\":[],\"prevRemoved\":[],\"assetsRemoved\":[],\"fx\":\"PNG 1500x950 con transparencia · ENTREGA DEL DISEÑADOR\"}"
+        },
+        {
+          "n": 3,
+          "desc": "FORMACIÓN: 11 titulares (ARQ primero) + 5 suplentes, esquema 4-3-3",
+          "ok": true,
+          "detail": "{\"players\":11,\"subs\":5,\"scheme\":\"ESQUEMA 4-3-3\",\"first\":\"PRUEBA CHI 1\",\"ph\":114}"
+        },
+        {
+          "n": 4,
+          "desc": "FORMACIÓN 3-5-2: 11 titulares sin superponerse, líneas DEF / MED / DEL",
+          "ok": true,
+          "detail": "{\"players\":11,\"scheme\":\"ESQUEMA 3-5-2\",\"overlap\":0} · ARQUERO | DEFENSORES (3) | MEDIOCAMPISTAS (5) | DELANTEROS (2)"
+        },
+        {
+          "n": 5,
+          "desc": "FIXTURE SÁBADO: 6 partidos con horario, escudos y VS",
+          "ok": true,
+          "detail": "11:00 ARGENTINA STREAMERS VS URUGUAY CREADORES"
+        },
+        {
+          "n": 6,
+          "desc": "resultado guardado -> FIXTURE al aire se actualiza solo (sin reescribirlo)",
+          "ok": true,
+          "detail": "11:00 ARGENTINA STREAMERS 2 - 1 URUGUAY CREADORES FINAL"
+        },
+        {
+          "n": 7,
+          "desc": "cruces automáticos 1º vs 4º / 2º vs 3º (sin RESOLVER CRUCES)",
+          "ok": true,
+          "detail": "SF1 brasil-chile · SF2 argentina-uruguay"
+        },
+        {
+          "n": 8,
+          "desc": "ganadores -> GRAN FINAL, perdedores -> TERCER PUESTO",
+          "ok": true,
+          "detail": "FIN brasil-uruguay · 3P chile-argentina"
+        },
+        {
+          "n": 9,
+          "desc": "FIXTURE DOMINGO: SEMIFINAL 1 / 2, AMISTOSO, TERCER PUESTO, GRAN FINAL con equipos y resultados",
+          "ok": true,
+          "detail": "12:00 BRASIL CRIADORES 1 - 0 SELECCIÓN CHILENA DE CREADORES SEMIFINAL 1 FINAL || 13:30 ARGENTINA STREAMERS 0 - 0 PEN 3-4 URUGUAY CREADORES SEMIFINAL 2 FINAL || 15:00 ARG STREAMERS FEM ? VS ? LATAM AMISTOSO INTERNACIONAL || 16:00 SELECCIÓN CHILENA DE CREADORES VS ARGENTINA STREAMERS TERCER PUESTO || "
+        },
+        {
+          "n": 10,
+          "desc": "fixture de prueba restaurado",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "n": 11,
+          "desc": "GOLEADORES MANUAL: 8 filas completas",
+          "ok": true,
+          "detail": "GOLEADORES GOLES 1 10TEST GOLEADOR 1 9 2 11TEST GOLEADOR 2 8 3 12TEST GOLEADOR 3 7 4 13TEST GOLEADOR 4 6 5 14TEST GOLEAD"
+        },
+        {
+          "n": 12,
+          "desc": "AUTOMÁTICA (web vacía -> estado vacío) y volver a MANUAL sin perder la carga",
+          "ok": true,
+          "detail": "auto: GOLEADORES GOLES · PARTIDOS JUGADOS LAS ESTADÍSTICAS SE PUBL · manual conservadas: 8"
+        },
+        {
+          "n": 13,
+          "desc": "G+A MANUAL: total automático (3 + 2 = 5)",
+          "ok": true,
+          "detail": "5"
+        },
+        {
+          "n": 14,
+          "desc": "POSICIONES MANUAL: posición, PTS, PJ, G, GXP, PXP, P, DG cargados",
+          "ok": true,
+          "detail": "1 ARG 9 3 3 0 0 0 5 | 2 URU 7 3 2 0 0 1 3 | 3 BRA 5 3 1 0 0 2 1 | 4 CHI 3 3 0 0 0 3 -1"
+        },
+        {
+          "n": 15,
+          "desc": "PREVIA MANUAL: números de las dos selecciones + goleador y asistidor",
+          "ok": true,
+          "detail": "PREVIA SELECCIÓN CHILENA DE CREADORES ARGENTINA STREAMERS VS 1º POSICIÓN 2º 7 PUNTOS 6 3 PJ 3 2 G 2 1 GXP 1 0 PXP 0 0 P 1 9 GF 9 4 GC 4 +5 DG +5 GOLEADOR CHI 4 "
+        },
+        {
+          "n": 16,
+          "desc": "FINAL MANUAL / TEST: resultado, penales, goles, autores, tarjetas, cambios y timeline",
+          "ok": true,
+          "detail": "4 marcas · FINAL DEL PARTIDO SELECCIÓN CHILENA DE CREADORES ARGENTINA STREAMERS 3-2 PENALES 4 - 3 10' 30' 40' PRIMER TIEMPO SEGUNDO TIEMPO ET 7' 15' 23"
+        },
+        {
+          "n": 17,
+          "desc": "ENTRETIEMPO MANUAL / TEST: solo eventos del 1T",
+          "ok": true,
+          "detail": "ENTRETIEMPO SELECCIÓN CHILENA DE CREADORES ARGENTINA STREAMERS 3-2 5' 10' 15' 20' PRIMER TIEMPO 7' 15' GOLES 7' TEST AUTOR 1T ASIST. TEST AS"
+        },
+        {
+          "n": 18,
+          "desc": "datos de TEST vaciados y fuentes en AUTOMÁTICA / CALCULADA",
+          "ok": true,
+          "detail": "{\"tabla\":\"calculada\",\"leftovers\":[]}"
+        },
+        {
+          "n": 19,
+          "desc": "ACTUALIZADOR: fichas WEB: OK / VACÍO / ERROR",
+          "ok": true,
+          "detail": "WEB: SELECCIONES OK FIXTURE OK PLANTELES VACÍO TABLA VACÍO GOLEADORES VACÍO ASISTENCIAS VACÍO G+A VACÍO"
+        }
+      ]
+    },
+    {
+      "name": "fase2-zocalos-marcador-compuesto",
+      "ok": true,
+      "fails": [],
+      "steps": [
+        {
+          "n": 1,
+          "desc": "c4nZocaloCorto: texto al aire OUT -> cambio -> IN, el PNG queda quieto",
+          "ok": true,
+          "detail": "c4n-swap is-out -> c4n-swap is-in · \"MARTÍN PÉREZ · ENVIADO ESPECIAL\" · PNG quieto"
+        },
+        {
+          "n": 2,
+          "desc": "c4nZocaloCorto: OUT completo",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "n": 3,
+          "desc": "c4nZocaloTexto: texto al aire OUT -> cambio -> IN, el PNG queda quieto",
+          "ok": true,
+          "detail": "c4n-swap is-out -> c4n-swap is-in · \"SEGUNDO TEXTO DEL ZÓCALO LARGO SIMPLE\" · PNG quieto"
+        },
+        {
+          "n": 4,
+          "desc": "c4nZocaloTexto: OUT completo",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "n": 5,
+          "desc": "c4nZocaloCompuesto: texto al aire OUT -> cambio -> IN, el PNG queda quieto",
+          "ok": true,
+          "detail": "c4n-swap is-out -> c4n-swap is-in · \"RENGLÓN NUEVO AL AIRE\" · PNG quieto"
+        },
+        {
+          "n": 6,
+          "desc": "c4nZocaloCompuesto: OUT completo",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "n": 7,
+          "desc": "Zócalo Corto: POSICIÓN DEL TEXTO mueve solo el texto (X / Y) en vivo",
+          "ok": true,
+          "detail": "X 10 · Y 6 · matrix(1, 0, 0, 1, 10, 6)|translate(26px, 46px) scale(0.86) (composición antes: translate(26px, 46px) scale(0.86))"
+        },
+        {
+          "n": 8,
+          "desc": "Marcador MANUAL: equipos elegidos a mano (sin fixture, sin guardar en el fixture)",
+          "ok": true,
+          "detail": "CHI 0 0 URU 1T 00:00 +0 · GUARDAR deshabilitado: true"
+        },
+        {
+          "n": 9,
+          "desc": "cambiar equipos manuales y volver a FIXTURE: partido del fixture recuperado, fixture intacto",
+          "ok": true,
+          "detail": "BRA 0 0 CHI 1T 00:00 +0 -> ARG 0 0 BRA 1T 00:00 +0 -> BRA 0 0 CHI 1T 00:00 +0 · fixture intacto"
+        },
+        {
+          "n": 10,
+          "desc": "Zócalo Compuesto: dos renglones + modo COPA 4 NACIONES (logo + texto)",
+          "ok": true,
+          "detail": "{\"l1\":\"COPA 4 NACIONES\",\"l2\":\"SÁBADO 14 · SPEEDCAMP BUENOS AIRES\",\"brand\":\"copa-logo.png,copa-texto-azul.png\",\"sponsors\":2,\"dentro\":true,\"contain\":true}"
+        },
+        {
+          "n": 11,
+          "desc": "Zócalo Compuesto: sponsors rotando dentro del recuadro, con proporciones",
+          "ok": true,
+          "detail": "2 logos · dentro true · contain true"
+        },
+        {
+          "n": 12,
+          "desc": "COPA 4 NACIONES -> PARTIDO con transición (escudos del partido del Marcador)",
+          "ok": true,
+          "detail": "c4n-swap is-out · argentina.png,chile.png"
+        },
+        {
+          "n": 13,
+          "desc": "PARTIDO sigue al Marcador al aire (cambia el partido sin rearmar el PNG)",
+          "ok": true,
+          "detail": "brasil.png,uruguay.png · PNG quieto true"
+        },
+        {
+          "n": 14,
+          "desc": "PARTIDO -> COPA 4 NACIONES",
+          "ok": true,
+          "detail": "copa-logo.png,copa-texto-azul.png"
+        },
+        {
+          "n": 15,
+          "desc": "sponsors de prueba borrados (carpeta como estaba)",
+          "ok": true,
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "name": "recargar-recurso-x100",
+      "ok": true,
+      "fails": [],
+      "checks": {
+        "masterNodesDelta": 0,
+        "masterListenersDelta": 0,
+        "programNodesDelta": 0,
+        "programListenersDelta": 0,
+        "masterHeapDeltaMB": 0.03,
+        "programHeapDeltaMB": 0.02,
+        "ciclos": 100,
+        "detachedDelta": 0,
+        "masterDetachedDelta": 0,
+        "programDetachedDelta": 0,
+        "heapMasterMB": [
+          3.43,
+          3.44,
+          3.44,
+          3.43
+        ],
+        "heapProgramMB": [
+          1.9,
+          1.91,
+          1.91,
+          1.91
+        ]
+      },
+      "before": {
+        "label": "R0 recargar",
+        "master": {
+          "nodes": 938,
+          "listeners": 234,
+          "heapMB": 3.4
+        },
+        "program": {
+          "nodes": 643,
+          "listeners": 80,
+          "heapMB": 1.89
+        }
+      },
+      "after": {
+        "label": "R fin",
+        "master": {
+          "nodes": 938,
+          "listeners": 234,
+          "heapMB": 3.43
+        },
+        "program": {
+          "nodes": 643,
+          "listeners": 80,
+          "heapMB": 1.91
+        }
+      }
+    },
+    {
+      "name": "fase2-recurso-grafico",
+      "ok": true,
+      "fails": [],
+      "steps": [
+        {
+          "n": 1,
+          "desc": "carpeta fondos/: solo los PNG reales entregados",
+          "ok": true,
+          "detail": "cambio.png,marcador.png,mejores-jugadores.png,mosca-evento.png,mosca-logo.png,tarjeta.png,vs-prepartido.png,vs-resultado.png,zocalo-compuesto.png,zocalo-corto-simple.png,zocalo-texto-simple.png"
+        },
+        {
+          "n": 2,
+          "desc": "ZÓCALO TEXTO DOBLE: RECURSO GRÁFICO PENDIENTE (no error)",
+          "ok": true,
+          "detail": "zocalo-texto-doble.png · /assets/themes/copa4naciones/fondos"
+        },
+        {
+          "n": 3,
+          "desc": "copiar zocalo-texto-doble.png + RECARGAR (sin reiniciar)",
+          "ok": true,
+          "detail": "RECURSO RECARGADO: se usa el archivo nuevo. Preview actualizado; Program lo usa en el próximo TAKE."
+        },
+        {
+          "n": 4,
+          "desc": "estado LISTO en el panel",
+          "ok": true,
+          "detail": "LISTO"
+        },
+        {
+          "n": 5,
+          "desc": "Preview muestra el PNG antes del TAKE",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "n": 6,
+          "desc": "Program: fondo DEBAJO del contenido",
+          "ok": true,
+          "detail": "z 0 < 1"
+        },
+        {
+          "n": 7,
+          "desc": "motion: reveal del fondo y contenido después",
+          "ok": true,
+          "detail": "c4nWipeR · contenido 0.36s"
+        },
+        {
+          "n": 8,
+          "desc": "PNG cargado (?v= versionado)",
+          "ok": true,
+          "detail": "/assets/themes/copa4naciones/fondos/zocalo-texto-doble.png?v=mw3tnqw51tw"
+        },
+        {
+          "n": 9,
+          "desc": "FONDO X y LÍNEA 1 X en vivo (al aire)",
+          "ok": true,
+          "detail": "matrix(1, 0, 0, 1, 24, 0) · matrix(1, 0, 0, 1, -12, 0)"
+        },
+        {
+          "n": 10,
+          "desc": "RESET TODO EL AJUSTE",
+          "ok": true,
+          "detail": "matrix(1, 0, 0, 1, 0, 0) · matrix(1, 0, 0, 1, 0, 0)"
+        },
+        {
+          "n": 11,
+          "desc": "reemplazo mismo filename + RECARGAR: archivo nuevo",
+          "ok": true,
+          "detail": "RECURSO RECARGADO: se usa el archivo nuevo. El módulo está AL AIRE: el recurso nuevo se aplica cuando salga del aire (próximo TAKE)."
+        },
+        {
+          "n": 12,
+          "desc": "medida distinta: advertencia (no error)",
+          "ok": true,
+          "detail": "ADVERTENCIA: EL PNG MIDE 1330x300; SE PIDIÓ 1320x300 (se puede encajar con AJUSTE DE CAPAS"
+        },
+        {
+          "n": 13,
+          "desc": "TAKE siguiente usa la versión nueva (sin Ctrl+F5 ni reinicio)",
+          "ok": true,
+          "detail": "v=mw3tnqw51tw -> v=mw3tnxpu1uw"
+        },
+        {
+          "n": "14a",
+          "desc": "c4nGoleadores: tabla-goleadores.png debajo del contenido + marco del manifest",
+          "ok": true,
+          "detail": "left:1480px;top:240px;width:400px;height:600px"
+        },
+        {
+          "n": "14b",
+          "desc": "c4nFormacion: formacion.png debajo del contenido + marco del manifest",
+          "ok": true,
+          "detail": "left:210px;top:65px;width:1500px;height:950px"
+        },
+        {
+          "n": "14c",
+          "desc": "c4nFixture: fixture.png debajo del contenido + marco del manifest",
+          "ok": true,
+          "detail": "left:210px;top:65px;width:1500px;height:950px"
+        },
+        {
+          "n": 16,
+          "desc": "MOSTRAR GUÍAS / OPACIDAD FONDO: Preview sí, Program nunca",
+          "ok": true,
+          "detail": "{\"preview\":[true,true],\"program\":false}"
+        },
+        {
+          "n": 17,
+          "desc": "tarjeta ROJA rápida desde MARCADOR",
+          "ok": true,
+          "detail": "TARJETA ROJA · URU 1' 1 PRUEBA URU 1 URUGUAY CREADORES"
+        },
+        {
+          "n": 18,
+          "desc": "cambio rápido (SALE -> ENTRA) desde MARCADOR",
+          "ok": true,
+          "detail": "CAMBIO · BRA 1' ENTRA 2 PRUEBA BRA 2 SALE 1 PRUEBA BRA 1"
+        },
+        {
+          "n": 19,
+          "desc": "PNG borrado + RECARGAR: PENDIENTE",
+          "ok": true,
+          "detail": "PENDIENTE: el archivo no está en la carpeta; la pieza se muestra transparente (sin fondo)."
+        },
+        {
+          "n": 20,
+          "desc": "sin PNG: pieza transparente (solo contenido)",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "n": 21,
+          "desc": "no quedan PNG temporales en fondos/ (solo los reales)",
+          "ok": true,
+          "detail": "cambio.png,marcador.png,mejores-jugadores.png,mosca-evento.png,mosca-logo.png,tarjeta.png,vs-prepartido.png,vs-resultado.png,zocalo-compuesto.png,zocalo-corto-simple.png,zocalo-texto-simple.png"
+        },
+        {
+          "n": "23a",
+          "desc": "c4nMarcador: PNG real por regiones (2), escudos medidos, fondo debajo, Preview = Program",
+          "ok": true,
+          "detail": "barra,banner · BRA 0 0 URU 1T 00:00 +0"
+        },
+        {
+          "n": "23b",
+          "desc": "c4nVsPrepartido: PNG real por regiones (5), escudos medidos, fondo debajo, Preview = Program",
+          "ok": true,
+          "detail": "papel,parche-cartel,parche-barra,barra,cartel · PRIMER PARTIDO DE LA JORNADA BRASIL CRIADORES URUGUAY CREADO"
+        },
+        {
+          "n": "23c",
+          "desc": "c4nVsResultado: PNG real por regiones (5), escudos medidos, fondo debajo, Preview = Program",
+          "ok": true,
+          "detail": "papel,parche-franja,parche-guion,franja,guion · FASE DE GRUPOS EN JUEGO · 1T BRASIL CRIADORES URUGUAY CREADO"
+        },
+        {
+          "n": "23d",
+          "desc": "c4nMoscaLogo: PNG real por regiones (1), escudos medidos, fondo debajo, Preview = Program",
+          "ok": true,
+          "detail": "logo · "
+        },
+        {
+          "n": "23dc",
+          "desc": "c4nMoscaLogo: COMPOSICIÓN COMPLETA mueve la pieza en vivo",
+          "ok": true,
+          "detail": "translate(-16px, 10px) scale(1) -> translate(-6px, 10px) scale(1)"
+        },
+        {
+          "n": "23e",
+          "desc": "c4nZocaloCorto: PNG real por regiones (1), escudos medidos, fondo debajo, Preview = Program",
+          "ok": true,
+          "detail": "placa · MARTÍN PÉREZ · ENVIADO ESPECIAL"
+        },
+        {
+          "n": "23ec",
+          "desc": "c4nZocaloCorto: COMPOSICIÓN COMPLETA mueve la pieza en vivo",
+          "ok": true,
+          "detail": "translate(26px, 46px) scale(0.86) -> translate(36px, 46px) scale(0.86)"
+        },
+        {
+          "n": "23f",
+          "desc": "c4nMejoresJugadores: PNG real por regiones (2), escudos medidos, fondo debajo, Preview = Program",
+          "ok": true,
+          "detail": "placa,franja · JUGADORES A SEGUIR 3PRUEBA CHI 3 5GOLES 5PRUEBA ARG 5 5GOLES"
+        },
+        {
+          "n": "23g",
+          "desc": "c4nMoscaTexto: PNG real por regiones (1), escudos medidos, fondo debajo, Preview = Program",
+          "ok": true,
+          "detail": "texto · "
+        },
+        {
+          "n": "23gc",
+          "desc": "c4nMoscaTexto: COMPOSICIÓN COMPLETA mueve la pieza en vivo",
+          "ok": true,
+          "detail": "translate(0px, 0px) scale(1) -> translate(10px, 0px) scale(1)"
+        },
+        {
+          "n": "23h",
+          "desc": "c4nZocaloTexto: PNG real por regiones (1), escudos medidos, fondo debajo, Preview = Program",
+          "ok": true,
+          "detail": "placa · SEGUNDO TEXTO DEL ZÓCALO LARGO SIMPLE"
+        },
+        {
+          "n": "23hc",
+          "desc": "c4nZocaloTexto: COMPOSICIÓN COMPLETA mueve la pieza en vivo",
+          "ok": true,
+          "detail": "translate(0px, 0px) scale(1) -> translate(10px, 0px) scale(1)"
+        },
+        {
+          "n": "23i",
+          "desc": "c4nZocaloCompuesto: PNG real por regiones (2), escudos medidos, fondo debajo, Preview = Program",
+          "ok": true,
+          "detail": "base,sponsors · COPA 4 NACIONES SÁBADO 14 · SPEEDCAMP BUENOS AIRES"
+        },
+        {
+          "n": "23ic",
+          "desc": "c4nZocaloCompuesto: COMPOSICIÓN COMPLETA mueve la pieza en vivo",
+          "ok": true,
+          "detail": "translate(0px, 0px) scale(1) -> translate(10px, 0px) scale(1)"
+        },
+        {
+          "n": "23j",
+          "desc": "c4nTarjeta: PNG real por regiones (2), escudos medidos, fondo debajo, Preview = Program",
+          "ok": true,
+          "detail": "placa,franja · TARJETA ROJA · URU 1' 1 PRUEBA URU 1 URUGUAY CREADORES"
+        },
+        {
+          "n": "23k",
+          "desc": "c4nCambio: PNG real por regiones (2), escudos medidos, fondo debajo, Preview = Program",
+          "ok": true,
+          "detail": "placa,franja · CAMBIO · BRA 1' ENTRA 2 PRUEBA BRA 2 SALE 1 PRUEBA BRA 1"
+        },
+        {
+          "n": 22,
+          "desc": "estructura web: OK / sección rota / crítica",
+          "ok": true,
+          "detail": "{\"v2\":[\"goleadores\",\"asistencias\",\"ga\"],\"v3\":[\"data.matches\"]}"
+        }
+      ]
+    },
+    {
+      "name": "navegacion-paneles",
+      "ok": true,
+      "fails": [],
+      "checks": {
+        "masterNodesDelta": 0,
+        "masterListenersDelta": 0,
+        "programNodesDelta": 0,
+        "programListenersDelta": 0,
+        "masterHeapDeltaMB": 0.25,
+        "programHeapDeltaMB": 0.01,
+        "tabs": 27,
+        "detachedDelta": 0
+      },
+      "before": {
+        "label": "A0 navegación",
+        "master": {
+          "nodes": 974,
+          "listeners": 234,
+          "heapMB": 3.49
+        },
+        "program": {
+          "nodes": 643,
+          "listeners": 80,
+          "heapMB": 1.92
+        }
+      },
+      "after": {
+        "label": "A fin",
+        "master": {
+          "nodes": 974,
+          "listeners": 234,
+          "heapMB": 3.74
+        },
+        "program": {
+          "nodes": 643,
+          "listeners": 80,
+          "heapMB": 1.93
+        }
+      },
+      "series": [
+        {
+          "label": "A ciclo 25",
+          "master": {
+            "nodes": 974,
+            "listeners": 234,
+            "heapMB": 3.72
+          },
+          "program": {
+            "nodes": 643,
+            "listeners": 80,
+            "heapMB": 1.93
+          }
+        },
+        {
+          "label": "A ciclo 50",
+          "master": {
+            "nodes": 974,
+            "listeners": 234,
+            "heapMB": 3.73
+          },
+          "program": {
+            "nodes": 643,
+            "listeners": 80,
+            "heapMB": 1.93
+          }
+        },
+        {
+          "label": "A ciclo 75",
+          "master": {
+            "nodes": 974,
+            "listeners": 234,
+            "heapMB": 3.74
+          },
+          "program": {
+            "nodes": 643,
+            "listeners": 80,
+            "heapMB": 1.93
+          }
+        },
+        {
+          "label": "A ciclo 100",
+          "master": {
+            "nodes": 974,
+            "listeners": 234,
+            "heapMB": 3.74
+          },
+          "program": {
+            "nodes": 643,
+            "listeners": 80,
+            "heapMB": 1.93
+          }
+        }
+      ]
+    },
+    {
+      "name": "take-out-repetidos",
+      "ok": true,
+      "fails": [],
+      "checks": {
+        "masterNodesDelta": 0,
+        "masterListenersDelta": 0,
+        "programNodesDelta": 0,
+        "programListenersDelta": 0,
+        "masterHeapDeltaMB": 0.05,
+        "programHeapDeltaMB": 0.07,
+        "rondas": 30,
+        "takeOutPorRonda": 8,
+        "detachedDelta": 0,
+        "onAirAlFinal": 0
+      },
+      "before": {
+        "label": "B0 take/out",
+        "master": {
+          "nodes": 974,
+          "listeners": 234,
+          "heapMB": 3.74
+        },
+        "program": {
+          "nodes": 643,
+          "listeners": 80,
+          "heapMB": 1.94
+        }
+      },
+      "after": {
+        "label": "B fin",
+        "master": {
+          "nodes": 974,
+          "listeners": 234,
+          "heapMB": 3.79
+        },
+        "program": {
+          "nodes": 643,
+          "listeners": 80,
+          "heapMB": 2.01
+        }
+      },
+      "series": [
+        {
+          "label": "B ronda 10",
+          "master": {
+            "nodes": 974,
+            "listeners": 234,
+            "heapMB": 3.76
+          },
+          "program": {
+            "nodes": 643,
+            "listeners": 80,
+            "heapMB": 2
+          }
+        },
+        {
+          "label": "B ronda 20",
+          "master": {
+            "nodes": 974,
+            "listeners": 234,
+            "heapMB": 3.76
+          },
+          "program": {
+            "nodes": 643,
+            "listeners": 80,
+            "heapMB": 2
+          }
+        },
+        {
+          "label": "B ronda 30",
+          "master": {
+            "nodes": 974,
+            "listeners": 234,
+            "heapMB": 3.79
+          },
+          "program": {
+            "nodes": 643,
+            "listeners": 80,
+            "heapMB": 2.01
+          }
+        }
+      ]
+    }
+  ]
+}

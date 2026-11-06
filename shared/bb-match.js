@@ -180,6 +180,18 @@ export function setEventMinute(ev, minute) {
   return ev;
 }
 
+// Minuto de PARTIDO para CHARTS / timeline (el reloj del Marcador vuelve a
+// 00:00 en el 2T; acá el 2T sigue la cuenta): con tiempos de 20', el minuto
+// 12 del 2T es "32'" y el tiempo adicional se escribe "20+1'" / "40+2'".
+// "limitMs" = duración de cada tiempo.
+export function matchMinuteLabel(ev, limitMs) {
+  if (!ev || ev.type === BB_EVENT_TYPES.PENALTY || !ev.minute) return '';
+  const half = Math.max(1, Math.round((limitMs || 20 * 60000) / 60000));
+  const second = ev.period === '2T' || ev.period === 'FIN';
+  const base = second ? half : 0;
+  return ev.minute > half ? `${base + half}+${ev.minute - half}'` : `${base + ev.minute}'`;
+}
+
 // Orden cronológico: período, después reloj (penales: orden de la tanda) y
 // por último el momento real en que se cargó.
 export function sortEvents(events) {
@@ -279,6 +291,9 @@ export function buildMatchState(marcador, formacion, { teamLookup = (id) => ({ i
       local: tally.local.scored,
       visitante: tally.visitante.scored,
       kicks: tally.kicks,
+      nextSide: tally.nextSide,
+      round: tally.round,
+      suddenDeath: tally.suddenDeath,
     },
     clock: m.clock || null,
     clockEndText: m.clockEndText || '',

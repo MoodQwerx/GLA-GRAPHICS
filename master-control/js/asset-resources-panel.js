@@ -29,8 +29,9 @@ function el(tag, className, text) {
 }
 
 function describeProbe(probe) {
+  if (probe?.pending) return 'PENDIENTE (todavía no entregado: el módulo se muestra sin fondo)';
   if (!probe?.exists) return 'NO EXISTE';
-  const parts = [probe.format];
+  const parts = [probe.ready ? `LISTO · ${probe.format}` : probe.format];
   if (probe.codec) parts.push(probe.codec);
   if (probe.width && probe.height) parts.push(`${probe.width}x${probe.height}`);
   if (probe.fps) parts.push(`${probe.fps} FPS`);
@@ -71,6 +72,13 @@ export function renderAssetResources(container, moduleId, options = {}) {
     summary.appendChild(el('span', 'asset-res-title', assets.length > 1 ? `RECURSOS GRÁFICOS (${assets.length})` : 'RECURSO GRÁFICO'));
     summary.appendChild(el('span', 'asset-res-summary-file', assets.length > 1 ? assets.map((a) => a.label.toUpperCase()).join(' · ') : assets[0].fileName));
     if (assets.some((a) => a.warnings.length)) summary.appendChild(el('span', 'asset-res-warn-dot', '⚠'));
+    // Recursos "a entregar" (hoy solo COPA 4 NACIONES): PENDIENTE / LISTO.
+    const deliverables = assets.filter((a) => a.probe?.pending || a.probe?.ready);
+    if (deliverables.length) {
+      const ready = deliverables.filter((a) => a.probe.ready).length;
+      const state = ready === deliverables.length ? 'LISTO' : ready ? `${ready}/${deliverables.length} LISTOS` : 'PENDIENTE';
+      summary.appendChild(el('span', `asset-res-state ${ready === deliverables.length ? 'is-ready' : 'is-pending'}`, state));
+    }
     box.appendChild(summary);
 
     const note = el('p', 'asset-res-note', 'Para cambiar la pieza: ABRIR CARPETA, reemplazá el archivo con el MISMO nombre y apretá RECARGAR. No manda nada al aire.');
@@ -129,12 +137,14 @@ export function renderAssetResources(container, moduleId, options = {}) {
         const onAir = options.isOnAir?.(asset.moduleId);
         const base = result.probe.exists
           ? (data.changed ? 'RECURSO RECARGADO: se usa el archivo nuevo.' : 'RECURSO RECARGADO (el archivo no cambió desde la última carga).')
-          : 'EL ARCHIVO NO EXISTE: Program conserva lo último que tenía cargado.';
+          : result.probe.pending
+            ? 'PENDIENTE: el archivo no está en la carpeta; la pieza se muestra transparente (sin fondo).'
+            : 'EL ARCHIVO NO EXISTE: Program conserva lo último que tenía cargado.';
         const where = onAir
           ? ' El módulo está AL AIRE: el recurso nuevo se aplica cuando salga del aire (próximo TAKE).'
           : ' Preview actualizado; Program lo usa en el próximo TAKE.';
         const text = [`${base}${result.probe.exists ? where : ''}`, `CARGADO: ${describeProbe(result.probe)}`, ...result.warnings].join('\n');
-        setStatus(result.warnings.length || !result.probe.exists ? 'warning' : 'success', text);
+        setStatus(result.warnings.length || (!result.probe.exists && !result.probe.pending) ? 'warning' : 'success', text);
         options.onReloaded?.(asset.moduleId);
         await load();
       } catch (err) {

@@ -64,6 +64,7 @@ import { flushPersistence, getPersistenceStatus } from './persistence.js';
 import { getActiveThemeId, getSystemLaunchSource } from './theme.js';
 import { chartsCatalog, buildChart } from './charts.js';
 import { registerBauletiBalanzaRoutes } from './bauleti-balanza.js';
+import { registerCopa4NacionesRoutes } from './copa4naciones.js';
 import { initAssetResources, getAssetVersions, describeModuleAssets, reloadAsset, openAssetFolder } from './asset-resources.js';
 import { listThemes, getTheme, ARGENTINA_STREAMERS_THEME_ID } from '../shared/themes.js';
 
@@ -286,7 +287,7 @@ app.post('/api/teams/team', (req, res) => {
 // orden arrastrado en EQUIPOS; todos los desplegables lo toman del catalogo.
 app.post('/api/teams/order', (req, res) => {
   const themeId = getActiveThemeId();
-  if (themeId !== 'gla' && themeId !== 'bauletiBalanza') return res.status(409).json({ ok: false, error: 'Este sistema no tiene orden manual de equipos.' });
+  if (themeId !== 'gla' && themeId !== 'bauletiBalanza' && themeId !== 'copa4naciones') return res.status(409).json({ ok: false, error: 'Este sistema no tiene orden manual de equipos.' });
   try {
     const catalog = themeId === 'gla' ? setGlaTeamOrder(req.body?.order) : setThemeTeamOrder(themeId, req.body?.order);
     broadcast({ type: 'TEAM_CATALOG_UPDATE', catalog });
@@ -299,7 +300,7 @@ app.post('/api/teams/order', (req, res) => {
 // ESCUDOS DISPONIBLES de GLA (2026-10-21): archivos de assets/crests/ para
 // el selector "ESCUDO" de EQUIPOS. Solo nombres de archivo, nunca rutas.
 app.get('/api/teams/crest-files', (req, res) => {
-  if (getActiveThemeId() === 'bauletiBalanza') return res.json({ ok: true, files: listThemeCrestFiles('bauletiBalanza') });
+  if (getActiveThemeId() === 'bauletiBalanza' || getActiveThemeId() === 'copa4naciones') return res.json({ ok: true, files: listThemeCrestFiles(getActiveThemeId()) });
   if (getActiveThemeId() !== 'gla') return res.json({ ok: true, files: [] });
   res.json({ ok: true, files: listGlaCrestFiles() });
 });
@@ -318,6 +319,9 @@ app.post('/api/teams/refresh', (req, res) => {
 // pedidos desde esta misma maquina (loopback), solo en Windows, nunca en un
 // deploy (Render), ninguna ruta llega del request (la carpeta sale fija de
 // server/teams.js) y se ejecuta explorer.exe directo, sin shell.
+// true desde que existe el WebSocketServer (ver "wss" más abajo).
+let wsReady = false;
+
 function isLoopbackRequest(req) {
   const addr = req.socket?.remoteAddress || '';
   return addr === '127.0.0.1' || addr === '::1' || addr === '::ffff:127.0.0.1';
@@ -766,6 +770,25 @@ function conservarSlotsSorteo(filasActuales, grupoWeb) {
 
 registerBauletiBalanzaRoutes(app, { getActiveThemeId, getTeamCatalog, getRoster, getModuleState, isLoopbackRequest });
 
+// COPA 4 NACIONES (SOFTX [4]): datos web/manual del torneo (server/copa4naciones.js).
+// El servidor es el único que escribe el módulo "c4nDatos" (vista efectiva
+// del torneo que leen las gráficas). Al registrar las rutas todavía no existe
+// el WebSocket: ese primer publish solo actualiza el estado (los clientes lo
+// reciben en el snapshot al conectar).
+await registerCopa4NacionesRoutes(app, {
+  getActiveThemeId,
+  getTeamCatalog,
+  getRoster,
+  isLoopbackRequest,
+  applyServerModuleUpdate(moduleId, data) {
+    const moduleState = applyUpdate(moduleId, data);
+    if (wsReady) broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId, moduleState, isAutoSave: false, isExplicitUpdate: true });
+  },
+  refreshTeamCatalog() {
+    if (wsReady) broadcast({ type: 'TEAM_CATALOG_UPDATE', catalog: getTeamCatalog(getActiveThemeId()) });
+  },
+});
+
 // CHARTS (SOFTX / GLA, ver server/charts.js): catálogo de torneos/días/
 // partidos y armado de la placa estadística desde gla.futbol. Solo GLA;
 // el panel guarda el resultado en el draft del módulo (autoguardado).
@@ -963,6 +986,7 @@ await initAssetResources();
 
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: WS_PATH });
+wsReady = true;
 
 function broadcast(message) {
   const payload = JSON.stringify(message);

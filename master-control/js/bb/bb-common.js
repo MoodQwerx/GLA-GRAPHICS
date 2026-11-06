@@ -54,6 +54,10 @@ export function normalizePlayer(j) {
     foto: meta.foto || '',
     posicion: meta.posicion || '',
     activo: meta.activo !== false,
+    // FASE 2: "baja" = quitado del plantel sin borrarlo (los eventos y la
+    // historia lo siguen encontrando por ID); "orden" = orden manual.
+    baja: meta.baja === true,
+    orden: Number.isFinite(Number(meta.orden)) && meta.orden !== '' && meta.orden !== null ? Number(meta.orden) : null,
   };
 }
 

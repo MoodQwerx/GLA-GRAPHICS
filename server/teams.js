@@ -124,13 +124,15 @@ const THEME_CREST_DIRS = {
   // BAULETI vs BALANZA (SOFTX [3], 2026-10-30): carpeta propia, nunca
   // compartida con GLA ni con Argentina Streamers.
   bauletiBalanza: { dir: path.resolve(process.cwd(), 'assets', 'themes', 'bauleti-balanza', 'escudos'), url: '/assets/themes/bauleti-balanza/escudos/' },
+  // COPA 4 NACIONES (SOFTX [4], 2026-11-04): carpeta propia de escudos.
+  copa4naciones: { dir: path.resolve(process.cwd(), 'assets', 'themes', 'copa4naciones', 'crests'), url: '/assets/themes/copa4naciones/crests/' },
 };
 
 // Themes manuales con EQUIPOS extendido (BAULETI vs BALANZA): escudo elegido
 // de la carpeta del theme ("crestFile"), color propio y orden manual, todo en
 // el mismo theme-team-overrides.json. Argentina Streamers no entra aca: su
 // catalogo sale exactamente igual que siempre.
-const EXTENDED_MANUAL_THEMES = new Set(['bauletiBalanza']);
+const EXTENDED_MANUAL_THEMES = new Set(['bauletiBalanza', 'copa4naciones']);
 
 export function listThemeCrestFiles(themeId) {
   const config = THEME_CREST_DIRS[themeId];
@@ -276,7 +278,9 @@ function extendedTeamFields(themeId, team, o, crestFiles) {
     file: crestFile ? `${config.url}${encodeURIComponent(crestFile)}` : null,
     crestFile,
     ownFile,
-    color: typeof o.color === 'string' && /^#[0-9A-F]{6}$/i.test(o.color) ? o.color.toUpperCase() : null,
+    // Color: el elegido en EQUIPOS o, si no hay, el del catálogo base (COPA 4
+    // NACIONES lo trae; BAULETI vs BALANZA no, así que sigue en null).
+    color: typeof o.color === 'string' && /^#[0-9A-F]{6}$/i.test(o.color) ? o.color.toUpperCase() : (/^#[0-9A-F]{6}$/i.test(team.color || '') ? team.color.toUpperCase() : null),
   };
 }
 

@@ -46,6 +46,31 @@ import bbMarcador from './bbMarcador.js';
 import bbFormacion from './bbFormacion.js';
 import bbVs from './bbVs.js';
 import bbTarjeta from './bbTarjeta.js';
+import bbGol from './bbGol.js';
+import bbPenales from './bbPenales.js';
+import bbCambio from './bbCambio.js';
+import bbVar from './bbVar.js';
+import bbVsResultado from './bbVsResultado.js';
+import bbCharts from './bbCharts.js';
+import { renderBbZocaloLargo as bbZocaloLargo, renderBbZocaloCorto as bbZocaloCorto, renderBbZocaloCortoDoble as bbZocaloCortoDoble } from './bbZocalos.js';
+import c4nMarcador from './c4nMarcador.js';
+import { renderC4nTarjeta as c4nTarjeta, renderC4nCambio as c4nCambio } from './c4nEventos.js';
+import {
+  renderC4nZocaloTexto as c4nZocaloTexto, renderC4nZocaloTextoDoble as c4nZocaloTextoDoble,
+  renderC4nZocaloCorto as c4nZocaloCorto, renderC4nZocaloCortoDoble as c4nZocaloCortoDoble,
+  renderC4nZocaloCompuesto as c4nZocaloCompuesto, renderC4nMoscaLogo as c4nMoscaLogo, renderC4nMoscaTexto as c4nMoscaTexto,
+  renderC4nRotativoSponsors as c4nRotativoSponsors,
+  renderC4nPromoWeb as c4nPromoWeb,
+} from './c4nTextos.js';
+import {
+  renderC4nGoleadores as c4nGoleadores, renderC4nAsistencias as c4nAsistencias, renderC4nGA as c4nGA,
+  renderC4nPosiciones as c4nPosiciones, renderC4nMejoresJugadores as c4nMejoresJugadores,
+} from './c4nTablas.js';
+import { renderC4nVsPrepartido as c4nVsPrepartido, renderC4nVsResultado as c4nVsResultado, renderC4nFormacion as c4nFormacion } from './c4nPlacas.js';
+import { renderC4nFixture as c4nFixture } from './c4nFixture.js';
+import { renderC4nStatsPrevia as c4nStatsPrevia, renderC4nStatsEntretiempo as c4nStatsEntretiempo, renderC4nStatsFinal as c4nStatsFinal } from './c4nStats.js';
+// "c4nDatos" es solo datos (nunca va al aire).
+const c4nDatos = () => {};
 import zocaloVs from './zocaloVs.js';
 
 // Registro de funciones de render: id de modulo -> (contentEl, data, justTaken, onOneShotEnded) => void
@@ -93,4 +118,38 @@ export const renderers = {
   bbFormacion,
   bbVs,
   bbTarjeta,
+  bbGol,
+  bbPenales,
+  bbCambio,
+  bbVar,
+  bbVsResultado,
+  bbCharts,
+  bbZocaloLargo,
+  bbZocaloCorto,
+  bbZocaloCortoDoble,
+  c4nMarcador,
+  c4nTarjeta,
+  c4nCambio,
+  c4nZocaloTexto,
+  c4nZocaloTextoDoble,
+  c4nZocaloCorto,
+  c4nZocaloCortoDoble,
+  c4nZocaloCompuesto,
+  c4nMoscaLogo,
+  c4nMoscaTexto,
+  c4nRotativoSponsors,
+  c4nGoleadores,
+  c4nAsistencias,
+  c4nGA,
+  c4nPosiciones,
+  c4nPromoWeb,
+  c4nMejoresJugadores,
+  c4nFixture,
+  c4nVsPrepartido,
+  c4nVsResultado,
+  c4nFormacion,
+  c4nStatsPrevia,
+  c4nStatsEntretiempo,
+  c4nStatsFinal,
+  c4nDatos,
 };

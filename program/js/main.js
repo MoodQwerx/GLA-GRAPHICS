@@ -410,6 +410,14 @@ function syncGolComposition() {
   applyComposition(els.gol, latestData.gol, 'gol', latestData);
 }
 
+// BAULETI vs BALANZA (FASE 2): mismo criterio para su GOL y su MARCADOR DE
+// PENALES, que siguen al Marcador BxB (ver composedCompositionData).
+function syncBbMarcadorFollowers() {
+  for (const id of ['bbGol', 'bbPenales']) {
+    if (els[id] && latestData[id]) applyComposition(els[id], latestData[id], id, latestData);
+  }
+}
+
 function applyModuleState(id, moduleState) {
   const target = els[id];
   if (!target || !moduleState) return;
@@ -685,11 +693,13 @@ ws = connect({
         latestData[msg.moduleId] = msg.moduleState.data;
         applyVisualLive(msg.moduleId, msg.moduleState.data);
         if (msg.moduleId === 'scoreboard') syncGolComposition();
+        if (msg.moduleId === 'bbMarcador') syncBbMarcadorFollowers();
         return;
       }
       if (!isOn) maybeRewarmOffAirVariant(msg.moduleId, msg.moduleState && msg.moduleState.data);
       applyModuleState(msg.moduleId, msg.moduleState, msg.isExplicitUpdate);
       if (msg.moduleId === 'scoreboard') syncGolComposition();
+      if (msg.moduleId === 'bbMarcador') syncBbMarcadorFollowers();
     }
   },
 });

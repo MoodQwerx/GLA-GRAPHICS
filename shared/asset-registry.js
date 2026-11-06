@@ -9,7 +9,8 @@
 // ARGENTINA STREAMERS: se derivan del manifest que ya existía en
 // shared/themes.js (THEMES.argentinaStreamers.assets) -- mismo archivo que
 // consumen sus renderers, sin copiar ninguna ruta.
-import { THEMES, DEFAULT_THEME_ID, ARGENTINA_STREAMERS_THEME_ID } from './themes.js';
+import { THEMES, DEFAULT_THEME_ID, ARGENTINA_STREAMERS_THEME_ID, COPA4N_THEME_ID } from './themes.js';
+import { C4N_FONDOS, C4N_EVENT_LOGO, c4nUrl } from './c4n-assets.js';
 
 export const ASSET_KIND = {
   ALPHA_VIDEO: 'alpha-video',
@@ -147,9 +148,29 @@ function deriveFromThemeManifest(themeId) {
   return out;
 }
 
+// COPA 4 NACIONES (SOFTX [4]): todo sale del MANIFEST ÚNICO
+// (shared/c4n-assets.js): un FONDO por módulo (la placa vacía del
+// diseñador) y el logo del evento en las piezas que lo usan. "pending": si
+// el archivo no existe se muestra PENDIENTE (no es un error: el módulo
+// funciona transparente) y Program no lo monta; con el archivo, LISTO.
+// Cuando llegue: copiarlo con ese nombre (ABRIR CARPETA) y RECARGAR.
+const c4nEntry = (r, slot) => ({
+  slot,
+  label: r.label,
+  path: c4nUrl(r.folder, r.file),
+  kind: I,
+  pending: true,
+  size: r.size,
+  alpha: r.alpha,
+  required: r.required,
+});
+const C4N_ASSETS = Object.fromEntries(C4N_FONDOS.map((f) => [f.moduleId, [c4nEntry(f, 'fondo')]]));
+for (const moduleId of C4N_EVENT_LOGO.modules) C4N_ASSETS[moduleId].push(c4nEntry(C4N_EVENT_LOGO, 'logo'));
+
 const REGISTRY = {
   [DEFAULT_THEME_ID]: GLA_ASSETS,
   [ARGENTINA_STREAMERS_THEME_ID]: deriveFromThemeManifest(ARGENTINA_STREAMERS_THEME_ID),
+  [COPA4N_THEME_ID]: C4N_ASSETS,
 };
 
 function withId(systemId, moduleId, entry) {

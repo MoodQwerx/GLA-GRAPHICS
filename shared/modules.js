@@ -59,6 +59,15 @@ export const MATCH_STATUS_OPTIONS = [
   { id: 'entretiempo', label: 'ENTRETIEMPO' },
 ];
 
+// COPA 4 NACIONES: ajuste independiente de capas por módulo (fondo PNG /
+// contenido / tamaño de texto / espaciado). Nombres terminados en
+// OffsetX/OffsetY/Scale: Program los aplica en vivo (ver isVisualKey).
+const C4N_LAYER = {
+  bgOffsetX: 0, bgOffsetY: 0, bgScale: 1,
+  contentOffsetX: 0, contentOffsetY: 0, contentScale: 1,
+  fontScale: 1, spacingScale: 1,
+};
+
 export const MODULES = {
   // ---------------------------------------------------------------------
   // MARCADOR
@@ -1627,8 +1636,9 @@ export const MODULES = {
   // BAULETI vs BALANZA (SOFTX [3], 2026-10-30): módulos propios del
   // sistema, dibujados en CSS (program/css/bb.css) y operados con paneles
   // dedicados (master-control/js/bb/). Ocultos en GLA y Argentina Streamers.
-  // "bbMarcador" es además la fuente del PARTIDO: equipos, reloj, período y
-  // "matchEvents" (incidencias, ver shared/bb-match.js).
+  // "bbMarcador" es además la fuente del PARTIDO: equipos, resultado, reloj,
+  // período y "matchEvents" (incidencias); junto con las alineaciones de
+  // "bbFormacion" forman el matchState único (shared/bb-match.js).
   bbMarcador: {
     id: 'bbMarcador',
     label: 'MARCADOR',
@@ -1648,7 +1658,82 @@ export const MODULES = {
       showExtra: false,
       showCrests: true,
       matchEvents: [],
-      penalties: { active: false, local: [], visitante: [] },
+      penalties: { active: false, first: 'local' },
+    },
+  },
+
+  // MARCADOR DE PENALES (FASE 2): misma familia que el Marcador, en su lugar
+  // (no conviven: TAKE de uno saca al otro). Los remates son eventos
+  // "penaltyShootout" de bbMarcador.matchEvents; este módulo solo guarda
+  // cómo se muestra. "live": se repinta solo cuando cambia la tanda.
+  bbPenales: {
+    id: 'bbPenales',
+    label: 'PENALES',
+    category: 'Partido',
+    layer: 'scoreboard',
+    live: true,
+    fields: [],
+    defaults: {
+      mostrarResultado: true,
+    },
+  },
+
+  // Placa chica de tarjeta (abajo a la izquierda). "event" es la copia del
+  // evento de matchEvents (más la foto del jugador). Sale sola a los
+  // "autoOutSec" segundos (0 = manual).
+  bbTarjeta: {
+    id: 'bbTarjeta',
+    label: 'TARJETAS',
+    category: 'Partido',
+    layer: 'event',
+    fields: [],
+    defaults: {
+      event: null,
+      autoOutSec: 7,
+    },
+  },
+
+  // CAMBIOS: misma zona y mecánica que la Tarjeta; "event" es la copia del
+  // evento "substitution" (con la foto del que entra).
+  bbCambio: {
+    id: 'bbCambio',
+    label: 'CAMBIOS',
+    category: 'Partido',
+    layer: 'event',
+    fields: [],
+    defaults: {
+      event: null,
+      autoOutSec: 8,
+    },
+  },
+
+  // VAR: placa compacta arriba a la derecha (convive con el Marcador).
+  bbVar: {
+    id: 'bbVar',
+    label: 'VAR',
+    category: 'Partido',
+    layer: 'event',
+    fields: [],
+    defaults: {
+      decision: 'chequeo',
+      motivo: '',
+    },
+  },
+
+  // GOL POR EQUIPO (FASE 2): capa propia debajo del Marcador, sin
+  // reconstruirlo. La dispara "GOL +" del panel del Marcador con la copia del
+  // evento; sale sola. "replay" cambia para REPETIR ANIMACIÓN DE GOL.
+  bbGol: {
+    id: 'bbGol',
+    label: 'GOL',
+    category: 'Partido',
+    layer: 'event',
+    fields: [],
+    defaults: {
+      event: null,
+      texto: 'GOOOL',
+      mostrarAutor: true,
+      replay: 0,
     },
   },
 
@@ -1685,19 +1770,446 @@ export const MODULES = {
     },
   },
 
-  // Placa chica de tarjeta (abajo a la izquierda). La dispara el panel del
-  // Marcador al registrar una tarjeta; "event" es la copia del evento de
-  // matchEvents (más la foto del jugador). Sale sola a los "autoOutSec"
-  // segundos (0 = manual).
-  bbTarjeta: {
-    id: 'bbTarjeta',
-    label: 'TARJETA',
+  // VS RESULTADO: la composición del VS PREPARTIDO con el resultado del
+  // matchState en lugar de la insignia VS (y los penales debajo, si hubo).
+  bbVsResultado: {
+    id: 'bbVsResultado',
+    label: 'VS RESULTADO',
+    category: 'Placas',
+    layer: 'fullscreen',
+    live: true,
+    fields: [
+      { key: 'titulo', label: 'Texto superior', type: FIELD_TYPES.TEXT },
+      {
+        key: 'penales',
+        label: 'Penales',
+        type: FIELD_TYPES.SELECT,
+        options: [
+          { id: 'auto', label: 'AUTOMÁTICO (si hubo tanda)' },
+          { id: 'si', label: 'MOSTRAR' },
+          { id: 'no', label: 'NO MOSTRAR' },
+        ],
+      },
+      { key: 'detalle', label: 'Texto inferior', type: FIELD_TYPES.TEXT },
+    ],
+    defaults: {
+      titulo: 'RESULTADO FINAL',
+      penales: 'auto',
+      detalle: '',
+    },
+  },
+
+  // ZÓCALOS: tres formatos del mismo sistema, abajo a la izquierda.
+  bbZocaloLargo: {
+    id: 'bbZocaloLargo',
+    label: 'ZÓCALO LARGO DOBLE',
+    category: 'Zocalos',
+    layer: 'lowerThird',
+    fields: [
+      { key: 'linea1', label: 'Línea principal', type: FIELD_TYPES.TEXT },
+      { key: 'linea2', label: 'Línea secundaria', type: FIELD_TYPES.TEXT },
+    ],
+    defaults: {
+      linea1: 'BAULETI VS BALANZA',
+      linea2: 'EL PARTIDO DEL AÑO',
+    },
+  },
+
+  bbZocaloCorto: {
+    id: 'bbZocaloCorto',
+    label: 'ZÓCALO CORTO SIMPLE',
+    category: 'Zocalos',
+    layer: 'lowerThird',
+    fields: [
+      { key: 'linea1', label: 'Texto', type: FIELD_TYPES.TEXT },
+    ],
+    defaults: {
+      linea1: 'EN VIVO',
+    },
+  },
+
+  bbZocaloCortoDoble: {
+    id: 'bbZocaloCortoDoble',
+    label: 'ZÓCALO CORTO DOBLE',
+    category: 'Zocalos',
+    layer: 'lowerThird',
+    fields: [
+      { key: 'linea1', label: 'Línea principal', type: FIELD_TYPES.TEXT },
+      { key: 'linea2', label: 'Línea secundaria', type: FIELD_TYPES.TEXT },
+    ],
+    defaults: {
+      linea1: 'NOMBRE APELLIDO',
+      linea2: 'CARGO / DESCRIPCIÓN',
+    },
+  },
+
+  // CHARTS BxB: PREVIA / ENTRETIEMPO / FINAL desde el matchState de SOFTX
+  // (no usa gla.futbol). "destacados" = IDs de jugadores elegidos para la
+  // PREVIA y "destacadosData" su copia visible (dorsal/nombre/foto);
+  // "stats" = filas manuales { label, local, visitante }, el lugar preparado
+  // para estadísticas históricas.
+  bbCharts: {
+    id: 'bbCharts',
+    label: 'CHARTS',
+    category: 'Charts',
+    layer: 'fullscreen',
+    live: true,
+    fields: [],
+    defaults: {
+      tipo: 'entretiempo', // 'previa' | 'entretiempo' | 'final'
+      titulo: '',
+      evento: '',
+      destacados: { local: [], visitante: [] },
+      destacadosData: {},
+      stats: [],
+    },
+  },
+
+  // COPA 4 NACIONES (SOFTX [4], 2026-11-04): módulos "c4n*" (solo en su
+  // navegación). Cada uno: capa de FONDO (PNG del diseñador, PENDIENTE por
+  // ahora -> transparente), capa de CONTENIDO y motion de entrada/salida
+  // (program/css/c4n.css). Ajuste independiente de capas (fondo / contenido
+  // / tamaño de texto / espaciado) en C4N_LAYER, aplicado en vivo.
+  // "c4nMarcador" es el partido en juego (matchState / matchEvents, mismo
+  // modelo que shared/bb-match.js); "c4nDatos" guarda la vista efectiva del
+  // torneo (fixture, tabla, rankings) que arma server/copa4naciones.js.
+  c4nMarcador: {
+    id: 'c4nMarcador',
+    label: 'MARCADOR',
+    category: 'Partido',
+    layer: 'scoreboard',
+    live: true,
+    fields: [],
+    // fuentePartido: 'fixture' (partido del fixture, como siempre) o 'manual'
+    // (equipos elegidos a mano, sin tocar el fixture; ver el panel).
+    defaults: {
+      fuentePartido: 'fixture',
+      matchId: 'm1',
+      stageLabel: 'FASE DE GRUPOS',
+      teamA: 'argentina',
+      teamB: 'uruguay',
+      scoreA: 0,
+      scoreB: 0,
+      clock: emptyClock(),
+      clockEndText: '20:00',
+      period: '1T',
+      extraMinutes: 0,
+      showExtra: false,
+      matchEvents: [],
+      penalties: { active: false, first: 'local', show: false },
+      ...C4N_LAYER,
+    },
+  },
+
+  c4nTarjeta: {
+    id: 'c4nTarjeta',
+    label: 'TARJETAS',
     category: 'Partido',
     layer: 'event',
     fields: [],
+    defaults: { event: null, autoOutSec: 7, ...C4N_LAYER },
+  },
+
+  c4nCambio: {
+    id: 'c4nCambio',
+    label: 'CAMBIOS',
+    category: 'Partido',
+    layer: 'event',
+    fields: [],
+    defaults: { event: null, autoOutSec: 8, ...C4N_LAYER },
+  },
+
+  c4nZocaloTexto: {
+    id: 'c4nZocaloTexto',
+    label: 'ZÓCALO LARGO SIMPLE',
+    category: 'Zocalos',
+    layer: 'lowerThird',
+    fields: [{ key: 'linea1', label: 'Texto', type: FIELD_TYPES.TEXT }],
+    defaults: { linea1: 'COPA 4 NACIONES · SPEEDCAMP BUENOS AIRES', ...C4N_LAYER },
+  },
+
+  c4nZocaloTextoDoble: {
+    id: 'c4nZocaloTextoDoble',
+    label: 'ZÓCALO TEXTO DOBLE',
+    category: 'Zocalos',
+    layer: 'lowerThird',
+    fields: [
+      { key: 'linea1', label: 'Línea principal', type: FIELD_TYPES.TEXT },
+      { key: 'linea2', label: 'Línea secundaria', type: FIELD_TYPES.TEXT },
+    ],
+    defaults: { linea1: 'COPA 4 NACIONES', linea2: '14 Y 15 DE NOVIEMBRE · SPEEDCAMP BUENOS AIRES', ...C4N_LAYER },
+  },
+
+  c4nZocaloCorto: {
+    id: 'c4nZocaloCorto',
+    label: 'ZÓCALO CORTO SIMPLE',
+    category: 'Zocalos',
+    layer: 'lowerThird',
+    fields: [{ key: 'linea1', label: 'Texto', type: FIELD_TYPES.TEXT }],
+    defaults: { linea1: 'EN VIVO', ...C4N_LAYER },
+  },
+
+  c4nZocaloCortoDoble: {
+    id: 'c4nZocaloCortoDoble',
+    label: 'ZÓCALO CORTO DOBLE',
+    category: 'Zocalos',
+    layer: 'lowerThird',
+    fields: [
+      { key: 'linea1', label: 'Línea principal', type: FIELD_TYPES.TEXT },
+      { key: 'linea2', label: 'Línea secundaria', type: FIELD_TYPES.TEXT },
+    ],
+    defaults: { linea1: 'NOMBRE APELLIDO', linea2: 'CARGO / DESCRIPCIÓN', ...C4N_LAYER },
+  },
+
+  // Logo (evento o equipo) + texto + rotativo de mensajes + sponsor.
+  // ZÓCALO COMPUESTO (PNG real): izquierda PARTIDO (escudos del partido del
+  // MARCADOR, fixture o manual) o COPA 4 NACIONES (logo + texto de la copa),
+  // dos renglones y rotativo de sponsors (logos elegidos en ROTATIVO
+  // SPONSORS). "live": sigue al partido del Marcador estando al aire.
+  c4nZocaloCompuesto: {
+    id: 'c4nZocaloCompuesto',
+    label: 'ZÓCALO COMPUESTO',
+    category: 'Zocalos',
+    layer: 'lowerThird',
+    live: true,
+    fields: [
+      {
+        key: 'izquierda',
+        label: 'Sector izquierdo',
+        type: FIELD_TYPES.SELECT,
+        options: [
+          { id: 'copa', label: 'COPA 4 NACIONES (logo + texto)' },
+          { id: 'partido', label: 'PARTIDO (escudos del Marcador)' },
+        ],
+      },
+      { key: 'texto', label: 'Renglón 1 (banda azul)', type: FIELD_TYPES.TEXT },
+      { key: 'texto2', label: 'Renglón 2', type: FIELD_TYPES.TEXT },
+      { key: 'intervaloSec', label: 'Segundos por sponsor', type: FIELD_TYPES.TEXT },
+    ],
     defaults: {
-      event: null,
-      autoOutSec: 7,
+      izquierda: 'copa',
+      texto: 'COPA 4 NACIONES',
+      texto2: '14 Y 15 DE NOVIEMBRE · SPEEDCAMP BUENOS AIRES',
+      intervaloSec: '6',
+      ...C4N_LAYER,
+    },
+  },
+
+  c4nMoscaLogo: {
+    id: 'c4nMoscaLogo',
+    label: 'MOSCA LOGO',
+    category: 'Mosca',
+    layer: 'bug',
+    fields: [],
+    defaults: { ...C4N_LAYER },
+  },
+
+  c4nMoscaTexto: {
+    id: 'c4nMoscaTexto',
+    label: 'MOSCA TEXTO',
+    category: 'Mosca',
+    layer: 'bug',
+    fields: [
+      { key: 'linea1', label: 'Línea 1', type: FIELD_TYPES.TEXT },
+      { key: 'linea2', label: 'Línea 2', type: FIELD_TYPES.TEXT },
+    ],
+    defaults: { linea1: 'COPA 4 NACIONES', linea2: 'EN VIVO', ...C4N_LAYER },
+  },
+
+  // Rotativo de sponsors: logos PNG de assets/themes/copa4naciones/sponsors/
+  // ("archivos" = elegidos en el panel; vacío = todos los de la carpeta).
+  c4nRotativoSponsors: {
+    id: 'c4nRotativoSponsors',
+    label: 'ROTATIVO SPONSORS',
+    category: 'Mosca',
+    layer: 'bug',
+    fields: [],
+    defaults: { archivos: [], intervaloSec: 6, ...C4N_LAYER },
+  },
+
+  // Grupo L (zona derecha, mutuamente excluyentes): leen la vista efectiva
+  // del torneo de "c4nDatos" (WEB o SOFTX según ACTUALIZADOR DE DATOS).
+  // FUENTE por módulo: "auto" (ese dato) o "manual" (filas cargadas en el
+  // propio módulo, snapshot separado: cambiar de fuente nunca borra el otro).
+  c4nGoleadores: {
+    id: 'c4nGoleadores',
+    label: 'TABLA GOLEADORES',
+    category: 'Tablas',
+    layer: 'placaL',
+    live: true,
+    fields: [{ key: 'titulo', label: 'Título', type: FIELD_TYPES.TEXT }],
+    defaults: { titulo: 'GOLEADORES', filas: 8, fuente: 'auto', manual: [], ...C4N_LAYER },
+  },
+
+  c4nAsistencias: {
+    id: 'c4nAsistencias',
+    label: 'TABLA ASISTENCIAS',
+    category: 'Tablas',
+    layer: 'placaL',
+    live: true,
+    fields: [{ key: 'titulo', label: 'Título', type: FIELD_TYPES.TEXT }],
+    defaults: { titulo: 'ASISTENCIAS', filas: 8, fuente: 'auto', manual: [], ...C4N_LAYER },
+  },
+
+  c4nGA: {
+    id: 'c4nGA',
+    label: 'TABLA G+A',
+    category: 'Tablas',
+    layer: 'placaL',
+    live: true,
+    fields: [{ key: 'titulo', label: 'Título', type: FIELD_TYPES.TEXT }],
+    defaults: { titulo: 'MEJORES JUGADORES · G+A', filas: 8, fuente: 'auto', manual: [], ...C4N_LAYER },
+  },
+
+  c4nPosiciones: {
+    id: 'c4nPosiciones',
+    label: 'TABLA DE POSICIONES',
+    category: 'Tablas',
+    layer: 'placaL',
+    live: true,
+    fields: [{ key: 'titulo', label: 'Título', type: FIELD_TYPES.TEXT }],
+    defaults: { titulo: 'POSICIONES', ...C4N_LAYER },
+  },
+
+  c4nPromoWeb: {
+    id: 'c4nPromoWeb',
+    label: 'PROMO WEB',
+    category: 'Tablas',
+    layer: 'placaL',
+    fields: [
+      { key: 'titulo', label: 'Título', type: FIELD_TYPES.TEXT },
+      { key: 'texto', label: 'Texto', type: FIELD_TYPES.TEXTAREA },
+      { key: 'url', label: 'Dirección web', type: FIELD_TYPES.TEXT },
+    ],
+    defaults: { titulo: 'SEGUÍ LA COPA', texto: 'Fixture, resultados, tabla y estadísticas en vivo', url: 'COPA4NACIONES.COM', ...C4N_LAYER },
+  },
+
+  // Destacado / comparativa de jugadores (500×150): uno por selección.
+  c4nMejoresJugadores: {
+    id: 'c4nMejoresJugadores',
+    label: 'MEJORES JUGADORES',
+    category: 'Tablas',
+    layer: 'lowerThird',
+    fields: [],
+    defaults: { titulo: 'JUGADORES A SEGUIR', jugadores: [], ...C4N_LAYER },
+  },
+
+  // FIXTURE del evento (placa 1500×950): partidos de un día (SÁBADO o
+  // DOMINGO) del fixture efectivo de "c4nDatos" (fuente WEB o MANUAL elegida
+  // en ACTUALIZADOR DE DATOS) con los resultados guardados desde el Marcador
+  // y los cruces resueltos solos (1º-4º / 2º-3º, final y tercer puesto).
+  c4nFixture: {
+    id: 'c4nFixture',
+    label: 'FIXTURE',
+    category: 'Placas',
+    layer: 'fullscreen',
+    live: true,
+    fields: [
+      {
+        key: 'dia',
+        label: 'Día',
+        type: FIELD_TYPES.SELECT,
+        options: [
+          { id: 'sabado', label: 'SÁBADO' },
+          { id: 'domingo', label: 'DOMINGO' },
+        ],
+      },
+      { key: 'titulo', label: 'Título (vacío = FIXTURE · día)', type: FIELD_TYPES.TEXT },
+    ],
+    defaults: { dia: 'sabado', titulo: '', ...C4N_LAYER },
+  },
+
+  c4nVsPrepartido: {
+    id: 'c4nVsPrepartido',
+    label: 'VS PREPARTIDO',
+    category: 'Placas',
+    layer: 'fullscreen',
+    fields: [
+      { key: 'titulo', label: 'Título / fase (vacío = la del partido)', type: FIELD_TYPES.TEXT },
+      { key: 'detalle', label: 'Horario / detalle (vacío = el del fixture)', type: FIELD_TYPES.TEXT },
+    ],
+    defaults: { titulo: '', detalle: '', ...C4N_LAYER },
+  },
+
+  c4nVsResultado: {
+    id: 'c4nVsResultado',
+    label: 'VS RESULTADO',
+    category: 'Placas',
+    layer: 'fullscreen',
+    live: true,
+    fields: [
+      { key: 'titulo', label: 'Título / fase (vacío = la del partido)', type: FIELD_TYPES.TEXT },
+      { key: 'estado', label: 'Subtítulo (vacío = automático: EN JUEGO · 1T / ENTRETIEMPO / FINAL DEL PARTIDO; "-" = sin subtítulo)', type: FIELD_TYPES.TEXT },
+      {
+        key: 'penales',
+        label: 'Penales',
+        type: FIELD_TYPES.SELECT,
+        options: [
+          { id: 'auto', label: 'AUTOMÁTICO (si hubo tanda)' },
+          { id: 'si', label: 'MOSTRAR' },
+          { id: 'no', label: 'NO MOSTRAR' },
+        ],
+      },
+    ],
+    defaults: { titulo: '', estado: '', penales: 'auto', ...C4N_LAYER },
+  },
+
+  // FORMACIÓN: equipos[teamId] = { esquema, titulares[], suplentes[], plantel{} }
+  // con IDs del plantel efectivo (WEB o MANUAL) y la copia visible.
+  c4nFormacion: {
+    id: 'c4nFormacion',
+    label: 'FORMACIÓN',
+    category: 'Placas',
+    layer: 'fullscreen',
+    fields: [],
+    defaults: { side: 'local', titulo: 'FORMACIÓN', mostrarSuplentes: true, equipos: {}, ...C4N_LAYER },
+  },
+
+  c4nStatsPrevia: {
+    id: 'c4nStatsPrevia',
+    label: 'ESTADÍSTICAS PREVIA',
+    category: 'Charts',
+    layer: 'fullscreen',
+    live: true,
+    fields: [{ key: 'titulo', label: 'Título', type: FIELD_TYPES.TEXT }],
+    defaults: { titulo: 'PREVIA', fuente: 'auto', manual: { local: {}, visitante: {} }, ...C4N_LAYER },
+  },
+
+  c4nStatsEntretiempo: {
+    id: 'c4nStatsEntretiempo',
+    label: 'ESTADÍSTICAS ENTRETIEMPO',
+    category: 'Charts',
+    layer: 'fullscreen',
+    live: true,
+    fields: [{ key: 'titulo', label: 'Título', type: FIELD_TYPES.TEXT }],
+    defaults: { titulo: 'ENTRETIEMPO', fuente: 'auto', manual: { scoreA: 0, scoreB: 0, penA: '', penB: '', events: [] }, ...C4N_LAYER },
+  },
+
+  c4nStatsFinal: {
+    id: 'c4nStatsFinal',
+    label: 'ESTADÍSTICAS FINAL',
+    category: 'Charts',
+    layer: 'fullscreen',
+    live: true,
+    fields: [{ key: 'titulo', label: 'Título', type: FIELD_TYPES.TEXT }],
+    defaults: { titulo: 'FINAL DEL PARTIDO', fuente: 'auto', manual: { scoreA: 0, scoreB: 0, penA: '', penB: '', events: [] }, ...C4N_LAYER },
+  },
+
+  // Vista efectiva del torneo (la escribe SOLO el servidor): pestaña
+  // ACTUALIZADOR DE DATOS, nunca va al aire.
+  c4nDatos: {
+    id: 'c4nDatos',
+    label: 'ACTUALIZADOR DE DATOS',
+    category: 'General',
+    layer: 'data',
+    fields: [],
+    defaults: {
+      fixture: [],
+      standings: { rows: [], source: 'calculada', hasResults: false, unresolvedTies: false },
+      rankings: { goals: [], assists: [], contributions: [], source: 'softx' },
+      tournament: { name: 'COPA 4 NACIONES', dates: '14 Y 15 DE NOVIEMBRE DE 2026', venue: 'SPEEDCAMP BUENOS AIRES' },
+      webUpdatedAt: '',
+      updatedAt: '',
     },
   },
 

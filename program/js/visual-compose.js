@@ -40,9 +40,18 @@ import { getActiveThemeId } from './theme-client.js';
 // los valores VIGENTES del Marcador (los mismos que pinta Program), nunca
 // su base guardada: GUARDAR POSICIÓN del Marcador no mueve nada. Argentina
 // Streamers conserva su GOL independiente, sin cambios.
+//
+// BAULETI vs BALANZA (FASE 2): misma regla para su GOL y su MARCADOR DE
+// PENALES, que siguen al Marcador BxB ("bbMarcador"), así quedan pegados a él
+// aunque el operador lo haya movido o escalado. GLA sin cambios.
+const BB_FOLLOWS_MARCADOR = new Set(['bbGol', 'bbPenales']);
+
 export function composedCompositionData(moduleId, data, allData) {
-  if (moduleId !== 'gol' || getActiveThemeId() !== DEFAULT_THEME_ID) return data;
-  const sb = allData?.scoreboard;
+  let leaderId = null;
+  if (moduleId === 'gol' && getActiveThemeId() === DEFAULT_THEME_ID) leaderId = 'scoreboard';
+  else if (BB_FOLLOWS_MARCADOR.has(moduleId)) leaderId = 'bbMarcador';
+  if (!leaderId) return data;
+  const sb = allData?.[leaderId];
   if (!sb) return data;
   return {
     compositionOffsetX: (sb.compositionOffsetX || 0) + (data.compositionOffsetX || 0),

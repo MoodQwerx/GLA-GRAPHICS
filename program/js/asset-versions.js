@@ -17,6 +17,14 @@ export function versionedAssetUrl(src) {
   return version ? `${base}?v=${version}` : src;
 }
 
+// Recurso registrado cuyo archivo existe (versión conocida y distinta de
+// "missing"). COPA 4 NACIONES monta su fondo PNG solo si existe: mientras el
+// diseñador no lo entrega, la pieza queda transparente.
+export function assetAvailable(src) {
+  const version = versions.get(String(src || '').split('?')[0]);
+  return Boolean(version) && version !== 'missing';
+}
+
 function applyCssVars() {
   const rootStyle = document.documentElement.style;
   for (const asset of listCssVarAssets()) {

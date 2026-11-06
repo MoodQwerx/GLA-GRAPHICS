@@ -90,8 +90,7 @@ export function registerBauletiBalanzaRoutes(app, { getActiveThemeId, getTeamCat
 
   // SUBIR / REEMPLAZAR FOTO (FASE 2): PNG desde Master Control directo a la
   // carpeta del equipo, sin pasar por el Explorador. El nombre se sanea acá
-  // ("10-nombre.png"); si ya existe se reemplaza. /assets se sirve con
-  // "no-cache", así que la foto nueva aparece en el próximo TAKE.
+  // ("10-nombre.png") y el panel lo asigna al jugador.
   app.post('/api/bb/fotos/:teamId/upload', express.raw({ type: 'image/png', limit: MAX_PHOTO_BYTES }), (req, res) => {
     if (!requireBb(res)) return;
     const { teamId } = req.params;
@@ -106,7 +105,13 @@ export function registerBauletiBalanzaRoutes(app, { getActiveThemeId, getTeamCat
       if (!PHOTO_NAME_RE.test(base)) return res.status(400).json({ ok: false, error: 'Nombre de archivo inválido.' });
       const dir = teamPhotosDir(teamId);
       fs.mkdirSync(dir, { recursive: true });
-      const file = `${base}.png`;
+      // Nunca pisa un archivo: un reemplazo queda como "-v2", "-v3"... (URL
+      // nueva, así Program no reusa la imagen vieja que ya tiene en memoria).
+      let file = `${base}.png`;
+      for (let n = 2; fs.existsSync(path.join(dir, file)); n += 1) {
+        if (n > 99) return res.status(409).json({ ok: false, error: 'Demasiadas versiones de esa foto en la carpeta.' });
+        file = `${base}-v${n}.png`;
+      }
       fs.writeFileSync(path.join(dir, file), body);
       res.json({ ok: true, file, files: listTeamPhotos(teamId) });
     } catch (err) {

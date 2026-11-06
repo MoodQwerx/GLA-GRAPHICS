@@ -44,10 +44,10 @@
 .bb-folder { font-size: 11px; color: #8c8c8c; word-break: break-all; }
 
 /* Reloj */
-.bb-clock-row { display: flex; align-items: center; gap: 16px; }
+.bb-clock-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
 .bb-clock-display { font-family: 'Consolas', monospace; font-size: 46px; font-weight: 800; color: #f3d78f; background: #0b0b0b; border: 1px solid #3a3326; padding: 4px 18px; border-radius: 6px; min-width: 190px; text-align: center; }
 .bb-clock-display.running { color: #7ee08a; border-color: #2f6b38; }
-.bb-periods { display: flex; gap: 8px; }
+.bb-periods { display: flex; flex-wrap: wrap; gap: 8px; }
 .bb-btn.period { font-size: 14px; padding: 10px 16px; }
 
 /* Goles y tarjetas */
@@ -68,7 +68,7 @@
 
 /* Incidencias */
 .bb-ev-list { display: flex; flex-direction: column; gap: 4px; max-height: 300px; overflow-y: auto; }
-.bb-ev-row { display: grid; grid-template-columns: 22px 70px 52px 1fr auto; gap: 8px; align-items: center; background: #121212; border: 1px solid #262626; border-radius: 4px; padding: 5px 8px; font-size: 12px; }
+.bb-ev-row { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; background: #121212; border: 1px solid #262626; border-radius: 4px; padding: 5px 8px; font-size: 12px; }
 .bb-ev-icon { font-size: 14px; text-align: center; }
 .bb-ev-icon.card { width: 11px; height: 15px; border-radius: 2px; justify-self: center; }
 .bb-ev-icon.card.yellow { background: #f5c518; }
@@ -76,7 +76,12 @@
 .bb-ev-icon.card.blue { background: #1f72e6; }
 .bb-ev-min { font-family: monospace; color: #f3d78f; }
 .bb-ev-team { font-weight: 800; color: #ccc; }
-.bb-ev-who { color: #eee; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bb-ev-who { flex: 1 1 160px; min-width: 0; color: #eee; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bb-ev-row > .bb-ev-icon { flex: 0 0 24px; text-align: center; }
+.bb-ev-row > .bb-ev-icon.card { flex: 0 0 11px; margin: 0 6px 0 7px; }
+.bb-ev-row > .bb-ev-icon.var { flex: 0 0 auto; }
+.bb-ev-min { flex: 0 0 66px; }
+.bb-ev-team { flex: 0 0 40px; }
 
 /* Equipos */
 .bb-eq-list { display: flex; flex-direction: column; gap: 10px; }
@@ -109,6 +114,42 @@
 .bb-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .bb-chip { background: #1d1d1d; border: 1px solid #444; color: #ccc; padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; cursor: pointer; }
 .bb-chip.on { background: #3a3220; border-color: #d6aa4e; color: #f3d78f; }
+
+/* ---- FASE 2 ---- */
+.bb-status.warn { color: #e7b35a; }
+.bb-btn.big { font-size: 14px; padding: 12px 18px; }
+.bb-btn.goal.big { font-size: 18px; padding: 14px 30px; letter-spacing: 0.08em; }
+.bb-btn.big-x { font-size: 13px; padding: 10px 18px; }
+.bb-btn.card.active-card { box-shadow: inset 0 0 0 2px currentColor; background: #2a2a2a; }
+.bb-btn.var-check { border-color: #d6aa4e; }
+.bb-goal-side.is-pending { border-color: #d6aa4e; box-shadow: 0 0 0 1px #d6aa4e; }
+.bb-goal-side.is-next { border-color: #d6aa4e; }
+.bb-manual { gap: 6px; }
+.bb-manual-label { font-size: 9px; font-weight: 800; letter-spacing: 0.1em; color: #888; }
+.bb-field-label { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: #999; align-self: center; }
+.bb-pick.selected { background: #3a3220; border-color: #d6aa4e; color: #f3d78f; }
+.bb-pick.dim { opacity: 0.5; }
+.bb-picker.sub-in { border-color: #43c46b; }
+.bb-picker.sub-out { border-color: #e1262e; }
+.bb-picker.goal { border-color: #3f8a4c; }
+.bb-ev-icon.sub { color: #8fd6a2; font-weight: 800; }
+.bb-ev-icon.var { font-size: 9px; font-weight: 800; color: #111; background: #d6aa4e; border-radius: 2px; padding: 2px 3px; }
+.bb-ev-icon.pen.ok { color: #7ed67e; font-weight: 800; }
+.bb-ev-icon.pen.ko { color: #ef8a8a; font-weight: 800; }
+.bb-ev-btns { display: flex; gap: 4px; margin-left: auto; }
+.bb-ev-row.is-editing { border-color: #d6aa4e; }
+.bb-ev-edit { background: #191712; border: 1px solid #5a4a26; border-top: 0; border-radius: 0 0 4px 4px; padding: 10px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+.bb-ev-edit-title { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: #f3d78f; }
+.bb-events .bb-ev-list { max-height: 420px; }
+.bb-var-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.bb-pen-dots-mc { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; min-height: 24px; }
+.bb-pen-dot { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; }
+.bb-pen-dot.ok { background: #d6aa4e; color: #111; }
+.bb-pen-dot.ko { background: #3a1416; color: #ff8f94; border: 1px solid #e1262e; }
+.bb-stat-row { display: grid; grid-template-columns: 64px minmax(120px, 1fr) 64px auto; gap: 8px; align-items: center; }
+.bb-stat-row input { background: #0f0f0f; border: 1px solid #4a4a4a; color: #fff; padding: 7px 8px; border-radius: 4px; font-size: 12px; font-weight: 700; min-width: 0; }
+.bb-pl-row.is-baja { opacity: 0.5; border-style: dashed; }
+.bb-pl-row .bb-eq-order { align-self: center; }
 
 @media (max-width: 900px) {
   .bb-grid2, .bb-goals { grid-template-columns: 1fr; }

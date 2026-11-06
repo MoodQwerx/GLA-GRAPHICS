@@ -354,6 +354,13 @@ export const THEMES = {
 // tokens de identidad. Equipos con catálogo manual propio (server/teams.js,
 // carpeta assets/themes/bauleti-balanza/escudos/): "file" se resuelve recién
 // cuando el PNG existe; mientras tanto los renderers muestran un monograma.
+// Módulos BxB: todos dibujados en CSS (sin asset de video), siempre listos.
+const MODULE_IDS_BB = [
+  'bbMarcador', 'bbPenales', 'bbTarjeta', 'bbCambio', 'bbVar', 'bbGol',
+  'bbFormacion', 'bbVs', 'bbVsResultado',
+  'bbZocaloLargo', 'bbZocaloCorto', 'bbZocaloCortoDoble', 'bbCharts',
+];
+
 THEMES.bauletiBalanza = {
   id: BAULETI_BALANZA_THEME_ID,
   name: 'BAULETI vs BALANZA',
@@ -369,8 +376,48 @@ THEMES.bauletiBalanza = {
     { id: 'bauleti', name: 'BAULETI', abbr: 'BAU', file: '/assets/themes/bauleti-balanza/escudos/bauleti.png' },
     { id: 'balanza', name: 'BALANZA', abbr: 'BAL', file: '/assets/themes/bauleti-balanza/escudos/balanza.png' },
   ],
-  assets: Object.fromEntries(['bbMarcador', 'bbFormacion', 'bbVs', 'bbTarjeta']
+  assets: Object.fromEntries(MODULE_IDS_BB
     .map((moduleId) => [moduleId, { status: 'ready' }])),
+};
+
+// COPA 4 NACIONES (SOFTX [4], 2026-11-04). Paquete "PNG estático + motion
+// web": cada módulo "c4n*" tiene capa de FONDO (PNG del diseñador, opcional:
+// mientras no llega la placa queda transparente), capa de CONTENIDO (datos,
+// escudos, textos) y capa de MOTION (entrada/salida CSS). Los fondos se
+// registran en shared/asset-registry.js como recursos PENDIENTES. Equipos
+// con catálogo manual extendido (server/teams.js, carpeta
+// assets/themes/copa4naciones/crests/).
+export const COPA4N_THEME_ID = 'copa4naciones';
+const MODULE_IDS_C4N = [
+  'c4nMarcador', 'c4nTarjeta', 'c4nCambio', 'c4nZocaloTexto', 'c4nZocaloTextoDoble', 'c4nZocaloCorto', 'c4nZocaloCortoDoble',
+  'c4nZocaloCompuesto', 'c4nMoscaLogo', 'c4nMoscaTexto', 'c4nRotativoSponsors', 'c4nGoleadores', 'c4nAsistencias', 'c4nGA',
+  'c4nPosiciones', 'c4nPromoWeb', 'c4nMejoresJugadores', 'c4nFixture', 'c4nVsPrepartido',
+  'c4nVsResultado', 'c4nFormacion', 'c4nStatsPrevia', 'c4nStatsEntretiempo', 'c4nStatsFinal', 'c4nDatos',
+];
+
+THEMES.copa4naciones = {
+  id: COPA4N_THEME_ID,
+  name: 'COPA 4 NACIONES',
+  shortName: 'C4N',
+  ready: true,
+  dataSource: 'copa4naciones-web',
+  palette: {
+    primary: '#0B1220',
+    accent: '#FFFFFF',
+    base: '#FFFFFF',
+  },
+  // IDs locales estables; "webId" = id de la selección en copa4naciones.com
+  // (server/copa4naciones.js mapea por ese id, con respaldo por país).
+  teams: [
+    { id: 'argentina', name: 'ARGENTINA STREAMERS', abbr: 'ARG', file: '/assets/themes/copa4naciones/crests/argentina.png', color: '#75AADB', webId: '516f251a4b76dc87bde60396' },
+    { id: 'brasil', name: 'BRASIL CRIADORES', abbr: 'BRA', file: '/assets/themes/copa4naciones/crests/brasil.png', color: '#F2C200', webId: 'f25903dbfae8af3fea966bfd' },
+    { id: 'chile', name: 'SELECCIÓN CHILENA DE CREADORES', abbr: 'CHI', file: '/assets/themes/copa4naciones/crests/chile.png', color: '#E42A35', webId: '267f8036e40093b74877bb29' },
+    { id: 'uruguay', name: 'URUGUAY CREADORES', abbr: 'URU', file: '/assets/themes/copa4naciones/crests/uruguay.png', color: '#37A9E0', webId: '441bc23ee6f534591ea12b62' },
+  ],
+  // Todo funciona sin PNG: el módulo está "listo" (sin badge de asset
+  // pendiente); el fondo de cada uno figura como PENDIENTE en RECURSO
+  // GRÁFICO hasta que llegue.
+  assets: Object.fromEntries(MODULE_IDS_C4N.map((moduleId) => [moduleId, { status: 'ready' }])),
 };
 
 export function listThemes() {
