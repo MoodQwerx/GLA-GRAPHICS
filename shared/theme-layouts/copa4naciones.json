@@ -3,5 +3,30 @@
     "compositionOffsetX": 26,
     "compositionOffsetY": 46,
     "compositionScale": 0.86
+  },
+  "c4nFixture": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": 0,
+    "compositionScale": 0.85
+  },
+  "c4nZocaloCompuesto": {
+    "compositionOffsetX": 0,
+    "compositionOffsetY": -2,
+    "compositionScale": 1
+  },
+  "c4nVar": {
+    "compositionOffsetX": 648,
+    "compositionOffsetY": 0,
+    "compositionScale": 1
+  },
+  "c4nGoleadores": {
+    "compositionOffsetX": -10,
+    "compositionOffsetY": 0,
+    "compositionScale": 1
+  },
+  "c4nZocaloCortoDoble": {
+    "compositionOffsetX": 1406,
+    "compositionOffsetY": 0,
+    "compositionScale": 1
   }
 }

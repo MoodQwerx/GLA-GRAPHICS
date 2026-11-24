@@ -14,7 +14,7 @@
 // program/js/main.js), sin reconstruirla. Se guardan con el módulo (autosave)
 // y se ven en Preview antes del TAKE.
 import { el } from './c4n-common.js';
-import { c4nFondo, C4N_ELEMENTS } from '../../../shared/c4n-assets.js';
+import { c4nFondo, C4N_ELEMENTS, C4N_FONDOS } from '../../../shared/c4n-assets.js';
 
 const CONTROLS = [
   { group: 'FONDO (PNG)', key: 'bgOffsetX', label: 'X', step: 2, min: -1920, max: 1920, unit: 'px', def: 0 },
@@ -71,8 +71,11 @@ const TEXT_MOVE = {
   c4nZocaloCorto: [['Line1', 'TEXTO']],
   c4nZocaloTexto: [['Line1', 'TEXTO']],
   c4nZocaloTextoDoble: [['Line1', 'LÍNEA 1'], ['Line2', 'LÍNEA 2']],
-  c4nZocaloCortoDoble: [['Line1', 'LÍNEA 1'], ['Line2', 'LÍNEA 2']],
+  c4nZocaloCortoDoble: [['Line1', 'NOMBRES'], ['Line2', 'CARGOS']],
   c4nZocaloCompuesto: [['Line1', 'RENGLÓN 1'], ['Line2', 'RENGLÓN 2'], ['Left', 'IZQUIERDA']],
+  // 2026-11-12: nombres de los jugadores, sin mover el PNG.
+  c4nCambio: [['InName', 'NOMBRE ENTRA'], ['OutName', 'NOMBRE SALE']],
+  c4nTarjeta: [['Name', 'NOMBRE']],
 };
 const TEXT_STEP = 2;
 
@@ -106,8 +109,36 @@ function textMoveBox(container, data, onDirty, moduleId) {
   container.append(box);
 }
 
+// AJUSTE POR PIEZA siempre visible (2026-11-11): X / Y / ESCALA de cada
+// pieza por separado (ZÓCALO CORTO DOBLE: placa izquierda, centro y derecha;
+// mover una no mueve las otras). Mismas claves que ELEMENTOS
+// (e<Parte>OffsetX / OffsetY / Scale): los dos controles quedan sincronizados.
+const PIECE_ADJUST = {
+  // 2026-11-15: + modo 4 (TALENTO 1..4), con claves propias (no mueven 1 / 2 / 3).
+  c4nZocaloCortoDoble: { title: 'POSICIÓN DE CADA PLACA (independiente)', parts: [['PlateL', 'IZQUIERDA (1 · 2 · 3)'], ['PlateC', 'CENTRO (3)'], ['PlateR', 'DERECHA (2 · 3)'], ['Plate41', 'x4 · TALENTO 1'], ['Plate42', 'x4 · TALENTO 2'], ['Plate43', 'x4 · TALENTO 3'], ['Plate44', 'x4 · TALENTO 4']] },
+};
+function pieceBox(container, data, onDirty, moduleId) {
+  const spec = PIECE_ADJUST[moduleId];
+  if (!spec) return;
+  const sync = (key) => { for (const input of container.querySelectorAll(`input[data-key="${key}"]`)) input.value = String(data[key] ?? ''); };
+  const box = el('div', { class: 'c4n-textmove c4n-piecebox' }, [el('div', { class: 'c4n-layer-title', text: spec.title })]);
+  for (const [key, label] of spec.parts) {
+    const ctls = ELEMENT_AXES.map((axis) => {
+      const k = `e${key}${axis.suffix}`;
+      return { axis, k, ctl: numberInput(data, k, axis, () => { sync(k); onDirty(); }) };
+    });
+    box.append(el('div', { class: 'c4n-layer-row c4n-layer-el', dataset: { part: key } }, [
+      el('span', { text: label }),
+      ...ctls.flatMap(({ axis, ctl }) => [el('small', { text: axis.label }), ctl.input]),
+      el('button', { type: 'button', class: 'bb-btn mini', text: 'RESET', onclick: () => ctls.forEach(({ axis, ctl }) => ctl.set(axis.def)) }),
+    ]));
+  }
+  container.append(box);
+}
+
 export function renderC4nLayerAdjust(container, data, onDirty, moduleId) {
   textMoveBox(container, data, onDirty, moduleId);
+  pieceBox(container, data, onDirty, moduleId);
   const box = el('details', { class: 'c4n-layer' });
   if (read(KEY_OPEN) === '1') box.open = true;
   box.addEventListener('toggle', () => store(KEY_OPEN, box.open ? '1' : '0'));
@@ -117,7 +148,7 @@ export function renderC4nLayerAdjust(container, data, onDirty, moduleId) {
   if (fondo) {
     box.append(el('div', {
       class: 'c4n-layer-hint',
-      text: `PNG: ${fondo.folder}/${fondo.file} · ${fondo.size[0]}×${fondo.size[1]} · MARCO EN X ${fondo.box.x} / Y ${fondo.box.y}. El PNG va siempre DEBAJO del contenido.`,
+      text: `PNG: ${C4N_FONDOS.filter((x) => x.moduleId === moduleId).map((x) => `${x.folder}/${x.file}${x.slot !== 'fondo' ? ` (${x.slot.toUpperCase()})` : ''}`).join(' + ')} · ${fondo.size[0]}×${fondo.size[1]} · MARCO EN X ${fondo.box.x} / Y ${fondo.box.y}. El PNG va siempre DEBAJO del contenido.`,
     }));
   }
 

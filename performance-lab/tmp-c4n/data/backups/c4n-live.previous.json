@@ -1,0 +1,25 @@
+{
+  "matchId": "a38dd38c5653435ea0235927",
+  "snapshot": {
+    "webMatchId": "a38dd38c5653435ea0235927",
+    "homeTeamId": "uruguay",
+    "awayTeamId": "chile",
+    "homeLabel": "Uruguay",
+    "awayLabel": "Chile",
+    "status": "scheduled",
+    "statusRaw": "scheduled",
+    "score": null,
+    "penalties": null,
+    "mvp": null,
+    "events": [],
+    "missedPenalties": [],
+    "unsupported": {},
+    "fetchedAt": "2026-11-15T03:26:14.657Z"
+  },
+  "lastOkAt": "2026-11-15T03:26:14.657Z",
+  "lastAttemptAt": "2026-11-15T03:26:14.657Z",
+  "state": "ok",
+  "message": "WEB CONECTADA · SIN INCIDENCIAS WEB DISPONIBLES TODAVÍA",
+  "detail": "",
+  "source": "mock"
+}

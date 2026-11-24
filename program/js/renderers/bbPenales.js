@@ -9,15 +9,16 @@
 // después solo cambian clases/números (el remate nuevo hace "pop", el número
 // rueda). Se reconstruye únicamente si cambian los equipos o la cantidad de
 // casilleros (muerte súbita).
-import { BB_PENALTY_ROUNDS } from '../../../shared/bb-match.js';
 import { team, anim, crestHtml, escapeHtml, matchStateFrom } from './bb-common.js';
 
 const MAX_SLOTS = 10;
 
+// TANDA DE 3 O 5 (2026-11-06): los casilleros iniciales son los de la tanda
+// elegida (state.penalties.rounds); en muerte súbita se agregan de a uno.
 function slotCount(state) {
   const rounds = Math.max(state.local.penalties.kicks.length, state.visitante.penalties.kicks.length);
   const next = rounds + (state.local.penalties.kicks.length === state.visitante.penalties.kicks.length ? 1 : 0);
-  return Math.min(MAX_SLOTS, Math.max(BB_PENALTY_ROUNDS, next));
+  return Math.min(MAX_SLOTS, Math.max(state.penalties.rounds, next));
 }
 
 function rowHtml(side, t, slots, showMain, d) {
@@ -113,8 +114,8 @@ export default function renderBbPenales(contentEl, data, justTaken, _onEnded, al
       }
     }
   }
-  const { suddenDeath, round } = state.penalties;
-  const roundText = suddenDeath ? 'MUERTE SÚBITA' : `TANDA ${Math.min(BB_PENALTY_ROUNDS, round)} DE ${BB_PENALTY_ROUNDS}`;
+  const { suddenDeath, round, rounds: regulation } = state.penalties;
+  const roundText = suddenDeath ? 'MUERTE SÚBITA' : `TANDA ${Math.min(regulation, round)} DE ${regulation}`;
   if (refs.round.textContent !== roundText) refs.round.textContent = roundText;
   refs.head.classList.toggle('is-sd', suddenDeath);
   refs.last.ready = true;

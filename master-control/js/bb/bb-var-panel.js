@@ -36,7 +36,7 @@ export function renderBbVarPanel(container, ctx) {
     sideSel.value = varSide;
 
     root.append(
-      el('p', { class: 'bb-desc', text: 'Placa compacta arriba a la derecha. Con la placa al aire, cada decisión se actualiza al instante.' }),
+      el('p', { class: 'bb-desc', text: 'Placa compacta abajo a la izquierda (misma zona que Tarjeta, Cambio y Zócalos: TAKE de una saca a la otra). Con la placa al aire, cada decisión se actualiza al instante.' }),
       section('DECISIÓN', [
         el('div', { class: 'bb-var-grid' }, BB_VAR_DECISIONS.map((d) => el('button', {
           type: 'button',

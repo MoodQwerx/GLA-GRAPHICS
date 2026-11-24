@@ -5,12 +5,17 @@
 // el resultado sube y debajo van los penales entre paréntesis con el rótulo
 // PENALES. "live": si se corrige el resultado con la placa al aire, se
 // reconstruye sin repetir la entrada.
+//
+// 2026-11-06: sin rótulos LOCAL / VISITANTE (igual que el VS PREPARTIDO) y
+// con un GUION propio entre los dos scores ("2 - 1"): barra dorada centrada
+// en el medio de la placa y a la altura del centro de los dígitos; como cada
+// score está alineado contra el centro, queda centrado con 1 o 2 dígitos.
 import { team, anim, crestHtml, upper, fitFontPx, markStatic, escapeHtml, matchStateFrom } from './bb-common.js';
 
 const NAME_MAX_WIDTH = 700;
 const NAME_MAX_PX = 112;
 
-function sideHtml(cls, t, label) {
+function sideHtml(cls, t) {
   const lag = cls === 'left' ? 0 : 0.04;
   const name = upper(t.name || t.abbr);
   const px = fitFontPx(name, { maxPx: NAME_MAX_PX, minPx: 52, maxWidth: NAME_MAX_WIDTH, trackEm: 0.015 });
@@ -18,7 +23,6 @@ function sideHtml(cls, t, label) {
     <div class="bb-vs-side ${cls}">
       <div class="bb-vs-floor bb-a" ${anim(0.55 + lag, 0)}></div>
       ${crestHtml(t, 'bb-vs-crest bb-a', anim(0.42 + lag, 0.06))}
-      <div class="bb-vs-label bb-a" ${anim(0.78 + lag, 0)}>${label}</div>
       <div class="bb-vs-name bb-a" ${anim(0.82 + lag, 0.02, `font-size:${px}px`)}>${escapeHtml(name)}</div>
       <div class="bb-vs-bar bb-a" ${anim(0.98 + lag, 0)}></div>
     </div>`;
@@ -52,10 +56,11 @@ export default function renderBbVsResultado(contentEl, data, justTaken, _onEnded
         <div class="bb-vs-seam bb-a" ${anim(0.18, 0.2)}></div>
         <div class="bb-vs-seam thin bb-a" ${anim(0.26, 0.18)}></div>
       </div>
-      ${sideHtml('left', a, 'LOCAL')}
-      ${sideHtml('right', b, 'VISITANTE')}
+      ${sideHtml('left', a)}
+      ${sideHtml('right', b)}
       <div class="bb-vsr-score left bb-a" ${anim(0.6, 0.1, `font-size:${scorePx}px`)}>${escapeHtml(sA)}</div>
       <div class="bb-vsr-score right bb-a" ${anim(0.66, 0.1, `font-size:${scorePx}px`)}>${escapeHtml(sB)}</div>
+      <div class="bb-vsr-dash bb-a" ${anim(0.78, 0.1, `--s:${scorePx}px`)}></div>
       ${showPens ? `
       <div class="bb-vsr-pen left bb-a" ${anim(0.9, 0)}>(${state.penalties.local})</div>
       <div class="bb-vsr-pen right bb-a" ${anim(0.94, 0)}>(${state.penalties.visitante})</div>

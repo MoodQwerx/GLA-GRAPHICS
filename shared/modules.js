@@ -29,7 +29,7 @@ import { TEAM_COLORS } from './team-colors.js';
 import { TEAM_OPTIONS } from './teams.js';
 import { SPONSOR_OPTIONS } from './sponsors.js';
 import { emptyClock } from './clock.js';
-import { ARGENTINA_STREAMERS_THEME_ID } from './themes.js';
+import { ARGENTINA_STREAMERS_THEME_ID, THEMES } from './themes.js';
 import { deepMergeAdjustFields } from './adjust-path.js';
 
 function penaltyKicksDefault(count) {
@@ -1658,7 +1658,8 @@ export const MODULES = {
       showExtra: false,
       showCrests: true,
       matchEvents: [],
-      penalties: { active: false, first: 'local' },
+      // "rounds" (2026-11-06): tanda inicial de 3 o 5 penales por equipo.
+      penalties: { active: false, first: 'local', rounds: 5 },
     },
   },
 
@@ -1690,6 +1691,10 @@ export const MODULES = {
     defaults: {
       event: null,
       autoOutSec: 7,
+      // JUGADOR: PLANTEL / MANUAL (2026-11-06). MANUAL = jugador de último
+      // momento solo para el evento; el plantel no se toca.
+      jugadorModo: 'plantel',
+      manual: { nombre: '', dorsal: '' },
     },
   },
 
@@ -1704,10 +1709,17 @@ export const MODULES = {
     defaults: {
       event: null,
       autoOutSec: 8,
+      // ENTRA / SALE: PLANTEL o MANUAL, cada uno por su lado (2026-11-06).
+      modoEntra: 'plantel',
+      modoSale: 'plantel',
+      manualEntra: { nombre: '', dorsal: '' },
+      manualSale: { nombre: '', dorsal: '' },
     },
   },
 
-  // VAR: placa compacta arriba a la derecha (convive con el Marcador).
+  // VAR: placa compacta abajo a la izquierda (2026-11-06; antes arriba a la
+  // derecha, en la zona de la mosca). Comparte zona y exclusión con Tarjeta,
+  // Cambio y Zócalos.
   bbVar: {
     id: 'bbVar',
     label: 'VAR',
@@ -1751,6 +1763,8 @@ export const MODULES = {
       side: 'local',
       titulo: 'FORMACIÓN',
       mostrarSuplentes: true,
+      // VISUAL (2026-11-06): 'foto' (camiseta si no hay foto) | 'camiseta'.
+      visual: 'foto',
       equipos: {},
     },
   },
@@ -1765,7 +1779,8 @@ export const MODULES = {
       { key: 'detalle', label: 'Texto inferior (fecha / sede / hora)', type: FIELD_TYPES.TEXT },
     ],
     defaults: {
-      evento: 'PARTIDO DEL AÑO',
+      // Nombre oficial del evento (metadata de shared/themes.js).
+      evento: THEMES.bauletiBalanza.event.name,
       detalle: '',
     },
   },
@@ -1798,6 +1813,69 @@ export const MODULES = {
       detalle: '',
     },
   },
+  bbYaComenzamos: {
+    id: 'bbYaComenzamos',
+    label: 'YA COMENZAMOS',
+    category: 'Placas',
+    layer: 'fullscreen',
+    // YA COMENZAMOS / GRACIAS POR VER (2026-11-06): placas de pantalla
+    // completa de apertura y cierre, misma familia que el VS (escudos de los
+    // equipos del Marcador, texto principal grande) con un loop de fondo
+    // suave mientras están al aire. Ver program/js/renderers/bbPlacas.js.
+    fields: [
+      { key: 'titulo', label: 'Texto principal', type: FIELD_TYPES.TEXT },
+      { key: 'evento', label: 'Texto superior (evento)', type: FIELD_TYPES.TEXT },
+      { key: 'detalle', label: 'Texto inferior (opcional)', type: FIELD_TYPES.TEXT },
+    ],
+    defaults: {
+      titulo: 'YA COMENZAMOS',
+      evento: THEMES.bauletiBalanza.event.name,
+      detalle: '',
+    },
+  },
+  bbGraciasPorVer: {
+    id: 'bbGraciasPorVer',
+    label: 'GRACIAS POR VER',
+    category: 'Placas',
+    layer: 'fullscreen',
+    fields: [
+      { key: 'titulo', label: 'Texto principal', type: FIELD_TYPES.TEXT },
+      { key: 'evento', label: 'Texto superior (evento)', type: FIELD_TYPES.TEXT },
+      { key: 'detalle', label: 'Texto inferior (opcional)', type: FIELD_TYPES.TEXT },
+    ],
+    defaults: {
+      titulo: 'GRACIAS POR VER',
+      evento: THEMES.bauletiBalanza.event.name,
+      detalle: '',
+    },
+  },
+  // MOSCA PDM (2026-11-06): arriba a la derecha, "PDM" que cada ~40 s se
+  // despliega en "#PARTIDODELMOMENTO" y vuelve. El ciclo es CSS (sin timers,
+  // ver program/js/renderers/bbMosca.js); cambiar ROTACIÓN o INTERVALO y
+  // ACTUALIZAR lo reinicia desde PDM. Convive con todo; debajo de las placas
+  // de pantalla completa queda oculta.
+  bbMoscaPdm: {
+    id: 'bbMoscaPdm',
+    label: 'MOSCA PDM',
+    category: 'Mosca',
+    layer: 'bug',
+    fields: [
+      {
+        key: 'rotacion',
+        label: 'Rotación PDM ↔ #PARTIDODELMOMENTO',
+        type: FIELD_TYPES.SELECT,
+        options: [
+          { id: 'si', label: 'ACTIVA' },
+          { id: 'no', label: 'DESACTIVADA (solo PDM)' },
+        ],
+      },
+      { key: 'intervalo', label: 'Intervalo entre hashtags (segundos, 3 a 600)', type: FIELD_TYPES.TEXT },
+    ],
+    defaults: {
+      rotacion: 'si',
+      intervalo: '40',
+    },
+  },
 
   // ZÓCALOS: tres formatos del mismo sistema, abajo a la izquierda.
   bbZocaloLargo: {
@@ -1810,8 +1888,8 @@ export const MODULES = {
       { key: 'linea2', label: 'Línea secundaria', type: FIELD_TYPES.TEXT },
     ],
     defaults: {
-      linea1: 'BAULETI VS BALANZA',
-      linea2: 'EL PARTIDO DEL AÑO',
+      linea1: 'TEAM BAULETI VS TEAM BALANZA',
+      linea2: THEMES.bauletiBalanza.event.name,
     },
   },
 
@@ -1833,13 +1911,36 @@ export const MODULES = {
     label: 'ZÓCALO CORTO DOBLE',
     category: 'Zocalos',
     layer: 'lowerThird',
+    // CANTIDAD 1 / 2 / 3 (2026-11-06): 1 = la pieza de siempre; 2 =
+    // izquierda + derecha (estructura espejada, texto normal); 3 = izquierda
+    // + centro + derecha (relator, comentarista, tercera persona). Cada
+    // persona tiene su propio nombre y cargo.
     fields: [
-      { key: 'linea1', label: 'Línea principal', type: FIELD_TYPES.TEXT },
-      { key: 'linea2', label: 'Línea secundaria', type: FIELD_TYPES.TEXT },
+      {
+        key: 'cantidad',
+        label: 'CANTIDAD DE ZÓCALOS',
+        type: FIELD_TYPES.SELECT,
+        options: [
+          { id: '1', label: '1 ZÓCALO' },
+          { id: '2', label: '2 ZÓCALOS (izquierda + derecha)' },
+          { id: '3', label: '3 ZÓCALOS (izquierda + centro + derecha)' },
+        ],
+      },
+      { key: 'linea1', label: 'IZQUIERDA — nombre (o única persona)', type: FIELD_TYPES.TEXT },
+      { key: 'linea2', label: 'IZQUIERDA — cargo / descripción', type: FIELD_TYPES.TEXT },
+      { key: 'linea1Cen', label: 'CENTRO — nombre (solo con 3)', type: FIELD_TYPES.TEXT },
+      { key: 'linea2Cen', label: 'CENTRO — cargo / descripción (solo con 3)', type: FIELD_TYPES.TEXT },
+      { key: 'linea1Der', label: 'DERECHA — nombre (con 2 o 3)', type: FIELD_TYPES.TEXT },
+      { key: 'linea2Der', label: 'DERECHA — cargo / descripción (con 2 o 3)', type: FIELD_TYPES.TEXT },
     ],
     defaults: {
+      cantidad: '1',
       linea1: 'NOMBRE APELLIDO',
       linea2: 'CARGO / DESCRIPCIÓN',
+      linea1Cen: '',
+      linea2Cen: '',
+      linea1Der: '',
+      linea2Der: '',
     },
   },
 
@@ -1862,6 +1963,10 @@ export const MODULES = {
       destacados: { local: [], visitante: [] },
       destacadosData: {},
       stats: [],
+      // DETALLE DE GOLES de ENTRETIEMPO y FINAL (2026-11-06): 'con' = autores,
+      // timeline e incidencias (lo de siempre); 'sin' = solo equipos, logos,
+      // resultado y datos principales. No borra eventos.
+      detalleGoles: { entretiempo: 'con', final: 'con' },
     },
   },
 
@@ -1893,8 +1998,14 @@ export const MODULES = {
       clock: emptyClock(),
       clockEndText: '20:00',
       period: '1T',
+      // TIEMPO ADICIONAL (shared/c4n-match.js extraTimeState): minutos,
+      // inicio automático (al llegar al fin del tiempo) o manual (showExtra +
+      // su propio reloj "extraClock", atado al período / partido "extraFor").
       extraMinutes: 0,
+      extraAuto: true,
       showExtra: false,
+      extraClock: emptyClock(),
+      extraFor: '',
       matchEvents: [],
       penalties: { active: false, first: 'local', show: false },
       ...C4N_LAYER,
@@ -1917,6 +2028,23 @@ export const MODULES = {
     layer: 'event',
     fields: [],
     defaults: { event: null, autoOutSec: 8, ...C4N_LAYER },
+  },
+
+  // PENAL SHOOTOUT (2026-11-15): pieza abajo a la izquierda sobre el PNG de
+  // TARJETAS (escudo de la selección que patea, PENAL SHOOTOUT, reloj y fase
+  // del partido). "lado": local / visitante del MARCADOR; "fase": vacío =
+  // automática (la del partido del fixture), texto = a mano; "toma": sube en
+  // cada PENAL SHOOTOUT del panel. El reloj arranca en 00:00 en cada TAKE (y
+  // en cada "toma" nueva) y cuenta para adelante sin tope, hasta OUT. "live":
+  // el tick de Program (500 ms) lo repinta; sin timers propios.
+  c4nPenalShootout: {
+    id: 'c4nPenalShootout',
+    label: 'PENAL SHOOTOUT',
+    category: 'Partido',
+    layer: 'event',
+    live: true,
+    fields: [],
+    defaults: { lado: 'local', fase: '', toma: 0, ...C4N_LAYER },
   },
 
   c4nZocaloTexto: {
@@ -1954,11 +2082,50 @@ export const MODULES = {
     label: 'ZÓCALO CORTO DOBLE',
     category: 'Zocalos',
     layer: 'lowerThird',
+    // ZÓCALO CASTER (PNG real 2026-11-11). CANTIDAD 1 / 2 / 3 / 4 (misma lógica
+    // que el zócalo de talentos de BxB): 1 = una placa; 2 = izquierda + derecha
+    // (placa espejada, texto normal); 3 = izquierda + centro + derecha
+    // (relator, comentarista, analista); 4 (2026-11-15) = cuatro placas
+    // simétricas sobre el borde inferior (TALENTO 1 = IZQUIERDA, 2, 3 y
+    // TALENTO 4 = DERECHA; 3 y 4 espejadas, el texto nunca). Cada placa:
+    // nombre y cargo propios.
     fields: [
-      { key: 'linea1', label: 'Línea principal', type: FIELD_TYPES.TEXT },
-      { key: 'linea2', label: 'Línea secundaria', type: FIELD_TYPES.TEXT },
+      {
+        key: 'cantidad',
+        label: 'CANTIDAD DE ZÓCALOS',
+        type: FIELD_TYPES.SELECT,
+        options: [
+          { id: '1', label: '1 ZÓCALO' },
+          { id: '2', label: '2 ZÓCALOS (izquierda + derecha)' },
+          { id: '3', label: '3 ZÓCALOS (izquierda + centro + derecha)' },
+          { id: '4', label: '4 ZÓCALOS (talentos 1 · 2 · 3 · 4)' },
+        ],
+      },
+      { key: 'linea1', label: 'IZQUIERDA / TALENTO 1 — nombre (o única persona)', type: FIELD_TYPES.TEXT },
+      { key: 'linea2', label: 'IZQUIERDA / TALENTO 1 — cargo / descripción', type: FIELD_TYPES.TEXT },
+      { key: 'linea1T2', label: 'TALENTO 2 — nombre (solo con 4)', type: FIELD_TYPES.TEXT },
+      { key: 'linea2T2', label: 'TALENTO 2 — cargo / descripción (solo con 4)', type: FIELD_TYPES.TEXT },
+      { key: 'linea1Cen', label: 'CENTRO — nombre (solo con 3)', type: FIELD_TYPES.TEXT },
+      { key: 'linea2Cen', label: 'CENTRO — cargo / descripción (solo con 3)', type: FIELD_TYPES.TEXT },
+      { key: 'linea1T3', label: 'TALENTO 3 — nombre (solo con 4)', type: FIELD_TYPES.TEXT },
+      { key: 'linea2T3', label: 'TALENTO 3 — cargo / descripción (solo con 4)', type: FIELD_TYPES.TEXT },
+      { key: 'linea1Der', label: 'DERECHA / TALENTO 4 — nombre (con 2, 3 o 4)', type: FIELD_TYPES.TEXT },
+      { key: 'linea2Der', label: 'DERECHA / TALENTO 4 — cargo / descripción (con 2, 3 o 4)', type: FIELD_TYPES.TEXT },
     ],
-    defaults: { linea1: 'NOMBRE APELLIDO', linea2: 'CARGO / DESCRIPCIÓN', ...C4N_LAYER },
+    defaults: {
+      cantidad: '1',
+      linea1: 'NOMBRE APELLIDO',
+      linea2: 'CARGO / DESCRIPCIÓN',
+      linea1T2: 'NOMBRE APELLIDO',
+      linea2T2: 'CARGO / DESCRIPCIÓN',
+      linea1Cen: 'NOMBRE APELLIDO',
+      linea2Cen: 'ANALISTA',
+      linea1T3: 'NOMBRE APELLIDO',
+      linea2T3: 'CARGO / DESCRIPCIÓN',
+      linea1Der: 'NOMBRE APELLIDO',
+      linea2Der: 'COMENTARISTA',
+      ...C4N_LAYER,
+    },
   },
 
   // Logo (evento o equipo) + texto + rotativo de mensajes + sponsor.
@@ -1984,9 +2151,19 @@ export const MODULES = {
       },
       { key: 'texto', label: 'Renglón 1 (banda azul)', type: FIELD_TYPES.TEXT },
       { key: 'texto2', label: 'Renglón 2', type: FIELD_TYPES.TEXT },
-      { key: 'intervaloSec', label: 'Segundos por sponsor', type: FIELD_TYPES.TEXT },
+      {
+        key: 'sponsorsRotacion',
+        label: 'Rotación sponsors (recuadro derecho)',
+        type: FIELD_TYPES.SELECT,
+        options: [
+          { id: 'si', label: 'ACTIVA (todos los logos de la carpeta)' },
+          { id: 'no', label: 'DESACTIVADA (solo el primer logo)' },
+        ],
+      },
+      { key: 'intervaloSec', label: 'Segundos por sponsor (2 a 60)', type: FIELD_TYPES.TEXT },
     ],
     defaults: {
+      sponsorsRotacion: 'si',
       izquierda: 'copa',
       texto: 'COPA 4 NACIONES',
       texto2: '14 Y 15 DE NOVIEMBRE · SPEEDCAMP BUENOS AIRES',
@@ -2014,6 +2191,63 @@ export const MODULES = {
       { key: 'linea2', label: 'Línea 2', type: FIELD_TYPES.TEXT },
     ],
     defaults: { linea1: 'COPA 4 NACIONES', linea2: 'EN VIVO', ...C4N_LAYER },
+  },
+
+  // MOSCA C4N (2026-11-11): reemplaza a MOSCA LOGO + MOSCA TEXTO (quedan
+  // definidas pero fuera del panel). Logo de la copa arriba a la derecha y,
+  // con ROTACIÓN ACTIVA, cada INTERVALO segundos el texto "COPA / CUATRO
+  // NACIONES" se despliega a su izquierda, queda unos segundos y vuelve a
+  // cerrarse (mismo funcionamiento que la MOSCA PDM de BxB, identidad C4N).
+  c4nMosca: {
+    id: 'c4nMosca',
+    label: 'MOSCA C4N',
+    category: 'Mosca',
+    layer: 'bug',
+    fields: [
+      {
+        key: 'rotacion',
+        label: 'Rotación LOGO ↔ TEXTO',
+        type: FIELD_TYPES.SELECT,
+        options: [
+          { id: 'si', label: 'ACTIVA' },
+          { id: 'no', label: 'DESACTIVADA (solo el logo)' },
+        ],
+      },
+      { key: 'intervalo', label: 'Intervalo entre textos (segundos, 3 a 600; por defecto 40)', type: FIELD_TYPES.TEXT },
+    ],
+    defaults: { rotacion: 'si', intervalo: '40', ...C4N_LAYER },
+  },
+
+  // VAR (2026-11-11): placa abajo a la izquierda sobre el PNG real
+  // ("ZOCALO_VAR.png"), misma lógica que el VAR de BxB: decisión con un clic,
+  // MOTIVO, cambio al aire sin rearmar la placa y REGISTRAR EN EL PARTIDO.
+  c4nVar: {
+    id: 'c4nVar',
+    label: 'VAR',
+    category: 'Partido',
+    layer: 'event',
+    // live: la lista de sponsors (RECARGAR) llega también con el VAR al aire.
+    live: true,
+    fields: [],
+    // SPONSORS A LA DERECHA (2026-11-13): MOSTRAR / OCULTAR el mismo rotativo
+    // de sponsors del ZÓCALO COMPUESTO (carpeta, rotación e intervalo de ese
+    // módulo) en un recuadro a la derecha de la placa.
+    defaults: { decision: 'chequeo', motivo: '', sponsors: 'ocultar', ...C4N_LAYER },
+  },
+
+  // SPONSORS (2026-11-13): placas de premio con sponsor sobre los PNG reales
+  // (MVP DEL PARTIDO · PRAGMATIC PLAY, con el escudo de cada selección;
+  // BALÓN DE ORO · COMPRA GAMER; GUANTE DE ORO · MOSTAZA; BOTÍN DE ORO ·
+  // SPEED LÍDER). JUGADOR AUTOMÁTICO = el operador elige selección y jugador
+  // del plantel (nombre y PNG se completan solos; el sistema nunca elige al
+  // ganador) o MANUAL = texto libre. Piezas y geometría: shared/c4n-assets.js.
+  c4nSponsors: {
+    id: 'c4nSponsors',
+    label: 'SPONSORS',
+    category: 'Sponsors',
+    layer: 'lowerThird',
+    fields: [],
+    defaults: { pieza: 'mvp', modo: 'auto', pais: 'argentina', jugador: null, nombre: '', escudo: '', ...C4N_LAYER },
   },
 
   // Rotativo de sponsors: logos PNG de assets/themes/copa4naciones/sponsors/
@@ -2068,7 +2302,54 @@ export const MODULES = {
     layer: 'placaL',
     live: true,
     fields: [{ key: 'titulo', label: 'Título', type: FIELD_TYPES.TEXT }],
-    defaults: { titulo: 'POSICIONES', ...C4N_LAYER },
+    // grupos (2026-11-10): asignación MANUAL de cada selección a GRUPO A / B
+    // ({ teamId: 'A' | 'B' }); la web oficial publica una sola fase de grupos.
+    // Vacía = un solo bloque con la tabla completa.
+    defaults: { titulo: 'POSICIONES', grupos: {}, ...C4N_LAYER },
+  },
+
+  // TABLA VS (2026-11-11): placa de enfrentamiento (escudo + nombre de cada
+  // equipo, VS, horario y fase) sobre TABLA_L, en la zona L. Fuente FIXTURE
+  // (un partido del fixture efectivo, con AJUSTES opcionales solo de la placa)
+  // o MANUAL (todo a mano). Nunca modifica el fixture: ver resolveTablaVs en
+  // shared/c4n-match.js. Panel propio (master-control/js/c4n/c4n-tablavs-panel.js).
+  c4nTablaVs: {
+    id: 'c4nTablaVs',
+    label: 'TABLA VS',
+    category: 'Tablas',
+    layer: 'placaL',
+    fields: [],
+    defaults: {
+      fuente: 'fixture',
+      matchId: '',
+      ajuste: { teamA: '', teamB: '', crestA: '', crestB: '', nameA: '', nameB: '', horario: '', dia: '', fase: '' },
+      manual: { teamA: 'argentina', teamB: 'uruguay', crestA: '', crestB: '', nameA: '', nameB: '', horario: '', dia: '', fase: 'FASE DE GRUPOS' },
+      ...C4N_LAYER,
+    },
+  },
+
+  // TABLA FIXTURE (2026-11-15): los partidos de un día sobre TABLA_L (la L de
+  // las tablas), con tarjetas blancas como la TABLA DE POSICIONES. Mismos
+  // partidos que FIXTURE (fixture efectivo de "c4nDatos"); "dia": auto (hoy) /
+  // sabado / domingo; "ocultos": partidos que no se muestran; "ajustes":
+  // { [matchId]: { hora, fase, local, visitante } } SOLO de esta placa (nunca
+  // tocan el FIXTURE ni la web). "live": un resultado nuevo se ve al aire.
+  c4nTablaFixture: {
+    id: 'c4nTablaFixture',
+    label: 'TABLA FIXTURE',
+    category: 'Tablas',
+    layer: 'placaL',
+    live: true,
+    fields: [],
+    defaults: {
+      kicker: 'COPA CUATRO NACIONES',
+      titulo: 'FIXTURE DE HOY',
+      pie: 'SEGUÍ TODAS LAS ESTADÍSTICAS Y RESULTADOS DESDE COPA4NACIONES.COM',
+      dia: 'auto',
+      ocultos: [],
+      ajustes: {},
+      ...C4N_LAYER,
+    },
   },
 
   c4nPromoWeb: {
@@ -2076,12 +2357,21 @@ export const MODULES = {
     label: 'PROMO WEB',
     category: 'Tablas',
     layer: 'placaL',
+    // 2026-11-11: pieza editorial sobre TABLA_L (mensaje, los 4 escudos, la
+    // web protagonista, texto secundario y SPEED CAMP).
     fields: [
-      { key: 'titulo', label: 'Título', type: FIELD_TYPES.TEXT },
-      { key: 'texto', label: 'Texto', type: FIELD_TYPES.TEXTAREA },
-      { key: 'url', label: 'Dirección web', type: FIELD_TYPES.TEXT },
+      { key: 'mensaje1', label: 'Mensaje (línea 1)', type: FIELD_TYPES.TEXT },
+      { key: 'mensaje2', label: 'Mensaje (línea 2)', type: FIELD_TYPES.TEXT },
+      { key: 'web', label: 'Dirección web', type: FIELD_TYPES.TEXT },
+      { key: 'bajada', label: 'Texto secundario', type: FIELD_TYPES.TEXT },
+      { key: 'sede', label: 'Sede', type: FIELD_TYPES.TEXT },
+      { key: 'pie', label: 'Pie', type: FIELD_TYPES.TEXT },
     ],
-    defaults: { titulo: 'SEGUÍ LA COPA', texto: 'Fixture, resultados, tabla y estadísticas en vivo', url: 'COPA4NACIONES.COM', ...C4N_LAYER },
+    defaults: {
+      mensaje1: 'SEGUÍ TODOS LOS DATOS', mensaje2: 'DESDE NUESTRA WEB', web: 'COPA4NACIONES.COM',
+      bajada: 'RESULTADOS, ESTADÍSTICAS Y POSICIONES EN VIVO', sede: 'SPEED CAMP', pie: 'COPA 4 NACIONES · BUENOS AIRES',
+      ...C4N_LAYER,
+    },
   },
 
   // Destacado / comparativa de jugadores (500×150): uno por selección.
@@ -2090,8 +2380,13 @@ export const MODULES = {
     label: 'MEJORES JUGADORES',
     category: 'Tablas',
     layer: 'lowerThird',
+    // 2026-11-12: DATO = 'goals' / 'assists' / 'contributions' (el mejor de cada
+    // selección del ranking efectivo, automático) o 'custom' (PERSONALIZADO: la
+    // elección manual de siempre, en "jugadores"). "live": si los rankings
+    // cambian con la placa al aire, se actualiza sola.
+    live: true,
     fields: [],
-    defaults: { titulo: 'JUGADORES A SEGUIR', jugadores: [], ...C4N_LAYER },
+    defaults: { titulo: 'JUGADORES A SEGUIR', dato: 'goals', jugadores: [], ...C4N_LAYER },
   },
 
   // FIXTURE del evento (placa 1500×950): partidos de un día (SÁBADO o
@@ -2182,7 +2477,10 @@ export const MODULES = {
     layer: 'fullscreen',
     live: true,
     fields: [{ key: 'titulo', label: 'Título', type: FIELD_TYPES.TEXT }],
-    defaults: { titulo: 'ENTRETIEMPO', fuente: 'auto', manual: { scoreA: 0, scoreB: 0, penA: '', penB: '', events: [] }, ...C4N_LAYER },
+    defaults: {
+      // FUENTE DE INCIDENCIAS (2026-11-11): 'softx' (lo de siempre) o 'web' (sync en vivo).
+      incidencias: 'softx',
+      titulo: 'ENTRETIEMPO', fuente: 'auto', manual: { scoreA: 0, scoreB: 0, penA: '', penB: '', events: [] }, ...C4N_LAYER },
   },
 
   c4nStatsFinal: {
@@ -2192,7 +2490,10 @@ export const MODULES = {
     layer: 'fullscreen',
     live: true,
     fields: [{ key: 'titulo', label: 'Título', type: FIELD_TYPES.TEXT }],
-    defaults: { titulo: 'FINAL DEL PARTIDO', fuente: 'auto', manual: { scoreA: 0, scoreB: 0, penA: '', penB: '', events: [] }, ...C4N_LAYER },
+    defaults: {
+      // FUENTE DE INCIDENCIAS (2026-11-11): 'softx' (lo de siempre) o 'web' (sync en vivo).
+      incidencias: 'softx',
+      titulo: 'FINAL DEL PARTIDO', fuente: 'auto', manual: { scoreA: 0, scoreB: 0, penA: '', penB: '', events: [] }, ...C4N_LAYER },
   },
 
   // Vista efectiva del torneo (la escribe SOLO el servidor): pestaña

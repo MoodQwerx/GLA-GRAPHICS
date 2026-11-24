@@ -136,10 +136,14 @@ export function createMatchEvent({
     minute: Math.floor(ms / 60000) + 1,
     timestamp: Date.now(),
   };
+  // MANUAL (BxB, 2026-11-06): jugador cargado a mano para este evento (sin
+  // ID de PLANTELES). Solo queda en el evento; el plantel no cambia.
+  if (player && !player.id && player.nombre) ev.playerManual = true;
   if (type === BB_EVENT_TYPES.SUB) {
     ev.playerOutId = playerOut?.id || null;
     ev.playerOutName = playerOut?.nombre || '';
     ev.playerOutDorsal = playerOut?.dorsal || '';
+    if (playerOut && !playerOut.id && playerOut.nombre) ev.playerOutManual = true;
   } else if (type === BB_EVENT_TYPES.PENALTY) {
     ev.scored = scored === true;
     ev.order = order;
@@ -215,10 +219,19 @@ export function scoreFromEvents(events) {
 
 // Tanda de penales desde los eventos "penaltyShootout".
 //   rounds: rondas completas o en curso; nextSide: quién patea ahora;
-//   suddenDeath: ya pasaron las 5 rondas reglamentarias.
+//   suddenDeath: ya pasaron las rondas reglamentarias de la tanda.
+// TANDA DE 3 O 5 (BxB, 2026-11-06): "regulation" = remates iniciales por
+// equipo (bbMarcador.penalties.rounds); sin dato, 5 (COPA 4 NACIONES y todo
+// lo anterior siguen igual).
 export const BB_PENALTY_ROUNDS = 5;
+export const BB_PENALTY_ROUND_OPTIONS = [3, 5];
 
-export function penaltyTally(events, first = 'local') {
+export function penaltyRounds(penalties) {
+  const n = Number(penalties?.rounds);
+  return BB_PENALTY_ROUND_OPTIONS.includes(n) ? n : BB_PENALTY_ROUNDS;
+}
+
+export function penaltyTally(events, first = 'local', regulation = BB_PENALTY_ROUNDS) {
   const kicks = sortEvents(events).filter((ev) => ev.type === BB_EVENT_TYPES.PENALTY);
   const local = kicks.filter((k) => k.side === 'local');
   const visitante = kicks.filter((k) => k.side === 'visitante');
@@ -235,7 +248,8 @@ export function penaltyTally(events, first = 'local') {
     rounds,
     round: Math.min(local.length, visitante.length) + 1,
     nextSide,
-    suddenDeath: Math.min(local.length, visitante.length) >= BB_PENALTY_ROUNDS,
+    regulation,
+    suddenDeath: Math.min(local.length, visitante.length) >= regulation,
   };
 }
 
@@ -256,7 +270,7 @@ export function buildMatchState(marcador, formacion, { teamLookup = (id) => ({ i
   const m = marcador || {};
   const events = sortEvents(m.matchEvents);
   const first = m.penalties?.first === 'visitante' ? 'visitante' : 'local';
-  const tally = penaltyTally(events, first);
+  const tally = penaltyTally(events, first, penaltyRounds(m.penalties));
   const goalsFromEvents = scoreFromEvents(events);
   const score = { local: Math.max(0, Number(m.scoreA) || 0), visitante: Math.max(0, Number(m.scoreB) || 0) };
   const side = (key) => {
@@ -293,6 +307,7 @@ export function buildMatchState(marcador, formacion, { teamLookup = (id) => ({ i
       kicks: tally.kicks,
       nextSide: tally.nextSide,
       round: tally.round,
+      rounds: tally.regulation,
       suddenDeath: tally.suddenDeath,
     },
     clock: m.clock || null,

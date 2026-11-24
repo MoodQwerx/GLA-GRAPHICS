@@ -80,3 +80,88 @@ label.c4n-layer-row { cursor: pointer; }
 .c4n-textmove-row > span:first-child { min-width: 92px; }
 .c4n-textmove-val { min-width: 96px; font-family: monospace; color: #cfd8e6; text-align: center; }
 .c4n-fuente .bb-btn.period.active { box-shadow: 0 0 0 2px #9fc3ff inset; }
+/* REINICIAR TODO (2026-11-14): debajo de STOP ALL, con confirmación. */
+/* SYNC EN VIVO (2026-11-15): lista de incidencias del partido WEB asociado. */
+.c4n-live-events { margin: 6px 0 2px; font-size: 12px; }
+.c4n-live-events summary { cursor: pointer; font-weight: 700; letter-spacing: 0.04em; }
+.c4n-live-events ol { margin: 4px 0 0; padding-left: 22px; max-height: 220px; overflow: auto; font-family: ui-monospace, Consolas, monospace; white-space: pre; }
+.btn-reset-all { margin-top: 10px; width: 100%; font-family: var(--font-display); font-size: 13px; font-weight: 800; letter-spacing: 1px; padding: 9px 18px; border-radius: 4px; background: transparent; color: #f0b44c; border: 1px solid #f0b44c; cursor: pointer; }
+.btn-reset-all:hover { background: #f0b44c; color: #111; }
+.c4n-reset-modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.72); }
+.c4n-reset-modal[hidden] { display: none; }
+.c4n-reset-box { width: min(560px, calc(100vw - 32px)); padding: 24px 26px; border-radius: 8px; background: #16181d; border: 1px solid #f0b44c; color: #e8e8e8; box-shadow: 0 18px 48px rgba(0, 0, 0, 0.5); }
+.c4n-reset-box h2 { margin: 0 0 12px; font-family: var(--font-display); font-size: 18px; letter-spacing: 1px; color: #f0b44c; }
+.c4n-reset-box p, .c4n-reset-box li { font-size: 14px; line-height: 1.45; }
+.c4n-reset-box ul { margin: 8px 0 10px; padding-left: 20px; }
+.c4n-reset-keep { color: #9fc3ff; }
+.c4n-reset-result { margin: 10px 0 0; padding: 10px 12px; border-radius: 4px; font-size: 13px; font-weight: 700; }
+.c4n-reset-result.ok { background: rgba(80, 170, 90, 0.18); color: #9be3a4; }
+.c4n-reset-result.error { background: rgba(200, 60, 60, 0.2); color: #ff9c9c; }
+.c4n-reset-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+.c4n-reset-actions button { font-family: var(--font-display); font-size: 13px; font-weight: 800; letter-spacing: 1px; padding: 10px 18px; border-radius: 4px; cursor: pointer; }
+.c4n-reset-cancel { background: transparent; color: #e8e8e8; border: 1px solid #555; }
+.c4n-reset-confirm { background: #f0b44c; color: #111; border: 1px solid #f0b44c; }
+.c4n-reset-confirm:disabled { opacity: 0.6; cursor: wait; }
+
+/* TIEMPO ADICIONAL del MARCADOR: estado en vivo (2026-11-10). */
+.c4n-extra-readout { font-size: 12px; letter-spacing: 0.04em; color: #cfd8e6; background: #141821; border: 1px solid #2c3442; border-radius: 4px; padding: 6px 8px; font-variant-numeric: tabular-nums; }
+.c4n-extra-readout.is-live { color: #fff; border-color: #c33a44; background: #3a1219; }
+.c4n-extra-mode .bb-btn.period.active { box-shadow: 0 0 0 2px #9fc3ff inset; }
+
+/* POSICIONES: asignación de GRUPO A / B (2026-11-10). */
+.c4n-grupo-row { align-items: center; }
+.c4n-grupo-team { min-width: 260px; font-weight: 700; letter-spacing: 0.04em; }
+.c4n-source-line.warn { border-color: #b3862b; color: #ffe2a6; }
+.c4n-source-line.is-error { border-color: #a8353b; color: #ff9a9e; }
+/* PREVIEW MULTICAPA (2026-11-12): piezas en Preview, con ✕ por pieza. */
+.c4n-prev-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0 0; padding: 8px; border: 1px solid #2c3442; border-radius: 6px; background: #141821; }
+.c4n-prev-bar[hidden] { display: none; }
+.c4n-prev-title { font-size: 11px; letter-spacing: 0.1em; color: #8a96aa; margin-right: 4px; }
+.c4n-prev-chip { font-size: 11px; letter-spacing: 0.06em; padding: 4px 8px; border-radius: 12px; border: 1px solid #c9a14a; background: #2a2414; color: #f4d28a; cursor: pointer; }
+.c4n-prev-chip:hover { background: #3a3018; }
+.c4n-prev-clear { margin-left: auto; font-size: 11px; letter-spacing: 0.08em; padding: 4px 10px; border-radius: 4px; border: 1px solid #3a4456; background: transparent; color: #cfd8e6; cursor: pointer; }
+.c4n-prev-clear:disabled { opacity: 0.4; cursor: default; }
+
+/* Sync en vivo de incidencias WEB (ENTRETIEMPO / FINAL). */
+.c4n-live { display: flex; flex-direction: column; gap: 8px; }
+.c4n-live-state.ok { border-color: #2f7a46; color: #a9f0c0; }
+.c4n-live-state.warn { border-color: #b3862b; color: #ffe2a6; }
+.c4n-live-state.error { border-color: #a8353b; color: #ff9a9e; }
+.c4n-live-grid { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; font-size: 12px; color: #cfd8e6; }
+.c4n-live-grid > span { color: #8a96aa; letter-spacing: 0.06em; }
+
+/* FORMACIÓN (2026-11-15): buscador de jugador en cada lugar (MANUAL y
+   corrección de POR LISTA), revisión de POR LISTA, lugares pendientes
+   (JUGADOR NO DISPONIBLE / NO ENCONTRADO / DUDOSO) y formación guardada. */
+.c4n-psearch { position: relative; min-width: 0; }
+.c4n-psearch-input { width: 100%; box-sizing: border-box; height: 32px; padding: 6px 8px; border: 1px solid #4a4a4a; border-radius: 4px; background: #0f0f0f; color: #eee; font-size: 12px; }
+.c4n-psearch-input:focus { outline: none; border-color: #d6aa4e; background: #151515; }
+.c4n-psearch:not(.has-value) .c4n-psearch-input::placeholder { color: #8a8a8a; }
+.c4n-psearch-list { position: absolute; z-index: 60; left: 0; right: 0; top: calc(100% + 2px); min-width: 220px; max-height: 260px; overflow: auto; background: #151515; border: 1px solid #d6aa4e; border-radius: 4px; box-shadow: 0 8px 22px rgba(0, 0, 0, 0.6); }
+.c4n-psearch-item { padding: 6px 9px; font-size: 12px; color: #ddd; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.c4n-psearch-item.active { background: #3a3220; color: #f3d78f; }
+.c4n-psearch-item.chosen { font-weight: 800; }
+.c4n-psearch-empty { padding: 8px 9px; font-size: 12px; color: #999; }
+.c4n-slot-pend .c4n-psearch-input { border-color: #c4454c; }
+.c4n-pend-note { margin-top: 2px; font-size: 11px; font-weight: 700; color: #ff9a9e; letter-spacing: 0.02em; }
+.c4n-fo-saved { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin: 0 0 10px; padding: 8px 10px; border: 1px solid #2f7a46; border-radius: 6px; background: #12241a; color: #bde9c9; font-size: 12px; font-weight: 700; }
+.c4n-lista-text { width: 100%; box-sizing: border-box; min-height: 210px; padding: 8px; border: 1px solid #4a4a4a; border-radius: 4px; background: #0f0f0f; color: #eee; font: 13px/1.45 ui-monospace, Consolas, monospace; resize: vertical; }
+.c4n-lista-group { margin: 8px 0; padding: 6px 8px; border-left: 3px solid #555; background: #141414; border-radius: 4px; }
+.c4n-lista-group.found { border-left-color: #2f9a55; }
+.c4n-lista-group.doubtful { border-left-color: #d6a23a; }
+.c4n-lista-group.notfound { border-left-color: #c4454c; }
+.c4n-lista-title { font-size: 11px; font-weight: 800; letter-spacing: 0.06em; color: #d6aa4e; margin-bottom: 4px; }
+.c4n-lista-row { display: grid; grid-template-columns: 18px minmax(110px, 0.8fr) minmax(140px, 1.4fr) auto minmax(170px, 1fr); gap: 8px; align-items: center; padding: 3px 0; font-size: 12px; color: #ddd; }
+.c4n-lista-row .c4n-lista-icon { font-weight: 900; text-align: center; }
+.c4n-lista-row.found .c4n-lista-icon, .c4n-lista-row.confirmed .c4n-lista-icon { color: #7ed67e; }
+.c4n-lista-row.doubtful:not(.confirmed) .c4n-lista-icon { color: #e7b35a; }
+.c4n-lista-row.notfound .c4n-lista-icon { color: #ef8a8a; }
+.c4n-lista-raw { font-weight: 800; }
+.c4n-lista-why { color: #9aa3b2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.c4n-lista-preview { margin: 8px 0; padding: 6px 8px; border: 1px dashed #555; border-radius: 4px; }
+.c4n-lista-line { display: grid; grid-template-columns: 170px 1fr; gap: 8px; padding: 2px 0; font-size: 12px; color: #ddd; }
+.c4n-lista-line b { color: #d6aa4e; font-size: 11px; letter-spacing: 0.05em; }
+/* TABLA FIXTURE (2026-11-15): filas del panel (partido + ajustes de la placa). */
+.c4n-tfx-row { margin: 6px 0; padding: 6px 8px; border: 1px solid #333; border-radius: 4px; background: #141414; }
+.c4n-tfx-row.off { opacity: 0.55; }
+.c4n-tfx-row .bb-field.check span { font-size: 12px; font-weight: 700; color: #ddd; }

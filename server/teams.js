@@ -281,7 +281,15 @@ function extendedTeamFields(themeId, team, o, crestFiles) {
     // Color: el elegido en EQUIPOS o, si no hay, el del catálogo base (COPA 4
     // NACIONES lo trae; BAULETI vs BALANZA no, así que sigue en null).
     color: typeof o.color === 'string' && /^#[0-9A-F]{6}$/i.test(o.color) ? o.color.toUpperCase() : (/^#[0-9A-F]{6}$/i.test(team.color || '') ? team.color.toUpperCase() : null),
+    // Compensación óptica del logo (solo BAULETI vs BALANZA, 2026-11-06): la
+    // medida del catálogo base (shared/themes.js) o el ajuste manual de EQUIPOS.
+    ...(themeId === 'bauletiBalanza' ? { crestScale: validCrestScale(o.crestScale) ?? validCrestScale(team.crestScale) ?? 1 } : {}),
   };
+}
+
+function validCrestScale(value) {
+  const n = Number(value);
+  return value !== null && value !== '' && Number.isFinite(n) && n >= 0.5 && n <= 2 ? Math.round(n * 100) / 100 : null;
 }
 
 // Orden manual de un theme extendido: lista completa de teamId (ocultos
@@ -320,6 +328,12 @@ export function updateThemeTeam(themeId, id, patch) {
       const color = patch.color.trim().toUpperCase();
       if (color && !/^#[0-9A-F]{6}$/.test(color)) throw new Error('Color invalido: usar #RRGGBB.');
       if (color) current.color = color; else delete current.color;
+    }
+    // BAULETI vs BALANZA: tamaño visual del logo (0.5–2; vacío = automático).
+    if (themeId === 'bauletiBalanza' && patch && 'crestScale' in patch) {
+      const scale = validCrestScale(patch.crestScale);
+      if (patch.crestScale !== null && patch.crestScale !== '' && scale === null) throw new Error('Tamaño de escudo inválido: usar 50 a 200 %.');
+      if (scale === null) delete current.crestScale; else current.crestScale = scale;
     }
   }
   current.confirmed = true;

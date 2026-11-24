@@ -2,6 +2,548 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [Unreleased] - 2026-11-14 (120)
+
+### Agregado / Corregido — COPA 4 NACIONES: REINICIAR TODO (reset operativo) y FIXTURE con resultado por penales (GLA, Argentina Streamers y Bauleti vs Balanza sin cambios)
+
+- **Problema**: después de una prueba (TERMINAR Y GUARDAR RESULTADO), el FIXTURE seguía mostrando ese resultado en lugar de VS. Con el fixture WEB, el resultado guardado en SOFTX (`c4n-resultados.json`) se aplica sobre los partidos que la web todavía no da por terminados, y no había forma de limpiarlo todo junto.
+- **REINICIAR TODO** (botón debajo de STOP ALL, solo en COPA 4 NACIONES), con confirmación: "¿REINICIAR TODO EL ESTADO OPERATIVO?" · CANCELAR / REINICIAR TODO. Al terminar muestra qué limpió.
+  - Resultados guardados desde SOFTX: en el fixture MANUAL, estado, goles, penales e incidencias de cada partido (equipos, fecha, horario y fase quedan); en el fixture WEB, los resultados SOFTX que se le aplicaban encima. Los partidos sin resultado vuelven a VS.
+  - Un resultado OFICIAL de la web se conserva (es real); cada partido sabe de dónde viene su resultado (`resultSource`: web / softx).
+  - MARCADOR: 0 - 0, reloj detenido en 00:00, 1T, tiempo adicional limpio (minutos, reloj propio, MOSTRAR), penales y tanda limpios, incidencias (goles, tarjetas, cambios, VAR) vacías. El partido elegido, el FIN DEL CONTADOR y los ajustes quedan.
+  - TARJETAS / CAMBIOS: sin el último evento. VAR: CHEQUEO VAR sin motivo (SPONSORS A LA DERECHA queda). ENTRETIEMPO / FINAL: sin la carga MANUAL / TEST (vuelven a AUTOMÁTICA).
+  - Todo fuera del aire y Preview vacío. Nada vuelve solo al aire.
+  - No toca equipos, planteles, fotos, camisetas, fixture, datos WEB (fixture, tabla, rankings, incidencias en vivo), grupos, tabla / rankings manuales, configuración, ajustes, sponsors, PNG ni perfiles. No escribe en copa4naciones.com.
+  - Persiste: snapshots C4N y estado de los módulos; después de reiniciar el servidor queda igual.
+  - `POST /api/c4n/reiniciar-todo` (`server/copa4naciones.js`): saca del aire y vacía el Preview primero, después limpia y publica la vista del torneo, y avisa a cada Master conectado (`C4N_RESET`), que reemplaza sus borradores y cancela sus autoguardados pendientes (el estado viejo nunca vuelve).
+- **FIXTURE — resultado por penales**: el resultado del partido grande, a la altura de los nombres como en las demás filas, y la tanda debajo como dato secundario: "1 - 1" / "PENALES 4 - 3" (antes "PEN 4-3", más chico y empujando el resultado hacia arriba).
+- **Prueba** `performance-lab/c4n-test.mjs`: sección Q nueva (6 chequeos: escenario completo de prueba, FIXTURE con penales, confirmación y CANCELAR, estado después del reset, FIXTURE en VS con la configuración intacta, resultado OFICIAL WEB conservado) y REINICIO + 1 (el reset persiste).
+
+## [Unreleased] - 2026-11-13 (119)
+
+### Agregado / Cambiado — COPA 4 NACIONES: módulo SPONSORS (premios con sponsor), VAR con sponsors a la derecha, incidencias al aire sin minuto, FIXTURE en una línea (GLA, Argentina Streamers y Bauleti vs Balanza sin cambios)
+
+- **PNG nuevos** (`cosas sueltas/`, inspeccionados y medidos; copiados sin modificar a `fondos/` con nombre en minúsculas):
+  - `ZOCALO_PRAGMATIC.png` → `zocalo-pragmatic.png`: PRAGMATIC PLAY · MVP DEL PARTIDO, sin escudo.
+  - `ZOCALO_PRAGMATIC_ARG / BRA / CHI / URU.png` → `zocalo-pragmatic-arg / -bra / -chi / -uru.png`: el mismo MVP con el escudo de cada selección (misma geometría; el filete y la etiqueta se corren 50 px a la izquierda para dejar lugar al escudo).
+  - `ZOCALO_COMPRAGAMER_BALON_ORO.png` → `zocalo-compragamer-balon-oro.png`: COMPRA GAMER · BALÓN DE ORO.
+  - `ZOCALO_MOSTAZA_GUANTE_ORO.png` → `zocalo-mostaza-guante-oro.png`: MOSTAZA · GUANTE DE ORO.
+  - `ZOCALO_SPEED_BOTIN_ORO.png` → `zocalo-speed-botin-oro.png`: SPEED LÍDER · BOTÍN DE ORO.
+  - `ZOCALOS_SPONSORS/` (16 logos de 451 × 137, el ancho del recuadro de sponsors del ZÓCALO COMPUESTO): ya estaban en `sponsors/` (idénticos).
+- **SPONSORS** (`c4nSponsors`, sección SPONSORS del panel): placa de premio con sponsor sobre esos PNG.
+  - PIEZA: MVP DEL PARTIDO · PRAGMATIC PLAY, BALÓN DE ORO · COMPRA GAMER, GUANTE DE ORO · MOSTAZA, BOTÍN DE ORO · SPEED LÍDER (nombres de los PNG).
+  - JUGADOR AUTOMÁTICO: SELECCIÓN (ARGENTINA, BRASIL, CHILE, URUGUAY) → JUGADOR (todo el plantel efectivo, WEB o MANUAL) → nombre, selección y PNG del MVP se completan solos. El sistema no elige al ganador.
+  - JUGADOR MANUAL: NOMBRE libre; en el MVP se elige además el PNG (sin escudo o con el escudo de una selección).
+  - El NOMBRE va en el renglón que el PNG deja arriba del filete: centrado en la etiqueta del premio, línea de base 14 px sobre el filete, ancho = papel libre entre el gráfico y el borde (o el escudo), color de la etiqueta. Medidas por PNG en `shared/c4n-assets.js` (`nameRow`).
+  - Una línea, 50 px para todos; se achica solo si el nombre no entra.
+  - Motion: la placa se revela de izquierda a derecha y el nombre entra después con un barrido corto; OUT al revés. Cambiar el nombre al aire (ACTUALIZAR o Enter) hace OUT / IN solo del nombre.
+  - Ajuste: ELEMENTOS → NOMBRE de cada pieza (X / Y / ESCALA) y AJUSTE DE COMPOSICIÓN.
+  - Grupo exclusivo de la zona inferior; funciona en el PREVIEW MULTICAPA. Se guarda todo; después de reiniciar no vuelve sola al aire.
+- **VAR — SPONSORS A LA DERECHA** [MOSTRAR] [OCULTAR] (`sponsors` del módulo, por defecto OCULTAR).
+  - El MISMO rotativo del ZÓCALO COMPUESTO: carpeta `sponsors/`, ROTACIÓN e INTERVALO de ese módulo, `contain` y rotación CSS (`compuestoSponsors` en `c4nTextos.js`, compartido).
+  - Recuadro a la derecha de la placa con la textura navy del recuadro de sponsors del COMPUESTO, del alto de la placa.
+  - Carpeta vacía: el VAR sale solo, sin recuadro ni error. Va dentro de la pieza: sale con el OUT.
+  - El VAR pasa a `live`: RECARGAR SPONSORS llega también con el VAR al aire.
+- **TARJETAS y CAMBIOS sin MINUTO al aire**: el reloj ya está en el MARCADOR. El minuto sigue guardándose en `matchEvents` y se ve en estadísticas, timeline, ENTRETIEMPO y FINAL (SOFTX y WEB). Sale el elemento MINUTO del AJUSTE DE CAPAS de esas dos placas.
+- **FIXTURE con nombres en UNA línea** (solo FIXTURE; la regla global de 2 renglones sigue en VS, TABLA VS, estadísticas y tablas).
+  - Todos los nombres con el mismo tamaño: el más grande con el que el nombre más largo entra completo (SELECCIÓN CHILENA DE CREADORES ~33 px); tracking 0,01 em; sin "...".
+  - Columnas de escudo 86 y separación 12: cada nombre gana 24 px. La columna del resultado / VS, los horarios y las fases no se mueven, así los ajustes guardados siguen valiendo.
+- **Prueba** `performance-lab/c4n-test.mjs`: sección P nueva (13 chequeos) y REINICIO + 1.
+  - Incidencias al aire sin minuto (AMARILLA, ROJA, AZUL, CAMBIO) con el minuto guardado; ENTRETIEMPO / FINAL con el minuto (SOFTX) y con las incidencias WEB y sus minutos.
+  - VAR + SPONSORS: carpeta con logos (rotan, Preview = Program), OCULTAR / MOSTRAR al aire, OUT sin restos, carpeta vacía y RECARGAR al aire.
+  - FIXTURE en una línea sin mover la columna del resultado; VS PREPARTIDO sigue en 2 renglones.
+  - SPONSORS: MVP por selección (PNG con escudo, plantel completo, nombre), los tres premios, MANUAL largo / corto, renglón del nombre (centro, base, color, sin desborde), Preview multicapa y grupo exclusivo, cambio de nombre al aire sin rearmar el PNG, TAKE / OUT x12 sin acumular, persistencia y reinicio.
+  - La carpeta de sponsors de la prueba es propia (TMP, `GLA_C4N_SPONSORS_DIR`, solo pruebas): los sponsors reales nunca se tocan.
+  - Expectativas actualizadas solo por cambios funcionales: 25 módulos + ACTUALIZADOR (+ SPONSORS); SPONSORS en la sección V.
+
+## [Unreleased] - 2026-11-12 (118)
+
+### Agregado / Cambiado / Corregido — COPA 4 NACIONES: JUGADORES A SEGUIR con DATO automático, PREVIEW MULTICAPA, ajuste de los nombres de CAMBIOS, ENTRETIEMPO redistribuido, encabezado de FORMACIÓN y sus titulares siempre con la remera (GLA, Argentina Streamers y Bauleti vs Balanza sin cambios; TABLA VS sin tocar)
+
+- **JUGADORES A SEGUIR — DATO** [GOLES] [ASISTENCIAS] [G+A] [PERSONALIZADO] (`dato`, por defecto GOLES).
+  - Los tres automáticos toman al mejor de cada selección del partido del MARCADOR desde los rankings efectivos (`c4nDatos.rankings`: WEB = copa4naciones.com, SOFTX = partidos guardados). Sin scraper nuevo.
+  - **Uno por selección**: la placa tiene 2 lugares (local | visitante).
+  - Empates: el orden que publica el ranking. Resultado reproducible; si el ranking cambia, la placa se actualiza sola, también al aire, sin repetir la entrada (módulo `live`).
+  - Foto local del jugador si existe: el servidor la agrega a cada fila de los rankings buscando por id en el plantel (`rankingsWithPhotos`); si no hay, escudo.
+  - Sin datos: escudo + nombre de la selección + "SIN DATOS DE GOLES"; Master avisa TODAVÍA NO HAY DATOS DE ... PARA ESTA SELECCIÓN. Nunca undefined ni imagen rota.
+  - PERSONALIZADO = la elección manual de siempre.
+  - Un solo resolutor para Master y Program: `mejoresAuto` / `C4N_MJ_DATOS` (`shared/c4n-match.js`).
+- **PREVIEW MULTICAPA** (solo C4N): PREVIEW suma la pieza al monitor sin sacar las demás (MARCADOR + MOSCA + ZÓCALO + VAR…), con el mismo orden de capas que Program.
+  - Respeta los grupos exclusivos dentro del Preview (una pieza de la misma zona reemplaza a la anterior); la MOSCA convive con todo.
+  - Barra EN PREVIEW debajo del monitor: chip por pieza con ✕ (OUT individual con su salida), LIMPIAR PREVIEW y botón SACAR DE PREVIEW.
+  - Independiente de Program. Los ajustes en vivo actualizan la pieza si está en la composición.
+  - Un monitor que se recarga recupera la composición: mensajes `PREVIEW_STACK` / `PREVIEW_HELLO` (`server/index.js` guarda la última), `program/js/preview-main.js` arma y desarma cada pieza por separado.
+  - BxB, GLA y Argentina Streamers siguen con el Preview de una pieza.
+- **CAMBIOS — AJUSTE DE CAPAS**: NOMBRE ENTRA y NOMBRE SALE con X / Y / ESCALA propios (`eInName*` / `eOutName*`, también en POSICIÓN DEL TEXTO); las filas pasan a llamarse ENTRA (FILA) / SALE (FILA). TARJETAS suma NOMBRE en POSICIÓN DEL TEXTO.
+  - **Corregido**: los ajustes hechos después de REGISTRAR Y MOSTRAR no llegaban ni a Program ni al guardado. Causa: `showSub` / `showCard` / `refreshOnAir` (`master-control/js/c4n/c4n-incidents.js`) reemplazaban el objeto del módulo en Master y AJUSTE DE CAPAS seguía escribiendo en el objeto viejo. Ahora se actualiza el evento en el mismo objeto.
+- **ENTRETIEMPO**: el bloque central baja para usar el alto de la placa (timeline +34 px, columnas de eventos en y 376, comparativa con filas de 56 px y números de 42). Quedan ~50 px libres abajo (antes ~170). Mismos límites, recorte, auto-scroll, alineación y flechas; FINAL sin cambios (clase `is-et`). Sin bloque de datos extra: no hay un dato real útil que no esté ya en la placa.
+- **FORMACIÓN — encabezado a todo el ancho**: escudo de 112 px + título + selección (dos renglones si es largo, hasta 42 px); ESQUEMA en grande; VS + escudo + nombre del rival (el otro equipo del MARCADOR) y fase · día · horario del partido (fixture efectivo; con MARCADOR MANUAL solo el rival). Elemento nuevo PARTIDO (RIVAL + FASE / DÍA). Cuerpo sin cambios.
+- **FORMACIÓN — titulares siempre con la REMERA**: cada titular en la cancha es la remera genérica de su selección (Argentina celeste y blanca rayada, Brasil amarilla, Chile roja, Uruguay celeste) con el dorsal; nunca escudo ni foto.
+  - VISUAL DE JUGADORES (FOTO / LOGO) ya no aplica a FORMACIÓN; sigue valiendo para JUGADORES A SEGUIR, TARJETAS y CAMBIOS.
+  - Sin dorsal: la remera sin número. Selección sin remera propia: remera neutra con su color (o gris), con el número en el color que contrasta; nunca el escudo.
+  - **Dorsal centrado en el torso**: el centro se midió sobre el alfa real de la remera (torso sin mangas: (50, 51,4) del viewBox de 100) y se centra la TINTA del número con la métrica de "GLA Anton" por dígito (`shirtSvg` / `shirtNumber` en `program/js/renderers/c4nPlacas.js`); 3 cifras o más se achican para entrar en el torso. Antes la caja del texto quedaba unos 9 puntos más abajo.
+  - El nombre debajo sigue sin repetir el número. Suplentes, cabecera, esquema y posiciones sin cambios.
+- **Prueba** `performance-lab/c4n-test.mjs`: sección N nueva (23 chequeos).
+  - JUGADORES A SEGUIR: GOLES / ASISTENCIAS / G+A con rankings WEB (web simulada) y SOFTX, empates, estabilidad, cambio al aire, PERSONALIZADO y SIN DATOS.
+  - PREVIEW MULTICAPA: tres piezas a la vez con el orden de capas de Program, OUT individual (chip y SACAR DE PREVIEW), grupos exclusivos, Program independiente, monitor recargado, Preview = Program, LIMPIAR y estrés x40 sin fugas.
+  - CAMBIOS: nombres con X / Y / ESCALA (filas y PNG quietos, Preview = Program, guardado).
+  - ENTRETIEMPO con pocos y muchos eventos; FORMACIÓN 4-3-3 / 4-4-2 / 4-2-3-1 / 3-5-2 y nombre largo.
+  - FORMACIÓN con remeras: 11 remeras de su selección, cero escudos o fotos (también con una foto cargada), titular sin dorsal con remera, FOTO = LOGO, Preview = Program, remera correcta y dorsal centrado (tinta a ≤ 1 unidad del centro medido) en ARG / URU / BRA / CHI.
+  - Expectativa actualizada solo por cambio funcional: la sección V elige PERSONALIZADO antes de cargar los jugadores a mano.
+  - Sección X, chequeo "+5 MANUAL": fallaba a veces (00:01 en lugar de 00:02) por timing de la prueba, no por el contador. Program repinta el Marcador cada 500 ms y la lectura a los 2,3 s podía caer antes del repintado del segundo 2. Ahora espera 2,8 s (un repintado más); la exigencia (≥ 00:02, PAUSAR frena, RESET a 00:00) es la misma.
+
+## [Unreleased] - 2026-11-11 (117)
+
+### Agregado / Cambiado — COPA 4 NACIONES: sync en vivo de incidencias WEB, POSICIONES con tarjetas, PROMO WEB en TABLA_L, MOSCA C4N, VAR, sponsors del ZÓCALO COMPUESTO, ZÓCALO CORTO DOBLE (GLA, Argentina Streamers y Bauleti vs Balanza sin cambios; TABLA VS sin tocar)
+
+- **SYNC EN VIVO DE INCIDENCIAS WEB** para ESTADÍSTICAS ENTRETIEMPO y FINAL: FUENTE DE INCIDENCIAS [SOFTX] [WEB] en los dos módulos (`incidencias`).
+  - SOFTX es exactamente lo de siempre.
+  - **Relevado en copa4naciones.com**: el flight RSC de la home trae por partido `id`, `status` (scheduled / finished), `hasEvents`, `score`, `hasPenalties` / `homePenalties` / `awayPenalties` y `events[]` (`id`, `type`, `minute`, `side`, `player`, `assistPlayer`, `playerIn`, `playerOut`, `staffName`).
+    - Tipos: goal, own_goal, yellow_card, red_card, blue_card, substitution, match_mvp.
+    - "En juego" = scheduled + hasEvents (criterio del propio sitio).
+    - No publica período, reloj, segunda amarilla, gol de penal, VAR ni el detalle de la tanda.
+    - La página se regenera cada ~15 s.
+  - `server/c4n-live.js`:
+    - **Un solo sync** en el servidor para las dos placas: cada **10 s** mientras alguna esté en WEB, una consulta a la vez, más ACTUALIZAR AHORA.
+    - Partido WEB asociado **por id**: AUTOMÁTICO (el del MARCADOR) o elegido a mano. Sin id válido: SIN PARTIDO WEB ASOCIADO; nunca se aproxima por nombre.
+    - Snapshot **reconstruido** en cada consulta: correcciones y eliminaciones se reflejan. Clave estable si falta el id, sin duplicados.
+    - Web caída: NO SE PUDO ACTUALIZAR — SE CONSERVAN LOS ÚLTIMOS DATOS WEB VÁLIDOS. Partido vacío: se conserva hasta 3 consultas seguidas. Nunca pasa sola a SOFTX.
+    - Persistencia en `c4n-live.json` y `c4n-config.json` (`liveMatchId`).
+  - **Modelo común**: `normalizeLiveMatch` → `webPlateEvents` (`shared/c4n-match.js`, mismo formato que los eventos de SOFTX) → renderer de siempre.
+    - El período se deduce con el FIN DEL CONTADOR del MARCADOR.
+    - ENTRETIEMPO usa solo el 1T; FINAL usa todo, más el resultado y los penales oficiales de la web.
+    - El snapshot WEB nunca toca `matchEvents`.
+    - Un tipo desconocido no se muestra y se informa en Master.
+  - Master muestra PARTIDO WEB (elegible), ESTADO, ÚLTIMA ACTUALIZACIÓN, ÚLTIMO INTENTO e INCIDENCIAS (mensaje `C4N_LIVE_STATUS`, sin consultas propias a la web).
+  - Preview se refresca solo cuando cambian los datos del torneo.
+- **TABLA DE POSICIONES**: bloque pegado al filete del título y una **tarjeta blanca** translúcida por selección, con un filete fino de su color. Mismas columnas, datos, grupos y tamaños.
+- **PROMO WEB** sobre la **TABLA_L** (familia de las tablas y TABLA VS), con textos editables (campos nuevos):
+  - mensaje SEGUÍ TODOS LOS DATOS / DESDE NUESTRA WEB;
+  - los **4 escudos** en 2 × 2;
+  - **COPA4NACIONES.COM** protagonista en el cartel azul con franja roja;
+  - RESULTADOS, ESTADÍSTICAS Y POSICIONES EN VIVO;
+  - **SPEED CAMP** y el pie.
+- **MOSCA C4N** (`c4nMosca`): reemplaza a MOSCA LOGO + MOSCA TEXTO (quedan definidas, fuera del panel).
+  - Logo de la copa; con ROTACIÓN ACTIVA, cada INTERVALO (40 s por defecto, 3 a 600) el texto "COPA / CUATRO NACIONES" se despliega desde el logo y vuelve a cerrarse.
+  - Ciclo CSS generado dentro de la pieza: sin timers, se limpia con el OUT.
+  - X / Y / ESCALA con COMPOSICIÓN anclada en el logo.
+  - El logo del evento (pendiente) queda como respaldo de esta pieza.
+- **ZÓCALO TEXTO DOBLE** fuera del panel de C4N (su código y datos, intactos).
+- **ZÓCALO CORTO DOBLE**: laterales hacia el centro (izquierda x 96, derecha x 1513; centro igual) y **POSICIÓN DE CADA PLACA** siempre visible (X / Y / ESCALA de IZQUIERDA, CENTRO y DERECHA por separado). Lógica, modos 1 / 2 / 3, espejo y motion sin cambios.
+- **ZÓCALO COMPUESTO — sponsors**: el recuadro derecho muestra los logos de `assets/themes/copa4naciones/sponsors/`.
+  - RECARGAR SPONSORS: el servidor lee la carpeta y los publica.
+  - ROTACIÓN ACTIVA / DESACTIVADA, INTERVALO 2 a 60 s, `contain`.
+  - Carpeta vacía = recuadro vacío, sin errores.
+  - `LEEME.txt` en la carpeta.
+- **VAR** (`c4nVar`, `cosas sueltas/ZOCALO_VAR.png` → `fondos/zocalo-var.png`): misma lógica que el VAR de BxB.
+  - Decisión con un clic (CHEQUEO VAR con punto que late y barrido), MOTIVO, cambio al aire sin rearmar la placa, REGISTRAR EN EL PARTIDO.
+  - Abajo a la izquierda, alineado con TARJETAS / CAMBIOS, grupo exclusivo de la zona inferior.
+  - COMPOSICIÓN anclada abajo a la izquierda.
+- **Prueba** `performance-lab/c4n-test.mjs`:
+  - **Web simulada** con una copia de la respuesta real (`performance-lab/fixtures/c4n-web-2026-11-11.json`, variable `GLA_C4N_WEB_MOCK` solo en la prueba): ya no depende de que la web esté en línea.
+  - Sección L nueva (14 chequeos): sync WEB (gol, asistencia, mismo minuto, roja, cambio, gol en contra, duplicados, corrección, eliminación, caída, vacío, penales, tipo desconocido), SOFTX ↔ WEB en FINAL y ENTRETIEMPO, MOSCA C4N, ZÓCALO CORTO DOBLE por placa, sponsors, VAR, PROMO WEB y POSICIONES.
+  - Sección REINICIO (2 chequeos).
+  - Expectativas actualizadas solo por cambios funcionales:
+    - módulos operativos y pestañas (24 + ACTUALIZADOR);
+    - el recurso PENDIENTE de prueba pasa a ROTATIVO SPONSORS (ZÓCALO TEXTO DOBLE salió del panel; PROMO WEB tiene PNG real);
+    - posiciones nuevas del ZÓCALO CORTO DOBLE;
+    - el ZÓCALO COMPUESTO toma los logos con RECARGAR SPONSORS.
+- Archivos:
+  - Servidor: `server/c4n-live.js` (nuevo), `server/copa4naciones.js`, `server/index.js` (dos funciones de apoyo para C4N).
+  - Datos y lógica: `shared/c4n-match.js`, `shared/c4n-assets.js`, `shared/modules.js`, `shared/themes.js`.
+  - Program: `program/js/renderers/c4nStats.js`, `c4nTablas.js`, `c4nTextos.js`, `c4nVar.js` (nuevo), `index.js`, `program/index.html`, `program/preview.html`, `program/css/c4n.css`.
+  - Master: `master-control/js/main.js`, `master-control/js/c4n/c4n-live-panel.js` (nuevo), `c4n-var-panel.js` (nuevo), `c4n-stats-panels.js`, `c4n-misc-panels.js`, `c4n-layer-adjust.js`, `master-control/css/c4n.css`.
+  - Assets: `fondos/zocalo-var.png`, `sponsors/LEEME.txt`.
+  - Docs: `docs/COPA4NACIONES_ASSETS.md`, `docs/MODULES.md`, `docs/THEMES.md`.
+
+### Verificado
+
+- Instancia aislada (puerto propio + COPIA de `data/`, web simulada en la copia, borrada al terminar). `data/` real con el mismo hash; el servidor del usuario (:4400) no se tocó.
+- Sync WEB simulado con la estructura real: 18 casos (gol, gol + asistencia, amarilla, roja, cambio, varios en el mismo minuto, gol en contra, 50 consultas sin duplicar, eventos sin id, corrección, eliminación, web caída, web vacía, penales, tipo desconocido, sin datos previos + caída, id inexistente, AUTOMÁTICO con fixture MANUAL) → **PASS**.
+- SOFTX ↔ WEB:
+  - FINAL en WEB muestra el gol del 9', el cambio del 14' y el gol del 33' web; ENTRETIEMPO en WEB solo el 1T.
+  - Volver a SOFTX muestra exactamente lo mismo que antes y los eventos del MARCADOR no cambian.
+  - Preview = Program en WEB.
+- Capturas revisadas: POSICIONES (sin grupos / grupos A-B) con tarjetas, PROMO WEB, MOSCA C4N cuadro a cuadro, VAR (CHEQUEO / GOL / TARJETA ROJA), ZÓCALO CORTO DOBLE 1 / 2 / 3 y ajustado por placa, sponsors.
+- Otras verificaciones:
+  - MOSCA: ciclos estables con intervalo de 4 s; TAKE / OUT en logo, texto y transición sin acumular (nodos y listeners iguales, el estilo del ciclo se va con el OUT); intervalo real 40 s.
+  - ZÓCALO CORTO DOBLE: cada placa se mueve sola, Preview = Program y persiste al recargar Master.
+  - Sponsors: carpeta vacía sin errores; 3 logos temporales rotando (`contain`), cambio de intervalo y rotación desactivada. Los temporales se borraron y la carpeta quedó como estaba.
+- `performance-lab/c4n-test.mjs` completo: **RESULTADO: PASS** (exit 0).
+  - operación 20/20, torneo 8/8, módulos al aire 24/24, alcance 20/20, zócalos 15/15.
+  - RECARGAR x100 (delta 0), recurso gráfico 45/45, adicional / penales 9/9, caster / scroll / fixture 10/10.
+  - **tabla-vs 5/5**, **tanda-117 14/14**.
+  - navegación x100 y TAKE / OUT x30: delta 0 en nodos, listeners y desacoplados.
+  - **reinicio 2/2**: nada vuelve al aire y la configuración, el partido web asociado y el último snapshot WEB quedan guardados.
+- Smoke con copia de datos: GLA (26 pestañas), Argentina Streamers (26) y Bauleti vs Balanza (17) **PASS**, sin errores, nada al aire al final.
+
+## [Unreleased] - 2026-11-11 (116)
+
+### Agregado — COPA 4 NACIONES: TABLA VS sobre TABLA_L; POSICIONES compacta (GLA, Argentina Streamers y Bauleti vs Balanza sin cambios)
+
+- **TABLA DE POSICIONES compacta**: el bloque de equipos arranca justo debajo del filete del título (18 px), en vez de ir centrado en la zona y quedar flotando abajo.
+  - La nota va debajo de la última fila.
+  - Mismos datos, columnas (ESCUDO | NOMBRE | PTS | GANADOS | PERDIDOS), filas (104 / 112 px) y escudos (58 px).
+- **TABLA VS** (`c4nTablaVs`, módulo nuevo, categoría Tablas, zona L): placa de enfrentamiento sobre el PNG real `tabla-l.png` (TABLA_L), con el lenguaje de las tablas de la L.
+  - Composición (zona 390×870), de arriba a abajo:
+    - FASE como título y DÍA como bajada roja, con el filete de las tablas.
+    - ESCUDO 1 (150 px), NOMBRE 1, VS (cartel azul con franja roja entre dos líneas), NOMBRE 2 y ESCUDO 2, en un bloque centrado.
+    - Filete y HORARIO grande ("11:00 HS"; un texto como "A CONFIRMAR" sale tal cual, más chico).
+  - Nombres: regla global de renglones (`teamNames`), igual que VS PREPARTIDO, VS RESULTADO, estadísticas y FIXTURE. Si uno va en 2 renglones el otro también, con el mismo tamaño, alto de bloque e interlineado.
+  - Cruce sin equipos todavía: el rótulo del fixture ("1º", con el ordinal chico y subrayado) y un escudo genérico atenuado.
+  - FUENTE:
+    - **FIXTURE**: DÍA / FECHA + PARTIDO de cualquier partido del fixture efectivo (WEB o MANUAL). Equipos, escudos, horario, día y fase salen solos.
+    - **AJUSTES DE LA PLACA** (opcional): equipo, escudo y nombre de cada lado, horario, día y fase. Vacío = lo del fixture. Ej.: el partido se atrasó → horario nuevo solo en la placa. Se limpian al cambiar de partido.
+    - **MANUAL**: equipos y escudos del catálogo de EQUIPOS, nombre opcional, horario, día y fase (con lista FASE DE GRUPOS / SEMIFINAL 1 / 2 / AMISTOSO INTERNACIONAL / TERCER PUESTO / GRAN FINAL, o texto libre).
+    - **PASAR A MANUAL CON ESTOS DATOS**: copia lo que se ve en la placa (partido + ajustes) como punto de partida.
+  - **Nunca escribe en el fixture.** Todo vive en el módulo (`fuente`, `matchId`, `ajuste`, `manual`, autoguardado). `resolveTablaVs` (`shared/c4n-match.js`) resuelve la placa igual en Program y en Master.
+  - Persistencia: la configuración queda guardada y al reiniciar SOFTX la placa arranca FUERA DEL AIRE (el estado al aire nunca se guarda).
+  - Master: TAKE, OUT, PREVIEW, ACTUALIZAR y AJUSTE DE CAPAS de siempre.
+    - ELEMENTOS: fase + día, fase, día, equipo 1 / 2 (escudo + nombre), escudo 1 / 2, nombre 1 / 2, VS y horario (X / Y / ESCALA, en vivo al aire).
+    - Línea "AL AIRE:" con lo que va a salir y aviso si el partido elegido ya no está en el fixture (al aire saldría "PARTIDO A CONFIRMAR").
+  - Grupo exclusivo de la zona L, con GOLEADORES, ASISTENCIAS, G+A, POSICIONES y PROMO WEB.
+  - Motion:
+    - El papel se despliega desde el borde derecho y entra la fase.
+    - Los escudos: el de arriba baja y el de abajo sube (traslado corto + opacidad, sin rebote).
+    - Los nombres se abren desde el centro; el VS se estampa y sus líneas se dibujan hacia afuera.
+    - Al final, filete y horario. OUT inverso; todo CSS (transform / opacity / clip-path), sin timers.
+- **Prueba** `performance-lab/c4n-test.mjs`:
+  - Sección W nueva: TABLA VS desde el FIXTURE, el mismo partido con el horario cambiado en la placa (fixture sin cambios), 100 % MANUAL con nombres de 2 renglones, Preview = Program, exclusión de la zona L, POSICIONES compacta y 10 TAKE / OUT sin acumulación.
+  - Expectativas actualizadas solo por el módulo nuevo: 25 módulos + ACTUALIZADOR en la navegación; TABLA VS en la lista de módulos al aire.
+- Archivos:
+  - Datos y lógica: `shared/c4n-match.js` (`resolveTablaVs`), `shared/c4n-assets.js`, `shared/modules.js`, `shared/themes.js`.
+  - Program: `program/js/renderers/c4nTablas.js`, `program/js/renderers/index.js`, `program/index.html`, `program/preview.html`, `program/css/c4n.css`.
+  - Master: `master-control/js/c4n/c4n-tablavs-panel.js` (nuevo), `master-control/js/main.js`, `master-control/css/c4n.css`.
+  - Docs: `docs/COPA4NACIONES_ASSETS.md`, `docs/MODULES.md`, `docs/THEMES.md`.
+
+### Verificado
+
+- Instancia aislada (puerto propio + COPIA de `data/`, borrada al terminar). El servidor del usuario (:4400) no se tocó y `data/` real quedó con el mismo hash.
+- Revisado en el navegador con capturas (Program 1920×1080 y Preview de Master):
+  - POSICIONES sin grupos y con GRUPO A / B: el bloque arranca 18 px debajo del filete; filas de 112 / 104 px y escudos de 58 px como antes.
+  - TABLA VS:
+    - FIXTURE ARGENTINA STREAMERS vs URUGUAY CREADORES (FASE DE GRUPOS, SÁBADO 14, 11:00) y el mismo partido con el horario cambiado en la placa (11:45). El fixture siguió en 11:00 y sus archivos (copia) sin cambios.
+    - SEMIFINAL 1 sin equipos ("1º" / "4º") y con equipos elegidos para la placa.
+    - MANUAL BRASIL CRIADORES vs SELECCIÓN CHILENA DE CREADORES (SEMIFINAL) y GRAN FINAL.
+    - Nombres cortos en 1 renglón, escudo cambiado, fase larga (AMISTOSO INTERNACIONAL) y horario de texto (A CONFIRMAR).
+    - PASAR A MANUAL CON ESTOS DATOS.
+    - En todos: mismo renglón y tamaño (48 px) para los dos nombres, nada fuera de la TABLA_L, sin superposiciones y **Preview = Program**.
+  - AJUSTE DE CAPAS al aire (escudo 1 a 1.2×, escudo 2, equipo 1, nombre 2, VS, horario y fase movidos): se aplica en vivo sin rearmar la placa, igual en Preview.
+  - Motion cuadro a cuadro: entrada (papel → fase → escudos → nombres → VS → horario) y salida inversa.
+  - Reinicio del servidor con TABLA VS al aire: arranca FUERA DEL AIRE, con la configuración guardada (FIXTURE, mismo partido, horario 11:50 de la placa).
+  - Corregido durante la revisión: el «º» del rótulo de un cruce sin definir se leía como un cero, y un horario de texto salía demasiado grande.
+- TABLA VS: 15 TAKE / OUT con nodos 653 → 653 y listeners 84 → 84, nada en el módulo tras el OUT.
+- `performance-lab/c4n-test.mjs` completo: **RESULTADO: PASS** (exit 0).
+  - operación 20/20, torneo 8/8, módulos al aire 25/25 (TABLA VS con su PNG real).
+  - alcance 20/20 (25 módulos + ACTUALIZADOR), zócalos 15/15, RECARGAR x100 (delta 0).
+  - recurso gráfico 47/47, adicional / penales 9/9, caster / scroll / fixture 10/10, **tabla-vs 5/5**.
+  - navegación x100 (28 pestañas) y TAKE / OUT x30: delta 0 en nodos, listeners y desacoplados.
+- Smoke con copia de datos: GLA (26 pestañas), Argentina Streamers (26) y Bauleti vs Balanza (17) **PASS**, sin errores de consola, nada al aire al final.
+
+## [Unreleased] - 2026-11-11 (115)
+
+### Cambiado — COPA 4 NACIONES: ZÓCALO CASTER 1 / 2 / 3, FIXTURE sin recorte, VS RESULTADO recto, ENTRETIEMPO / FINAL con límites y auto-scroll, POSICIONES más grande, VISUAL DE JUGADORES FOTO / LOGO y PREVIA nueva (GLA, Argentina Streamers y Bauleti vs Balanza sin cambios)
+
+- **ZÓCALO CASTER** (`cosas sueltas/ZOCALO_CASTER.png` → `fondos/zocalo-caster.png`, manifest `C4N_CASTER`): es el PNG del ZÓCALO CORTO DOBLE. Una placa en x 32-343, y 963-1059: banda azul con el nombre y papel con el cargo.
+  - CANTIDAD 1 / 2 / 3 (misma lógica del zócalo de talentos de BxB):
+    - 1: izquierda.
+    - 2: izquierda + derecha. La derecha es la placa espejada; el texto no se espeja.
+    - 3: izquierda + centro + derecha.
+  - Nombre y cargo propios por placa (`linea1/2`, `linea1Cen/2Cen`, `linea1Der/2Der`), con la misma letra en todas: la que entra en la más larga.
+  - Entrada escalonada izquierda → centro → derecha (0,18 s) y salida inversa, sin corte simultáneo. Un texto cambiado al aire hace OUT / IN solo de ese texto.
+  - ELEMENTOS: nombres y cargos de todas, PLACA IZQUIERDA / CENTRO / DERECHA y el nombre y el cargo de cada una.
+- **FIXTURE**: los horarios corridos a la izquierda ya no se cortan.
+  - Causa: el barrido de entrada de cada fila (`c4nWipeR`) terminaba en `clip-path: inset(-30% 0 -30% 0)` y quedaba aplicado por `animation-fill-mode: both`. Recortaba justo en los bordes izquierdo y derecho de la fila.
+  - Arreglo: las filas usan `m-wiperx` (`c4nWipeRWide`, 600 px de margen a los costados). Solo cambió ese clip; las posiciones guardadas no se tocaron.
+- **VS RESULTADO**: el cartel de resultado va recto (sin `rotate`). El estampado (`c4nStampIn`) usa solo escala + fundido. La estética y el orden de entrada no cambian.
+- **ENTRETIEMPO / FINAL**:
+  - Cambios con flecha roja hacia abajo (sale) y verde hacia arriba (entra), seguidas solo del nombre. Ya no se escriben SALE / ENTRA.
+  - La asistencia de un gol va en un segundo renglón.
+  - Goles, tarjetas y cambios en una grilla (ícono · minuto · nombre) alineada en X con el escudo y el comienzo / fin de la timeline, en los dos lados.
+  - Las marcas de la timeline nunca se salen de la línea: se separan hacia adelante y, si se pasan del final, hacia atrás.
+- **Límites y auto-scroll de las placas con contenido variable** (`fitAutoScroll` / `armAutoScroll` en `c4n-common.js`, `@keyframes c4nAutoScroll`):
+  - Las columnas de eventos son un viewport recortado al papel, con su borde inferior siguiendo el ajuste de CUERPO (así TEICO y el resto nunca quedan fuera de la placa).
+  - Si el contenido entra, queda quieto.
+  - Si no entra, el ciclo es: pausa arriba, baja despacio (16 px/s), pausa abajo, vuelve y repite.
+  - Es CSS puro: se mide una vez por render, sin timers, intervalos, observers ni JS por cuadro, y sin barra de scroll.
+  - Revisadas las demás placas de listado: ya entran siempre en su espacio, con cantidad acotada y alto de fila calculado. Tablas de la L hasta 10 filas (52-72 px en 720 px), FIXTURE hasta 8 partidos (en 760 px), FORMACIÓN hasta 12 suplentes, PREVIA con filas fijas. Por eso no necesitan scroll.
+- **TABLA DE POSICIONES** más grande, con presencia de tabla de jugadores:
+  - Filas de 104 px (112 sin grupos), escudo 58 px, nombre de la selección hasta 32 px, PTS 42 px.
+  - Columnas: ESCUDO | NOMBRE | PTS | GANADOS | PERDIDOS, con GANADOS = G + GXP y PERDIDOS = P + PXP.
+  - Se mantienen GRUPO A / GRUPO B.
+- **VISUAL DE JUGADORES: FOTO / LOGO** (EQUIPOS / PLANTELES → VISUAL DE JUGADORES (AL AIRE)). Se guarda en `c4n-config.json` (`visualJugadores`, `POST /api/c4n/config`) y se publica en `c4nDatos`.
+  - FOTO: la foto si existe; si no hay o no carga, el reemplazo de siempre (escudo o remera), nunca una imagen rota (`photoWithFallback`).
+  - LOGO: el escudo de la selección.
+  - Aplica a JUGADORES A SEGUIR, TARJETAS, CAMBIOS y FORMACIÓN. No modifica los datos de los jugadores.
+- **ESTADÍSTICAS PREVIA**:
+  - Sin la gráfica de posición: la POSICIÓN es un dato (1º, con el indicador ordinal chico y subrayado).
+  - Comparativas cara a cara con números grandes: POSICIÓN, PUNTOS, DIF. DE GOL, GOLES A FAVOR, GOLES EN CONTRA. El mejor valor resalta y el otro se atenúa; en POSICIÓN y GOLES EN CONTRA, menos es mejor.
+  - Barra proporcional solo donde tiene sentido: el RÉCORD de cada selección, sus partidos jugados repartidos en G / GXP / PXP / P, con leyenda.
+  - Sin porcentajes ni relaciones inventadas.
+- **Prueba** `performance-lab/c4n-test.mjs`:
+  - Sección Y nueva: ZÓCALO CASTER 1 / 2 / 3 (espejo solo en la derecha, textos independientes, escalonado, salida inversa, 20 TAKE / OUT sin acumulación), FIXTURE con horarios a -300 px visibles, VS RESULTADO sin transformación, ENTRETIEMPO / FINAL con pocos y muchos eventos (límites, auto-scroll solo cuando hace falta, flechas, sin SALE / ENTRA).
+  - Expectativas actualizadas solo por cambios funcionales: columnas de POSICIONES; el PNG temporal de la prueba de RECURSO GRÁFICO pasa al ROTATIVO SPONSORS, porque el ZÓCALO CORTO DOBLE ya tiene PNG real.
+  - La copia de datos de la prueba arranca normalizada: GOLEADORES / ASISTENCIAS / G+A / PREVIA / ENTRETIEMPO / FINAL en AUTOMÁTICA sin carga MANUAL y el MARCADOR con FIN DEL CONTADOR 20:00.
+    - Los datos reales tienen hoy GOLEADORES y PREVIA en MANUAL con filas cargadas y el fin del reloj en 00:05, y la prueba no debe depender de eso.
+    - Solo se toca la copia.
+  - La sección Y suelta su referencia de prueba a una placa antes de medir nodos. Si no, la referencia retenía el árbol viejo después del OUT.
+- Archivos:
+  - Datos y lógica: `shared/c4n-assets.js`, `shared/modules.js`, `server/copa4naciones.js`.
+  - Program: `program/js/renderers/c4n-common.js`, `c4nTextos.js`, `c4nFixture.js`, `c4nStats.js`, `c4nTablas.js`, `c4nEventos.js`, `c4nPlacas.js`, `program/css/c4n.css`.
+  - Master: `master-control/js/c4n/c4n-planteles-panel.js`, `c4n-layer-adjust.js`.
+  - Asset: `assets/themes/copa4naciones/fondos/zocalo-caster.png`.
+  - Docs: `docs/COPA4NACIONES_ASSETS.md`, `docs/MODULES.md`, `docs/THEMES.md`.
+
+### Verificado
+
+- Instancia aislada (puerto propio + COPIA de `data/`, borrada al terminar). `data/` real con el mismo hash antes y después; el servidor del usuario (:4400) no se tocó.
+- Revisado en el navegador con capturas:
+  - ZÓCALO CASTER x1 (x 32), x2 (x 32 / 1577, la derecha espejada con el texto derecho) y x3 (x 32 / 804 / 1577); Preview = Program en los tres.
+  - FIXTURE con los horarios corridos a -260 / -300 px: los seis visibles.
+  - VS RESULTADO con el cartel recto (`transform: none`).
+  - ENTRETIEMPO y FINAL con pocos eventos (quietos) y con muchos (auto-scroll; FINAL: 330 px en un ciclo de 55,7 s). El borde del viewport queda en y 912, dentro del papel.
+  - Goles / tarjetas / cambios alineados con el escudo y la timeline; flechas ↓ / ↑ sin SALE / ENTRA.
+  - POSICIONES con y sin GRUPO A / B, comparada con GOLEADORES.
+  - JUGADORES A SEGUIR y FORMACIÓN en FOTO (jugador con foto: foto; sin foto: escudo / remera) y en LOGO (escudos).
+  - Foto que no carga: se quita la imagen y aparece el reemplazo.
+  - PREVIA nueva.
+  - Corregido durante la revisión:
+    - El rótulo PERDIDOS de POSICIONES se pegaba con GANADOS.
+    - El «º» de la POSICIÓN se leía como un cero.
+    - El número de PARTIDOS JUGADOS quedaba lejos de su rótulo.
+    - La asistencia larga se cortaba con el barrido de la fila (pasó a segundo renglón).
+    - Las marcas de la timeline se salían por la derecha.
+- ZÓCALO CASTER: 20 TAKE / OUT alternando 1 / 2 / 3 con nodos 650 → 650 y listeners 83 → 83, sin nada en el módulo tras el OUT.
+- `performance-lab/c4n-test.mjs` completo: **RESULTADO: PASS**.
+  - operación 20/20, torneo 8/8, módulos al aire 24/24.
+  - alcance 20/20, zócalos 15/15.
+  - RECARGAR x100 (delta 0), recurso gráfico 47/47, adicional / penales 9/9.
+  - caster / scroll / fixture 10/10.
+  - navegación x100 (27 pestañas) y TAKE / OUT x30: nodos, listeners y nodos desacoplados con delta 0, heap estable.
+  - Una corrida anterior falló en A / B y en el adicional por correr otra instancia de Chrome a la vez. Con la prueba sola, todo PASS.
+- Smoke con copia de datos: GLA (26 pestañas), Argentina Streamers (26) y Bauleti vs Balanza (17) **PASS** (10 TAKE / OUT cada uno, sin errores de consola, nada al aire al final).
+
+## [Unreleased] - 2026-11-10 (114)
+
+### Cambiado — COPA 4 NACIONES: tablas sobre TABLA_L, GRUPO A / B, JUGADORES A SEGUIR, FORMACIÓN, VS RESULTADO y regla global de doble renglón (GLA, Argentina Streamers y Bauleti vs Balanza sin cambios)
+
+- **TABLA_L** (`cosas sueltas/TABLA_L.png` → `fondos/tabla-l.png`, registrado en `shared/c4n-assets.js`): panel de papel x 1471-1919, y 0-936. Es la parte vertical de la "L" que completa el ZÓCALO COMPUESTO.
+  - GOLEADORES, ASISTENCIAS, G+A (CONTRIBUCIONES) y TABLA DE POSICIONES vuelven a la zona L (grupo exclusivo L; sin `c4n-fs` en Program / Preview) y se arman sobre la geometría real del PNG (`TABLA_L_AREA` x 1500, y 34, 390×870).
+  - Rankings: posición, escudo, dorsal + nombre (misma letra para todos, sin cortes), selección y valor.
+  - Motion: el panel se despliega desde el borde derecho (`wipe-l`, keyframes nuevos `c4nSlWipeL` / `c4nSlCollapseR`) y las filas entran en el mismo sentido.
+  - Fuentes sin cambios (`c4nDatos`):
+    - `rankings.goals` / `assists` / `contributions`: SOFTX (eventos de los partidos guardados) o WEB (copa4naciones.com), con FUENTE MANUAL por módulo.
+    - `standings`: CALCULADA / WEB / MANUAL.
+- **TABLA DE POSICIONES con GRUPO A / GRUPO B**: la web oficial publica una sola fase de grupos, así que la división es una asignación MANUAL.
+  - Panel: sección GRUPOS con GRUPO A / GRUPO B / SIN GRUPO por selección y QUITAR TODOS LOS GRUPOS. Se guarda en `grupos` del módulo (autoguardado, persiste).
+  - La placa muestra los dos grupos con los números de la tabla efectiva, en su orden, con la posición contada dentro de cada grupo (`groupStandings`).
+  - Sin asignaciones: un solo bloque con la tabla completa.
+- **JUGADORES A SEGUIR** (MEJORES JUGADORES) restaurado a su franja con su PNG (`mejores-jugadores.png`).
+  - Se quitaron el FORMATO PLACA, el selector del panel, el recurso `placa` del manifest, el grupo exclusivo dinámico, la regla de pantalla completa y el CSS `.c4n-mjp-*`.
+  - Renderer igual al original, más el ajuste por texto (ELEMENTOS).
+- **FORMACIÓN**: cabecera arriba (escudo, selección, esquema), CANCHA VERTICAL dibujada en SVG a la izquierda y SUPLENTES a la derecha.
+  - El arquero va abajo y las líneas del esquema suben (defensa, mediocampo, delantera), cada una repartida a lo ancho.
+  - Los nombres se ajustan al ancho de su lugar.
+- **VS RESULTADO** sobre la misma placa y composición que VS PREPARTIDO (`vs-prepartido.png`: fase, escudos, nombres, línea debajo de la barra azul).
+  - El cartel VS se tapa con papel limpio y entra el CARTEL DE RESULTADO: placa azul inclinada con franja roja y goles en crema, que se "estampa".
+  - Penales debajo; estado (manual o automático) en la línea de abajo.
+  - `vs-resultado.png` queda en `fondos/` como reserva (`C4N_RESERVA`), sin borrar.
+- **Regla global de doble renglón** (`teamRows` / `teamNames` en `c4n-common.js`): la decisión depende solo de los nombres (más de 7,5 em en Anton → 2 renglones para los dos equipos), así que es la misma en todas las placas para el mismo partido.
+  - Se aplica en VS PREPARTIDO, VS RESULTADO, encabezado de ESTADÍSTICAS PREVIA / ENTRETIEMPO / FINAL y FIXTURE.
+  - Con las cuatro selecciones, todo partido va en 2 renglones.
+- **Prueba** `performance-lab/c4n-test.mjs`:
+  - Expectativas nuevas solo por cambios funcionales: VS RESULTADO (cartel + penales, 4 regiones), JUGADORES A SEGUIR (2 regiones), tablas sobre TABLA_L, `vs-resultado.png` como reserva conocida.
+  - Chequeos nuevos: GRUPO A / B (dos bloques y persistencia tras recargar Master) y FORMACIÓN (cancha, arquero abajo, suplentes a la derecha).
+  - El chequeo de POSICIÓN DEL TEXTO del Zócalo Corto ahora mide el cambio relativo: dependía del ajuste guardado en los datos reales, que el operador había movido.
+- Archivos:
+  - Datos y lógica: `shared/c4n-assets.js`, `shared/modules.js` (`grupos` de POSICIONES; MEJORES JUGADORES sin `formato`).
+  - Program: `program/js/renderers/c4n-common.js`, `c4nTablas.js`, `c4nPlacas.js`, `c4nStats.js`, `c4nFixture.js`, `program/css/c4n.css`, `program/index.html` / `preview.html`.
+  - Master: `master-control/js/main.js`, `master-control/js/c4n/c4n-stats-panels.js`, `c4n-misc-panels.js`, `master-control/css/c4n.css`.
+  - Docs: `docs/COPA4NACIONES_ASSETS.md`, `docs/MODULES.md`, `docs/THEMES.md`.
+
+### Verificado
+
+- Instancias aisladas (puerto propio + COPIA de `data/`, borrada al terminar). `data/` real con el mismo hash antes y después; el servidor del usuario no se tocó.
+- Capturas revisadas con datos SOFTX de un torneo de prueba (solo en la copia):
+  - GOLEADORES, ASISTENCIAS y CONTRIBUCIONES sobre TABLA_L: 8 / 7 / 8 filas, nombres largos completos (JUAN CRUZ ECHEVERRÍA, SELECCIÓN CHILENA DE CREADORES), sin desbordes.
+  - TABLA L junto al ZÓCALO COMPUESTO formando la "L".
+  - POSICIONES sin grupos y con GRUPO A (ARG, URU) / GRUPO B (BRA, CHI).
+  - JUGADORES A SEGUIR en su franja (regiones placa + franja, sin selector de formato).
+  - FORMACIÓN 4-3-3, 4-4-2, 4-2-3-1 y 3-5-2: 11 titulares, arquero abajo, todos dentro de la cancha, 0 superposiciones, suplentes a la derecha.
+  - VS PREPARTIDO y VS RESULTADO (ARGENTINA STREAMERS vs SELECCIÓN CHILENA DE CREADORES): los dos con 2 renglones a 62 px y bloques de 128 px. VS RESULTADO con 2-1 y con 1-1 + penales 4-3.
+  - ESTADÍSTICAS FINAL con los mismos dos nombres en 2 renglones (54 px).
+  - FIXTURE con 12 nombres, todos en 2 renglones y al mismo tamaño (46 px).
+  - Corregido durante la revisión: el ajuste del nombre en las tablas no contaba el dorsal, la selección larga se cortaba con "…", la bajada de G+A tocaba el borde, los grupos dejaban el panel vacío abajo y los penales del VS RESULTADO eran chicos.
+- `performance-lab/c4n-test.mjs` completo: **RESULTADO: PASS**.
+  - operación 20/20 (VS RESULTADO 1-1 con penales 2-1), torneo 8/8, módulos al aire 24/24.
+  - alcance 20/20 (GRUPO A / B en dos bloques y persistencia tras recargar Master), zócalos 15/15.
+  - recurso gráfico 47/47: Preview = Program en VS RESULTADO (4 regiones), JUGADORES A SEGUIR (2), FIXTURE, estadísticas, FORMACIÓN y las 4 tablas sobre TABLA_L.
+  - adicional / penales 9/9.
+  - RECARGAR x100, navegación x100 (27 pestañas) y TAKE / OUT x30: nodos, listeners y nodos desacoplados con delta 0, heap estable.
+- Smoke con copia de datos: GLA, Argentina Streamers y Bauleti vs Balanza **PASS** (todas las pestañas, 10 TAKE / OUT cada uno, sin errores de consola).
+
+## [Unreleased] - 2026-11-10 (113)
+
+### Cambiado — COPA 4 NACIONES: MARCADOR2, TIEMPO ADICIONAL, PENALES, FIXTURE y PLACA VACÍA (GLA, Argentina Streamers y Bauleti vs Balanza sin cambios)
+
+- **PNG nuevos del diseñador** (origen `cosas sueltas/`, sin modificar) integrados por el manifest `shared/c4n-assets.js`:
+  - `MARCADOR2.png` → `fondos/marcador.png`.
+  - `MARCADOR2_tiempo (1).png` → `fondos/marcador-tiempo.png`.
+  - `PENALES.png` → `fondos/marcador-penales.png`.
+  - `fixture.png` → `fondos/fixture.png`.
+  - `PLACA_VACIA2.png` → `fondos/placa-vacia.png`.
+  - Los íconos `BLANCO_` / `verde_` / `rojo_PENALES.png` son rectángulos de un solo color: sus colores quedan en el manifest (`C4N_PEN_STRIP.colors`) y se pintan con CSS.
+  - El manifest admite más de un recurso por módulo ("slot"): `fondo`, `tiempo` y `penales` del MARCADOR, y `placa` de MEJORES JUGADORES. `shared/asset-registry.js` los registra a todos.
+- **MARCADOR2**:
+  - Escudos mucho más grandes en los recuadros grises (40×40): escala óptica por alfa con objetivo propio (`data-optics`, parámetros por recuadro en `opticalCrests`). Lado mayor hasta 38 px, sin recorte ni deformación, con el mismo peso visual en todas las selecciones.
+  - Guion entre los goles dibujado por el contenido (el PNG nuevo trae el negro liso).
+  - Siglas con el mismo tamaño en los dos lados.
+- **TIEMPO ADICIONAL** (capa `marcador-tiempo.png`, x 324-443 / y 102-140): justo debajo de período + reloj, "+N" en el gris y la cuenta 00:00 → N:00 en el negro.
+  - INICIO AUTOMÁTICO SÍ: sale solo cuando el reloj llega al fin del tiempo y cuenta con el mismo reloj. PAUSAR / INICIAR del reloj ahora guardan el tiempo real sin topear; lo que se ve sigue topeado.
+  - INICIO AUTOMÁTICO NO: MOSTRAR / INICIAR / PAUSAR / RESET ADICIONAL, con su propio `extraClock`.
+  - Sin timers en Program: `extraTimeState` en `shared/c4n-match.js` se evalúa en cada repintado del Marcador.
+  - Solo en 1T / 2T. Se limpia al cambiar de período o de partido y con REINICIAR PARTIDO. El manual queda atado al período + partido + equipos (`extraFor`).
+  - Motion propio de mostrar / ocultar (clip + transform), además del TAKE / OUT.
+  - Reemplaza a la pestaña roja anterior.
+- **PENALES** (capa `marcador-penales.png`, debajo de la barra):
+  - Disco del color del estado (neutro / convertido / errado) detrás de cada hueco del PNG y resultado de la tanda en el centro.
+  - Muerte súbita en una tanda nueva de círculos y ganador marcado (el número del que pierde se apaga).
+  - "pop" sin rebote en el círculo del remate nuevo.
+  - Panel: MOSTRAR LOS PENALES DEBAJO DEL MARCADOR, aviso TANDA DEFINIDA y RESET PENALES.
+  - Lógica `shootoutView` (sobre `penaltyTally`, compartida con BxB, sin su CSS). Reemplaza a la pestaña "PEN x-y".
+- **FIXTURE** sobre `fixture.png` (lienzo completo):
+  - Título y bajada arriba de la franja de colores; partidos debajo, en el azul del paquete, con divisores.
+  - Todos los nombres con la misma tipografía y estructura de renglones.
+  - Se mantiene toda la lógica: SÁBADO / DOMINGO, resultados en vivo, cruces automáticos, semis, amistoso, tercer puesto, final y WEB / MANUAL.
+- **PLACA VACÍA como base común** de las placas de pantalla completa: ESTADÍSTICAS PREVIA / ENTRETIEMPO / FINAL, FORMACIÓN, GOLEADORES, ASISTENCIAS, G+A, TABLA DE POSICIONES y MEJORES JUGADORES.
+  - Contenido en `PLACA_AREA` (dentro del papel), en el azul del paquete, con la misma lógica, datos y motion. El papel se abre desde el centro.
+  - GOLEADORES / ASISTENCIAS / G+A / POSICIONES pasan de panel L a pantalla completa: grupo exclusivo y `c4n-fs` en Program / Preview.
+  - MEJORES JUGADORES suma FORMATO PLACA (de fábrica) y conserva FORMATO FRANJA (su PNG propio).
+  - VS PREPARTIDO y VS RESULTADO siguen con sus PNG.
+- **Nombres en pareja** (`balancedNames` / `nameBlock` en `c4n-common.js`): mismo tamaño, interlineado y cantidad de renglones a los dos lados. Si uno necesita 2 renglones, el otro usa la misma estructura. Se aplica en VS, VS RESULTADO, encabezado de estadísticas, FIXTURE, POSICIONES, MEJORES JUGADORES y siglas del Marcador. Reemplaza a `nameLines`.
+- **Ajuste por texto**: ELEMENTOS (`C4N_ELEMENTS`) con X / Y / ESCALA de cada texto visible y de sus grupos en todos los módulos C4N con texto dinámico.
+  - Dentro de filas y grillas se usan las propiedades `translate` / `scale` (`tadj`), que no pelean con el `transform` de la animación.
+  - Ancho máximo e interlineado por texto no se agregaron: no hay infraestructura; siguen TEXTO TAMAÑO / ESPACIADO por módulo y el ajuste automático de cada texto.
+- **Prueba** `performance-lab/c4n-test.mjs`:
+  - Sección X nueva: adicional automático / manual / pausa / reset / cambio de período y de partido, penales y conteo de intervalos de Program.
+  - Placas nuevas en Preview = Program y selectores nuevos.
+  - **Guarda**: la prueba ya no puede escribir ni borrar un PNG real entregado. Antes usaba `fixture.png` / `formacion.png` como PNG temporales.
+- Archivos:
+  - Datos y lógica: `shared/c4n-assets.js`, `shared/asset-registry.js`, `shared/c4n-match.js`, `shared/modules.js` (`extraAuto`, `extraClock`, `extraFor`, `formato`).
+  - Program: `program/js/renderers/c4n-common.js`, `c4nMarcador.js`, `c4nFixture.js`, `c4nStats.js`, `c4nPlacas.js`, `c4nTablas.js`, `c4nEventos.js`, `program/css/c4n.css`, `program/index.html` / `preview.html`.
+  - Master: `master-control/js/main.js` (grupos exclusivos C4N dinámicos), `master-control/js/c4n/c4n-marcador-panel.js`, `c4n-misc-panels.js`, `c4n-layer-adjust.js`, `master-control/css/c4n.css`.
+  - Docs: `docs/COPA4NACIONES_ASSETS.md`, `docs/MODULES.md`, `docs/THEMES.md`.
+
+### Verificado
+
+- Todo en instancias aisladas: puerto propio + COPIA de `data/`, borrada al terminar. `data/` real con el mismo hash antes y después; el servidor del usuario en :4400 no se tocó.
+- `performance-lab/c4n-test.mjs` completo: **RESULTADO: PASS**.
+  - operación 20/20, torneo 8/8, todos los módulos al aire 24/24, alcance FASE 2 19/19, zócalos / marcador / compuesto 15/15, recurso gráfico 47/47.
+  - Placas sobre PLACA VACÍA y FIXTURE: fondo debajo, regiones del PNG, escudos medidos y Preview = Program.
+  - X 9/9: +3 automático sale a las 20:00 debajo del reloj (x 324, y 102, 120 px de ancho) y sigue al reloj; +5 manual (MOSTRAR / INICIAR / PAUSAR / RESET); se limpia con el cambio de período y de partido; penales neutros / 2-2 / 4-4 / muerte súbita 5-6 con ganador / RESET. Intervalos de Program: 2 fuera, 3 al aire (el ticker del Marcador), 3 con el adicional corriendo y 2 tras el OUT.
+  - RECARGAR x100, navegación x100 (27 pestañas) y TAKE / OUT x30: nodos, listeners y nodos desacoplados con delta 0.
+  - `fondos/` quedó solo con los PNG reales.
+  - Corregido durante la prueba: FORMACIÓN 3-5-2 / 5-4-1 superponía mediocampistas en la placa (separación e interlineado del nombre).
+- Capturas revisadas:
+  - MARCADOR2 con las cuatro selecciones, 0-0, 10-9, reloj y período.
+  - Adicional +3 automático y +5 manual.
+  - Penales neutros, mezcla, 4-4 y muerte súbita definida.
+  - FIXTURE sábado y domingo con nombres largos (SELECCIÓN CHILENA DE CREADORES, ARGENTINA STREAMERS, BRASIL, URUGUAY, SEMIFINAL 1 / 2, AMISTOSO INTERNACIONAL, TERCER PUESTO, GRAN FINAL): sin recortes.
+  - PREVIA, ENTRETIEMPO, FINAL, FORMACIÓN (4-3-3, 3-5-2, 5-4-1), GOLEADORES, POSICIONES y MEJORES JUGADORES sobre PLACA VACÍA.
+  - Panel del Marcador (TIEMPO ADICIONAL y PENALES).
+- Ajuste por texto en vivo: HORARIOS del FIXTURE (`translate` en las 5 filas) y SIGLA LOCAL del MARCADOR (`transform`), mismo nodo, sin reconstruir la pieza.
+- Smoke con copia de datos: GLA, Argentina Streamers y Bauleti vs Balanza **PASS**. Arranque, todas las pestañas, 10 TAKE / OUT cada uno, nada al aire al final, sin errores de consola.
+
+## [Unreleased] - 2026-11-06 (112)
+
+### Agregado — BAULETI vs BALANZA: MOSCA PDM (resto sin cambios)
+
+- **MOSCA PDM (`bbMoscaPdm`)**, módulo nuevo (navegación: Mosca). Placa chica negra con acento e hilo dorados arriba a la derecha, dentro del área segura. Muestra "PDM" y cada ~40 s se despliega en "#PARTIDODELMOMENTO", sostiene el hashtag y vuelve a "PDM".
+  - Despliegue: P, D y M están dibujadas en su lugar dentro del hashtag y, en estado PDM, corridas hasta quedar juntas; al desplegarse se separan (la placa se estira desde la derecha a la par) y aparecen "#", "ARTIDO", "EL" y "OMENTO" con escalonado de 0,05 s. Iniciales y "#" en dorado, el resto en blanco. Cierre inverso. Sin bounce ni glow.
+  - Ciclo sin timers: una animación CSS infinita por elemento (9 en total, solo transform / opacity). `program/js/renderers/bbMosca.js` genera los keyframes con el intervalo elegido (tiempos del despliegue fijos en segundos: abrir 1,2 s, hashtag 4,5 s, cerrar 1 s; el resto del período es PDM) dentro de un `<style>` de la propia pieza, así el OUT (Program vacía el contenido) no deja nada vivo. Geometría medida con la fuente (`measureTextWidth`).
+  - Master: ROTACIÓN (ACTIVA / DESACTIVADA = solo PDM) e INTERVALO en segundos (default 40, de 3 a 600), persistidos con el módulo; TAKE / OUT / ACTUALIZAR / PREVIEW y ajuste de composición (el escalado mantiene fija la esquina superior derecha: `#mod-bbMoscaPdm > .content` con `transform-origin` en 1824 / 54). Cada TAKE, o ACTUALIZAR con otra ROTACIÓN / INTERVALO, arranca desde PDM.
+  - Convive con todo (sin grupo exclusivo); debajo de las placas de pantalla completa queda oculta, como las demás piezas chicas.
+- Archivos: `shared/modules.js`, `shared/themes.js` (`MODULE_IDS_BB`), `program/index.html` / `program/preview.html`, `program/js/renderers/index.js`, nuevo `program/js/renderers/bbMosca.js`, sección `.bb-mp-*` en `program/css/bb.css`; docs `docs/THEMES.md` y `docs/MODULES.md`.
+
+### Verificado
+
+- Instancia aislada (`GLA_PORT=4412`, copia de `data/`) con Chrome por CDP (sonda de `performance-lab`): con intervalo de 3 s, 50 ciclos seguidos: el hashtag apareció 50 veces y volvió a PDM 50 veces (período medido 3001 ms, 2968–3085 por el muestreo); siempre 9 animaciones de ciclo, sin duplicados. OUT durante PDM, durante la transformación y con el hashtag visible (4 veces cada uno): la pieza sale, queda vacía (sin nodos, sin animaciones, sin `<style>`) y el TAKE siguiente arranca en PDM (iteración 0). 30 TAKE / OUT rápidos seguidos: vacía al final. ROTACIÓN DESACTIVADA: solo PDM, sin animaciones de ciclo; ACTUALIZAR la reactiva desde PDM. Program: nodos 650 → 650, listeners 86 → 86, intervalos 2 → 2 (los propios de Program), 0 nodos desacoplados; Master: nodos 978 → 978, listeners 221 → 221. Sin errores de consola ni recursos fallidos en Program, Preview y Master.
+- Con el intervalo real de 40 s: primer hashtag a los 34,9 s del TAKE y después cada 40,04 s. Preview muestra la misma pieza.
+- Cuadros del despliegue y del cierre revisados con capturas (PDM, iniciales separándose, hashtag completo, cierre); escalado 1,4 con la esquina fija en 1824 / 54; con YA COMENZAMOS al aire la mosca queda oculta y vuelve al salir la placa; INTERVALO 45 persistido tras recargar Master (vuelto a 40). Smoke de arranque de GLA, Argentina Streamers y Copa 4 Naciones con copia de datos sin errores.
+- Limitación: el servidor real no se reinició porque tenía YA COMENZAMOS al aire (no lo puso esta tarea); la mosca aparece en Master después del próximo reinicio con START.
+
+## [Unreleased] - 2026-11-06 (111)
+
+### Agregado — BAULETI vs BALANZA: planteles oficiales y placas YA COMENZAMOS / GRACIAS POR VER (GLA, Argentina Streamers y Copa 4 Naciones sin cambios)
+
+- **Planteles oficiales** cargados en el almacén central (`data/player-rosters.json`, tema `bauletiBalanza`) con la API de PLANTELES (`PUT /api/planteles/:teamId`), que alimenta PLANTELES, FORMACIÓN, CAMBIOS, TARJETAS, GOL, PENALES y CHARTS. Nombres en mayúsculas (convención existente), dorsal tal cual, `metadata: { foto: '', posicion, activo: true, baja: false, orden }` en el orden recibido.
+  - TEAM BAULETI (10): 10 BAULETI, 11 MOSKI, 17 MERNUEL, 9 MARCOS GILES, 1 BRIAN SARMIENTO (posición ARQ), 2 COSCU, 5 TONALI, 7 COKER, 8 EDUL, 19 GRIZAS. Los dos jugadores de prueba que había (10 MESI, 9 CAVEGOL) quedan como "dados de baja" (no se borran; VER DADOS DE BAJA → RESTAURAR).
+  - TEAM BALANZA (11): SANTI PAPÁ DE SALVI (sin dorsal), 10 SALVI, 10 BALANZA, 2 TINELLI, 11 MARKITOS NVJ, 10 BRIAN CASTAÑO, 12 OWEN PELLE, 7 PABLO NONIS, 99 DANI RIBBA, 1 CEDROLA, 30 AXEL DE FIORITO. Tres #10 sin bloqueo: todo el sistema elige por ID de jugador.
+  - "Salvi (nene estudiantes)" se cargó como SALVI y "Brian Sarmiento (ataja)" como BRIAN SARMIENTO + ARQ: lo entre paréntesis es descripción, no nombre de pantalla. Formación sin titulares cargados (no hubo datos de titular / suplente): AUTO-COMPLETAR POR POSICIÓN pone a BRIAN SARMIENTO de arquero.
+- **YA COMENZAMOS (`bbYaComenzamos`) y GRACIAS POR VER (`bbGraciasPorVer`)**: módulos nuevos de pantalla completa (Placas). `shared/modules.js` (campos `titulo`, `evento`, `detalle`), `shared/themes.js` (`MODULE_IDS_BB`), `master-control/js/main.js` (grupo exclusivo de pantalla completa y repintado del Preview), `program/index.html` / `program/preview.html` (contenedores), `program/js/renderers/index.js` + nuevo `program/js/renderers/bbPlacas.js`, sección `.bb-ph-*` en `program/css/bb.css`. Sin assets nuevos: CSS + los logos actuales.
+  - Composición del VS: glass que se abre desde el centro, marcas de agua de los escudos, evento arriba, escudos del Marcador con VS dorado, texto principal (Anton 190 px, se achica si no entra) que sube desde una máscara, barra dorada con destello, TEAM A VS TEAM B y texto inferior opcional; esquinas del marco.
+  - Loop al aire, solo transform/opacity: luz dorada central que respira (8 s), barrido de luz diagonal de -14° cada 9 s y marcas de agua que flotan en sentidos opuestos (14 s). Arranca después de la entrada desde su estado de reposo, sigue durante la salida (sin saltos) y se apaga cuando Program desmonta la pieza.
+  - ACTUALIZAR al aire cambia solo los textos: el fondo queda montado y el loop no se reinicia.
+- Docs: `docs/THEMES.md` (navegación, grupos, planteles) y `docs/MODULES.md` (ficha de las dos placas).
+
+### Verificado
+
+- Instancia aislada (`GLA_PORT=4412`, copia de `data/`): carga de planteles re-ejecutable (segunda corrida sin duplicados); PLANTELES muestra las dos listas en el orden recibido (SANTI sin dorsal, BRIAN SARMIENTO ARQ, VER DADOS DE BAJA (2) en Bauleti); FORMACIÓN lista 10 / 11 jugadores, AUTO-COMPLETAR pone a BRIAN SARMIENTO de arquero, camisetas con dorsal y SANTI con "–" y camiseta sin número; CAMBIOS (ENTRA / SALE) y TARJETAS listan todos los nombres; tarjeta a "10 BRIAN CASTAÑO" registrada con su propio ID (no otro #10); cambio SALE 10 SALVI / ENTRA 2 TINELLI correcto en Program.
+- Placas: TAKE / OUT / PREVIEW; Preview = Program (escudos 626 / 1084, VS 900–1020, título centrado en 960); TAKE de GRACIAS POR VER saca a YA COMENZAMOS; 5 loops corriendo al aire y durante la salida; después del OUT `display: none`, 0 animaciones y contenido vacío; ACTUALIZAR conserva el mismo nodo de fondo; 8 ciclos TAKE / TAKE / OUT: Program 322 → 322 nodos, 0 animaciones activas. Corregido durante la prueba: el título asomaba por debajo de la máscara antes de entrar (ahora parte de 100 % + 60 px).
+- Smoke GLA / Argentina Streamers / Copa 4 Naciones en instancias aisladas con copia de datos: arrancan (`stale: false`), Master y Program sin errores de consola ni recursos fallidos, las placas nuevas no aparecen en su navegación.
+- Servidor real: reiniciado con `START BAULETI VS BALANZA.bat` (sin nada al aire), planteles cargados con la misma API (respaldo previo de `player-rosters.json`; GLA y Argentina Streamers idénticos), Master real lista las dos placas y los jugadores en FORMACIÓN / CAMBIOS / TARJETAS; PREVIEW de las dos placas con los datos reales; Program sin nada al aire; formación, marcador y eventos reales sin cambios.
+
+## [Unreleased] - 2026-11-06 (110)
+
+### Cambiado — BAULETI vs BALANZA: VS RESULTADO y ZÓCALO CORTO DOBLE (resto sin cambios)
+
+- **VS RESULTADO sin LOCAL / VISITANTE** (`program/js/renderers/bbVsResultado.js`): igual que el VS PREPARTIDO, sin rótulos de localía; nombre y barra suben al mismo lugar (604 / 760, regla compartida `#mod-bbVs` / `#mod-bbVsResultado` en `program/css/bb.css`). Logos, nombres oficiales y motion sin cambios.
+- **Guion del resultado**: elemento propio `.bb-vsr-dash` entre los dos scores ("0 - 0", "2 - 1", "10 - 9"). Centrado en la placa (x 930–990: los scores están alineados contra el centro, el izquierdo termina en 900 y el derecho empieza en 1020, así que no depende de la cantidad de dígitos) y a la altura del centro de los dígitos (y 373; medido con las métricas de Anton: 375 − 0.01 × px), tamaño proporcional al score (0.24 × 0.072 em). Con penales sube con los scores (y 343). Entra trazándose desde el centro (0.78 s, después de los scores) y sale con ellos.
+- **ZÓCALO CORTO DOBLE**: el selector (ya existente desde la entrada 109) pasa a llamarse CANTIDAD DE ZÓCALOS (1 ZÓCALO / 2 ZÓCALOS / 3 ZÓCALOS), sin cambios de comportamiento. Corregida una línea de 1 px que quedaba a los costados de la placa CENTRO al terminar su apertura: keyframe propio `bbOpenCz` que termina 2 px por fuera de la caja (los demás usos de `bbOpenC` no cambian).
+- Docs: `docs/MODULES.md` (VS RESULTADO, CANTIDAD DE ZÓCALOS).
+
+### Verificado
+
+- Causa de que el selector no se viera: el código estaba en `shared/modules.js` desde las 11:59; Master arma los campos con el `modules.js` que cargó al abrir la página, así que una pestaña abierta antes de ese momento (o con el servidor viejo, previo a 12:38) no lo muestra hasta recargarla. Reproducido en la instancia de prueba: una pestaña de Preview abierta antes del cambio siguió mostrando LOCAL / VISITANTE hasta recargarla.
+- Instancia aislada (`GLA_PORT=4412`, copia de `data/`): VS RESULTADO sin rótulos en Program y Preview; guion en 930–990 × 364–382 con 0-0, 1-1, 10-9 y 2-1 (con penales forzados: 334–352); Preview = Program; salida del guion junto con los scores; VS PREPARTIDO sin cambios (nombres 604, barras 760).
+- ZÓCALO CORTO DOBLE con datos cargados desde los campos de Master: 1 = pieza simple (106–458); 2 = 106–564 / 1356–1814, derecha espejada con texto normal, el texto del CENTRO no aparece; 3 = 106–564 / 731–1189 / 1356–1814 (centro en 960); entrada izquierda → centro → derecha (0.14 / 0.26 / 0.38 s), salida inversa (0 / 0.05 / 0.10 s); Preview = Program; en 1920×1080 CANTIDAD DE ZÓCALOS es el primer campo del panel (y 212).
+- Servidor real: reiniciado con `START BAULETI VS BALANZA.bat` (`/api/version`: `stale: false`); `bbVsResultado.js`, `bb.css`, `modules.js` y `bbZocalos.js` servidos idénticos a disco (md5); Master real muestra CANTIDAD DE ZÓCALOS como primer campo con IZQUIERDA / CENTRO / DERECHA; PREVIEW de VS RESULTADO con los datos reales: sin rótulos, "1 - 1" con el guion en 930–990 × 364–382, logos reales y nombres oficiales; Program sin nada al aire y consola sin errores.
+
+## [Unreleased] - 2026-11-06 (109)
+
+### Cambiado — BAULETI vs BALANZA (Copa 4 Naciones, GLA y Argentina Streamers sin cambios)
+
+- **Identidad**: nombres visibles TEAM BAULETI / TEAM BALANZA (`shared/themes.js`); ids `bauleti` / `balanza` y abreviaturas BAU / BAL sin cambios. Evento `THEMES.bauletiBalanza.event` = EL PARTIDO DEL MOMENTO (PDM, Párense de Manos, 18/12/2026): default del VS PREPARTIDO (`evento`) y del ZÓCALO LARGO. `server/state.js` migra una sola vez los textos que tenían exactamente el placeholder anterior (PARTIDO DEL AÑO / BAULETI VS BALANZA); un texto del operador no se toca.
+- **Logos reales**: `cosas sueltas/team bauleti.png` → `assets/themes/bauleti-balanza/escudos/bauleti.png` (1184×1328 RGBA) y `cosas sueltas/team balanza.png` → `escudos/balanza.png` (2084×2084 RGBA), movidos sin modificar (md5 igual). Compensación óptica `crestScale` medida sobre el alfa (BAULETI ×1, BALANZA ×1.32: el área visible de BALANZA ocupa 70 % de su lienzo contra 92 % de BAULETI), aplicada en `.bb-crest img` (`--bb-crest-scale`, `program/js/renderers/bb-common.js`). Ajuste manual por equipo en EQUIPOS → TAMAÑO LOGO % (50–200, AUTO vuelve a la medida; `server/teams.js` `validCrestScale`, `POST /api/teams/team` con `crestScale`, solo BxB).
+- **PENALES**: selector TANDA 3 / 5 (`bbMarcador.penalties.rounds`, 5 por defecto). `shared/bb-match.js`: `penaltyTally(events, first, regulation = 5)`, `penaltyRounds()`, `BB_PENALTY_ROUND_OPTIONS`; casilleros, "TANDA N DE 3/5" y muerte súbita siguen a la tanda elegida. C4N llama sin el parámetro y queda en 5.
+- **TARJETAS**: JUGADOR PLANTEL / MANUAL (nombre + número opcional); el manual no se agrega al plantel y el evento queda con `playerManual`.
+- **CAMBIOS**: ENTRA y SALE cada uno PLANTEL / MANUAL (las 4 combinaciones); `playerOutManual` para el que sale manual. LIMPIAR también vacía los campos manuales; REGISTRAR sin jugador avisa y no crea evento.
+- **VAR**: abajo a la izquierda (`left: var(--bb-safe-x); bottom: 92px`), en el grupo exclusivo de Tarjeta / Cambio / Zócalos (`BB_EXCLUSIVE_GROUPS`); misma pieza y mismo ajuste de composición.
+- **ZÓCALO CORTO DOBLE**: CANTIDAD 1 / 2 / 3 con nombre y cargo por persona (`linea1/linea2`, `linea1Cen/linea2Cen`, `linea1Der/linea2Der`). 2 = izquierda + derecha con la estructura espejada (acento, corte, wipe e hilo del otro lado; texto alineado a la derecha, nunca espejado); 3 = + centro simétrica. Todas las placas con el mismo ancho (el del texto más largo dentro del máximo del modo), entrada escalonada 0.12 s y salida inversa 0.05 s. CANTIDAD 1 es la pieza de siempre (`renderZocalo('short2')`).
+- **FORMACIÓN**: VISUAL FOTO / CAMISETA (`visual`). Camiseta SVG con los colores del equipo (`kit` en `shared/themes.js`, `bbTeamKit`): BALANZA negra con dorado sutil y número dorado; BAULETI blanca con banda roja diagonal, sin escudo. Dorsal del plantel (46 / 40 / 30 px según 1 / 2 / 3 cifras). FOTO usa la foto y, sin foto, la camiseta (antes una silueta).
+- **VS PREPARTIDO**: sin rótulos LOCAL / VISITANTE; nombre y barra suben 36 px (el hueco del rótulo) y el fondo usa transparencia controlada (glass 0.64–0.72, viñeta 0.55), solo `#mod-bbVs`. VS RESULTADO sin cambios de diseño (logos y nombres oficiales por el catálogo).
+- **CHARTS ENTRETIEMPO / FINAL**: DETALLE DE GOLES CON AUTORES / SIN AUTORES por tipo (`detalleGoles.entretiempo|final`). SIN AUTORES reemplaza el detalle por un resumen centrado (GOLES siempre; AMARILLAS / ROJAS / AZULES / CAMBIOS solo si hay; PENALES en FINAL si hubo tanda); los eventos no se tocan. FINAL muestra los penales en los dos modos.
+- `performance-lab/bb-leak-test.mjs`: los pasos 12 y 16 comparan con el nombre oficial (TEAM BAULETI / TEAM BALANZA).
+- Docs: `docs/THEMES.md` (identidad, logos, `crestScale`, grupos) y `docs/MODULES.md` (fichas BxB).
+
+### Verificado
+
+Instancia aislada (`GLA_PORT=4412`, `GLA_DATA_DIR` = copia de `data/` en un directorio temporal; los datos reales no se usaron):
+
+- `/api/teams`: TEAM BAULETI / TEAM BALANZA, archivos reales, `crestScale` 1 / 1.32. Migración aplicada en la copia (VS `evento` = EL PARTIDO DEL MOMENTO).
+- PENALES: tanda 3 → 3 casilleros, "TANDA 1 DE 3"; con 2-2 tras 3 rondas pasa a MUERTE SÚBITA con 4º casillero; tanda 5 → "TANDA 5 DE 5"; REINICIAR deja 0 remates. TAKE de Penales saca al Marcador.
+- TARJETAS: manual (nombre + 23) y plantel (10) al aire con logo y TEAM BAULETI; plantel sin cambios. CAMBIOS: las 4 combinaciones PLANTEL / MANUAL correctas en Program; plantel sin cambios.
+- VAR: x 96–543, y 886–988; Preview = Program; un TAKE de zócalo lo saca (grupo).
+- ZÓCALO CORTO DOBLE: 2 personas: placas del mismo ancho y simétricas (106–875 / 1045–1814 con un nombre de 40 caracteres), derecha espejada, texto a la derecha sin espejar; 3 personas: 106–646 / 687–1233 / 1274–1814 (centro en 960); delays 0 / 0.12 / 0.24 s; nombres de 40 caracteres sin desborde; OUT y nuevo TAKE; CANTIDAD 1 igual que antes; Preview = Program.
+- FORMACIÓN: dorsales 1, 7, 9, 10, 11, 23 (BAULETI) y 1, 7, 10, 11, 23, 99 (BALANZA) en la camiseta; FOTO con una foto temporal (borrada después) muestra la foto en ese jugador y la camiseta en el resto; CAMISETA ignora la foto; sin ids SVG duplicados.
+- VS PREPARTIDO sobre fondo oscuro y claro (fondo de página temporal): escudos y nombres sólidos, sin rótulos. VS RESULTADO: logos, nombres y resultado.
+- CHARTS ENTRETIEMPO y FINAL (2-1, penales 3-1, tanda de 3) en los dos modos; SIN AUTORES sin "undefined" ni filas vacías, eventos intactos (10 → 10); Preview = Program.
+- Persistencia: STOP ALL, 3 piezas al aire, reinicio del servidor → ninguna vuelve al aire; tanda 3, tarjeta MANUAL, cambios ENTRA MANUAL / SALE PLANTEL, CANTIDAD 2, CAMISETA, SIN AUTORES y TAMAÑO LOGO 120 % se recargan; AUTO vuelve a 100 %.
+- Consola de Master / Program / Preview sin errores tras recorrer TAKE / OUT de los 12 módulos BxB; sin recursos con estado ≥ 400.
+- Smoke en instancias aisladas con copia de datos (4415 / 4416 / 4417): Argentina Streamers, GLA y Copa 4 Naciones arrancan, 8 módulos de cada uno entran y salen en Program, consola sin errores. `penaltyTally` sin tanda = 5 (C4N).
+- `performance-lab/bb-leak-test.mjs` (copia propia, puerto 4432) con NAV_CYCLES=40, TAKE_ROUNDS=40, GOALS=24: navegación PASS (Master 934 nodos / 203 listeners y Program 641 / 83 iguales al principio y al final, 0 nodos desacoplados), TAKE/OUT repetidos PASS (10 piezas por ronda, 0 de diferencia en nodos, listeners e intervalos, 0 desacoplados, nada al aire al final), goles en vivo PASS (14-13, estructura sin reconstruir). En esa corrida el partido completo dio 24/26 porque los pasos 12 y 16 esperaban los nombres viejos; con la corrección, segunda corrida corta (3/3/4): 26/26 y RESULTADO: PASS. `performance-lab/results-bb/results.json` restaurado al versionado.
+- Limitación: las capturas del panel del navegador se tomaron con la ventana oculta (los frames de animación avanzan solo al capturar); el escalonado se verificó por los `animation-delay` reales, no cuadro a cuadro.
+
 ## [Unreleased] - 2026-11-05 (108)
 
 ### Agregado / Cambiado — COPA 4 NACIONES (GLA, Argentina Streamers y BAULETI vs BALANZA sin cambios)

@@ -39,11 +39,15 @@ export function renderC4nDatosPanel(container, { lifecycle }) {
     }
   }
 
-  async function call(url, method, body, okText) {
+  // (2026-11-14) Tiempo máximo por pedido: si el servidor no contesta, el
+  // botón sale de "ACTUALIZANDO..." igual, con el error, y quedan los datos.
+  async function call(url, method, body, okText, timeoutMs = 30000) {
     busy = true;
     render();
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
     try {
-      const res = await fetch(url, { method, headers: body ? { 'Content-Type': 'application/json' } : undefined, body: body ? JSON.stringify(body) : undefined });
+      const res = await fetch(url, { method, headers: body ? { 'Content-Type': 'application/json' } : undefined, body: body ? JSON.stringify(body) : undefined, signal: ctrl.signal });
       const data = await res.json().catch(() => null);
       if (lifecycle.destroyed) return null;
       if (data?.state) state = data.state;
@@ -53,9 +57,10 @@ export function renderC4nDatosPanel(container, { lifecycle }) {
       status.set('ok', [okText, ...(data.warnings || [])].filter(Boolean).join(' · '));
       return data;
     } catch (err) {
-      status.set('error', err.message);
+      status.set('error', err.name === 'AbortError' ? `EL SERVIDOR NO RESPONDIÓ A TIEMPO (${Math.round(timeoutMs / 1000)} s): se conservan los últimos datos.` : err.message);
       return null;
     } finally {
+      clearTimeout(timer);
       busy = false;
       if (!lifecycle.destroyed) render();
     }
@@ -214,7 +219,7 @@ export function renderC4nDatosPanel(container, { lifecycle }) {
             text: busy ? 'ACTUALIZANDO...' : 'ACTUALIZAR TODO DESDE WEB',
             disabled: busy,
             onclick: async () => {
-              const data = await call('/api/c4n/sync', 'POST', null, 'DATOS WEB ACTUALIZADOS.');
+              const data = await call('/api/c4n/sync', 'POST', null, 'DATOS WEB ACTUALIZADOS.', 90000);
               if (data) invalidatePlantel();
               if (!data && state?.web?.fetchedAt) status.set('error', `${status.node.textContent} · Se conserva el snapshot del ${fmtDate(state.web.fetchedAt)}.`);
             },

@@ -188,6 +188,9 @@ body:has(.bb-fs.is-in) .bb-root:not(.bb-fs) > .content { opacity: 0; transition-
   height: 100%;
   object-fit: contain;
   filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.55));
+  /* Compensación óptica por equipo (2026-11-06): agranda el logo que trae
+     mucho margen transparente para que su área visible iguale a la del otro. */
+  transform: scale(var(--bb-crest-scale, 1));
 }
 .bb-monogram {
   width: 100%;
@@ -222,6 +225,17 @@ body:has(.bb-fs.is-in) .bb-root:not(.bb-fs) > .content { opacity: 0; transition-
 }
 .bb-root.is-in .bb-vs-bg { animation-name: bbOpenC; }
 .bb-root:not(.is-in) .bb-vs-bg { animation-name: bbCloseC; }
+/* VS PREPARTIDO (2026-11-06): fondo con transparencia controlada para que
+   respire la cámara detrás (antes ~0.84–0.88 + viñeta casi opaca en los
+   bordes). Mismos degradés negro/dorado; escudos y textos siguen sólidos.
+   VS RESULTADO no cambia. */
+#mod-bbVs .bb-vs-bg {
+  background:
+    radial-gradient(ellipse 52% 62% at 50% 46%, rgba(214, 170, 78, 0.16), transparent 70%),
+    radial-gradient(ellipse 120% 90% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.55) 100%),
+    repeating-linear-gradient(104deg, rgba(255, 255, 255, 0.022) 0 2px, transparent 2px 16px),
+    linear-gradient(180deg, rgba(11, 11, 15, 0.64) 0%, rgba(7, 7, 9, 0.72) 100%);
+}
 
 .bb-vs-half {
   position: absolute;
@@ -360,6 +374,13 @@ body:has(.bb-fs.is-in) .bb-root:not(.bb-fs) > .content { opacity: 0; transition-
 .bb-vs-side.right .bb-vs-bar { transform-origin: 0 50%; }
 .bb-root.is-in .bb-vs-bar { animation-name: bbDrawX; }
 .bb-root:not(.is-in) .bb-vs-bar { animation-name: bbUndrawX; }
+/* VS PREPARTIDO y VS RESULTADO sin rótulo LOCAL / VISITANTE (2026-11-06):
+   nombre y barra suben 36px (el hueco que dejaba el rótulo, top 612) para
+   que el escudo y el nombre lean como una sola pieza. */
+#mod-bbVs .bb-vs-name,
+#mod-bbVsResultado .bb-vs-name { top: 604px; }
+#mod-bbVs .bb-vs-bar,
+#mod-bbVsResultado .bb-vs-bar { top: 760px; }
 
 /* Insignia VS central */
 .bb-vs-badge {
@@ -710,6 +731,20 @@ body:has(.bb-fs.is-in) .bb-root:not(.bb-fs) > .content { opacity: 0; transition-
   color: transparent;
   -webkit-text-stroke: 2px rgba(214, 170, 78, 0.55);
 }
+/* Camiseta (VISUAL = CAMISETA o jugador sin foto, 2026-11-06): misma caja y
+   misma entrada que la foto. */
+.bb-player-photo .bb-shirt {
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 154px;
+  height: 154px;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.55));
+  overflow: visible;
+  --bb-dur: 0.7s;
+}
+.bb-root.is-in .bb-player-photo .bb-shirt { animation-name: bbPhotoUp; }
 .bb-player-bar {
   position: absolute;
   left: 0;
@@ -1584,17 +1619,22 @@ body:has(.bb-fs.is-in) .bb-root:not(.bb-fs) > .content { opacity: 0; transition-
 .bb-root:not(.is-in) .bb-sub-row { animation-name: bbFadeOut; --bb-dur-out: 0.16s; }
 
 /* =====================================================================
-   VAR (#mod-bbVar) — compacto arriba a la derecha
+   VAR (#mod-bbVar) — compacto abajo a la izquierda
+   ---------------------------------------------------------------------
+   2026-11-06: antes arriba a la derecha (zona de la mosca). Misma safe area
+   y misma línea de base que Tarjeta / Cambio / Zócalos (bottom 92px); el
+   bloque crece hacia arriba y el MOTIVO queda alineado a la izquierda.
+   Pieza y motion sin cambios.
    ===================================================================== */
 #mod-bbVar { --bb-exit-hold: 0.45s; }
 
 .bb-var {
   position: absolute;
-  right: var(--bb-safe-x);
-  top: var(--bb-safe-y);
+  left: var(--bb-safe-x);
+  bottom: 92px;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.5));
 }
 .bb-var-main {
@@ -1807,6 +1847,50 @@ body:has(.bb-fs.is-in) .bb-root:not(.bb-fs) > .content { opacity: 0; transition-
 .bb-zl.is-short2 .bb-zl-l2 { font-size: 21px; letter-spacing: 0.14em; }
 .bb-zl.is-short2 .bb-zl-accent { flex-basis: 10px; }
 
+/* Corto doble con 2 / 3 personas (2026-11-06). Misma pieza, misma línea de
+   base y safe area. DERECHA: estructura espejada (acento a la derecha,
+   corte a la izquierda, wipe e hilo desde la derecha), texto normal
+   alineado a la derecha. CENTRO: pieza simétrica (corte a los dos lados,
+   apertura desde el centro, texto centrado). La salida escalonada termina
+   antes de que Program desmonte (--bb-exit-hold). */
+#mod-bbZocaloCortoDoble:has(.bb-zl-multi) { --bb-exit-hold: 0.62s; }
+.bb-zl.pos-r { left: auto; right: var(--bb-safe-x); flex-direction: row-reverse; }
+.bb-zl.pos-c { left: 50%; transform: translateX(-50%); }
+.bb-zl.pos-r .bb-zl-plate {
+  clip-path: polygon(22px 0, 100% 0, 100% 100%, 0 100%);
+  padding: 0 26px 0 56px;
+  align-items: flex-end;
+  background:
+    repeating-linear-gradient(76deg, rgba(255, 255, 255, 0.022) 0 2px, transparent 2px 16px),
+    linear-gradient(180deg, #17171D 0%, var(--bb-black) 100%);
+}
+.bb-zl.pos-c .bb-zl-plate {
+  clip-path: polygon(0 0, 100% 0, calc(100% - 22px) 100%, 22px 100%);
+  padding: 0 48px;
+  align-items: center;
+}
+.bb-zl.pos-r .bb-zl-hair {
+  left: auto;
+  right: 0;
+  transform-origin: 100% 50%;
+  background: linear-gradient(270deg, var(--bb-line), transparent);
+}
+.bb-zl.pos-c .bb-zl-hair {
+  left: 27%;
+  transform-origin: 50% 50%;
+  background: linear-gradient(90deg, transparent, var(--bb-line), transparent);
+}
+.bb-root.is-in .bb-zl.pos-r .bb-zl-platewrap { animation-name: bbWipeL; }
+.bb-root:not(.is-in) .bb-zl.pos-r .bb-zl-platewrap { animation-name: bbUnwipeL; }
+/* Placa CENTRO: la apertura termina 2px por fuera de la caja. Con el recorte
+   justo en el borde quedaba una línea de 1px a los costados (las esquinas
+   de abajo de la caja son transparentes por el corte doble). */
+@keyframes bbOpenCz { from { clip-path: inset(0 50% 0 50%); } to { clip-path: inset(-2px); } }
+.bb-root.is-in .bb-zl.pos-c .bb-zl-platewrap { animation-name: bbOpenCz; }
+.bb-root:not(.is-in) .bb-zl.pos-c .bb-zl-platewrap { animation-name: bbCloseC; }
+.bb-root.is-in .bb-zl.pos-r .bb-zl-l2 { animation-name: bbWipeL; }
+.bb-root.is-in .bb-zl.pos-c .bb-zl-l2 { animation-name: bbOpenC; }
+
 /* =====================================================================
    VS RESULTADO (#mod-bbVsResultado) — base del VS PREPARTIDO
    ===================================================================== */
@@ -1835,6 +1919,26 @@ body:has(.bb-fs.is-in) .bb-root:not(.bb-fs) > .content { opacity: 0; transition-
 .bb-vs.has-pens .bb-vsr-score { top: 206px; }
 .bb-root.is-in .bb-vsr-score { animation-name: bbSettle; }
 .bb-root:not(.is-in) .bb-vsr-score { animation-name: bbShrink; --bb-dur-out: 0.3s; }
+/* Guion del resultado (2026-11-06): centrado en la placa (los scores están
+   alineados contra el centro: izquierdo termina en 900, derecho empieza en
+   1020) y a la altura del centro de los dígitos (Anton: 375 - 0.01 x px,
+   ~373; con penales los scores suben 30). Tamaño proporcional al score
+   (--s). Entra trazándose desde el centro después de los scores. */
+.bb-vsr-dash {
+  position: absolute;
+  left: 50%;
+  top: 373px;
+  width: calc(var(--s, 250px) * 0.24);
+  height: calc(var(--s, 250px) * 0.072);
+  margin-left: calc(var(--s, 250px) * -0.12);
+  margin-top: calc(var(--s, 250px) * -0.036);
+  background: var(--bb-gold-grad-v);
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.6));
+  --bb-dur: 0.42s; --bb-ease: var(--bb-ease-inout);
+}
+.bb-vs.has-pens .bb-vsr-dash { top: 343px; }
+.bb-root.is-in .bb-vsr-dash { animation-name: bbDrawX; }
+.bb-root:not(.is-in) .bb-vsr-dash { animation-name: bbUndrawX; --bb-dur-out: 0.3s; }
 .bb-vsr-pen {
   position: absolute;
   top: 482px;
@@ -1868,6 +1972,287 @@ body:has(.bb-fs.is-in) .bb-root:not(.bb-fs) > .content { opacity: 0; transition-
 }
 .bb-root.is-in .bb-vsr-penlabel { animation-name: bbRise; }
 .bb-root:not(.is-in) .bb-vsr-penlabel { animation-name: bbFadeOut; }
+
+/* =====================================================================
+   YA COMENZAMOS / GRACIAS POR VER (#mod-bbYaComenzamos, #mod-bbGraciasPorVer)
+   — pantalla completa (2026-11-06)
+   ---------------------------------------------------------------------
+   Familia del VS: glass que se abre desde el centro, marcas de agua de los
+   escudos, evento arriba, escudos + VS, texto principal con máscara, barra
+   dorada y TEAM A VS TEAM B. LOOP al aire (solo transform/opacity, en el
+   compositor): luz dorada que respira, barrido de luz diagonal cada 9 s y
+   marcas de agua que flotan. Cada loop arranca desde su estado de reposo
+   (sin saltos) recién cuando terminó la entrada y sigue durante la salida
+   (el fondo se cierra encima, sin cortes); Program lo apaga al desmontar
+   la pieza (display: none + contenido vacío).
+   ===================================================================== */
+#mod-bbYaComenzamos, #mod-bbGraciasPorVer { --bb-exit-hold: 0.72s; }
+
+.bb-ph-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 52% 62% at 50% 46%, rgba(214, 170, 78, 0.12), transparent 70%),
+    radial-gradient(ellipse 120% 90% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.85) 100%),
+    repeating-linear-gradient(104deg, rgba(255, 255, 255, 0.022) 0 2px, transparent 2px 16px),
+    linear-gradient(180deg, var(--bb-glass-top) 0%, var(--bb-glass-bottom) 100%);
+  --bb-dur: 0.75s; --bb-ease: var(--bb-ease-inout);
+  --bb-dur-out: 0.42s;
+}
+.bb-root.is-in .bb-ph-bg { animation-name: bbOpenC; }
+.bb-root:not(.is-in) .bb-ph-bg { animation-name: bbCloseC; }
+
+/* Loop 1: luz dorada central que respira y se desplaza apenas. */
+.bb-ph-glow {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  width: 1300px;
+  height: 760px;
+  margin: -380px 0 0 -650px;
+  background: radial-gradient(ellipse at center, rgba(214, 170, 78, 0.16), transparent 66%);
+  opacity: 0.6;
+  will-change: transform, opacity;
+}
+.bb-root .bb-ph-glow { animation: bbPhGlow 8s ease-in-out 1.3s infinite; }
+@keyframes bbPhGlow {
+  0%, 100% { opacity: 0.6; transform: none; }
+  50% { opacity: 1; transform: translateX(70px) scale(1.06); }
+}
+/* Loop 2: barrido de luz diagonal (corte de -14°), una pasada cada 9 s. */
+.bb-ph-sweep {
+  position: absolute;
+  top: -10%;
+  bottom: -10%;
+  left: -26%;
+  width: 22%;
+  background: linear-gradient(90deg, transparent, rgba(243, 215, 143, 0.075), transparent);
+  transform: skewX(var(--bb-slant));
+  will-change: transform;
+}
+.bb-ph-sweep.thin { left: -12%; width: 7%; background: linear-gradient(90deg, transparent, rgba(243, 215, 143, 0.06), transparent); }
+.bb-root .bb-ph-sweep { animation: bbPhSweep 9s var(--bb-ease-inout) 1.6s infinite; }
+.bb-root .bb-ph-sweep.thin { animation-delay: 1.95s; }
+@keyframes bbPhSweep {
+  0% { transform: skewX(var(--bb-slant)); }
+  48%, 100% { transform: translateX(2600px) skewX(var(--bb-slant)); }
+}
+/* Loop 3: las marcas de agua flotan (cada mitad en sentido contrario). */
+.bb-ph-drift { will-change: transform; }
+.bb-root .bb-ph-drift { animation: bbPhDrift 14s ease-in-out 1.4s infinite; }
+.bb-root .bb-ph-drift.r { animation-name: bbPhDriftR; }
+@keyframes bbPhDrift {
+  0%, 100% { transform: none; }
+  50% { transform: translateY(-16px) scale(1.03); }
+}
+@keyframes bbPhDriftR {
+  0%, 100% { transform: none; }
+  50% { transform: translateY(16px) scale(1.03); }
+}
+
+.bb-ph-fg { position: absolute; inset: 0; }
+
+/* Escudos + VS */
+.bb-ph-teams {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 262px;
+  height: 210px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 64px;
+}
+.bb-ph-crest {
+  width: 210px;
+  height: 210px;
+  --bb-crest-size: 210px;
+  --bb-dur: 0.85s;
+}
+.bb-root.is-in .bb-ph-crest.left { animation-name: bbFromL; }
+.bb-root.is-in .bb-ph-crest.right { animation-name: bbFromR; }
+.bb-root:not(.is-in) .bb-ph-crest.left { animation-name: bbToL; }
+.bb-root:not(.is-in) .bb-ph-crest.right { animation-name: bbToR; }
+.bb-ph-vs {
+  width: 120px;
+  text-align: center;
+  font-family: var(--bb-font-display);
+  font-size: 84px;
+  line-height: 1;
+  --bb-dur: 0.62s; --bb-ease: var(--bb-ease-back);
+}
+.bb-ph-vs span {
+  display: inline-block;
+  padding-top: 4px;
+  transform: skewX(var(--bb-slant));
+  background: var(--bb-gold-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.bb-root.is-in .bb-ph-vs { animation-name: bbPop; }
+.bb-root:not(.is-in) .bb-ph-vs { animation-name: bbShrink; }
+
+/* Texto principal: sube desde atrás de una máscara (el padding de la
+   máscara deja lugar a tildes y a la sombra). */
+.bb-ph-title-mask {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 512px;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+  padding: 26px 0 40px;
+}
+.bb-ph-title {
+  font-family: var(--bb-font-display);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  padding-left: 0.02em;
+  white-space: nowrap;
+  color: var(--bb-white);
+  text-shadow: 0 10px 28px rgba(0, 0, 0, 0.6);
+  --bb-dur: 0.72s; --bb-ease: var(--bb-ease-out);
+  --bb-dur-out: 0.34s;
+}
+/* Desde/hasta abajo del todo: 100% del texto + el padding inferior de la
+   máscara (40px) + margen, así nada asoma antes de entrar. */
+@keyframes bbPhUp { from { transform: translateY(calc(100% + 60px)); } to { transform: none; } }
+@keyframes bbPhDown { from { transform: none; } to { transform: translateY(calc(100% + 60px)); } }
+.bb-root.is-in .bb-ph-title { animation-name: bbPhUp; }
+.bb-root:not(.is-in) .bb-ph-title { animation-name: bbPhDown; }
+
+.bb-ph-bar {
+  position: absolute;
+  left: 50%;
+  top: 764px;
+  width: 240px;
+  height: 7px;
+  margin-left: -120px;
+  overflow: hidden;
+  background: var(--bb-gold-grad);
+  --bb-dur: 0.55s; --bb-ease: var(--bb-ease-inout);
+}
+.bb-root.is-in .bb-ph-bar { animation-name: bbDrawX; }
+.bb-root:not(.is-in) .bb-ph-bar { animation-name: bbUndrawX; }
+
+.bb-ph-teamline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 802px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 22px;
+  font-family: var(--bb-font-text);
+  font-size: 30px;
+  letter-spacing: 0.2em;
+  padding-left: 0.2em;
+  color: var(--bb-white);
+  white-space: nowrap;
+}
+.bb-ph-teamline span { color: var(--bb-gold); font-size: 24px; }
+.bb-root.is-in .bb-ph-teamline { animation-name: bbRise; }
+.bb-root:not(.is-in) .bb-ph-teamline { animation-name: bbSink; }
+
+.bb-ph-detail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 872px;
+  text-align: center;
+  font-family: var(--bb-font-light);
+  font-size: 28px;
+  letter-spacing: 0.14em;
+  color: var(--bb-text-dim);
+  white-space: nowrap;
+}
+.bb-root.is-in .bb-ph-detail { animation-name: bbRise; }
+.bb-root:not(.is-in) .bb-ph-detail { animation-name: bbSink; }
+
+/* =====================================================================
+   MOSCA PDM (#mod-bbMoscaPdm) — arriba a la derecha (2026-11-06)
+   ---------------------------------------------------------------------
+   Placa chica negra con acento y hilo dorados, anclada a la derecha del
+   área segura. El ciclo PDM ↔ #PARTIDODELMOMENTO lo arma el renderer
+   (keyframes "bbMp<período>-move/-fill" en un <style> de la propia pieza):
+   ".bb-mp-move" = fondo (scaleX desde la derecha), acento e iniciales
+   (translateX); ".bb-mp-fill" = letras de los huecos (opacity + Y). Acá
+   solo el estado PDM de reposo, el armado y la entrada/salida de la pieza.
+   El ajuste de composición escala desde la esquina de la mosca.
+   ===================================================================== */
+#mod-bbMoscaPdm { --bb-exit-hold: 0.42s; }
+#mod-bbMoscaPdm > .content { transform-origin: calc(1920px - var(--bb-safe-x)) var(--bb-safe-y); }
+
+.bb-mp-box {
+  position: absolute;
+  right: var(--bb-safe-x);
+  top: var(--bb-safe-y);
+  height: 50px;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.5));
+  --bb-dur: 0.5s; --bb-ease: var(--bb-ease-out);
+  --bb-dur-out: 0.3s;
+}
+@keyframes bbMpIn { from { opacity: 0; transform: translateX(22px); } to { opacity: 1; transform: none; } }
+@keyframes bbMpOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(16px); } }
+.bb-root.is-in .bb-mp-box { animation-name: bbMpIn; }
+.bb-root:not(.is-in) .bb-mp-box { animation-name: bbMpOut; }
+
+.bb-mp-move { transform: var(--mp-pdm); will-change: transform; }
+.bb-mp-fill { opacity: 0; will-change: transform, opacity; }
+
+.bb-mp-bg {
+  position: absolute;
+  inset: 0;
+  transform-origin: 100% 50%;
+  background:
+    linear-gradient(var(--bb-line), var(--bb-line)) left bottom / 100% var(--bb-hair) no-repeat,
+    linear-gradient(180deg, #17171D 0%, var(--bb-black) 100%);
+}
+.bb-mp-acc {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+}
+.bb-mp-acc-bar {
+  width: 100%;
+  height: 100%;
+  background: var(--bb-gold-grad-v);
+  transform-origin: 50% 100%;
+  --bb-dur: 0.36s; --bb-ease: var(--bb-ease-inout);
+}
+.bb-root.is-in .bb-mp-acc-bar { animation-name: bbDrawY; }
+
+.bb-mp-text {
+  position: absolute;
+  top: 10px;
+  height: 30px;
+  --bb-dur: 0.5s;
+}
+.bb-root.is-in .bb-mp-text { animation-name: bbRise; }
+.bb-mp-g {
+  position: absolute;
+  top: 0;
+  font-family: var(--bb-font-display);
+  font-size: 30px;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  color: var(--bb-white);
+}
+.bb-mp-g.ini,
+.bb-mp-g.hash {
+  background: var(--bb-gold-grad-v);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
 
 /* =====================================================================
    CHARTS (#mod-bbCharts) — PREVIA / ENTRETIEMPO / FINAL
@@ -2102,6 +2487,12 @@ body:has(.bb-fs.is-in) .bb-root:not(.bb-fs) > .content { opacity: 0; transition-
 .bb-ch-col.right { right: 150px; }
 .bb-ch-col.center { left: 50%; width: 500px; margin-left: -250px; }
 .bb-charts.is-previa .bb-ch-col { top: 372px; }
+/* SIN AUTORES (2026-11-06): un solo resumen centrado en el espacio que dejan
+   timeline y columnas, más ancho y con filas más altas. */
+.bb-ch-col.center.is-resumen { top: 352px; width: 760px; margin-left: -380px; justify-content: center; gap: 10px; }
+.bb-ch-col.is-resumen .bb-ch-stat { height: 64px; grid-template-columns: 96px 1fr 96px; }
+.bb-ch-col.is-resumen .bb-ch-stat-v { font-size: 48px; }
+.bb-ch-col.is-resumen .bb-ch-stat-label { font-size: 17px; }
 .bb-ch-sec-title {
   display: flex;
   align-items: center;

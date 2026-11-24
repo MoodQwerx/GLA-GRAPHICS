@@ -24,7 +24,97 @@ export {
   parseFormation, startersCount,
 } from './bb-match.js';
 
+import { elapsedMs, parseClockLimit } from './clock.js';
+
 export const C4N_POINTS = { win: 3, penaltyWin: 2, penaltyLoss: 1, loss: 0 };
+
+// TIEMPO ADICIONAL del MARCADOR (2026-11-10). Vive debajo del reloj principal
+// y NO tiene timer propio en Program: todo sale del modelo del reloj
+// (shared/clock.js) en cada repintado del Marcador.
+//   AUTOMÁTICO (extraAuto !== false): cuando el reloj principal pasa el fin del
+//     tiempo (DURACIÓN DEL TIEMPO) aparece solo y cuenta desde 00:00 con el
+//     MISMO reloj (lo que corre después del límite): pausar / seguir el reloj
+//     principal pausa / sigue el adicional.
+//   (2026-11-14) SIN TOPE: "+N" es solo el aviso de los minutos anunciados; el
+//     reloj del adicional sigue después de N:00 (05:01, 06:24...) hasta que el
+//     operador lo pausa / resetea. capMs queda solo como dato informativo.
+//   MANUAL (extraAuto === false): queda preparado; MOSTRAR (showExtra) lo saca
+//     al aire e INICIAR / PAUSAR / RESET manejan su propio reloj "extraClock"
+//     (misma estructura que "clock").
+// Nunca queda un adicional viejo: solo existe en 1T / 2T y el manual queda
+// atado al período + partido + equipos en que se mostró ("extraFor"); al
+// cambiar cualquiera de esos se apaga solo (el panel además lo limpia).
+export const C4N_DEFAULT_HALF_MS = 20 * 60 * 1000;
+export const C4N_EXTRA_MAX = 15;
+
+export function extraToken(m) {
+  return [m?.period || '', m?.matchId || '', m?.teamA || '', m?.teamB || ''].join('|');
+}
+
+export function extraTimeState(m) {
+  const minutes = Math.max(0, Math.min(C4N_EXTRA_MAX, Math.round(Number(m?.extraMinutes) || 0)));
+  const auto = m?.extraAuto !== false;
+  const capMs = minutes * 60000;
+  const off = { visible: false, auto, minutes, capMs, ms: 0, running: false };
+  if (!minutes || (m?.period !== '1T' && m?.period !== '2T')) return off;
+  if (auto) {
+    const limitMs = parseClockLimit(m?.clockEndText, C4N_DEFAULT_HALF_MS) || C4N_DEFAULT_HALF_MS;
+    const over = elapsedMs(m?.clock) - limitMs;
+    if (over < 0) return off;
+    return { visible: true, auto, minutes, capMs, ms: over, running: m?.clock?.running === true };
+  }
+  if (m?.showExtra !== true || m?.extraFor !== extraToken(m)) return off;
+  const ms = elapsedMs(m?.extraClock);
+  return { visible: true, auto, minutes, capMs, ms, running: m?.extraClock?.running === true };
+}
+
+// PENAL SHOOTOUT (2026-11-15): FASE de la pieza. Escrita a mano en el panel
+// (data.fase) o, si está vacía, la del partido del MARCADOR en el fixture
+// efectivo (SEMIFINAL 1, TERCER PUESTO, GRAN FINAL...); sin partido del
+// fixture, la etapa del MARCADOR. La usan Program (renderer) y Master (panel).
+export function penalShootoutFase(data, allData) {
+  const manual = String(data?.fase || '').trim().toUpperCase();
+  if (manual) return manual;
+  const m = allData?.c4nMarcador || {};
+  const fx = m.fuentePartido === 'manual' ? null : (allData?.c4nDatos?.fixture || []).find((x) => x.id === m.matchId) || null;
+  return String(fx?.stageLabel || fx?.label || m.stageLabel || '').trim().toUpperCase();
+}
+
+// TANDA DE PENALES en el Marcador (PNG con 5 círculos por lado): estado de
+// cada círculo (neutro / convertido / errado), ventana (tanda regular en los
+// 5 círculos; en muerte súbita las rondas nuevas vuelven a empezar en el
+// primer círculo, de a 5) y ganador cuando la tanda ya está definida
+// (matemáticamente en la tanda regular; en muerte súbita al completar una
+// ronda con distinto resultado). "tally" = penaltyTally().
+export const C4N_PEN_SLOTS = 5;
+export function shootoutView(tally, slots = C4N_PEN_SLOTS) {
+  const L = tally?.local?.kicks || [];
+  const V = tally?.visitante?.kicks || [];
+  const reg = tally?.regulation || 5;
+  const n = Math.max(L.length, V.length);
+  const offset = n <= reg ? 0 : reg + Math.floor((n - reg - 1) / slots) * slots;
+  const cell = (k) => (!k ? 'neutro' : k.scored ? 'convertido' : 'errado');
+  const row = (list) => Array.from({ length: slots }, (_, i) => cell(list[offset + i]));
+  const ls = tally?.local?.scored || 0;
+  const vs = tally?.visitante?.scored || 0;
+  let winner = null;
+  if (L.length <= reg && V.length <= reg) {
+    if (ls > vs + (reg - V.length)) winner = 'local';
+    else if (vs > ls + (reg - L.length)) winner = 'visitante';
+  } else if (L.length === V.length && ls !== vs) {
+    winner = ls > vs ? 'local' : 'visitante';
+  }
+  return {
+    offset,
+    local: row(L),
+    visitante: row(V),
+    score: { local: ls, visitante: vs },
+    winner,
+    decided: Boolean(winner),
+    suddenDeath: Math.min(L.length, V.length) >= reg || (n > reg),
+    total: L.length + V.length,
+  };
+}
 
 export const C4N_STAGES = {
   group: 'FASE DE GRUPOS',
@@ -34,6 +124,126 @@ export const C4N_STAGES = {
   final: 'GRAN FINAL',
   friendly: 'AMISTOSO INTERNACIONAL',
 };
+
+// INCIDENCIAS WEB -> MODELO COMÚN (2026-11-11). El snapshot del sync en vivo
+// (server/c4n-live.js: minuto como lo publica la web, "12" / "20+3" / "MM:SS")
+// pasa al MISMO formato de los eventos de SOFTX (período, minuto dentro del
+// período, clockMs), así ENTRETIEMPO / FINAL usan su renderer de siempre.
+// La web NO publica el período: se deduce con la duración REAL de cada tiempo
+// configurada en SOFTX (FIN DEL CONTADOR del MARCADOR), nunca 45'. Con reloj
+// "MM:SS" se toma continuo (como en gla.futbol, misma plataforma). Un "N+X"
+// cuenta como adicional del tiempo de N. Sin minuto: noClock (va en las
+// columnas de FINAL, no en ENTRETIEMPO ni en la timeline).
+export function webPlateEvents(snapshot, limitMs) {
+  const halfMs = Number(limitMs) > 0 ? Number(limitMs) : 20 * 60000;
+  const halfMin = halfMs / 60000;
+  const list = Array.isArray(snapshot?.events) ? snapshot.events : [];
+  const out = list.map((e, i) => {
+    const m = e.minute;
+    let period = '1T';
+    let clockMs = 0;
+    let noClock = false;
+    if (!m || !Number.isFinite(m.base)) {
+      period = 'FIN';
+      noClock = true;
+    } else if (m.sec !== null && m.sec !== undefined) {
+      const total = (m.base * 60 + m.sec + (m.extra || 0) * 60) * 1000;
+      if (total < halfMs) clockMs = total;
+      else { period = '2T'; clockMs = total - halfMs; }
+    } else if (m.base <= halfMin) {
+      clockMs = Math.max(0, (m.base - 1) * 60000 + 30000) + (m.extra || 0) * 60000;
+    } else {
+      period = '2T';
+      clockMs = Math.max(0, (m.base - halfMin - 1) * 60000 + 30000) + (m.extra || 0) * 60000;
+    }
+    return {
+      id: e.id,
+      source: 'web',
+      type: e.type,
+      side: e.side === 'visitante' ? 'visitante' : 'local',
+      period,
+      minute: noClock ? 0 : Math.floor(clockMs / 60000) + 1,
+      clockMs,
+      noClock,
+      minuteText: e.minuteText || '',
+      playerName: e.playerName || '',
+      dorsal: e.dorsal || '',
+      assistName: e.type === 'goal' ? e.assistName || '' : '',
+      ownGoal: e.ownGoal === true,
+      // (2026-11-15) Gol de penal en juego (tipo "penalty" convertido de la web).
+      penalty: e.type === 'goal' && e.penalty === true,
+      playerOutName: e.type === 'substitution' ? e.playerOutName || '' : '',
+      playerOutDorsal: e.type === 'substitution' ? e.playerOutDorsal || '' : '',
+      timestamp: Number.isFinite(e.order) ? e.order : i,
+    };
+  });
+  const rank = { '1T': 0, ET: 1, '2T': 2, FIN: 3 };
+  return out.sort((a, b) => (rank[a.period] - rank[b.period]) || (a.clockMs - b.clockMs) || (a.timestamp - b.timestamp));
+}
+
+// JUGADORES A SEGUIR automático (2026-11-12). DATO = GOLES / ASISTENCIAS / G+A:
+// el mejor de cada selección del partido del MARCADOR (local y visitante) en el
+// ranking efectivo de "c4nDatos" (rankings.goals / assists / contributions:
+// WEB de copa4naciones.com o SOFTX, según ACTUALIZADOR DE DATOS). Empates: el
+// orden que ya trae el ranking (el de la web, o valor + nombre en SOFTX); el
+// filtro lo conserva, así la elección es la misma en cada refresco. La placa
+// tiene un lugar por selección: perTeam = 1. Sin datos de una selección:
+// players vacío (la placa muestra un estado limpio, nunca un número inventado).
+export const C4N_MJ_DATOS = {
+  goals: { key: 'goals', label: 'GOLES' },
+  assists: { key: 'assists', label: 'ASISTENCIAS' },
+  contributions: { key: 'contributions', label: 'G+A' },
+};
+export function mejoresAuto(dato, marcador, rankings, perTeam = 1) {
+  const spec = C4N_MJ_DATOS[dato];
+  if (!spec) return null;
+  const rows = Array.isArray(rankings?.[spec.key]) ? rankings[spec.key] : [];
+  return [marcador?.teamA || '', marcador?.teamB || ''].map((teamId) => ({
+    teamId,
+    label: spec.label,
+    players: rows
+      .filter((r) => r && teamId && r.teamId === teamId && String(r.name || '').trim() && Number(r.value) > 0)
+      .slice(0, perTeam)
+      .map((r) => ({ name: String(r.name).trim(), dorsal: String(r.dorsal || ''), teamId, foto: r.foto || '', statLabel: spec.label, statValue: Number(r.value) || 0, playerId: r.playerId || '' })),
+  }));
+}
+
+// TABLA VS (2026-11-11): el partido que muestra la placa. Lo usan Program
+// (renderer) y Master (panel), así los dos resuelven lo mismo.
+//   FIXTURE  un partido del fixture efectivo ("c4nDatos".fixture, data.matchId):
+//            equipos, escudos, horario, día y fase salen del partido, y
+//            data.ajuste los puede cambiar SOLO EN LA PLACA (vacío = lo del
+//            fixture). Ej.: el partido se atrasó -> horario nuevo en la placa.
+//   MANUAL   todo cargado a mano (data.manual), sin vínculo con el fixture.
+// Ninguno de los dos escribe nunca en el fixture.
+//   lado = { teamId, crestId, name, label }: name = nombre escrito a mano
+//   (vacío = el del catálogo de equipos); crestId = de qué equipo es el escudo
+//   (vacío = el del equipo); label = rótulo del fixture para un cruce sin
+//   equipo definido todavía ("1º", "PERDEDOR SEMIFINAL 1"...).
+export const C4N_TABLA_VS_FIELDS = ['teamA', 'teamB', 'crestA', 'crestB', 'nameA', 'nameB', 'horario', 'dia', 'fase'];
+export function resolveTablaVs(data, fixture) {
+  const manual = data?.fuente === 'manual';
+  const src = (manual ? data?.manual : data?.ajuste) || {};
+  const list = Array.isArray(fixture) ? fixture : [];
+  const match = manual ? null : (list.find((m) => m.id === data?.matchId) || null);
+  const pick = (v, fallback) => (String(v ?? '').trim() ? String(v).trim() : fallback);
+  const side = (k) => {
+    const fxTeam = match ? (k === 'A' ? match.homeTeamId : match.awayTeamId) || '' : '';
+    const fxLabel = match ? (k === 'A' ? match.homeLabel : match.awayLabel) || '' : '';
+    const teamId = pick(src[`team${k}`], fxTeam);
+    return { teamId, crestId: pick(src[`crest${k}`], teamId), name: pick(src[`name${k}`], ''), label: teamId ? '' : fxLabel };
+  };
+  return {
+    source: manual ? 'manual' : 'fixture',
+    match,
+    missing: !manual && !match,
+    a: side('A'),
+    b: side('B'),
+    horario: pick(src.horario, match?.time || ''),
+    dia: pick(src.dia, match?.day || ''),
+    fase: pick(src.fase, match ? (match.stageLabel || C4N_STAGES[match.stage] || match.label || '') : ''),
+  };
+}
 
 // FÚTBOL 11 (la COPA se juega en cancha de 11): arquero + 10 de campo. Los
 // esquemas habituales; la cantidad de líneas es libre (3, 4 o 5), así que

@@ -1,0 +1,10 @@
+{
+  "fixtureSource": "web",
+  "tablaSource": "calculada",
+  "statsSource": "web",
+  "plantelSource": {
+    "argentina": "web"
+  },
+  "visualJugadores": "logo",
+  "liveMatchId": ""
+}

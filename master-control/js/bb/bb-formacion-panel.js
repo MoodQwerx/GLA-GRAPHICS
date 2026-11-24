@@ -119,6 +119,13 @@ export function renderBbFormacionPanel(container, ctx) {
     const titulo = el('input', { type: 'text', maxLength: 30, value: data.titulo || 'FORMACIÓN' });
     titulo.addEventListener('input', () => { data.titulo = titulo.value; ctx.autosave('bbFormacion'); });
     const subsToggle = el('input', { type: 'checkbox', checked: data.mostrarSuplentes !== false, onchange: (e) => { data.mostrarSuplentes = e.target.checked; ctx.autosave('bbFormacion'); } });
+    // VISUAL (2026-11-06): FOTO (camiseta si el jugador no tiene foto) o
+    // CAMISETA para todos. El número sale de PLANTELES.
+    const visual = el('select', { onchange: (e) => { data.visual = e.target.value; ctx.autosave('bbFormacion'); } }, [
+      el('option', { value: 'foto', text: 'FOTO (sin foto: camiseta)' }),
+      el('option', { value: 'camiseta', text: 'CAMISETA' }),
+    ]);
+    visual.value = data.visual === 'camiseta' ? 'camiseta' : 'foto';
 
     root.append(
       el('p', { class: 'bb-desc', text: 'Formación 6v6 del equipo elegido (los equipos salen del MARCADOR). Jugadores, dorsales y fotos vienen de PLANTELES.' }),
@@ -127,6 +134,7 @@ export function renderBbFormacionPanel(container, ctx) {
         el('div', { class: 'bb-grid2' }, [
           el('label', { class: 'bb-field' }, [el('span', { text: 'TÍTULO' }), titulo]),
           el('label', { class: 'bb-field check' }, [subsToggle, el('span', { text: 'MOSTRAR SUPLENTES' })]),
+          el('label', { class: 'bb-field' }, [el('span', { text: 'VISUAL DE LOS JUGADORES' }), visual]),
         ]),
       ]),
     );

@@ -1,0 +1,13 @@
+{
+  "fixtureSource": "manual",
+  "tablaSource": "calculada",
+  "statsSource": "softx",
+  "plantelSource": {
+    "argentina": "manual",
+    "brasil": "manual",
+    "chile": "manual",
+    "uruguay": "manual"
+  },
+  "visualJugadores": "foto",
+  "liveMatchId": "67726f75702d310000000000"
+}

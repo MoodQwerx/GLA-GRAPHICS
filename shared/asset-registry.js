@@ -164,7 +164,10 @@ const c4nEntry = (r, slot) => ({
   alpha: r.alpha,
   required: r.required,
 });
-const C4N_ASSETS = Object.fromEntries(C4N_FONDOS.map((f) => [f.moduleId, [c4nEntry(f, 'fondo')]]));
+// Un módulo puede tener más de un recurso (MARCADOR: fondo + TIEMPO ADICIONAL
+// + PENALES; MEJORES JUGADORES: franja + placa): uno por "slot".
+const C4N_ASSETS = {};
+for (const f of C4N_FONDOS) (C4N_ASSETS[f.moduleId] ||= []).push(c4nEntry(f, f.slot || 'fondo'));
 for (const moduleId of C4N_EVENT_LOGO.modules) C4N_ASSETS[moduleId].push(c4nEntry(C4N_EVENT_LOGO, 'logo'));
 
 const REGISTRY = {

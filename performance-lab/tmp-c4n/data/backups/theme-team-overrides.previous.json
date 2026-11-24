@@ -1,0 +1,16 @@
+{
+  "argentinaStreamers": {
+    "actores-fc-png": {
+      "name": "ACTORES FC",
+      "abbr": "ACT",
+      "visible": true,
+      "confirmed": true
+    },
+    "actrices": {
+      "name": "ACTRICES FC",
+      "abbr": "ACT",
+      "visible": true,
+      "confirmed": true
+    }
+  }
+}

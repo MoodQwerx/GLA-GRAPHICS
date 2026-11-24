@@ -3,12 +3,15 @@
 // diagonal, escudos que entran desde afuera, insignia VS, nombres revelados
 // desde el centro hacia afuera y textos de evento/detalle. Equipos = los del
 // Marcador (fuente del partido).
+//
+// 2026-11-06: sin rótulos LOCAL / VISITANTE (no comunica localía ni
+// favoritismo); el nombre ocupa ese lugar (ver #mod-bbVs .bb-vs-name).
 import { team, anim, crestHtml, upper, fitFontPx, markStatic, escapeHtml } from './bb-common.js';
 
 const NAME_MAX_WIDTH = 700;
 const NAME_MAX_PX = 112;
 
-function sideHtml(cls, t, label) {
+function sideHtml(cls, t) {
   const lag = cls === 'left' ? 0 : 0.04; // el visitante llega un pelo después
   const name = upper(t.name || t.abbr);
   const px = fitFontPx(name, { maxPx: NAME_MAX_PX, minPx: 52, maxWidth: NAME_MAX_WIDTH, trackEm: 0.015 });
@@ -16,7 +19,6 @@ function sideHtml(cls, t, label) {
     <div class="bb-vs-side ${cls}">
       <div class="bb-vs-floor bb-a" ${anim(0.55 + lag, 0)}></div>
       ${crestHtml(t, 'bb-vs-crest bb-a', anim(0.42 + lag, 0.06))}
-      <div class="bb-vs-label bb-a" ${anim(0.78 + lag, 0)}>${label}</div>
       <div class="bb-vs-name bb-a" ${anim(0.82 + lag, 0.02, `font-size:${px}px`)}>${escapeHtml(name)}</div>
       <div class="bb-vs-bar bb-a" ${anim(0.98 + lag, 0)}></div>
     </div>`;
@@ -44,8 +46,8 @@ export default function renderBbVs(contentEl, data, justTaken, _onEnded, allData
         <div class="bb-vs-seam bb-a" ${anim(0.18, 0.2)}></div>
         <div class="bb-vs-seam thin bb-a" ${anim(0.26, 0.18)}></div>
       </div>
-      ${sideHtml('left', a, 'LOCAL')}
-      ${sideHtml('right', b, 'VISITANTE')}
+      ${sideHtml('left', a)}
+      ${sideHtml('right', b)}
       <div class="bb-vs-badge bb-a" ${anim(0.55, 0.12)}>
         <div class="bb-vs-badge-plate"><div class="bb-glint" style="--d:1.1s"></div></div>
         <div class="bb-vs-badge-text">VS</div>

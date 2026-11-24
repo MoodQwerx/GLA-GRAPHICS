@@ -52,19 +52,22 @@ import bbCambio from './bbCambio.js';
 import bbVar from './bbVar.js';
 import bbVsResultado from './bbVsResultado.js';
 import bbCharts from './bbCharts.js';
+import { renderBbYaComenzamos as bbYaComenzamos, renderBbGraciasPorVer as bbGraciasPorVer } from './bbPlacas.js';
+import bbMoscaPdm from './bbMosca.js';
 import { renderBbZocaloLargo as bbZocaloLargo, renderBbZocaloCorto as bbZocaloCorto, renderBbZocaloCortoDoble as bbZocaloCortoDoble } from './bbZocalos.js';
 import c4nMarcador from './c4nMarcador.js';
-import { renderC4nTarjeta as c4nTarjeta, renderC4nCambio as c4nCambio } from './c4nEventos.js';
+import { renderC4nTarjeta as c4nTarjeta, renderC4nCambio as c4nCambio, renderC4nPenalShootout as c4nPenalShootout } from './c4nEventos.js';
 import {
   renderC4nZocaloTexto as c4nZocaloTexto, renderC4nZocaloTextoDoble as c4nZocaloTextoDoble,
   renderC4nZocaloCorto as c4nZocaloCorto, renderC4nZocaloCortoDoble as c4nZocaloCortoDoble,
   renderC4nZocaloCompuesto as c4nZocaloCompuesto, renderC4nMoscaLogo as c4nMoscaLogo, renderC4nMoscaTexto as c4nMoscaTexto,
-  renderC4nRotativoSponsors as c4nRotativoSponsors,
-  renderC4nPromoWeb as c4nPromoWeb,
+  renderC4nRotativoSponsors as c4nRotativoSponsors, renderC4nMosca as c4nMosca,
 } from './c4nTextos.js';
+import { renderC4nVar as c4nVar } from './c4nVar.js';
+import { renderC4nSponsors as c4nSponsors } from './c4nSponsors.js';
 import {
   renderC4nGoleadores as c4nGoleadores, renderC4nAsistencias as c4nAsistencias, renderC4nGA as c4nGA,
-  renderC4nPosiciones as c4nPosiciones, renderC4nMejoresJugadores as c4nMejoresJugadores,
+  renderC4nPosiciones as c4nPosiciones, renderC4nMejoresJugadores as c4nMejoresJugadores, renderC4nTablaVs as c4nTablaVs, renderC4nPromoWeb as c4nPromoWeb, renderC4nTablaFixture as c4nTablaFixture,
 } from './c4nTablas.js';
 import { renderC4nVsPrepartido as c4nVsPrepartido, renderC4nVsResultado as c4nVsResultado, renderC4nFormacion as c4nFormacion } from './c4nPlacas.js';
 import { renderC4nFixture as c4nFixture } from './c4nFixture.js';
@@ -124,25 +127,34 @@ export const renderers = {
   bbVar,
   bbVsResultado,
   bbCharts,
+  bbYaComenzamos,
+  bbGraciasPorVer,
+  bbMoscaPdm,
   bbZocaloLargo,
   bbZocaloCorto,
   bbZocaloCortoDoble,
   c4nMarcador,
   c4nTarjeta,
+  c4nPenalShootout,
   c4nCambio,
   c4nZocaloTexto,
   c4nZocaloTextoDoble,
   c4nZocaloCorto,
   c4nZocaloCortoDoble,
   c4nZocaloCompuesto,
+  c4nSponsors,
   c4nMoscaLogo,
   c4nMoscaTexto,
   c4nRotativoSponsors,
+  c4nMosca,
+  c4nVar,
   c4nGoleadores,
   c4nAsistencias,
   c4nGA,
   c4nPosiciones,
+  c4nTablaVs,
   c4nPromoWeb,
+  c4nTablaFixture,
   c4nMejoresJugadores,
   c4nFixture,
   c4nVsPrepartido,

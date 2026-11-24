@@ -36,13 +36,18 @@ import { renderBbVarPanel } from './bb/bb-var-panel.js';
 import { renderBbPenalesPanel } from './bb/bb-penales-panel.js';
 import { renderBbChartsPanel } from './bb/bb-charts-panel.js';
 import { renderC4nMarcadorPanel } from './c4n/c4n-marcador-panel.js';
-import { renderC4nTarjetasPanel, renderC4nCambiosPanel } from './c4n/c4n-eventos-panels.js';
+import { renderC4nTarjetasPanel, renderC4nCambiosPanel, renderC4nPenalShootoutPanel } from './c4n/c4n-eventos-panels.js';
 import { renderC4nFormacionPanel } from './c4n/c4n-formacion-panel.js';
 import { renderC4nPlantelesPanel } from './c4n/c4n-planteles-panel.js';
 import { renderC4nDatosPanel } from './c4n/c4n-datos-panel.js';
-import { renderC4nDataInfo, renderC4nMejoresPanel, renderC4nSponsorsPanel } from './c4n/c4n-misc-panels.js';
+import { renderC4nDataInfo, renderC4nMejoresPanel, renderC4nSponsorsPanel, renderC4nCompuestoSponsorsPanel } from './c4n/c4n-misc-panels.js';
 import { renderC4nLayerAdjust } from './c4n/c4n-layer-adjust.js';
 import { renderC4nRankingPanel, renderC4nPosicionesPanel, renderC4nPreviaPanel, renderC4nPartidoManualPanel, renderC4nFixturePanel } from './c4n/c4n-stats-panels.js';
+import { renderC4nTablaVsPanel } from './c4n/c4n-tablavs-panel.js';
+import { renderC4nTablaFixturePanel } from './c4n/c4n-tablafixture-panel.js';
+import { setC4nLiveStatus } from './c4n/c4n-live-panel.js';
+import { renderC4nVarPanel } from './c4n/c4n-var-panel.js';
+import { renderC4nSponsorsJugadorPanel } from './c4n/c4n-sponsors-jugador-panel.js';
 import { createPanelLifecycle, setCurrentPanelLifecycle } from './panel-lifecycle.js';
 import { renderJugadoresPanel } from './jugadores-panel.js';
 import { renderZocaloEscudosPanel } from './zocalo-escudos-panel.js';
@@ -198,7 +203,7 @@ loadGlaTorneoEdicion();
 // Orden de categorias en el panel (broadcast: lo mas usado en vivo primero).
 // Orden pedido explicitamente: Mosca arriba de todo, Marcador justo
 // debajo, despues el resto sin cambios (2026-08-15).
-const CATEGORY_ORDER = ['Partido', 'Mosca', 'Marcador', 'Eventos', 'VAR / Replay', 'Zocalos', 'Placas', 'Charts', 'Grupos', 'Tablas', 'Brackets', 'General'];
+const CATEGORY_ORDER = ['Partido', 'Mosca', 'Marcador', 'Eventos', 'VAR / Replay', 'Zocalos', 'Sponsors', 'Placas', 'Charts', 'Grupos', 'Tablas', 'Brackets', 'General'];
 
 // "MARCADOR unificado" (2026-08-15, pedido explicito del usuario): en vez
 // de varias tabs sueltas en la navegacion (Marcador principal, Tiempo
@@ -256,7 +261,10 @@ function isArgentinaLiveModule(moduleId) {
 // persistidos, oculto de toda navegacion (antes solo se ocultaba para GLA,
 // ver GLA_HIDDEN_MODULES mas abajo -- ahora se oculta siempre, para
 // cualquier theme).
-const HIDDEN_FROM_NAV_IDS = new Set(['gol', 'zocaloFinal', 'zocaloFinalDiv', 'zocaloCompuestoLogo', 'bbGol']);
+// C4N (2026-11-11): ZÓCALO TEXTO DOBLE fuera del panel (no operativo); MOSCA
+// LOGO y MOSCA TEXTO quedan reemplazadas por MOSCA C4N (c4nMosca). Siguen
+// definidas (datos guardados y funciones compartidas intactos), sin pestaña.
+const HIDDEN_FROM_NAV_IDS = new Set(['gol', 'zocaloFinal', 'zocaloFinalDiv', 'zocaloCompuestoLogo', 'bbGol', 'c4nZocaloTextoDoble', 'c4nMoscaLogo', 'c4nMoscaTexto']);
 
 // BAULETI vs BALANZA (SOFTX [3], 2026-10-30): sus módulos "bb*" solo existen
 // en su navegación y el resto de los módulos no aparece en la suya. GOL no
@@ -274,7 +282,7 @@ const themeSystemPrefix = () => (isBbTheme() ? 'bb' : isC4nTheme() ? 'c4n' : '')
 // C4N: pestaña de datos (no va al aire) y piezas en vivo / manejadas por su panel.
 const C4N_DATA_IDS = new Set(['c4nDatos']);
 const C4N_NO_UPDATE_IDS = new Set(['c4nMarcador', 'c4nTarjeta', 'c4nCambio']);
-const C4N_MATCH_READERS = new Set(['c4nVsPrepartido', 'c4nVsResultado', 'c4nFormacion', 'c4nStatsPrevia', 'c4nStatsEntretiempo', 'c4nStatsFinal', 'c4nZocaloCompuesto']);
+const C4N_MATCH_READERS = new Set(['c4nVsPrepartido', 'c4nVsResultado', 'c4nFormacion', 'c4nStatsPrevia', 'c4nStatsEntretiempo', 'c4nStatsFinal', 'c4nZocaloCompuesto', 'c4nPenalShootout']);
 // Ganchos del panel BxB visible (estado de la placa de tarjeta, etc.).
 let bbPanelHooks = null;
 // Sin ACTUALIZAR: en vivo (Marcador, Penales) o manejados por su panel
@@ -282,26 +290,26 @@ let bbPanelHooks = null;
 const BB_NO_UPDATE_IDS = new Set(['bbMarcador', 'bbPenales', 'bbTarjeta', 'bbCambio']);
 // Piezas que leen el partido (matchState): Preview las repinta cuando cambia
 // el Marcador.
-const BB_MATCH_READERS = new Set(['bbVs', 'bbFormacion', 'bbVsResultado', 'bbCharts', 'bbPenales']);
+const BB_MATCH_READERS = new Set(['bbVs', 'bbFormacion', 'bbVsResultado', 'bbCharts', 'bbPenales', 'bbYaComenzamos', 'bbGraciasPorVer']);
 
 // GRUPOS EXCLUSIVOS BxB (FASE 2): piezas que ocupan la misma zona nunca
 // quedan una encima de otra. TAKE de una saca a la que esté al aire de su
 // grupo, espera su salida (la misma animación de siempre) y recién ahí
-// entra la nueva. Fuera de los grupos (conviven): GOL (debajo del Marcador)
-// y VAR (arriba a la derecha).
+// entra la nueva. Fuera de los grupos (conviven): GOL (debajo del Marcador).
+// VAR (2026-11-06) pasó abajo a la izquierda: comparte zona y grupo con
+// Tarjeta, Cambio y Zócalos.
 const BB_EXCLUSIVE_GROUPS = [
-  ['bbVs', 'bbFormacion', 'bbVsResultado', 'bbCharts'], // pantalla completa
-  ['bbTarjeta', 'bbCambio', 'bbZocaloLargo', 'bbZocaloCorto', 'bbZocaloCortoDoble'], // abajo a la izquierda
+  ['bbVs', 'bbFormacion', 'bbVsResultado', 'bbCharts', 'bbYaComenzamos', 'bbGraciasPorVer'], // pantalla completa
+  ['bbTarjeta', 'bbCambio', 'bbVar', 'bbZocaloLargo', 'bbZocaloCorto', 'bbZocaloCortoDoble'], // abajo a la izquierda
   ['bbMarcador', 'bbPenales'], // arriba a la izquierda
 ];
 // COPA 4 NACIONES: zona L (como en GLA: TAKE de una saca a la anterior; el
 // Preview nunca dispara la exclusión), pantalla completa, zona inferior y
 // moscas. Marcador y rotativo de sponsors conviven con todo.
 const C4N_EXCLUSIVE_GROUPS = [
-  ['c4nGoleadores', 'c4nAsistencias', 'c4nGA', 'c4nPosiciones', 'c4nPromoWeb'], // zona L
+  ['c4nGoleadores', 'c4nAsistencias', 'c4nGA', 'c4nPosiciones', 'c4nTablaVs', 'c4nTablaFixture', 'c4nPromoWeb'], // zona L (TABLA_L)
   ['c4nFixture', 'c4nVsPrepartido', 'c4nVsResultado', 'c4nFormacion', 'c4nStatsPrevia', 'c4nStatsEntretiempo', 'c4nStatsFinal'], // pantalla completa
-  ['c4nTarjeta', 'c4nCambio', 'c4nZocaloTexto', 'c4nZocaloTextoDoble', 'c4nZocaloCorto', 'c4nZocaloCortoDoble', 'c4nZocaloCompuesto', 'c4nMejoresJugadores'], // zona inferior
-  ['c4nMoscaLogo', 'c4nMoscaTexto'], // mosca
+  ['c4nTarjeta', 'c4nCambio', 'c4nPenalShootout', 'c4nVar', 'c4nZocaloTexto', 'c4nZocaloCorto', 'c4nZocaloCortoDoble', 'c4nZocaloCompuesto', 'c4nMejoresJugadores', 'c4nSponsors'], // zona inferior
 ];
 const BB_SWAP_WAIT_MS = 750;
 let bbSwapTimer = null;
@@ -381,6 +389,72 @@ const updateBtn = document.getElementById('btn-update');
 const outBtn = document.getElementById('btn-out');
 const previewBtn = document.getElementById('btn-preview');
 const stopAllBtn = document.getElementById('btn-stop-all');
+// REINICIAR TODO (2026-11-14, solo COPA 4 NACIONES): reset OPERATIVO con
+// confirmación (servidor: POST /api/c4n/reiniciar-todo). Cada Master conectado
+// recibe "C4N_RESET" con el estado limpio y reemplaza sus borradores.
+const resetAllBtn = document.getElementById('btn-reset-all');
+let c4nResetModal = null;
+function openC4nResetModal() {
+  if (!c4nResetModal) {
+    c4nResetModal = document.createElement('div');
+    c4nResetModal.className = 'c4n-reset-modal';
+    c4nResetModal.innerHTML = `<div class="c4n-reset-box" role="dialog" aria-modal="true" aria-labelledby="c4n-reset-title">
+        <h2 id="c4n-reset-title">¿REINICIAR TODO EL ESTADO OPERATIVO?</h2>
+        <p>Esto eliminará resultados e incidencias manuales de SOFTX y dejará el sistema listo para comenzar.</p>
+        <ul>
+          <li>MARCADOR a 0 - 0: reloj, período, tiempo adicional, penales e incidencias (goles, tarjetas, cambios, VAR) limpios.</li>
+          <li>FIXTURE: los partidos sin resultado OFICIAL de la web vuelven a VS.</li>
+          <li>Todo fuera del aire y Preview vacío.</li>
+        </ul>
+        <p class="c4n-reset-keep">No se tocan equipos, planteles, fotos, fixture, datos WEB, configuración, ajustes ni PNG.</p>
+        <div class="c4n-reset-result" hidden></div>
+        <div class="c4n-reset-actions">
+          <button type="button" class="c4n-reset-cancel" data-act="cancel">CANCELAR</button>
+          <button type="button" class="c4n-reset-confirm" data-act="confirm">REINICIAR TODO</button>
+        </div>
+      </div>`;
+    c4nResetModal.addEventListener('click', (e) => {
+      const act = e.target.closest('[data-act]')?.dataset.act;
+      if (e.target === c4nResetModal || act === 'cancel' || act === 'close') c4nResetModal.hidden = true;
+      else if (act === 'confirm') runC4nReset();
+    });
+    document.body.appendChild(c4nResetModal);
+  }
+  const confirmBtn = c4nResetModal.querySelector('[data-act]:not([data-act="cancel"])');
+  confirmBtn.dataset.act = 'confirm';
+  confirmBtn.textContent = 'REINICIAR TODO';
+  confirmBtn.disabled = false;
+  c4nResetModal.querySelector('.c4n-reset-cancel').hidden = false;
+  const result = c4nResetModal.querySelector('.c4n-reset-result');
+  result.hidden = true;
+  result.textContent = '';
+  c4nResetModal.hidden = false;
+  c4nResetModal.querySelector('.c4n-reset-cancel').focus();
+}
+async function runC4nReset() {
+  const confirmBtn = c4nResetModal.querySelector('[data-act="confirm"]');
+  const result = c4nResetModal.querySelector('.c4n-reset-result');
+  confirmBtn.disabled = true;
+  confirmBtn.textContent = 'REINICIANDO…';
+  try {
+    const res = await fetch('/api/c4n/reiniciar-todo', { method: 'POST' });
+    const r = await res.json();
+    if (!res.ok || !r.ok) throw new Error(r.error || `HTTP ${res.status}`);
+    result.className = 'c4n-reset-result ok';
+    result.textContent = `SISTEMA REINICIADO. Resultados SOFTX borrados: ${r.resultadosSoftx + r.partidosManual}. Fuera del aire: ${r.fueraDelAire.length ? r.fueraDelAire.map((id) => MODULES[id]?.label || id).join(', ') : 'nada estaba al aire'}. Resultados oficiales WEB: intactos.`;
+    c4nResetModal.querySelector('.c4n-reset-cancel').hidden = true;
+    confirmBtn.dataset.act = 'close';
+    confirmBtn.textContent = 'CERRAR';
+    confirmBtn.disabled = false;
+  } catch (err) {
+    result.className = 'c4n-reset-result error';
+    result.textContent = `NO SE PUDO REINICIAR: ${err.message}`;
+    confirmBtn.textContent = 'REINTENTAR';
+    confirmBtn.disabled = false;
+  }
+  result.hidden = false;
+}
+resetAllBtn?.addEventListener('click', openC4nResetModal);
 
 // Auto-guardado: cada edicion de campo (onDirty, ver field-editors.js)
 // programa un UPDATE al servidor con un debounce corto, para que todo lo
@@ -403,10 +477,112 @@ const stopAllBtn = document.getElementById('btn-stop-all');
 // "onDirty" en renderModuleAdjustAccordion), asi que un ajuste en vivo se
 // reenvia a Preview sin agregar un hook por modulo ni por control.
 let previewedModuleId = null;
+
+// PREVIEW MULTICAPA (2026-11-12, COPA 4 NACIONES): Preview es una composición
+// de varias piezas, como Program. PREVIEW AGREGA la pieza activa (si comparte
+// grupo exclusivo con otra -- C4N_EXCLUSIVE_GROUPS, los mismos de Program --,
+// la reemplaza); SACAR DE PREVIEW / la ✕ de cada pieza la saca sola; LIMPIAR
+// PREVIEW saca todas. Se manda la composición entera (PREVIEW_STACK); el
+// servidor solo la retransmite. Nunca toca Program ni el estado de los módulos.
+// GLA, Argentina Streamers y BxB siguen con el Preview de una pieza de siempre.
+const c4nPreviewStack = [];
+let c4nPreviewBar = null;
+let c4nPreviewBarSig = '';
+// Identifica los mensajes propios (el servidor los retransmite a todos).
+const C4N_PREVIEW_CLIENT = Math.random().toString(36).slice(2);
+function sendC4nPreviewStack(replayId = null) {
+  const items = Object.fromEntries(c4nPreviewStack.map((id) => [id, draft[id]]));
+  ws.send({ type: 'PREVIEW_STACK', order: c4nPreviewStack.slice(), items, allData: draft, replay: replayId, from: C4N_PREVIEW_CLIENT });
+  renderC4nPreviewBar();
+}
+function c4nPreviewAdd(id) {
+  if (!id || !MODULES[id] || C4N_DATA_IDS.has(id)) return;
+  const group = C4N_EXCLUSIVE_GROUPS.find((g) => g.includes(id)) || null;
+  for (let i = c4nPreviewStack.length - 1; i >= 0; i--) {
+    const other = c4nPreviewStack[i];
+    if (other !== id && group?.includes(other)) c4nPreviewStack.splice(i, 1);
+  }
+  if (!c4nPreviewStack.includes(id)) c4nPreviewStack.push(id);
+  sendC4nPreviewStack(id);
+}
+function c4nPreviewRemove(id) {
+  const i = c4nPreviewStack.indexOf(id);
+  if (i < 0) return;
+  c4nPreviewStack.splice(i, 1);
+  sendC4nPreviewStack();
+}
+function c4nPreviewClear() {
+  if (!c4nPreviewStack.length) return;
+  c4nPreviewStack.length = 0;
+  sendC4nPreviewStack();
+}
+function renderC4nPreviewBar() {
+  if (!isC4nTheme()) {
+    if (c4nPreviewBar) c4nPreviewBar.hidden = true;
+    const b = document.getElementById('btn-preview-out');
+    if (b) b.hidden = true;
+    return;
+  }
+  const sig = JSON.stringify([c4nPreviewStack, activeId]);
+  if (c4nPreviewBar && sig === c4nPreviewBarSig) return;
+  c4nPreviewBarSig = sig;
+  if (!c4nPreviewBar) {
+    const frame = document.querySelector('.preview-frame');
+    if (!frame) return;
+    c4nPreviewBar = document.createElement('div');
+    c4nPreviewBar.className = 'c4n-prev-bar';
+    frame.after(c4nPreviewBar);
+    const outBtnEl = document.createElement('button');
+    outBtnEl.type = 'button';
+    outBtnEl.id = 'btn-preview-out';
+    outBtnEl.className = 'btn btn-preview';
+    outBtnEl.textContent = 'SACAR DE PREVIEW';
+    outBtnEl.addEventListener('click', () => c4nPreviewRemove(activeId));
+    previewBtn.after(outBtnEl);
+  }
+  c4nPreviewBar.hidden = false;
+  const outBtnEl = document.getElementById('btn-preview-out');
+  if (outBtnEl) {
+    outBtnEl.hidden = false;
+    outBtnEl.disabled = !c4nPreviewStack.includes(activeId);
+  }
+  c4nPreviewBar.innerHTML = '';
+  const title = document.createElement('span');
+  title.className = 'c4n-prev-title';
+  title.textContent = c4nPreviewStack.length ? 'EN PREVIEW:' : 'PREVIEW VACÍO';
+  c4nPreviewBar.append(title);
+  for (const id of c4nPreviewStack) {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'c4n-prev-chip';
+    chip.dataset.id = id;
+    chip.title = 'Sacar solo esta pieza de Preview';
+    chip.textContent = `${MODULES[id]?.label || id} ✕`;
+    chip.addEventListener('click', () => c4nPreviewRemove(id));
+    c4nPreviewBar.append(chip);
+  }
+  const clear = document.createElement('button');
+  clear.type = 'button';
+  clear.className = 'c4n-prev-clear';
+  clear.textContent = 'LIMPIAR PREVIEW';
+  clear.disabled = !c4nPreviewStack.length;
+  clear.addEventListener('click', c4nPreviewClear);
+  c4nPreviewBar.append(clear);
+}
+
 function sendPreviewSnapshot(moduleId) {
+  // C4N: solo se reenvía la composición si la pieza está en Preview (nunca la agrega).
+  if (isC4nTheme()) {
+    if (c4nPreviewStack.includes(moduleId)) sendC4nPreviewStack();
+    return;
+  }
   ws.send({ type: 'PREVIEW_MODULE', moduleId, data: draft[moduleId], allData: draft });
 }
 function sendPreviewUpdateIfActive(moduleId) {
+  if (isC4nTheme()) {
+    if (c4nPreviewStack.includes(moduleId)) sendC4nPreviewStack();
+    return;
+  }
   if (moduleId === previewedModuleId) sendPreviewSnapshot(moduleId);
   // ZÓCALO VS (2026-10-09, solo Argentina Streamers): toma equipos/goles en
   // vivo del Marcador -- si es lo que muestra Preview, un cambio del
@@ -1368,13 +1544,14 @@ function bbPanelContext() {
       sendPreviewUpdateIfActive(id);
       // Las piezas que leen el partido (matchState) siguen al Marcador en Preview.
       if (id === 'bbMarcador' && BB_MATCH_READERS.has(previewedModuleId)) sendPreviewSnapshot(previewedModuleId);
-      if (id === 'c4nMarcador' && C4N_MATCH_READERS.has(previewedModuleId)) sendPreviewSnapshot(previewedModuleId);
+      if (id === 'c4nMarcador' && c4nPreviewStack.some((x) => x === 'c4nMarcador' || C4N_MATCH_READERS.has(x))) sendC4nPreviewStack();
     },
     take: (id) => bbTake(id, () => ws.send({ type: WS_MSG.TAKE, moduleId: id, data: draft[id] })),
     out: (id) => ws.send({ type: WS_MSG.OUT, moduleId: id }),
     preview(id) {
       previewedModuleId = id;
-      sendPreviewSnapshot(id);
+      if (isC4nTheme()) c4nPreviewAdd(id);
+      else sendPreviewSnapshot(id);
     },
     setHooks(hooks) {
       bbPanelHooks = hooks;
@@ -2164,12 +2341,23 @@ function renderPanel() {
     renderC4nTarjetasPanel(extraContainer, bbPanelContext());
   } else if (activeId === 'c4nCambio') {
     renderC4nCambiosPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'c4nPenalShootout') {
+    // PENAL SHOOTOUT (2026-11-15): selección que patea, fase y TAKE / OUT.
+    renderC4nPenalShootoutPanel(extraContainer, bbPanelContext());
   } else if (activeId === 'c4nFormacion') {
     renderC4nFormacionPanel(extraContainer, bbPanelContext());
   } else if (activeId === 'c4nDatos') {
     renderC4nDatosPanel(extraContainer, { lifecycle: panelLifecycle });
   } else if (activeId === 'c4nMejoresJugadores') {
     renderC4nMejoresPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'c4nVar') {
+    renderC4nVarPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'c4nSponsors') {
+    // SPONSORS (2026-11-13): PIEZA, JUGADOR AUTOMÁTICO (selección -> jugador) / MANUAL.
+    renderC4nSponsorsJugadorPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'c4nZocaloCompuesto') {
+    // Sponsors del recuadro derecho (2026-11-11): carpeta, RECARGAR, lista.
+    renderC4nCompuestoSponsorsPanel(extraContainer, bbPanelContext());
   } else if (activeId === 'c4nRotativoSponsors') {
     renderC4nSponsorsPanel(extraContainer, bbPanelContext());
   } else if (['c4nGoleadores', 'c4nAsistencias', 'c4nGA'].includes(activeId)) {
@@ -2177,6 +2365,12 @@ function renderPanel() {
     renderC4nRankingPanel(extraContainer, bbPanelContext(), activeId);
   } else if (activeId === 'c4nPosiciones') {
     renderC4nPosicionesPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'c4nTablaVs') {
+    // TABLA VS (2026-11-11): FUENTE FIXTURE (+ ajustes de la placa) / MANUAL.
+    renderC4nTablaVsPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'c4nTablaFixture') {
+    // TABLA FIXTURE (2026-11-15): día, partidos y ajustes propios (hora, fase, siglas).
+    renderC4nTablaFixturePanel(extraContainer, bbPanelContext());
   } else if (activeId === 'c4nStatsPrevia') {
     renderC4nPreviaPanel(extraContainer, bbPanelContext());
   } else if (activeId === 'c4nStatsEntretiempo' || activeId === 'c4nStatsFinal') {
@@ -2239,10 +2433,13 @@ function previewAfterAssetReload(moduleId) {
     return;
   }
   previewedModuleId = activeId;
-  sendPreviewSnapshot(activeId);
+  if (isC4nTheme()) c4nPreviewAdd(activeId);
+  else sendPreviewSnapshot(activeId);
 }
 
 function updatePanelStatus() {
+  renderC4nPreviewBar();
+  if (resetAllBtn) resetAllBtn.hidden = !isC4nTheme();
   if (activeId === 'abreviaturas' || activeId === 'jugadoresAdmin' || activeId === 'actualizadorDatos') {
     panelStatus.textContent = 'CONFIG';
     panelStatus.className = 'status-pill off';
@@ -2276,6 +2473,8 @@ const ws = connect({
     connStatus.className = 'conn on';
     wsConnected = true;
     checkBackendVersion();
+    // PREVIEW MULTICAPA (C4N): recupera la composición actual de Preview.
+    ws?.send({ type: 'PREVIEW_HELLO' });
   },
   onClose() {
     connStatus.textContent = 'SIN CONEXION...';
@@ -2293,6 +2492,33 @@ const ws = connect({
       if (activeId === 'abreviaturas' || activeId === 'jugadoresAdmin' || activeId === 'zocaloFinalDiv' || activeId === 'zocaloCompuesto' || activeId === 'scoreboard' || (isBbTheme() && isBbModuleId(activeId)) || (isC4nTheme() && isC4nModuleId(activeId))) {
         renderPanel();
       }
+    } else if (msg.type === 'PREVIEW_STACK') {
+      // Composición de Preview (C4N) armada por este u otro Master: la lista se
+      // mantiene igual en todos (solo el orden; los datos salen del draft).
+      if (isC4nTheme() && Array.isArray(msg.order) && (msg.hello || msg.from !== C4N_PREVIEW_CLIENT)) {
+        c4nPreviewStack.splice(0, c4nPreviewStack.length, ...msg.order.filter((id) => MODULES[id]));
+        renderC4nPreviewBar();
+      }
+    } else if (msg.type === 'C4N_RESET') {
+      // REINICIAR TODO (desde este u otro Master): los borradores de los
+      // módulos reiniciados pasan a ser el estado limpio del servidor y se
+      // cancelan sus autoguardados pendientes (nunca vuelve el estado viejo).
+      if (isC4nTheme() && msg.modules && typeof msg.modules === 'object') {
+        for (const [id, data] of Object.entries(msg.modules)) {
+          if (!MODULES[id] || !data || typeof data !== 'object') continue;
+          clearTimeout(saveTimers[id]);
+          delete saveTimers[id];
+          draft[id] = JSON.parse(JSON.stringify(data));
+        }
+        c4nPreviewStack.length = 0;
+        renderPanel();
+        renderC4nPreviewBar();
+      }
+    } else if (msg.type === 'C4N_LIVE_STATUS') {
+      // Sync en vivo de incidencias C4N (servidor, una consulta cada ~10 s):
+      // solo se refresca la sección WEB de ENTRETIEMPO / FINAL si está abierta.
+      setC4nLiveStatus(msg.status);
+      bbPanelHooks?.onLiveStatus?.(msg.status);
     } else if (msg.type === 'GLA_TORNEO_EDICION_UPDATE') {
       // ACTUALIZADOR DE DATOS (2026-10-21): otra pestaña cambio la edicion
       // del torneo -- las leyendas "FUENTE ACTUAL" se repintan solas.
@@ -2413,6 +2639,10 @@ const ws = connect({
       // su copia al día (Preview y paneles la leen desde el draft).
       if (msg.moduleId === 'c4nDatos' && isC4nTheme() && msg.moduleState?.data) {
         draft.c4nDatos = JSON.parse(JSON.stringify(msg.moduleState.data));
+        // Preview = Program (2026-11-11): las piezas que leen la vista del torneo
+        // (incidencias WEB en vivo, tablas, fixture, sponsors...) se refrescan
+        // también en Preview, sin repetir la entrada.
+        if (c4nPreviewStack.length) sendC4nPreviewStack();
       }
       if (msg.moduleId === 'scoreboard' && activeId === 'estrellas') {
         renderPanel();
@@ -2679,7 +2909,9 @@ updateBtn.addEventListener('click', () => {
 // se entera de que esto paso.
 previewBtn.addEventListener('click', () => {
   previewedModuleId = activeId;
-  sendPreviewSnapshot(activeId);
+  // C4N: PREVIEW agrega la pieza a la composición (multicapa).
+  if (isC4nTheme()) c4nPreviewAdd(activeId);
+  else sendPreviewSnapshot(activeId);
 });
 outBtn.addEventListener('click', () => {
   // BxB: SACAR durante el cambio de placa cancela el TAKE que esperaba.

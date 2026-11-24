@@ -15,6 +15,7 @@
 // Cada módulo guarda su carga MANUAL en su propio estado ("manual"): pasar de
 // AUTOMÁTICA a MANUAL y volver nunca borra ninguna de las dos. AUTOMÁTICA =
 // lo que trae ACTUALIZADOR DE DATOS (WEB o SOFTX) o el partido del MARCADOR.
+import { liveWebSection } from './c4n-live-panel.js';
 import { el, section, statusLine, teamLabel, visibleTeams, api, activePlantel } from './c4n-common.js';
 import { C4N_CARD_LABELS } from '../../../shared/c4n-match.js';
 
@@ -171,11 +172,48 @@ export function renderC4nPosicionesPanel(container, ctx) {
     }
   }
 
+  // GRUPOS de la placa (2026-11-10): la web oficial publica una sola fase de
+  // grupos, así que GRUPO A / GRUPO B es una asignación MANUAL del operador,
+  // guardada con el módulo ("grupos": { teamId: 'A' | 'B' }). La placa usa los
+  // números de la tabla efectiva (FUENTE de abajo) agrupados así.
+  function gruposSection() {
+    const data = ctx.draft.c4nPosiciones;
+    if (!data.grupos || typeof data.grupos !== 'object') data.grupos = {};
+    const ids = (state?.standings?.rows || []).map((r) => r.teamId);
+    const teams = ids.length ? ids : visibleTeams().map((t) => t.id);
+    const set = (teamId, g) => {
+      if (g) data.grupos[teamId] = g; else delete data.grupos[teamId];
+      ctx.autosave('c4nPosiciones');
+      render();
+    };
+    const count = (g) => teams.filter((id) => data.grupos[id] === g).length;
+    const missing = teams.filter((id) => data.grupos[id] !== 'A' && data.grupos[id] !== 'B');
+    return section('GRUPOS EN LA PLACA (GRUPO A / GRUPO B)', [
+      el('div', { class: 'bb-desc', text: 'La web oficial publica una sola fase de grupos: asigná cada selección a su grupo. La placa muestra los dos grupos con los números de la tabla efectiva. Sin asignaciones, sale la tabla completa en un solo bloque.' }),
+      ...teams.map((id) => el('div', { class: 'bb-actions c4n-grupo-row' }, [
+        el('span', { class: 'c4n-grupo-team', text: teamLabel(id) }),
+        ...[['A', 'GRUPO A'], ['B', 'GRUPO B'], ['', 'SIN GRUPO']].map(([g, text]) => el('button', {
+          type: 'button',
+          class: `bb-btn period${(data.grupos[id] || '') === g ? ' active' : ''}`,
+          text,
+          onclick: () => set(id, g),
+        })),
+      ])),
+      el('div', { class: `c4n-source-line${missing.length && missing.length < teams.length ? ' warn' : ''}`, text: missing.length === teams.length
+        ? 'SIN ASIGNACIONES: la placa muestra la tabla completa en un solo bloque.'
+        : `GRUPO A: ${count('A')} · GRUPO B: ${count('B')}${missing.length ? ` · SIN GRUPO (no salen en la placa): ${missing.map((id) => teamLabel(id)).join(', ')}` : ''}` }),
+      el('div', { class: 'bb-actions' }, [
+        el('button', { type: 'button', class: 'bb-btn mini', text: 'QUITAR TODOS LOS GRUPOS', disabled: missing.length === teams.length, onclick: () => { data.grupos = {}; ctx.autosave('c4nPosiciones'); render(); } }),
+      ]),
+    ]);
+  }
+
   function render() {
     root.innerHTML = '';
     if (!state) { root.append(el('div', { class: 'bb-desc', text: 'Cargando tabla...' })); return; }
     const src = state.config.tablaSource;
     root.append(
+      gruposSection(),
       section('FUENTE (central: la usan POSICIONES, PREVIA y los cruces)', [
         el('div', { class: 'bb-actions' }, [
           el('span', { class: 'bb-field-label', text: 'FUENTE:' }),
@@ -276,6 +314,9 @@ export function renderC4nPreviaPanel(container, ctx) {
 const EV_TYPES = [['goal', 'GOL'], ['yellowCard', C4N_CARD_LABELS.yellowCard], ['redCard', C4N_CARD_LABELS.redCard], ['blueCard', C4N_CARD_LABELS.blueCard], ['substitution', 'CAMBIO']];
 
 export function renderC4nPartidoManualPanel(container, ctx, moduleId) {
+  // FUENTE DE INCIDENCIAS (2026-11-11): SOFTX (todo lo de abajo, como siempre)
+  // o WEB (sync en vivo de copa4naciones.com). Cambiar de fuente solo cambia
+  // el dataset de la placa: no borra ni modifica el otro.
   const { lifecycle } = ctx;
   const data = ctx.draft[moduleId];
   if (!data.manual || typeof data.manual !== 'object') data.manual = {};
@@ -327,10 +368,36 @@ export function renderC4nPartidoManualPanel(container, ctx, moduleId) {
     ]);
   }
 
+  function setIncidencias(next) {
+    if ((data.incidencias === 'web' ? 'web' : 'softx') === next) return;
+    data.incidencias = next;
+    save();
+    // Con la placa al aire, el cambio de dataset se ve en el momento.
+    if (ctx.isOn(moduleId)) ctx.sendLive(moduleId);
+    if (next === 'web') api('/api/c4n/live/refresh', { method: 'POST' }).catch(() => {});
+    render();
+  }
+
   function render() {
     root.innerHTML = '';
     const manual = data.fuente === 'manual';
     const man = data.manual;
+    const web = data.incidencias === 'web';
+    root.append(section('FUENTE DE INCIDENCIAS', [
+      el('div', { class: 'bb-actions c4n-fuente' }, [
+        el('span', { class: 'bb-field-label', text: 'FUENTE:' }),
+        ...[['softx', 'SOFTX'], ['web', 'WEB']].map(([id, text]) => el('button', {
+          type: 'button', class: `bb-btn period${(web ? 'web' : 'softx') === id ? ' active' : ''}`, text, dataset: { incidencias: id }, onclick: () => setIncidencias(id),
+        })),
+      ]),
+      el('div', { class: 'c4n-source-line', text: web
+        ? 'WEB: incidencias oficiales de copa4naciones.com (snapshot aparte). Los eventos de SOFTX quedan guardados tal cual: volver a SOFTX los muestra de nuevo.'
+        : 'SOFTX: los eventos que registramos en SOFTX (MARCADOR o carga MANUAL / TEST de abajo), como siempre.' }),
+    ]));
+    if (web) {
+      root.append(liveWebSection(ctx, moduleId));
+      return;
+    }
     root.append(
       datalist,
       section('FUENTE', [

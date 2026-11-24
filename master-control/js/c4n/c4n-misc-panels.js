@@ -4,7 +4,7 @@
 //   - MEJORES JUGADORES: uno por selección, desde los rankings o a mano.
 //   - ROTATIVO DE SPONSORS: logos de la carpeta del sistema.
 import { el, section, statusLine, api, teamLabel, activePlantel } from './c4n-common.js';
-import { sideTeamId } from '../../../shared/c4n-match.js';
+import { sideTeamId, mejoresAuto, C4N_MJ_DATOS } from '../../../shared/c4n-match.js';
 
 const SOURCE_TEXT = { web: 'WEB (copa4naciones.com)', softx: 'SOFTX (partidos guardados)', calculada: 'CALCULADA (resultados)', manual: 'MANUAL' };
 const RANK_KEY = { c4nGoleadores: 'goals', c4nAsistencias: 'assists', c4nGA: 'contributions' };
@@ -82,20 +82,103 @@ export function renderC4nMejoresPanel(container, ctx) {
     ]);
   }
 
+  // DATO (2026-11-12): GOLES / ASISTENCIAS / G+A eligen solos al mejor de cada
+  // selección (mismo resolutor que Program); PERSONALIZADO = elección manual.
+  function autoBox() {
+    const rk = ctx.draft.c4nDatos?.rankings || {};
+    const sides = mejoresAuto(data.dato, m, rk) || [];
+    const src = rk.source === 'web' ? 'WEB (copa4naciones.com)' : rk.source === 'softx' ? 'SOFTX (partidos guardados)' : '—';
+    return section(`AUTOMÁTICO — ${C4N_MJ_DATOS[data.dato].label} (ranking ${src})`, [
+      ...sides.map((s, i) => {
+        const p = s.players[0];
+        return el('div', { class: `c4n-source-line${p ? '' : ' warn'}`, dataset: { side: i ? 'visitante' : 'local' } }, p
+          ? [el('b', { text: `${i ? 'VISITANTE' : 'LOCAL'} — ${teamLabel(s.teamId)}: ` }), `${p.dorsal ? `${p.dorsal} · ` : ''}${p.name} — ${p.statValue} ${s.label}${p.foto ? '' : ' (sin foto: escudo)'}`]
+          : [el('b', { text: `${i ? 'VISITANTE' : 'LOCAL'} — ${teamLabel(s.teamId) || 'SIN EQUIPO'}: ` }), `TODAVÍA NO HAY DATOS DE ${s.label} PARA ESTA SELECCIÓN (la placa muestra el escudo y "SIN DATOS")`]);
+      }),
+      el('div', { class: 'bb-desc', text: 'El mejor de cada selección del partido del MARCADOR, en el orden del ranking (empates: el orden que publica el ranking). Se actualiza solo si cambia el ranking, también con la placa al aire. Fuente de los rankings: ACTUALIZADOR DE DATOS.' }),
+    ]);
+  }
+
   function render() {
     root.innerHTML = '';
+    if (!C4N_MJ_DATOS[data.dato] && data.dato !== 'custom') data.dato = 'goals';
     const titulo = el('input', { type: 'text', maxLength: 40, value: data.titulo || '' });
     titulo.addEventListener('input', () => { data.titulo = titulo.value; ctx.autosave('c4nMejoresJugadores'); });
+    const dato = el('select', {
+      dataset: { key: 'dato' },
+      onchange: (e) => {
+        data.dato = e.target.value;
+        ctx.autosave('c4nMejoresJugadores');
+        if (ctx.isOn('c4nMejoresJugadores')) ctx.sendLive('c4nMejoresJugadores');
+        render();
+      },
+    }, [...Object.entries(C4N_MJ_DATOS).map(([id, d]) => el('option', { value: id, text: d.label })), el('option', { value: 'custom', text: 'PERSONALIZADO' })]);
+    dato.value = data.dato;
     root.append(
-      el('label', { class: 'bb-field' }, [el('span', { text: 'TÍTULO' }), titulo]),
-      slot(0, 'local'),
-      slot(1, 'visitante'),
+      el('div', { class: 'bb-actions' }, [
+        el('label', { class: 'bb-field' }, [el('span', { text: 'DATO' }), dato]),
+        el('label', { class: 'bb-field grow' }, [el('span', { text: 'TÍTULO' }), titulo]),
+      ]),
+      ...(data.dato === 'custom' ? [slot(0, 'local'), slot(1, 'visitante')] : [autoBox()]),
       status.node,
     );
   }
+  // Los rankings cambian (sync web, resultados): el resumen automático se repinta.
+  ctx.setHooks({ onModuleUpdate: (id) => { if (id === 'c4nDatos' && data.dato !== 'custom' && !lifecycle.destroyed) render(); } });
 
   render();
   load();
+}
+
+// ZÓCALO COMPUESTO — SPONSORS del recuadro derecho (2026-11-11): los logos de
+// la carpeta sponsors/ rotan solos. Poner PNG en la carpeta -> RECARGAR -> el
+// servidor la vuelve a leer y publica la lista (las placas la toman al
+// instante, también al aire). Carpeta vacía = recuadro vacío, sin errores.
+// ROTACIÓN (ACTIVA / DESACTIVADA) e INTERVALO están en los campos de arriba.
+export function renderC4nCompuestoSponsorsPanel(container, ctx) {
+  const { lifecycle } = ctx;
+  const root = el('div', { class: 'bb-panel' });
+  container.append(root);
+  const status = statusLine();
+  let files = Array.isArray(ctx.draft.c4nDatos?.sponsors) ? ctx.draft.c4nDatos.sponsors : [];
+  let carpeta = '';
+
+  async function reload(manual) {
+    try {
+      const res = await api('/api/c4n/sponsors/recargar', { method: 'POST' });
+      if (lifecycle.destroyed) return;
+      files = res.files || [];
+      carpeta = res.carpeta || '';
+      if (manual) status.set('ok', files.length ? `RECARGADO: ${files.length} logo${files.length === 1 ? '' : 's'} en la carpeta.` : 'RECARGADO: la carpeta está vacía (el recuadro queda vacío).');
+      render();
+    } catch (err) {
+      status.set('error', err.message);
+    }
+  }
+
+  function render() {
+    root.innerHTML = '';
+    const data = ctx.draft.c4nZocaloCompuesto || {};
+    root.append(section('SPONSORS (RECUADRO DERECHO)', [
+      el('div', { class: 'bb-desc', text: `Logos PNG / WEBP / JPG de assets/themes/copa4naciones/sponsors/${carpeta ? ` (${carpeta})` : ''}. Se ajustan al recuadro sin deformarse. ROTACIÓN ${data.sponsorsRotacion === 'no' ? 'DESACTIVADA: queda fijo el primero' : `ACTIVA: cambian cada ${Math.max(2, Math.min(60, Number(data.intervaloSec) || 6))} s`}.` }),
+      el('div', { class: 'bb-actions' }, [
+        el('button', { type: 'button', class: 'bb-btn primary', text: 'RECARGAR SPONSORS', onclick: () => reload(true) }),
+        el('button', {
+          type: 'button',
+          class: 'bb-btn',
+          text: 'ABRIR CARPETA DE SPONSORS',
+          onclick: async () => { try { const d = await api('/api/c4n/abrir-carpeta', { method: 'POST', body: { carpeta: 'sponsors' } }); status.set('ok', `CARPETA ABIERTA: ${d.carpeta}`); } catch (err) { status.set('error', err.message); } },
+        }),
+      ]),
+      files.length
+        ? el('div', { class: 'bb-chips' }, files.map((f) => el('span', { class: 'bb-chip on', text: f })))
+        : el('div', { class: 'c4n-source-line', text: 'CARPETA VACÍA: el recuadro de sponsors queda vacío (sin errores). Poné los logos en la carpeta y apretá RECARGAR SPONSORS.' }),
+      status.node,
+    ]));
+  }
+
+  render();
+  reload(false);
 }
 
 export function renderC4nSponsorsPanel(container, ctx) {

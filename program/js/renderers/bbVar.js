@@ -1,5 +1,5 @@
-// VAR — BAULETI vs BALANZA (SOFTX [3], FASE 2). Placa compacta arriba a la
-// derecha, a la altura del Marcador (conviven): bloque dorado "VAR" con el
+// VAR — BAULETI vs BALANZA (SOFTX [3], FASE 2). Placa compacta abajo a la
+// izquierda (2026-11-06; antes arriba a la derecha): bloque dorado "VAR" con el
 // mismo corte del reloj, placa negra con la decisión y, si hay, una tira con
 // el MOTIVO debajo. En CHEQUEO VAR un punto rojo late y un barrido dorado
 // recorre la placa (en revisión); las decisiones quedan quietas.

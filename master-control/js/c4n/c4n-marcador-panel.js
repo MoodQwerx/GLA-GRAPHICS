@@ -5,7 +5,7 @@
 // y TERMINAR Y GUARDAR RESULTADO (alimenta fixture, tabla y estadísticas).
 // Todo en vivo (sin ACTUALIZAR), como el Marcador de BxB.
 import { elapsedMs, formatClock, parseClockLimit, emptyClock } from '../../../shared/clock.js';
-import { C4N_EVENT_TYPES, C4N_CARD_TYPES, C4N_CARD_LABELS, createMatchEvent, sideTeamId, otherSide, penaltyTally, scoreFromEvents, matchOutcome } from '../../../shared/c4n-match.js';
+import { C4N_EVENT_TYPES, C4N_CARD_TYPES, C4N_CARD_LABELS, createMatchEvent, sideTeamId, otherSide, penaltyTally, scoreFromEvents, matchOutcome, extraTimeState, extraToken, shootoutView, C4N_EXTRA_MAX } from '../../../shared/c4n-match.js';
 import { el, section, statusLine, visibleTeams, teamLabel, api, activePlantel, matchLabel, invalidatePlantel } from './c4n-common.js';
 import { c4nOptions, commitMatch, bumpScore, playerPicker, eventsEditor, registerCard, showSub } from './c4n-incidents.js';
 
@@ -31,16 +31,37 @@ export function renderC4nMarcadorPanel(container, ctx) {
   const status = statusLine();
   let players = null;
   let clockDisplay = null;
+  let extraReadout = null;
 
   const limitMs = () => parseClockLimit(m.clockEndText, DEFAULT_LIMIT_MS) || DEFAULT_LIMIT_MS;
   const nowMs = () => elapsedMs(m.clock, limitMs());
+  // Tiempo real del reloj (sin topear en el fin del tiempo): INICIAR / PAUSAR
+  // lo conservan para que el TIEMPO ADICIONAL automático siga contando lo que
+  // corrió después del límite. Lo que se ve (Marcador, eventos) sigue topeado.
+  const rawMs = () => elapsedMs(m.clock);
   const commit = () => commitMatch(ctx);
   const fixture = () => ctx.draft.c4nDatos?.fixture || [];
 
+  // Lectura del tiempo adicional en el panel (mismo cálculo que el Marcador).
+  function paintExtra() {
+    if (!extraReadout) return;
+    const x = extraTimeState(m);
+    let text;
+    if (!(Number(m.extraMinutes) > 0)) text = 'SIN TIEMPO ADICIONAL CARGADO';
+    else if (m.period !== '1T' && m.period !== '2T') text = `+${m.extraMinutes} · SOLO EN 1T / 2T`;
+    else if (x.visible) text = `AL AIRE (con el Marcador) · +${x.minutes} · ${formatClock(x.ms)}${x.running ? ' · CORRIENDO' : ' · EN PAUSA'}`;
+    else if (x.auto) text = `+${m.extraMinutes} PREPARADO · APARECE SOLO AL LLEGAR A ${formatClock(limitMs())}`;
+    else text = `+${m.extraMinutes} PREPARADO · MOSTRAR PARA SACARLO AL AIRE`;
+    if (extraReadout.textContent !== text) extraReadout.textContent = text;
+    extraReadout.classList.toggle('is-live', x.visible);
+  }
+
   function paintClock() {
-    if (!clockDisplay) return;
-    clockDisplay.textContent = formatClock(nowMs());
-    clockDisplay.classList.toggle('running', m.clock?.running === true);
+    if (clockDisplay) {
+      clockDisplay.textContent = formatClock(nowMs());
+      clockDisplay.classList.toggle('running', m.clock?.running === true);
+    }
+    paintExtra();
   }
   lifecycle.setInterval(paintClock, 250);
 
@@ -50,19 +71,61 @@ export function renderC4nMarcadorPanel(container, ctx) {
     paintClock();
   }
 
+  // Tiempo adicional limpio (cambio de período, de partido o reinicio): nunca
+  // queda un adicional viejo para el tiempo siguiente.
+  function clearExtra() {
+    m.extraMinutes = 0;
+    m.showExtra = false;
+    m.extraClock = emptyClock();
+    m.extraFor = '';
+  }
+
   function setPeriod(period) {
     if (m.period === period) return;
     if (period === '1T' || period === '2T') {
       if (m.period !== 'ET' && nowMs() > 0 && !window.confirm(`¿Pasar a ${period}? El reloj vuelve a 00:00 y se quita el tiempo adicional.`)) return;
       m.clock = emptyClock();
-      m.extraMinutes = 0;
-      m.showExtra = false;
     } else {
       if (period === 'FIN' && !window.confirm('¿Terminar el partido? El reloj se frena y el período pasa a FINAL.')) return;
       m.clock = { running: false, accumulatedMs: nowMs(), startedAt: null };
-      m.showExtra = false;
     }
+    clearExtra();
     m.period = period;
+    commit();
+    render();
+  }
+
+  // --- tiempo adicional manual (INICIO AUTOMÁTICO: NO) ---
+  // Sin tope (2026-11-14): +N es solo el aviso; el reloj sigue después de N:00.
+  function setExtraClock(running) {
+    const now = elapsedMs(m.extraClock);
+    m.extraClock = { running, accumulatedMs: now, startedAt: running ? Date.now() : null };
+  }
+  function extraShow(show) {
+    m.showExtra = show;
+    m.extraFor = show ? extraToken(m) : '';
+    if (!show) m.extraClock = emptyClock();
+    commit();
+    render();
+  }
+  function extraStart() {
+    if (!m.showExtra || m.extraFor !== extraToken(m)) { m.showExtra = true; m.extraFor = extraToken(m); }
+    setExtraClock(true);
+    commit();
+    render();
+  }
+  function extraPause() {
+    setExtraClock(false);
+    commit();
+    render();
+  }
+  function extraReset() {
+    m.extraClock = emptyClock();
+    commit();
+    render();
+  }
+  function setExtraMinutes(n) {
+    m.extraMinutes = Math.max(0, Math.min(C4N_EXTRA_MAX, Math.round(Number(n) || 0)));
     commit();
     render();
   }
@@ -74,8 +137,7 @@ export function renderC4nMarcadorPanel(container, ctx) {
     m.scoreB = 0;
     m.clock = emptyClock();
     m.period = '1T';
-    m.extraMinutes = 0;
-    m.showExtra = false;
+    clearExtra();
     m.penalties = { active: false, first: 'local', show: false };
     pendingGoal = null;
   }
@@ -370,13 +432,18 @@ export function renderC4nMarcadorPanel(container, ctx) {
       setInput.value = '';
     };
     setInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') applySet(); });
-    const extraInput = el('input', { type: 'number', min: 0, max: 30, value: String(m.extraMinutes || 0), class: 'bb-num' });
-    extraInput.addEventListener('change', () => { m.extraMinutes = Math.max(0, Math.min(30, Number.parseInt(extraInput.value, 10) || 0)); commit(); render(); });
+    const extraInput = el('input', { type: 'number', min: 0, max: C4N_EXTRA_MAX, value: String(m.extraMinutes || 0), class: 'bb-num' });
+    extraInput.addEventListener('change', () => setExtraMinutes(Number.parseInt(extraInput.value, 10)));
+    const extraAuto = m.extraAuto !== false;
+    const extraState = extraTimeState(m);
+    const extraOn = m.showExtra === true && m.extraFor === extraToken(m);
+    extraReadout = el('div', { class: 'c4n-extra-readout' });
     const assistToggle = el('input', { type: 'checkbox', checked: c4nOptions.askAssist, onchange: (e) => { c4nOptions.askAssist = e.target.checked; } });
 
     const goalsEv = scoreFromEvents(m.matchEvents);
     const mismatch = goalsEv.local !== (Number(m.scoreA) || 0) || goalsEv.visitante !== (Number(m.scoreB) || 0);
     const tally = penaltyTally(m.matchEvents, m.penalties.first);
+    const shoot = shootoutView(tally);
 
     const sideBlock = (side) => el('div', { class: `bb-goal-side${pendingGoal?.side === side ? ' is-pending' : ''}` }, [
       el('div', { class: 'bb-goal-team', text: teamLabel(sideTeamId(m, side)) }),
@@ -389,8 +456,8 @@ export function renderC4nMarcadorPanel(container, ctx) {
       ]),
     ]);
 
-    const penSide = (side) => el('div', { class: `bb-goal-side${tally.nextSide === side ? ' is-next' : ''}` }, [
-      el('div', { class: 'bb-goal-team', text: `${teamLabel(sideTeamId(m, side))}${tally.nextSide === side && tally.total ? ' · PATEA' : ''}` }),
+    const penSide = (side) => el('div', { class: `bb-goal-side${tally.nextSide === side && !shoot.decided ? ' is-next' : ''}` }, [
+      el('div', { class: 'bb-goal-team', text: `${teamLabel(sideTeamId(m, side))}${tally.nextSide === side && tally.total && !shoot.decided ? ' · PATEA' : ''}` }),
       el('div', { class: 'bb-goal-num', text: String(tally[side].scored) }),
       el('div', { class: 'bb-pen-dots-mc' }, tally[side].kicks.map((k) => el('span', { class: `bb-pen-dot ${k.scored ? 'ok' : 'ko'}`, text: k.scored ? '✓' : '✕' }))),
       el('div', { class: 'bb-actions center' }, [
@@ -429,8 +496,8 @@ export function renderC4nMarcadorPanel(container, ctx) {
           el('div', { class: 'bb-periods' }, PERIODS.map(([id, text]) => el('button', { type: 'button', class: `bb-btn period${m.period === id ? ' active' : ''}`, text, onclick: () => setPeriod(id) }))),
         ]),
         el('div', { class: 'bb-actions' }, [
-          el('button', { type: 'button', class: 'bb-btn primary', text: 'INICIAR', onclick: () => setClock(true, nowMs()) }),
-          el('button', { type: 'button', class: 'bb-btn', text: 'PAUSAR', onclick: () => setClock(false, nowMs()) }),
+          el('button', { type: 'button', class: 'bb-btn primary', text: 'INICIAR', onclick: () => setClock(true, rawMs()) }),
+          el('button', { type: 'button', class: 'bb-btn', text: 'PAUSAR', onclick: () => setClock(false, rawMs()) }),
           el('button', { type: 'button', class: 'bb-btn danger', text: 'RESET', onclick: () => { if (nowMs() === 0 || window.confirm('¿Volver el reloj a 00:00?')) { m.clock = emptyClock(); commit(); paintClock(); } } }),
         ]),
         el('div', { class: 'bb-actions' }, [
@@ -439,12 +506,33 @@ export function renderC4nMarcadorPanel(container, ctx) {
           el('button', { type: 'button', class: 'bb-btn', text: 'APLICAR', onclick: applySet }),
         ]),
       ]),
+      // TIEMPO ADICIONAL (debajo del reloj del Marcador, PNG propio): cantidad,
+      // INICIO AUTOMÁTICO SÍ (aparece y cuenta solo al llegar al fin del
+      // tiempo) o NO (preparado: MOSTRAR / INICIAR / PAUSAR / RESET a mano).
       section('TIEMPO ADICIONAL', [
         el('div', { class: 'bb-actions' }, [
-          ...[1, 2, 3, 4, 5].map((n) => el('button', { type: 'button', class: `bb-btn${Number(m.extraMinutes) === n ? ' active' : ''}`, text: `+${n}`, onclick: () => { m.extraMinutes = n; commit(); render(); } })),
+          ...[1, 2, 3, 4, 5, 6].map((n) => el('button', { type: 'button', class: `bb-btn${Number(m.extraMinutes) === n ? ' active' : ''}`, text: `+${n}`, onclick: () => setExtraMinutes(n) })),
           el('label', { class: 'bb-field' }, [el('span', { text: 'MINUTOS' }), extraInput]),
-          el('button', { type: 'button', class: `bb-btn ${m.showExtra ? 'primary' : ''}`, text: m.showExtra ? 'OCULTAR +' : 'MOSTRAR +', disabled: !(Number(m.extraMinutes) > 0), onclick: () => { m.showExtra = !m.showExtra; commit(); render(); } }),
+          el('button', { type: 'button', class: 'bb-btn mini', text: 'QUITAR', disabled: !(Number(m.extraMinutes) > 0), onclick: () => { clearExtra(); commit(); render(); } }),
         ]),
+        el('div', { class: 'bb-actions c4n-extra-mode' }, [
+          el('span', { class: 'bb-field-label', text: 'INICIO AUTOMÁTICO:' }),
+          ...[[true, 'SÍ'], [false, 'NO']].map(([val, text]) => el('button', {
+            type: 'button',
+            class: `bb-btn period${extraAuto === val ? ' active' : ''}`,
+            text,
+            onclick: () => { if (extraAuto === val) return; m.extraAuto = val; m.showExtra = false; m.extraFor = ''; m.extraClock = emptyClock(); commit(); render(); },
+          })),
+        ]),
+        extraAuto
+          ? el('div', { class: 'bb-desc', text: `Al llegar el reloj a ${formatClock(limitMs())} el tiempo adicional sale al aire solo, debajo del reloj, y cuenta desde 00:00 con el mismo reloj, sin tope (+${Number(m.extraMinutes) || 'N'} es solo el aviso; PAUSAR / INICIAR del reloj lo pausan / siguen).` })
+          : el('div', { class: 'bb-actions' }, [
+            el('button', { type: 'button', class: `bb-btn ${extraOn ? 'primary' : ''}`, text: extraOn ? 'OCULTAR ADICIONAL' : 'MOSTRAR ADICIONAL (TAKE)', disabled: !(Number(m.extraMinutes) > 0) || (m.period !== '1T' && m.period !== '2T'), onclick: () => extraShow(!extraOn) }),
+            el('button', { type: 'button', class: 'bb-btn primary', text: 'INICIAR ADICIONAL', disabled: !(Number(m.extraMinutes) > 0) || (m.period !== '1T' && m.period !== '2T') || extraState.running, onclick: extraStart }),
+            el('button', { type: 'button', class: 'bb-btn', text: 'PAUSAR ADICIONAL', disabled: !extraState.running, onclick: extraPause }),
+            el('button', { type: 'button', class: 'bb-btn danger', text: 'RESET ADICIONAL', onclick: extraReset }),
+          ]),
+        extraReadout,
       ]),
       section('RESULTADO Y GOLES', [
         el('div', { class: 'bb-goals' }, [sideBlock('local'), el('div', { class: 'bb-goal-sep', text: '–' }), sideBlock('visitante')]),
@@ -473,10 +561,26 @@ export function renderC4nMarcadorPanel(container, ctx) {
           ...['local', 'visitante'].map((side) => el('button', { type: 'button', class: `bb-btn period${m.penalties.first === side ? ' active' : ''}`, text: teamLabel(sideTeamId(m, side)), onclick: () => { m.penalties.first = side; commit(); render(); } })),
           el('label', { class: 'bb-field check' }, [
             el('input', { type: 'checkbox', checked: m.penalties.show === true, onchange: (e) => { m.penalties.show = e.target.checked; commit(); } }),
-            el('span', { text: 'MOSTRAR "PEN" EN EL MARCADOR' }),
+            el('span', { text: 'MOSTRAR LOS PENALES DEBAJO DEL MARCADOR' }),
           ]),
         ]),
         el('div', { class: 'bb-goals' }, [penSide('local'), el('div', { class: 'bb-goal-sep', text: '–' }), penSide('visitante')]),
+        shoot.decided ? el('div', { class: 'bb-status ok', text: `TANDA DEFINIDA: gana ${teamLabel(sideTeamId(m, shoot.winner))} ${shoot.score[shoot.winner]}-${shoot.score[otherSide(shoot.winner)]}` }) : null,
+        el('div', { class: 'bb-actions' }, [
+          el('button', {
+            type: 'button',
+            class: 'bb-btn danger',
+            text: 'RESET PENALES',
+            disabled: !tally.total,
+            onclick: () => {
+              if (!window.confirm('¿Borrar todos los remates de la tanda de penales?')) return;
+              m.matchEvents = m.matchEvents.filter((ev) => ev.type !== C4N_EVENT_TYPES.PENALTY);
+              m.penalties.active = false;
+              commit();
+              render();
+            },
+          }),
+        ]),
       ]),
       section('CIERRE', [
         el('div', { class: 'bb-actions' }, [

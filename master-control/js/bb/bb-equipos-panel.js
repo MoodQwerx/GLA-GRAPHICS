@@ -91,11 +91,18 @@ export function renderBbEquiposPanel(container, { lifecycle, themeId = 'bauletiB
       ...crestFiles.map((f) => el('option', { value: f, text: f })),
     ]);
     crestSelect.value = team.crestFile || '';
+    // TAMAÑO LOGO (solo BAULETI vs BALANZA, 2026-11-06): compensación óptica
+    // del logo en todas las piezas. AUTO = la medida del PNG (shared/themes.js).
+    const hasScale = themeId === 'bauletiBalanza';
+    const scalePct = Math.round((Number(team.crestScale) || 1) * 100);
+    const scale = hasScale ? el('input', { type: 'number', min: 50, max: 200, step: 1, class: 'bb-num', value: String(scalePct) }) : null;
     const doSave = () => {
       const n = name.value.trim();
       const a = abbr.value.trim().toUpperCase();
       if (!n || !a) { status.set('error', 'NOMBRE y ABREVIATURA son obligatorios.'); return; }
-      save(team, { fullName: n, abbreviation: a, visible: visible.value === 'si', crestFile: crestSelect.value, color: color.value.toUpperCase() }, `${n} GUARDADO.`);
+      // Solo se guarda si se cambió (si no, sigue la medida automática).
+      const extra = hasScale && Number(scale.value) !== scalePct ? { crestScale: Number(scale.value) / 100 } : {};
+      save(team, { fullName: n, abbreviation: a, visible: visible.value === 'si', crestFile: crestSelect.value, color: color.value.toUpperCase(), ...extra }, `${n} GUARDADO.`);
     };
     const field = (label, input) => el('label', { class: 'bb-field' }, [el('span', { text: label }), input]);
     return el('div', { class: `bb-eq-row${team.visible === false ? ' is-hidden-team' : ''}${team.pending ? ' is-pending' : ''}` }, [
@@ -110,6 +117,8 @@ export function renderBbEquiposPanel(container, { lifecycle, themeId = 'bauletiB
         field('ABREV.', abbr),
         field('ESCUDO', crestSelect),
         field('COLOR', color),
+        hasScale ? field('TAMAÑO LOGO %', scale) : null,
+        hasScale ? el('button', { type: 'button', class: 'bb-btn mini', text: 'AUTO', title: 'Volver a la compensación medida del PNG', onclick: () => save(team, { crestScale: null }, `${team.name}: TAMAÑO DE LOGO AUTOMÁTICO.`) }) : null,
         field('VISIBLE', visible),
         el('button', { type: 'button', class: 'bb-btn primary', text: team.pending ? 'CONFIRMAR' : 'GUARDAR', onclick: doSave }),
       ]),

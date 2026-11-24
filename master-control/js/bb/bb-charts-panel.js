@@ -112,6 +112,17 @@ export function renderBbChartsPanel(container, ctx) {
           text: t.text,
           onclick: () => { data.tipo = t.id; save(); render(); },
         }))),
+        // DETALLE DE GOLES (2026-11-06): SIN AUTORES saca la placa solo con
+        // equipos, logos y resultado (no borra los eventos guardados).
+        tipo === 'previa' ? null : el('div', { class: 'bb-actions' }, [
+          el('span', { class: 'bb-field-label', text: 'DETALLE DE GOLES:' }),
+          ...[['con', 'CON AUTORES'], ['sin', 'SIN AUTORES']].map(([id, text]) => el('button', {
+            type: 'button',
+            class: `bb-btn period${(data.detalleGoles?.[tipo] === 'sin' ? 'sin' : 'con') === id ? ' active' : ''}`,
+            text,
+            onclick: () => { data.detalleGoles = { entretiempo: 'con', final: 'con', ...(data.detalleGoles || {}), [tipo]: id }; save(); render(); },
+          })),
+        ]),
         el('div', { class: 'bb-grid2' }, [
           el('label', { class: 'bb-field' }, [el('span', { text: 'TÍTULO (opcional)' }), titulo]),
           tipo === 'previa' ? el('label', { class: 'bb-field' }, [el('span', { text: 'SUBTÍTULO PREVIA' }), evento]) : el('div'),

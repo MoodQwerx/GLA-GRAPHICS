@@ -32,10 +32,25 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import express from 'express';
 import { COPA4N_THEME_ID } from '../shared/themes.js';
+import { MODULES } from '../shared/modules.js';
 import { seedManualFixture, computeStandings, resolvePlayoffs, autoResolvePlayoffs, statsFromFixtureEvents, dayLabel, C4N_STAGES } from '../shared/c4n-match.js';
 import { loadPersistentValue, schedulePersistentWrite } from './persistence.js';
+import { createLiveSync } from './c4n-live.js';
 
 const WEB_URL = 'https://copa4naciones.com/';
+// FUENTE REAL DE LOS DATOS EN VIVO (relevado 2026-11-15 en el código cliente
+// del sitio): el FIXTURE de copa4naciones.com se dibuja primero con los datos
+// del render del servidor (el flight RSC de la home, ISR: "s-maxage=15,
+// stale-while-revalidate=31535985", se sirve con x-nextjs-cache STALE /
+// cf-cache-status HIT) y después el navegador consulta cada 5 s
+// "/api/c4n/live" (fetch con cache "no-store"; respuesta "s-maxage=2",
+// cf-cache-status DYNAMIC) y reemplaza TODO el estado con esa respuesta: el
+// mismo objeto { tournament, teams, players, matches, standings, rankings,
+// champion, cupTeamIds }. El detalle de un partido (modal al hacer click) no
+// hace ningún pedido: muestra los "events" de ese partido del estado vivo.
+// SOFTX lee lo mismo que la web: primero /api/c4n/live; el flight RSC (y el
+// HTML) quedan solo de respaldo si la API no está disponible.
+const WEB_LIVE_URL = 'https://copa4naciones.com/api/c4n/live';
 const WEB_TIMEOUT_MS = 15000;
 const MEDIA_HOSTS = new Set(['api.gla.futbol', 'copa4naciones.com']);
 const MAX_MEDIA_BYTES = 8 * 1024 * 1024;
@@ -45,7 +60,10 @@ const PHOTOS_DIR = path.join(ROOT_ASSETS, 'jugadores');
 const PHOTOS_URL = '/assets/themes/copa4naciones/jugadores/';
 const FOLDERS = {
   fondos: path.join(ROOT_ASSETS, 'fondos'),
-  sponsors: path.join(ROOT_ASSETS, 'sponsors'),
+  // SOLO PRUEBAS (2026-11-13): GLA_C4N_SPONSORS_DIR apunta a una COPIA de la
+  // carpeta (carpeta vacía / con logos sin tocar los sponsors reales); el
+  // servidor la sirve en la misma URL (server/index.js).
+  sponsors: process.env.GLA_C4N_SPONSORS_DIR || path.join(ROOT_ASSETS, 'sponsors'),
   logos: path.join(ROOT_ASSETS, 'logos'),
   crests: CRESTS_DIR,
 };
@@ -113,6 +131,31 @@ async function fetchText(url, headers = {}) {
   return res.text();
 }
 
+// Error de red legible (2026-11-15): "fetch failed" solo no dice nada; la causa
+// (ENOTFOUND, ECONNRESET, UND_ERR_CONNECT_TIMEOUT...) queda en el mensaje.
+function describeFetchError(err) {
+  if (err?.name === 'TimeoutError' || err?.name === 'AbortError') return 'copa4naciones.com no respondió a tiempo.';
+  const code = err?.cause?.code || err?.cause?.name || '';
+  return `${err?.message || err}${code ? ` (${code})` : ''}`;
+}
+const isNetworkError = (err) => err?.name === 'TimeoutError' || err?.name === 'AbortError' || (err instanceof TypeError && /fetch failed/i.test(err.message || ''));
+
+// Misma validación que hace el propio sitio antes de usar la respuesta.
+function validTournament(d) {
+  return d && typeof d === 'object' && d.standings && Array.isArray(d.matches) && Array.isArray(d.teams) && Array.isArray(d.players) ? d : null;
+}
+// De qué fuente salió el objeto (no se guarda: propiedad no enumerable).
+function tagSource(data, fuente) {
+  Object.defineProperty(data, '__fuente', { value: fuente, enumerable: false });
+  return data;
+}
+export const WEB_SOURCE_LABEL = {
+  api: 'copa4naciones.com/api/c4n/live (la misma fuente que usa la web)',
+  rsc: 'copa4naciones.com (render RSC de la home, respaldo)',
+  html: 'copa4naciones.com (HTML de la home, respaldo)',
+  mock: 'copa4naciones.com SIMULADA (pruebas)',
+};
+
 export const STRUCTURE_CHANGED_MESSAGE = 'CAMBIÓ LA ESTRUCTURA DE COPA4NACIONES.COM — SE CONSERVAN LOS ÚLTIMOS DATOS VÁLIDOS';
 
 class StructureError extends Error {
@@ -123,19 +166,51 @@ class StructureError extends Error {
   }
 }
 
+// MOCK SOLO PARA PRUEBAS (2026-11-11): con GLA_C4N_WEB_MOCK apuntando a un
+// archivo JSON (el objeto del torneo tal como lo publica la web) se lee ese
+// archivo en lugar de copa4naciones.com, así la prueba general no depende de
+// que la web esté en línea y se pueden simular incidencias en una COPIA. Si el
+// archivo no existe o contiene "FALLA", se comporta como una web caída.
+// Nunca se usa en operación (la variable no está definida).
+const WEB_MOCK = process.env.GLA_C4N_WEB_MOCK || '';
+async function fetchMockTournament() {
+  let text;
+  try { text = fs.readFileSync(WEB_MOCK, 'utf8'); } catch { throw new Error('copa4naciones.com (simulada) no respondió.'); }
+  if (/^\s*FALLA/.test(text)) throw new Error('copa4naciones.com (simulada) respondió 503 Service Unavailable');
+  const obj = JSON.parse(text);
+  return tagSource(obj?.data?.tournament ? obj.data : obj, 'mock');
+}
+
+// (2026-11-15) Primero /api/c4n/live (la fuente que usa la web en el
+// navegador, sin el caché ISR de la home); si no responde bien, el flight RSC
+// y por último el HTML. Si la API ni siquiera conecta (red / tiempo), el sitio
+// no está accesible: no se insiste con los respaldos (mismo host).
 export async function fetchWebTournament() {
+  if (WEB_MOCK) return fetchMockTournament();
+  const fails = [];
+  try {
+    const res = await fetch(WEB_LIVE_URL, { headers: { 'User-Agent': 'SOFTX/1.0 (graficas de transmision)', Accept: 'application/json' }, cache: 'no-store', signal: AbortSignal.timeout(WEB_TIMEOUT_MS) });
+    if (!res.ok) throw new Error(`/api/c4n/live respondió ${res.status} ${res.statusText}`);
+    const data = validTournament(await res.json());
+    if (data) return tagSource(data, 'api');
+    fails.push('/api/c4n/live: respuesta sin el formato esperado');
+  } catch (err) {
+    if (isNetworkError(err)) throw new Error(`No se pudo conectar con copa4naciones.com: ${describeFetchError(err)}`);
+    fails.push(`/api/c4n/live: ${describeFetchError(err)}`);
+  }
   let data = null;
   try {
     data = extractTournamentData(await fetchText(WEB_URL, { RSC: '1' }));
   } catch (err) {
-    if (err.name === 'TimeoutError') throw new Error('copa4naciones.com no respondió a tiempo.');
+    if (isNetworkError(err)) throw new Error(`No se pudo conectar con copa4naciones.com: ${describeFetchError(err)}`);
   }
-  if (!data) data = extractTournamentData(flightFromHtml(await fetchText(WEB_URL)));
+  if (data) return tagSource(data, 'rsc');
+  data = extractTournamentData(flightFromHtml(await fetchText(WEB_URL)));
   if (!data) {
-    console.warn('[SOFTX C4N] Estructura de copa4naciones.com: no se encontró el bloque {"data":{"tournament"...} en el flight RSC ni en self.__next_f.');
+    console.warn(`[SOFTX C4N] Estructura de copa4naciones.com: ${fails.join(' · ')}; tampoco se encontró el bloque {"data":{"tournament"...} en el flight RSC ni en self.__next_f.`);
     throw new StructureError(['data.tournament (bloque del torneo)']);
   }
-  return data;
+  return tagSource(data, 'html');
 }
 
 // VALIDACIÓN DEFENSIVA de la estructura publicada. "critical": sin esto no
@@ -247,6 +322,9 @@ function normalizeWeb(raw, catalog) {
     teamWebId: p.teamId || null,
     teamId: toLocal(p.teamId),
     name: p.name || '',
+    // (2026-11-15) Nombre completo de la web ("Javier Machado" de "Javo"): lo usa
+    // FORMACIÓN POR LISTA para reconocer nombres pegados. No se dibuja.
+    fullName: p.fullName && p.fullName !== p.name ? String(p.fullName) : '',
     number: p.number === undefined || p.number === null || p.number === '' ? '' : String(p.number),
     position: p.position || '',
     photo: p.photo || null,
@@ -400,7 +478,7 @@ async function downloadMedia(url, destNoExt) {
 // ------------------------------------------------------------- módulo
 
 export async function registerCopa4NacionesRoutes(app, deps) {
-  const { getActiveThemeId, getTeamCatalog, getRoster, applyServerModuleUpdate, isLoopbackRequest, refreshTeamCatalog } = deps;
+  const { getActiveThemeId, getTeamCatalog, getRoster, applyServerModuleUpdate, isLoopbackRequest, refreshTeamCatalog, getModuleData, broadcastMessage, stopModules, clearPreview } = deps;
   const active = getActiveThemeId() === COPA4N_THEME_ID;
 
   function requireC4n(res) {
@@ -417,6 +495,7 @@ export async function registerCopa4NacionesRoutes(app, deps) {
   let resultsSoftx = {};
   let tablaManual = [];
   let config = {};
+  let liveSaved = null;
   if (active) {
     const dataDir = path.resolve(process.env.GLA_DATA_DIR || path.join(process.cwd(), 'data'), 'copa4naciones');
     fs.mkdirSync(dataDir, { recursive: true });
@@ -431,15 +510,25 @@ export async function registerCopa4NacionesRoutes(app, deps) {
     resultsSoftx = await loadPersistentValue('c4n_results_softx', F('c4n-resultados.json'), {}) || {};
     tablaManual = await loadPersistentValue('c4n_tabla_manual', F('c4n-tabla-manual.json'), []) || [];
     config = await loadPersistentValue('c4n_config', F('c4n-config.json'), {}) || {};
+    // Sync en vivo de incidencias (ENTRETIEMPO / FINAL en WEB): último estado y
+    // último snapshot WEB válido del partido asociado.
+    liveSaved = await loadPersistentValue('c4n_live', F('c4n-live.json'), null);
   }
   config = {
     fixtureSource: config.fixtureSource === 'web' ? 'web' : 'manual',
     tablaSource: ['web', 'manual'].includes(config.tablaSource) ? config.tablaSource : 'calculada',
     statsSource: config.statsSource === 'web' ? 'web' : 'softx',
     plantelSource: config.plantelSource && typeof config.plantelSource === 'object' ? config.plantelSource : {},
+    // VISUAL DE JUGADORES al aire (2026-11-11, PLANTELES): 'foto' (foto si
+    // existe, si no el respaldo de cada pieza) o 'logo' (escudo de la selección).
+    visualJugadores: config.visualJugadores === 'logo' ? 'logo' : 'foto',
+    // PARTIDO WEB ASOCIADO para el sync en vivo: '' = AUTOMÁTICO (el partido
+    // del MARCADOR, por id); si no, el id web elegido a mano en ENTRETIEMPO / FINAL.
+    liveMatchId: typeof config.liveMatchId === 'string' && /^[A-Za-z0-9_-]{0,80}$/.test(config.liveMatchId) ? config.liveMatchId : '',
   };
 
   const catalog = () => getTeamCatalog(COPA4N_THEME_ID);
+  let liveSync = null;
   const teamName = (id) => catalog().find((t) => t.id === id)?.name || id || '';
 
   // --- fixture efectivo ---
@@ -507,6 +596,7 @@ export async function registerCopa4NacionesRoutes(app, deps) {
       teamId,
       dorsal: p.number,
       nombre: p.name,
+      nombreCompleto: p.fullName || '',
       posicion: p.position,
       foto: p.photoLocal || '',
       fotoUrl: p.photoLocal ? `${PHOTOS_URL}${encodeURIComponent(teamId)}/${encodeURIComponent(p.photoLocal)}` : null,
@@ -540,6 +630,20 @@ export async function registerCopa4NacionesRoutes(app, deps) {
     if (manualPlayers(teamId).length) return 'manual';
     return webPlayers(teamId).length ? 'web' : 'manual';
   }
+  // Foto LOCAL de cada jugador de los rankings (2026-11-12, JUGADORES A SEGUIR
+  // automático; Program no lee planteles): la del plantel efectivo y, si no
+  // tiene, la foto web ya descargada. Siempre por id del jugador.
+  function rankingsWithPhotos(rk) {
+    const cache = new Map();
+    const fotoOf = (teamId, playerId) => {
+      if (!teamId || !playerId) return '';
+      if (!cache.has(teamId)) cache.set(teamId, [...effectivePlantel(teamId).players, ...webPlayers(teamId)]);
+      const p = cache.get(teamId).find((x) => x.foto && (x.id === playerId || (x.webId && `web-${x.webId}` === playerId)));
+      return p?.foto || '';
+    };
+    const map = (rows) => (Array.isArray(rows) ? rows : []).map((r) => ({ ...r, foto: fotoOf(r.teamId, r.playerId) }));
+    return { ...rk, goals: map(rk.goals), assists: map(rk.assists), contributions: map(rk.contributions) };
+  }
   function effectivePlantel(teamId) {
     const src = plantelSource(teamId);
     return { source: src, players: src === 'web' ? webPlayers(teamId) : manualPlayers(teamId).filter((p) => !p.baja) };
@@ -552,8 +656,9 @@ export async function registerCopa4NacionesRoutes(app, deps) {
     applyServerModuleUpdate('c4nDatos', {
       fixture: effectiveFixture(),
       fixtureSource: config.fixtureSource,
+      visualJugadores: config.visualJugadores,
       standings: effectiveStandings(),
-      rankings: effectiveRankings(),
+      rankings: rankingsWithPhotos(effectiveRankings()),
       tournament: {
         name: 'COPA 4 NACIONES',
         dates: '14 Y 15 DE NOVIEMBRE DE 2026',
@@ -563,8 +668,16 @@ export async function registerCopa4NacionesRoutes(app, deps) {
       },
       champion: web?.champion || null,
       webUpdatedAt: web?.fetchedAt || '',
+      // Logos de la carpeta de sponsors (ZÓCALO COMPUESTO: RECARGAR los vuelve a leer).
+      sponsors: sponsorFilesNow(),
+      // Incidencias WEB del partido asociado (ENTRETIEMPO / FINAL en WEB).
+      live: liveSync ? liveSync.publicLive() : null,
       updatedAt: nowIso(),
     });
+  }
+
+  function sponsorFilesNow() {
+    try { return listImages(FOLDERS.sponsors); } catch { return []; }
   }
 
   function saveAll() {
@@ -576,6 +689,7 @@ export async function registerCopa4NacionesRoutes(app, deps) {
 
   // --- sync web ---
   async function cacheMedia(snapshot) {
+    if (WEB_MOCK) return; // web simulada (pruebas): no se descarga nada
     const known = new Set(catalog().map((t) => t.id));
     // Escudos de selecciones que no están en EQUIPOS (ej. el amistoso): se
     // descargan a la carpeta de escudos y aparecen ahí como PENDIENTES.
@@ -606,11 +720,14 @@ export async function registerCopa4NacionesRoutes(app, deps) {
       if (!normalized.teams.length && !normalized.matches.length) throw new Error('La web respondió sin selecciones ni partidos: se conserva el último snapshot válido.');
       const { merged, status } = mergeWithPrevious(normalized, web, check.sections);
       await cacheMedia(merged);
-      web = { ...merged, fetchedAt: startedAt, source: `${WEB_URL} (Next.js RSC)`, status };
+      web = { ...merged, fetchedAt: startedAt, source: WEB_SOURCE_LABEL[raw.__fuente] || WEB_URL, status };
       webStatus = status;
       schedulePersistentWrite('c4n_web_snapshot', web);
       refreshTeamCatalog?.();
       publish();
+      // (2026-11-15) ACTUALIZAR TODO DESDE WEB también actualiza las
+      // incidencias WEB de ENTRETIEMPO / FINAL si alguna está en WEB.
+      if (liveSync && liveWanted()) liveSync.refresh().catch(() => {});
       return { ok: true, status, fetchedAt: startedAt };
     } catch (err) {
       // Nunca se borra el snapshot: el error queda informado y las gráficas
@@ -685,10 +802,21 @@ export async function registerCopa4NacionesRoutes(app, deps) {
 
   // ACTUALIZAR TODO DESDE WEB: selecciones, fixture, planteles, tabla,
   // goleadores, asistencias y G+A en una sola lectura.
+  // ACTUALIZAR TODO DESDE WEB (2026-11-14): SIEMPRE responde. En Express 4 un
+  // error dentro de una ruta async no se atrapa: la respuesta no salía nunca y
+  // Master quedaba en "ACTUALIZANDO..." para siempre. Dos pedidos a la vez
+  // (doble click, otro Master) comparten la misma consulta.
+  let syncInFlight = null;
   app.post('/api/c4n/sync', async (req, res) => {
     if (!requireC4n(res)) return;
-    const result = await syncWeb();
-    res.status(result.ok ? 200 : 502).json({ ...result, state: stateResponse() });
+    try {
+      if (!syncInFlight) syncInFlight = syncWeb().finally(() => { syncInFlight = null; });
+      const result = await syncInFlight;
+      res.status(result.ok ? 200 : 502).json({ ...result, state: stateResponse() });
+    } catch (err) {
+      console.warn('[SOFTX C4N] ACTUALIZAR DESDE WEB:', err?.message || err);
+      if (!res.headersSent) res.status(500).json({ ok: false, error: `NO SE PUDO ACTUALIZAR: ${err?.message || err}. Se conservan los últimos datos.` });
+    }
   });
 
   app.post('/api/c4n/config', (req, res) => {
@@ -697,6 +825,7 @@ export async function registerCopa4NacionesRoutes(app, deps) {
     if (b.fixtureSource) config.fixtureSource = b.fixtureSource === 'web' ? 'web' : 'manual';
     if (b.tablaSource) config.tablaSource = ['web', 'manual'].includes(b.tablaSource) ? b.tablaSource : 'calculada';
     if (b.statsSource) config.statsSource = b.statsSource === 'web' ? 'web' : 'softx';
+    if (b.visualJugadores) config.visualJugadores = b.visualJugadores === 'logo' ? 'logo' : 'foto';
     if (b.plantelSource && typeof b.plantelSource === 'object') {
       for (const [teamId, src] of Object.entries(b.plantelSource)) {
         if (TEAM_ID_RE.test(teamId) && ['web', 'manual'].includes(src)) config.plantelSource[teamId] = src;
@@ -763,6 +892,61 @@ export async function registerCopa4NacionesRoutes(app, deps) {
     saveAll();
     publish();
     res.json(stateResponse());
+  });
+
+  // REINICIAR TODO (2026-11-14): RESET OPERATIVO antes de transmitir o después
+  // de probar. Limpia SOLO lo que carga / opera SOFTX:
+  //   - resultados guardados desde SOFTX: en el fixture MANUAL, el estado,
+  //     goles, penales e incidencias de cada partido (equipos, fecha, horario y
+  //     fase quedan); en el fixture WEB, los resultados SOFTX que se le
+  //     aplicaban encima. Un resultado OFICIAL de la web queda (es real).
+  //   - MARCADOR: goles, reloj, período, tiempo adicional, penales e
+  //     incidencias (goles, tarjetas, cambios, VAR, tanda); el partido elegido,
+  //     el FIN DEL CONTADOR y los ajustes quedan.
+  //   - placas de incidencia (TARJETAS / CAMBIOS: el último evento; VAR: la
+  //     decisión y el motivo) y la carga MANUAL / TEST de ENTRETIEMPO / FINAL.
+  //   - saca del aire todas las piezas y vacía el Preview.
+  // No toca equipos, planteles, fotos, fixture, datos WEB (fixture, tabla,
+  // rankings, incidencias en vivo), tabla / rankings manuales, configuración,
+  // ajustes, sponsors ni assets. Persiste (snapshots + estado de los módulos).
+  const RESET_FIELDS = {
+    c4nMarcador: ['scoreA', 'scoreB', 'clock', 'period', 'extraMinutes', 'showExtra', 'extraClock', 'extraFor', 'matchEvents', 'penalties'],
+    c4nTarjeta: ['event'],
+    c4nCambio: ['event'],
+    c4nVar: ['decision', 'motivo'],
+    c4nStatsEntretiempo: ['fuente', 'manual'],
+    c4nStatsFinal: ['fuente', 'manual'],
+  };
+  app.post('/api/c4n/reiniciar-todo', (req, res) => {
+    if (!requireC4n(res)) return;
+    // ORDEN: primero fuera del aire (cada pieza sale con su animación) y el
+    // Preview vacío; recién después los datos limpios y la vista del torneo.
+    // (Si la vista se publicara antes, un Master reenviaría su composición de
+    // Preview al recibirla y volvería a aparecer.)
+    const c4nIds = Object.keys(MODULES).filter((id) => id.startsWith('c4n') && id !== 'c4nDatos');
+    const fueraDelAire = stopModules ? stopModules(c4nIds) : [];
+    if (clearPreview) clearPreview();
+    const resultadosSoftx = Object.keys(resultsSoftx).length;
+    resultsSoftx = {};
+    let partidosManual = 0;
+    fixtureManual = fixtureManual.map((mt) => {
+      if (mt.status === 'scheduled' && !mt.score && !mt.penalties && !(mt.events || []).length) return mt;
+      partidosManual++;
+      return { ...mt, status: 'scheduled', score: null, penalties: null, events: [] };
+    });
+    saveAll();
+    publish();
+    const modules = {};
+    for (const [id, keys] of Object.entries(RESET_FIELDS)) {
+      const defaults = MODULES[id]?.defaults || {};
+      const patch = Object.fromEntries(keys.map((k) => [k, JSON.parse(JSON.stringify(defaults[k] ?? null))]));
+      applyServerModuleUpdate(id, patch);
+      modules[id] = getModuleData(id);
+    }
+    // Cada Master reemplaza esos borradores (y cancela sus autoguardados).
+    broadcastMessage({ type: 'C4N_RESET', modules, at: nowIso() });
+    console.log(`[C4N] REINICIAR TODO: ${resultadosSoftx} resultado(s) SOFTX sobre la web, ${partidosManual} partido(s) del fixture MANUAL, fuera del aire: ${fueraDelAire.join(', ') || 'nada'}`);
+    res.json({ ok: true, resultadosSoftx, partidosManual, fueraDelAire, modulos: Object.keys(modules), ...stateResponse() });
   });
 
   // RESOLVER CRUCES (fixture MANUAL): semis desde la tabla efectiva, final y
@@ -856,6 +1040,72 @@ export async function registerCopa4NacionesRoutes(app, deps) {
     res.json({ ok: true, carpeta: FOLDERS.sponsors, url: SPONSORS_URL, files: listImages(FOLDERS.sponsors) });
   });
 
+  // RECARGAR SPONSORS: vuelve a leer la carpeta y publica la lista (el ZÓCALO
+  // COMPUESTO toma los logos solos). Carpeta vacía = recuadro vacío.
+  app.post('/api/c4n/sponsors/recargar', (req, res) => {
+    if (!requireC4n(res)) return;
+    fs.mkdirSync(FOLDERS.sponsors, { recursive: true });
+    publish();
+    res.json({ ok: true, carpeta: FOLDERS.sponsors, url: SPONSORS_URL, files: sponsorFilesNow() });
+  });
+
+  // --- SYNC EN VIVO DE INCIDENCIAS (ENTRETIEMPO / FINAL en WEB) ---
+  // Partido WEB asociado: el elegido a mano o, en AUTOMÁTICO, el del MARCADOR
+  // (por id: con el fixture WEB es el id oficial; con el fixture MANUAL no hay
+  // id web y queda SIN PARTIDO WEB ASOCIADO hasta elegirlo). Nunca por nombre.
+  function liveAssociation() {
+    if (config.liveMatchId) return { id: config.liveMatchId, mode: 'manual', reason: '' };
+    const m = getModuleData?.('c4nMarcador') || {};
+    if (m.fuentePartido === 'manual') return { id: null, mode: 'auto', reason: 'el MARCADOR está en MANUAL (sin partido del fixture)' };
+    if (!m.matchId) return { id: null, mode: 'auto', reason: 'el MARCADOR no tiene partido del fixture' };
+    return { id: m.matchId, mode: 'auto', reason: '' };
+  }
+  const liveWanted = () => getActiveThemeId() === COPA4N_THEME_ID
+    && ['c4nStatsEntretiempo', 'c4nStatsFinal'].some((id) => getModuleData?.(id)?.incidencias === 'web');
+  liveSync = active ? createLiveSync({
+    fetchRaw: fetchWebTournament,
+    mapperFor: (raw) => makeTeamMapper(catalog(), Array.isArray(raw?.teams) ? raw.teams : []),
+    associated: liveAssociation,
+    wanted: liveWanted,
+    onPublish: () => publish(),
+    onStatus: (status) => broadcastMessage?.({ type: 'C4N_LIVE_STATUS', status }),
+    persist: (state) => schedulePersistentWrite('c4n_live', state),
+    initial: liveSaved,
+  }) : null;
+
+  app.get('/api/c4n/live', (req, res) => {
+    if (!requireC4n(res)) return;
+    res.json({ ok: true, status: liveSync.status() });
+  });
+  // ACTUALIZAR AHORA: una consulta inmediata (si ya hay una en curso, se espera esa).
+  // (2026-11-14) SIEMPRE responde, también si la consulta tira un error (ver
+  // /api/c4n/sync): el botón nunca queda en "ACTUALIZANDO…".
+  app.post('/api/c4n/live/refresh', async (req, res) => {
+    if (!requireC4n(res)) return;
+    try {
+      res.json({ ok: true, status: await liveSync.refresh() });
+    } catch (err) {
+      console.warn('[SOFTX C4N] Sync en vivo (ACTUALIZAR AHORA):', err?.message || err);
+      if (!res.headersSent) res.status(500).json({ ok: false, error: `NO SE PUDO ACTUALIZAR: ${err?.message || err}. Se conservan los últimos datos.`, status: liveSync.status() });
+    }
+  });
+  app.post('/api/c4n/live/asociar', async (req, res) => {
+    if (!requireC4n(res)) return;
+    const id = String(req.body?.matchId ?? '');
+    if (!/^[A-Za-z0-9_-]{0,80}$/.test(id)) return res.status(400).json({ ok: false, error: 'Id de partido inválido.' });
+    config.liveMatchId = id;
+    saveAll();
+    // (2026-11-15) Se publica YA el cambio de partido: la placa deja de
+    // mostrar el partido anterior mientras llega la consulta del nuevo.
+    publish();
+    try {
+      res.json({ ok: true, status: await liveSync.refresh() });
+    } catch (err) {
+      console.warn('[SOFTX C4N] Sync en vivo (PARTIDO WEB):', err?.message || err);
+      if (!res.headersSent) res.status(500).json({ ok: false, error: `NO SE PUDO ACTUALIZAR: ${err?.message || err}. Se conservan los últimos datos.`, status: liveSync.status() });
+    }
+  });
+
   // ABRIR CARPETA (solo esta computadora con Windows): fotos de una
   // selección, sponsors, logos, fondos o escudos. Carpetas fijas en código.
   app.post('/api/c4n/abrir-carpeta', (req, res) => {
@@ -877,6 +1127,9 @@ export async function registerCopa4NacionesRoutes(app, deps) {
     }
   });
 
-  if (active) publish();
+  if (active) {
+    publish();
+    liveSync.start();
+  }
   return { publish, syncWeb, teamName };
 }

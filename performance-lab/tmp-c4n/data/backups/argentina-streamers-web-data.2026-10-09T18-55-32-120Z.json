@@ -1,0 +1,4211 @@
+{
+  "jugadores": {
+    "masculino": {
+      "data": {
+        "jugadores": [
+          {
+            "webId": "6a5a79a0d8f54d7f55c66ff2",
+            "slug": "arquero-sin-guantes",
+            "nombreCompleto": "Franco Nicolas Colagrossi",
+            "nombre": "Franco Nicolas",
+            "apellido": "Colagrossi",
+            "apodo": "ARQUERO SIN GUANTES",
+            "displayName": "ARQUERO SIN GUANTES",
+            "dorsal": "27",
+            "posicion": "GK",
+            "photoUrl": "/assets/as/players/arquero-sin-guantes.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 21,
+              "mvps": 1,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66ff5",
+            "slug": "axel-de-fiorito",
+            "nombreCompleto": "Axel Frías",
+            "nombre": "Axel",
+            "apellido": "Frías",
+            "apodo": "AXEL DE FIORITO",
+            "displayName": "AXEL DE FIORITO",
+            "dorsal": "30",
+            "posicion": "MCO",
+            "photoUrl": "/assets/as/players/axel-de-fiorito.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 1,
+              "presencias": 19,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a47e31706c86e93e88ca6b2",
+            "slug": "balanza",
+            "nombreCompleto": "Matias Amboade",
+            "nombre": "Matias",
+            "apellido": "Amboade",
+            "apodo": "BALANZA",
+            "displayName": "BALANZA",
+            "dorsal": "10",
+            "posicion": "MI",
+            "photoUrl": "https://api.gla.futbol/api/media/file/balanza.jpg",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 2,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a559deb9264fd9d6d31dc64",
+            "slug": "benca",
+            "nombreCompleto": "Agustin Bencardino",
+            "nombre": "Agustin",
+            "apellido": "Bencardino",
+            "apodo": "BENCA",
+            "displayName": "BENCA",
+            "dorsal": "28",
+            "posicion": "MD",
+            "photoUrl": "/assets/as/players/benca.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 2,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66fe5",
+            "slug": "benjamin-calero",
+            "nombreCompleto": "Benjamin Calero",
+            "nombre": "Benjamin",
+            "apellido": "Calero",
+            "apodo": "",
+            "displayName": "Benjamin Calero",
+            "dorsal": "33",
+            "posicion": "LD",
+            "photoUrl": "/assets/as/players/benja-calero.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 8,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a47e31706c86e93e88ca6af",
+            "slug": "blito",
+            "nombreCompleto": "Pablo Alexis Basualdo",
+            "nombre": "Pablo Alexis",
+            "apellido": "Basualdo",
+            "apodo": "Blito",
+            "displayName": "Blito",
+            "dorsal": "8",
+            "posicion": "DFC",
+            "photoUrl": "/assets/as/players/blito.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 1,
+              "asistencias": 0,
+              "presencias": 25,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66feb",
+            "slug": "c0ker",
+            "nombreCompleto": "Mathias Nicolas Vasile",
+            "nombre": "Mathias Nicolas",
+            "apellido": "Vasile",
+            "apodo": "C0KER",
+            "displayName": "C0KER",
+            "dorsal": "99",
+            "posicion": "DC",
+            "photoUrl": "/assets/as/players/coker.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 4,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a559deb9264fd9d6d31dc70",
+            "slug": "cedrola",
+            "nombreCompleto": "Luciano Cedrola",
+            "nombre": "Luciano",
+            "apellido": "Cedrola",
+            "apodo": "CEDROLA",
+            "displayName": "CEDROLA",
+            "dorsal": "1",
+            "posicion": "GK",
+            "photoUrl": "/assets/as/players/cedrola.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 26,
+              "mvps": 1,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a559deb9264fd9d6d31dc94",
+            "slug": "chapu",
+            "nombreCompleto": "Martín Lucas Martínez",
+            "nombre": "Martín Lucas",
+            "apellido": "Martínez",
+            "apodo": "CHAPU",
+            "displayName": "CHAPU",
+            "dorsal": "21",
+            "posicion": "GK",
+            "photoUrl": "https://api.gla.futbol/api/media/file/JUGADOR_f.png",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 1,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a47e31706c86e93e88ca6b7",
+            "slug": "chichi",
+            "nombreCompleto": "Juan Pablo Angel Flores",
+            "nombre": "Juan Pablo Angel",
+            "apellido": "Flores",
+            "apodo": "CHICHI",
+            "displayName": "CHICHI",
+            "dorsal": "25",
+            "posicion": "DC",
+            "photoUrl": "/assets/as/players/chichi.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 2,
+              "asistencias": 1,
+              "presencias": 12,
+              "mvps": 1,
+              "sanciones": {
+                "total": 1,
+                "amarillas": 1,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a47e31706c86e93e88ca6ac",
+            "slug": "coscu",
+            "nombreCompleto": "Martin Perez Di Salvo",
+            "nombre": "Martin",
+            "apellido": "Perez Di Salvo",
+            "apodo": "COSCU",
+            "displayName": "COSCU",
+            "dorsal": "4",
+            "posicion": "LD",
+            "photoUrl": "/assets/as/players/coscu.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 3,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66ffc",
+            "slug": "el-nene",
+            "nombreCompleto": "Agustin Pablo Saguillo",
+            "nombre": "Agustin Pablo",
+            "apellido": "Saguillo",
+            "apodo": "EL NENE",
+            "displayName": "EL NENE",
+            "dorsal": "20",
+            "posicion": "MP",
+            "photoUrl": "/assets/as/players/el-nene.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 0,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66ff0",
+            "slug": "facu-nvj",
+            "nombreCompleto": "Facundo Ezequiel Sanchez",
+            "nombre": "Facundo Ezequiel",
+            "apellido": "Sanchez",
+            "apodo": "FACU NVJ",
+            "displayName": "FACU NVJ",
+            "dorsal": "15",
+            "posicion": "MDC",
+            "photoUrl": "/assets/as/players/facu-nvj.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 2,
+              "presencias": 23,
+              "mvps": 1,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a47e31706c86e93e88ca6ae",
+            "slug": "franbar",
+            "nombreCompleto": "Franco Tomas Bartucci",
+            "nombre": "Franco Tomas",
+            "apellido": "Bartucci",
+            "apodo": "FRANBAR",
+            "displayName": "FRANBAR",
+            "dorsal": "7",
+            "posicion": "EI",
+            "photoUrl": "/assets/as/players/franbar.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 4,
+              "asistencias": 2,
+              "presencias": 23,
+              "mvps": 2,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66ff9",
+            "slug": "goyo",
+            "nombreCompleto": "Gregorio Lopez Ogawa",
+            "nombre": "Gregorio",
+            "apellido": "Lopez Ogawa",
+            "apodo": "GOYO",
+            "displayName": "GOYO",
+            "dorsal": "4",
+            "posicion": "LD",
+            "photoUrl": "/assets/as/players/goyo.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 11,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a559deb9264fd9d6d31dc46",
+            "slug": "igna-lopez",
+            "nombreCompleto": "Ignacio Lopez",
+            "nombre": "Ignacio",
+            "apellido": "Lopez",
+            "apodo": "Igna Lopez",
+            "displayName": "Igna Lopez",
+            "dorsal": "32",
+            "posicion": "MD",
+            "photoUrl": "/assets/as/players/igna-lopez.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 2,
+              "asistencias": 3,
+              "presencias": 25,
+              "mvps": 1,
+              "sanciones": {
+                "total": 1,
+                "amarillas": 1,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66fe9",
+            "slug": "joaco",
+            "nombreCompleto": "Joaquin Lopez",
+            "nombre": "Joaquin",
+            "apellido": "Lopez",
+            "apodo": "JOACO",
+            "displayName": "JOACO",
+            "dorsal": "18",
+            "posicion": "DC",
+            "photoUrl": "/assets/as/players/joaco-lopez.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 8,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66fe6",
+            "slug": "khea",
+            "nombreCompleto": "Ivo Alfredo Thomas Serué",
+            "nombre": "Ivo Alfredo",
+            "apellido": "Thomas Serué",
+            "apodo": "KHEA",
+            "displayName": "KHEA",
+            "dorsal": "43",
+            "posicion": "MD",
+            "photoUrl": "/assets/as/players/khea.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 2,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66fe8",
+            "slug": "la-cobra",
+            "nombreCompleto": "Lautaro Del Campo",
+            "nombre": "Lautaro",
+            "apellido": "Del Campo",
+            "apodo": "LA COBRA",
+            "displayName": "LA COBRA",
+            "dorsal": "9",
+            "posicion": "DC",
+            "photoUrl": "/assets/as/players/la-cobra.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 3,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a559dea9264fd9d6d31dc25",
+            "slug": "luca-f",
+            "nombreCompleto": "Luca Figurelli",
+            "nombre": "Luca",
+            "apellido": "Figurelli",
+            "apodo": "LUCA F",
+            "displayName": "LUCA F",
+            "dorsal": "23",
+            "posicion": "LI",
+            "photoUrl": "/assets/as/players/luca-figurelli.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 2,
+              "presencias": 22,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66fe7",
+            "slug": "markito",
+            "nombreCompleto": "Marcos Prez",
+            "nombre": "Marcos",
+            "apellido": "Prez",
+            "apodo": "Markito",
+            "displayName": "Markito",
+            "dorsal": "10",
+            "posicion": "MP",
+            "photoUrl": "/assets/as/players/marquitos.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 1,
+              "asistencias": 7,
+              "presencias": 21,
+              "mvps": 2,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66ff4",
+            "slug": "massi",
+            "nombreCompleto": "Massimo Pomponio",
+            "nombre": "Massimo",
+            "apellido": "Pomponio",
+            "apodo": "Massi",
+            "displayName": "Massi",
+            "dorsal": "77",
+            "posicion": "DC",
+            "photoUrl": "/assets/as/players/massi.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 19,
+              "asistencias": 1,
+              "presencias": 22,
+              "mvps": 6,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": [
+                {
+                  "titulo": "Balón de Oro",
+                  "detalle": "Influencers World Cup Malasia 2025"
+                },
+                {
+                  "titulo": "Botín de Oro",
+                  "detalle": "Influencers World Cup Malasia 2025"
+                }
+              ]
+            }
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66ffe",
+            "slug": "mauri",
+            "nombreCompleto": "Mauricio Jordan Del Castillo",
+            "nombre": "Mauricio Jordan",
+            "apellido": "Del Castillo",
+            "apodo": "MAURI",
+            "displayName": "MAURI",
+            "dorsal": "29",
+            "posicion": "MCO",
+            "photoUrl": "/assets/as/players/mauri-delca.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 2,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66fea",
+            "slug": "momo",
+            "nombreCompleto": "Geronimo Benavidez",
+            "nombre": "Geronimo",
+            "apellido": "Benavidez",
+            "apodo": "MOMO",
+            "displayName": "MOMO",
+            "dorsal": "19",
+            "posicion": "DT",
+            "photoUrl": "/assets/as/players/momo.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 3,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a580a190571f0e19fe0934a",
+            "slug": "nacho-cp",
+            "nombreCompleto": "Juan Ignacio Castañares",
+            "nombre": "Juan Ignacio",
+            "apellido": "Castañares",
+            "apodo": "NACHO CP",
+            "displayName": "NACHO CP",
+            "dorsal": "11",
+            "posicion": "ED",
+            "photoUrl": "/assets/as/players/nacho-cp.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 1,
+              "asistencias": 1,
+              "presencias": 20,
+              "mvps": 1,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a559deb9264fd9d6d31dc7f",
+            "slug": "nacho-pellizari",
+            "nombreCompleto": "Nacho Pellizari",
+            "nombre": "Nacho",
+            "apellido": "Pellizari",
+            "apodo": "",
+            "displayName": "Nacho Pellizari",
+            "dorsal": "9",
+            "posicion": "DC",
+            "photoUrl": "https://api.gla.futbol/api/media/file/pellizari-1.jpg",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 0,
+              "mvps": 0,
+              "sanciones": {
+                "total": 1,
+                "amarillas": 1,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66ff1",
+            "slug": "nahu-senger",
+            "nombreCompleto": "Nahuel Senger",
+            "nombre": "Nahuel",
+            "apellido": "Senger",
+            "apodo": "NAHU SENGER",
+            "displayName": "NAHU SENGER",
+            "dorsal": "4",
+            "posicion": "LD",
+            "photoUrl": "/assets/as/players/nahu-senger.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 19,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66fef",
+            "slug": "pablito-nonis",
+            "nombreCompleto": "Pablo Nonis",
+            "nombre": "Pablo",
+            "apellido": "Nonis",
+            "apodo": "Pablito Nonis",
+            "displayName": "Pablito Nonis",
+            "dorsal": "80",
+            "posicion": "EI",
+            "photoUrl": "/assets/as/players/pablito-nonis.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 4,
+              "asistencias": 2,
+              "presencias": 25,
+              "mvps": 1,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a559deb9264fd9d6d31dc4c",
+            "slug": "pelozo",
+            "nombreCompleto": "Luca Pelozo",
+            "nombre": "Luca",
+            "apellido": "Pelozo",
+            "apodo": "Pelozo",
+            "displayName": "Pelozo",
+            "dorsal": "22",
+            "posicion": "DFC",
+            "photoUrl": "/assets/as/players/pelozo.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 13,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66ffd",
+            "slug": "pimpeano",
+            "nombreCompleto": "Galo Blasco",
+            "nombre": "Galo",
+            "apellido": "Blasco",
+            "apodo": "Pimpeano",
+            "displayName": "Pimpeano",
+            "dorsal": "29",
+            "posicion": "LD",
+            "photoUrl": "/assets/as/players/pimpeano.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 1,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a580a180571f0e19fe092d1",
+            "slug": "roy",
+            "nombreCompleto": "Damian Dario Martino",
+            "nombre": "Damian Dario",
+            "apellido": "Martino",
+            "apodo": "ROY",
+            "displayName": "ROY",
+            "dorsal": "26",
+            "posicion": "GK",
+            "photoUrl": "/assets/as/players/roy.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 4,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a47e31706c86e93e88ca6b4",
+            "slug": "santi",
+            "nombreCompleto": "Santiago Grizas",
+            "nombre": "Santiago",
+            "apellido": "Grizas",
+            "apodo": "Santi",
+            "displayName": "Santi",
+            "dorsal": "19",
+            "posicion": "DC",
+            "photoUrl": "/assets/as/players/santi-grizas.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 3,
+              "asistencias": 0,
+              "presencias": 14,
+              "mvps": 2,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66fee",
+            "slug": "santiago-argibay",
+            "nombreCompleto": "Santiago Argibay",
+            "nombre": "Santiago",
+            "apellido": "Argibay",
+            "apodo": "",
+            "displayName": "Santiago Argibay",
+            "dorsal": "5",
+            "posicion": "MDC",
+            "photoUrl": "/assets/as/players/santi.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 1,
+              "asistencias": 1,
+              "presencias": 26,
+              "mvps": 1,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a559deb9264fd9d6d31dc91",
+            "slug": "tadeo",
+            "nombreCompleto": "Tadeo Torres",
+            "nombre": "Tadeo",
+            "apellido": "Torres",
+            "apodo": "TADEO",
+            "displayName": "TADEO",
+            "dorsal": "2",
+            "posicion": "DFC",
+            "photoUrl": "/assets/as/players/tadeo.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 1,
+              "asistencias": 1,
+              "presencias": 23,
+              "mvps": 0,
+              "sanciones": {
+                "total": 1,
+                "amarillas": 1,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a56a82b1bc7ab9d19117836",
+            "slug": "teico",
+            "nombreCompleto": "Mateo Leszkiewicz",
+            "nombre": "Mateo",
+            "apellido": "Leszkiewicz",
+            "apodo": "TEICO",
+            "displayName": "TEICO",
+            "dorsal": "13",
+            "posicion": "LD",
+            "photoUrl": "https://api.gla.futbol/api/media/file/teico.jpg",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 26,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66fec",
+            "slug": "tita",
+            "nombreCompleto": "Franco Stefano Tita",
+            "nombre": "Franco Stefano",
+            "apellido": "Tita",
+            "apodo": "TITA",
+            "displayName": "TITA",
+            "dorsal": "14",
+            "posicion": "MDC",
+            "photoUrl": "/assets/as/players/tita.webp",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 9,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          }
+        ]
+      },
+      "ultimaActualizacion": "2026-10-09T01:33:56.801Z",
+      "fuente": "argentinastreamers.com · JUGADORES · MASCULINO",
+      "ultimoIntento": "2026-10-09T01:33:56.801Z",
+      "ultimoResultado": "ok",
+      "ultimoError": null
+    },
+    "femenino": {
+      "data": {
+        "jugadores": [
+          {
+            "webId": "6aa05e8b3d3ca5e4630997f6",
+            "slug": "ana-gabriela-de-biasi",
+            "nombreCompleto": "Ana Gabriela De Biasi",
+            "nombre": "Ana Gabriela",
+            "apellido": "De Biasi",
+            "apodo": "",
+            "displayName": "Ana Gabriela De Biasi",
+            "dorsal": "11",
+            "posicion": "EI",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-878bcdbe9d6f2ad391f8.jpeg",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 1,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6aa05e8b3d3ca5e4630997f0",
+            "slug": "anto",
+            "nombreCompleto": "Antonela Fantini",
+            "nombre": "Antonela",
+            "apellido": "Fantini",
+            "apodo": "Anto",
+            "displayName": "Anto",
+            "dorsal": "5",
+            "posicion": "DFC",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-335d460fa018e1dd2587.jpeg",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 1,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6aa85331fde3badf1f247275",
+            "slug": "barbi",
+            "nombreCompleto": "Barbara Roskin",
+            "nombre": "Barbara",
+            "apellido": "Roskin",
+            "apodo": "Barbi",
+            "displayName": "Barbi",
+            "dorsal": "30",
+            "posicion": "MED",
+            "photoUrl": "",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 0,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6aa85331fde3badf1f247267",
+            "slug": "becca",
+            "nombreCompleto": "Delfina Beccacece",
+            "nombre": "Delfina",
+            "apellido": "Beccacece",
+            "apodo": "Becca",
+            "displayName": "Becca",
+            "dorsal": "8",
+            "posicion": "MDC",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-2b13941d9263166a4fa6.jpeg",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 1,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6aa85331fde3badf1f24726b",
+            "slug": "bianca",
+            "nombreCompleto": "Bianca Di Pascuale",
+            "nombre": "Bianca",
+            "apellido": "Di Pascuale",
+            "apodo": "Bianca",
+            "displayName": "Bianca",
+            "dorsal": "16",
+            "posicion": "EI",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-26482d93b95cde9bb15a.jpeg",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 1,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a6a2d3dc2efc7298cf57fea",
+            "slug": "camilitafer",
+            "nombreCompleto": "Camila Fernández",
+            "nombre": "Camila",
+            "apellido": "Fernández",
+            "apodo": "Camilitafer",
+            "displayName": "Camilitafer",
+            "dorsal": "19",
+            "posicion": "LI",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-40c537f0682bcc3c8504.jpeg",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 1,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6aa85331fde3badf1f247269",
+            "slug": "cande",
+            "nombreCompleto": "Candela Simoneit",
+            "nombre": "Candela",
+            "apellido": "Simoneit",
+            "apodo": "Cande",
+            "displayName": "Cande",
+            "dorsal": "6",
+            "posicion": "DFC",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-538bf8f10b9607228590.jpeg",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 1,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6aa05e8b3d3ca5e4630997f4",
+            "slug": "chiara-mancuso",
+            "nombreCompleto": "Chiara Mancuso",
+            "nombre": "Chiara",
+            "apellido": "Mancuso",
+            "apodo": "",
+            "displayName": "Chiara Mancuso",
+            "dorsal": "26",
+            "posicion": "DEL",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-fbb4d5688a7448134021.jpeg",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 0,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "e9b130bff7e2c395c1dd8c51",
+            "slug": "coty",
+            "nombreCompleto": "Constanza Romero",
+            "nombre": "Constanza",
+            "apellido": "Romero",
+            "apodo": "Coty",
+            "displayName": "Coty",
+            "dorsal": "18",
+            "posicion": "DC",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-d4b09c3e63d657f68c69.jpeg",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 1,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a6a2d3dc2efc7298cf57fd9",
+            "slug": "danu",
+            "nombreCompleto": "Daniela Guerrero",
+            "nombre": "Daniela",
+            "apellido": "Guerrero",
+            "apodo": "Danu",
+            "displayName": "Danu",
+            "dorsal": "32",
+            "posicion": "LD",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-5afc111a357d2b160f87.jpeg",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 1,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6aa85331fde3badf1f24726d",
+            "slug": "emi",
+            "nombreCompleto": "Emilia Boema",
+            "nombre": "Emilia",
+            "apellido": "Boema",
+            "apodo": "Emi",
+            "displayName": "Emi",
+            "dorsal": "15",
+            "posicion": "EI",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-8e77d87173a8403e8b6f.jpeg",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 1,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6aa85331fde3badf1f24726a",
+            "slug": "faty",
+            "nombreCompleto": "Fatima Danura",
+            "nombre": "Fatima",
+            "apellido": "Danura",
+            "apodo": "Faty",
+            "displayName": "Faty",
+            "dorsal": "17",
+            "posicion": "MI",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-25ab6caffb343aa6ee92.jpeg",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 1,
+              "asistencias": 0,
+              "presencias": 1,
+              "mvps": 0,
+              "sanciones": {
+                "total": 1,
+                "amarillas": 1,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a6a2d3dc2efc7298cf57fcf",
+            "slug": "federikita",
+            "nombreCompleto": "Federica Riccio",
+            "nombre": "Federica",
+            "apellido": "Riccio",
+            "apodo": "FederiKita",
+            "displayName": "FederiKita",
+            "dorsal": "7",
+            "posicion": "LD",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-c6e97cebdd08a482079e.jpeg",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 1,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6aa85331fde3badf1f247268",
+            "slug": "fio",
+            "nombreCompleto": "Fiorella Gimenez",
+            "nombre": "Fiorella",
+            "apellido": "Gimenez",
+            "apodo": "Fio",
+            "displayName": "Fio",
+            "dorsal": "21",
+            "posicion": "DC",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-c705c563119a0bf6cc81.jpeg",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 1,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6aa05e8b3d3ca5e463099804",
+            "slug": "guadalupe-vergara",
+            "nombreCompleto": "Guadalupe Vergara",
+            "nombre": "Guadalupe",
+            "apellido": "Vergara",
+            "apodo": "",
+            "displayName": "Guadalupe Vergara",
+            "dorsal": "",
+            "posicion": "MDC",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-6621fd01e6cb81b6f690.jpeg",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 0,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6aa05e8b3d3ca5e4630997f2",
+            "slug": "hui",
+            "nombreCompleto": "Huilén De Angelo",
+            "nombre": "Huilén",
+            "apellido": "De Angelo",
+            "apodo": "Hui",
+            "displayName": "Hui",
+            "dorsal": "30",
+            "posicion": "MDC",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-fa1d58034ed7513f2f6d.jpeg",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 1,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6aa85331fde3badf1f247273",
+            "slug": "jachu",
+            "nombreCompleto": "Jacinta Maidana",
+            "nombre": "Jacinta",
+            "apellido": "Maidana",
+            "apodo": "Jachu",
+            "displayName": "Jachu",
+            "dorsal": "24",
+            "posicion": "MED",
+            "photoUrl": "",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 0,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6aa85331fde3badf1f247279",
+            "slug": "jaz",
+            "nombreCompleto": "Jazmin De Leon",
+            "nombre": "Jazmin",
+            "apellido": "De Leon",
+            "apodo": "Jaz",
+            "displayName": "Jaz",
+            "dorsal": "4",
+            "posicion": "DEF",
+            "photoUrl": "",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 0,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6aa85331fde3badf1f24727a",
+            "slug": "july",
+            "nombreCompleto": "Julieta Peña",
+            "nombre": "Julieta",
+            "apellido": "Peña",
+            "apodo": "July",
+            "displayName": "July",
+            "dorsal": "25",
+            "posicion": "DEF",
+            "photoUrl": "",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 0,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6a6a2d3dc2efc7298cf57fda",
+            "slug": "lucia-maidana-cornejo",
+            "nombreCompleto": "Lucia Maidana Cornejo",
+            "nombre": "Lucia",
+            "apellido": "Maidana Cornejo",
+            "apodo": "",
+            "displayName": "Lucia Maidana Cornejo",
+            "dorsal": "3",
+            "posicion": "DEL",
+            "photoUrl": "",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 0,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6aa85331fde3badf1f247277",
+            "slug": "mai",
+            "nombreCompleto": "Mailen Zalazar",
+            "nombre": "Mailen",
+            "apellido": "Zalazar",
+            "apodo": "Mai",
+            "displayName": "Mai",
+            "dorsal": "29",
+            "posicion": "DEL",
+            "photoUrl": "",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 0,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6aa85331fde3badf1f24726f",
+            "slug": "mora",
+            "nombreCompleto": "Mora Jabornisky",
+            "nombre": "Mora",
+            "apellido": "Jabornisky",
+            "apodo": "Mora",
+            "displayName": "Mora",
+            "dorsal": "2",
+            "posicion": "DFC",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-40da9ace3172471d3659.jpeg",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 1,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6aa85331fde3badf1f247271",
+            "slug": "pachu",
+            "nombreCompleto": "Maria Paz Zubiri",
+            "nombre": "Maria Paz",
+            "apellido": "Zubiri",
+            "apodo": "Pachu",
+            "displayName": "Pachu",
+            "dorsal": "26",
+            "posicion": "GK",
+            "photoUrl": "",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 1,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6aa05e8b3d3ca5e463099808",
+            "slug": "portena",
+            "nombreCompleto": "Isis Nerea Lezcano",
+            "nombre": "Isis Nerea",
+            "apellido": "Lezcano",
+            "apodo": "Porteña",
+            "displayName": "Porteña",
+            "dorsal": "9",
+            "posicion": "MDC",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-2bbeb9c0b15b8a8dc136.jpeg",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 1,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6aa05e8b3d3ca5e4630997fc",
+            "slug": "puma",
+            "nombreCompleto": "Maria Florencia Lattanzio",
+            "nombre": "Maria Florencia",
+            "apellido": "Lattanzio",
+            "apodo": "Puma",
+            "displayName": "Puma",
+            "dorsal": "1",
+            "posicion": "GK",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-65318a93022759846a09.jpeg",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 1,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6aa05e8b3d3ca5e46309980c",
+            "slug": "rocio-oliva",
+            "nombreCompleto": "Rocio Oliva",
+            "nombre": "Rocio",
+            "apellido": "Oliva",
+            "apodo": "",
+            "displayName": "Rocio Oliva",
+            "dorsal": "10",
+            "posicion": "MCO",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-802c2e2390ca279e3b49.jpeg",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 1,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6aa85331fde3badf1f24726c",
+            "slug": "sofi-b",
+            "nombreCompleto": "Sofia Ricci",
+            "nombre": "Sofia",
+            "apellido": "Ricci",
+            "apodo": "Sofi B",
+            "displayName": "Sofi B",
+            "dorsal": "14",
+            "posicion": "ED",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-ecf52c4a36e04d77d2e2.jpeg",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 1,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6aa05e8b3d3ca5e463099810",
+            "slug": "tiziana-torino",
+            "nombreCompleto": "Tiziana Torino",
+            "nombre": "Tiziana",
+            "apellido": "Torino",
+            "apodo": "",
+            "displayName": "Tiziana Torino",
+            "dorsal": "33",
+            "posicion": "MDC",
+            "photoUrl": "",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 0,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6aa85331fde3badf1f247272",
+            "slug": "vicky",
+            "nombreCompleto": "Victoria Moran",
+            "nombre": "Victoria",
+            "apellido": "Moran",
+            "apodo": "Vicky",
+            "displayName": "Vicky",
+            "dorsal": "23",
+            "posicion": "DEL",
+            "photoUrl": "",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 0,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          },
+          {
+            "webId": "6aa85331fde3badf1f24726e",
+            "slug": "yami",
+            "nombreCompleto": "Yamila Sanchez",
+            "nombre": "Yamila",
+            "apellido": "Sanchez",
+            "apodo": "Yami",
+            "displayName": "Yami",
+            "dorsal": "77",
+            "posicion": "DFC",
+            "photoUrl": "",
+            "perfil": {
+              "fuente": "perfil-web",
+              "goles": 0,
+              "asistencias": 0,
+              "presencias": 1,
+              "mvps": 0,
+              "sanciones": {
+                "total": 0,
+                "amarillas": 0,
+                "rojas": 0
+              },
+              "distinciones": []
+            }
+          }
+        ]
+      },
+      "ultimaActualizacion": "2026-10-09T01:33:56.801Z",
+      "fuente": "argentinastreamers.com · JUGADORES · FEMENINO",
+      "ultimoIntento": "2026-10-09T01:33:56.801Z",
+      "ultimoResultado": "ok",
+      "ultimoError": null
+    }
+  },
+  "estadisticas": {
+    "masculino": {
+      "data": {
+        "jugadores": [
+          {
+            "webId": "6a5a79a0d8f54d7f55c67005",
+            "slug": "ariolo",
+            "nombreCompleto": "Ariel Angel Ricardo",
+            "nombre": "Ariel Angel",
+            "apellido": "Ricardo",
+            "apodo": "ARIOLO",
+            "displayName": "ARIOLO",
+            "dorsal": "6",
+            "posicion": "MED",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66ff2",
+            "slug": "arquero-sin-guantes",
+            "nombreCompleto": "Franco Nicolas Colagrossi",
+            "nombre": "Franco Nicolas",
+            "apellido": "Colagrossi",
+            "apodo": "ARQUERO SIN GUANTES",
+            "displayName": "ARQUERO SIN GUANTES",
+            "dorsal": "27",
+            "posicion": "GK",
+            "photoUrl": "/assets/as/players/arquero-sin-guantes.webp"
+          },
+          {
+            "webId": "6a5c145298463ecfab32c3f1",
+            "slug": "augusto",
+            "nombreCompleto": "Augusto Fernández",
+            "nombre": "Augusto",
+            "apellido": "Fernández",
+            "apodo": "AUGUSTO",
+            "displayName": "AUGUSTO",
+            "dorsal": "",
+            "posicion": "MED",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66ff5",
+            "slug": "axel-de-fiorito",
+            "nombreCompleto": "Axel Frías",
+            "nombre": "Axel",
+            "apellido": "Frías",
+            "apodo": "AXEL DE FIORITO",
+            "displayName": "AXEL DE FIORITO",
+            "dorsal": "30",
+            "posicion": "MCO",
+            "photoUrl": "/assets/as/players/axel-de-fiorito.webp"
+          },
+          {
+            "webId": "6a47e31706c86e93e88ca6b2",
+            "slug": "balanza",
+            "nombreCompleto": "Matias Amboade",
+            "nombre": "Matias",
+            "apellido": "Amboade",
+            "apodo": "BALANZA",
+            "displayName": "BALANZA",
+            "dorsal": "10",
+            "posicion": "MI",
+            "photoUrl": "https://api.gla.futbol/api/media/file/balanza.jpg"
+          },
+          {
+            "webId": "6a559deb9264fd9d6d31dc64",
+            "slug": "benca",
+            "nombreCompleto": "Agustin Bencardino",
+            "nombre": "Agustin",
+            "apellido": "Bencardino",
+            "apodo": "BENCA",
+            "displayName": "BENCA",
+            "dorsal": "28",
+            "posicion": "MD",
+            "photoUrl": "/assets/as/players/benca.webp"
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66fe5",
+            "slug": "benjamin-calero",
+            "nombreCompleto": "Benjamin Calero",
+            "nombre": "Benjamin",
+            "apellido": "Calero",
+            "apodo": "",
+            "displayName": "Benjamin Calero",
+            "dorsal": "33",
+            "posicion": "LD",
+            "photoUrl": "/assets/as/players/benja-calero.webp"
+          },
+          {
+            "webId": "6a47e31706c86e93e88ca6af",
+            "slug": "blito",
+            "nombreCompleto": "Pablo Alexis Basualdo",
+            "nombre": "Pablo Alexis",
+            "apellido": "Basualdo",
+            "apodo": "Blito",
+            "displayName": "Blito",
+            "dorsal": "8",
+            "posicion": "DFC",
+            "photoUrl": "/assets/as/players/blito.webp"
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66feb",
+            "slug": "c0ker",
+            "nombreCompleto": "Mathias Nicolas Vasile",
+            "nombre": "Mathias Nicolas",
+            "apellido": "Vasile",
+            "apodo": "C0KER",
+            "displayName": "C0KER",
+            "dorsal": "99",
+            "posicion": "DC",
+            "photoUrl": "/assets/as/players/coker.webp"
+          },
+          {
+            "webId": "6a559deb9264fd9d6d31dc70",
+            "slug": "cedrola",
+            "nombreCompleto": "Luciano Cedrola",
+            "nombre": "Luciano",
+            "apellido": "Cedrola",
+            "apodo": "CEDROLA",
+            "displayName": "CEDROLA",
+            "dorsal": "1",
+            "posicion": "GK",
+            "photoUrl": "/assets/as/players/cedrola.webp"
+          },
+          {
+            "webId": "6a559deb9264fd9d6d31dc94",
+            "slug": "chapu",
+            "nombreCompleto": "Martín Lucas Martínez",
+            "nombre": "Martín Lucas",
+            "apellido": "Martínez",
+            "apodo": "CHAPU",
+            "displayName": "CHAPU",
+            "dorsal": "21",
+            "posicion": "GK",
+            "photoUrl": "https://api.gla.futbol/api/media/file/JUGADOR_f.png"
+          },
+          {
+            "webId": "6a47e31706c86e93e88ca6b7",
+            "slug": "chichi",
+            "nombreCompleto": "Juan Pablo Angel Flores",
+            "nombre": "Juan Pablo Angel",
+            "apellido": "Flores",
+            "apodo": "CHICHI",
+            "displayName": "CHICHI",
+            "dorsal": "25",
+            "posicion": "DC",
+            "photoUrl": "/assets/as/players/chichi.webp"
+          },
+          {
+            "webId": "6a580a190571f0e19fe0931c",
+            "slug": "ciro-burchakchi",
+            "nombreCompleto": "Ciro Burchakchi",
+            "nombre": "Ciro",
+            "apellido": "Burchakchi",
+            "apodo": "",
+            "displayName": "Ciro Burchakchi",
+            "dorsal": "6",
+            "posicion": "DEF",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c67007",
+            "slug": "cola",
+            "nombreCompleto": "Franco Mateo Colavini",
+            "nombre": "Franco Mateo",
+            "apellido": "Colavini",
+            "apodo": "COLA",
+            "displayName": "COLA",
+            "dorsal": "17",
+            "posicion": "MED",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6a47e31706c86e93e88ca6ac",
+            "slug": "coscu",
+            "nombreCompleto": "Martin Perez Di Salvo",
+            "nombre": "Martin",
+            "apellido": "Perez Di Salvo",
+            "apodo": "COSCU",
+            "displayName": "COSCU",
+            "dorsal": "4",
+            "posicion": "LD",
+            "photoUrl": "/assets/as/players/coscu.webp"
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66ffc",
+            "slug": "el-nene",
+            "nombreCompleto": "Agustin Pablo Saguillo",
+            "nombre": "Agustin Pablo",
+            "apellido": "Saguillo",
+            "apodo": "EL NENE",
+            "displayName": "EL NENE",
+            "dorsal": "20",
+            "posicion": "MP",
+            "photoUrl": "/assets/as/players/el-nene.webp"
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66ff0",
+            "slug": "facu-nvj",
+            "nombreCompleto": "Facundo Ezequiel Sanchez",
+            "nombre": "Facundo Ezequiel",
+            "apellido": "Sanchez",
+            "apodo": "FACU NVJ",
+            "displayName": "FACU NVJ",
+            "dorsal": "15",
+            "posicion": "MDC",
+            "photoUrl": "/assets/as/players/facu-nvj.webp"
+          },
+          {
+            "webId": "6a47e31706c86e93e88ca6ae",
+            "slug": "franbar",
+            "nombreCompleto": "Franco Tomas Bartucci",
+            "nombre": "Franco Tomas",
+            "apellido": "Bartucci",
+            "apodo": "FRANBAR",
+            "displayName": "FRANBAR",
+            "dorsal": "7",
+            "posicion": "EI",
+            "photoUrl": "/assets/as/players/franbar.webp"
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66ff9",
+            "slug": "goyo",
+            "nombreCompleto": "Gregorio Lopez Ogawa",
+            "nombre": "Gregorio",
+            "apellido": "Lopez Ogawa",
+            "apodo": "GOYO",
+            "displayName": "GOYO",
+            "dorsal": "4",
+            "posicion": "LD",
+            "photoUrl": "/assets/as/players/goyo.webp"
+          },
+          {
+            "webId": "6a559deb9264fd9d6d31dc46",
+            "slug": "igna-lopez",
+            "nombreCompleto": "Ignacio Lopez",
+            "nombre": "Ignacio",
+            "apellido": "Lopez",
+            "apodo": "Igna Lopez",
+            "displayName": "Igna Lopez",
+            "dorsal": "32",
+            "posicion": "MD",
+            "photoUrl": "/assets/as/players/igna-lopez.webp"
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66fe9",
+            "slug": "joaco",
+            "nombreCompleto": "Joaquin Lopez",
+            "nombre": "Joaquin",
+            "apellido": "Lopez",
+            "apodo": "JOACO",
+            "displayName": "JOACO",
+            "dorsal": "18",
+            "posicion": "DC",
+            "photoUrl": "/assets/as/players/joaco-lopez.webp"
+          },
+          {
+            "webId": "6a807b90b3a7188d56f1e3ba",
+            "slug": "joaquin-cartelle",
+            "nombreCompleto": "Joaquin Cartelle",
+            "nombre": "Joaquin",
+            "apellido": "Cartelle",
+            "apodo": "",
+            "displayName": "Joaquin Cartelle",
+            "dorsal": "12",
+            "posicion": "ARQ",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66fe6",
+            "slug": "khea",
+            "nombreCompleto": "Ivo Alfredo Thomas Serué",
+            "nombre": "Ivo Alfredo",
+            "apellido": "Thomas Serué",
+            "apodo": "KHEA",
+            "displayName": "KHEA",
+            "dorsal": "43",
+            "posicion": "MD",
+            "photoUrl": "/assets/as/players/khea.webp"
+          },
+          {
+            "webId": "6a47e31706c86e93e88ca6b5",
+            "slug": "kun",
+            "nombreCompleto": "Sergio Leonel Agüero",
+            "nombre": "Sergio Leonel",
+            "apellido": "Agüero",
+            "apodo": "KUN",
+            "displayName": "KUN",
+            "dorsal": "20",
+            "posicion": "DEL",
+            "photoUrl": "/assets/img/gallery-10-1280.webp"
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66fe8",
+            "slug": "la-cobra",
+            "nombreCompleto": "Lautaro Del Campo",
+            "nombre": "Lautaro",
+            "apellido": "Del Campo",
+            "apodo": "LA COBRA",
+            "displayName": "LA COBRA",
+            "dorsal": "9",
+            "posicion": "DC",
+            "photoUrl": "/assets/as/players/la-cobra.webp"
+          },
+          {
+            "webId": "6a71125ba98274c2ce3544d6",
+            "slug": "la-joya",
+            "nombreCompleto": "Tomas Riguera",
+            "nombre": "Tomas",
+            "apellido": "Riguera",
+            "apodo": "La Joya",
+            "displayName": "La Joya",
+            "dorsal": "16",
+            "posicion": "MED",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6a559dea9264fd9d6d31dc25",
+            "slug": "luca-f",
+            "nombreCompleto": "Luca Figurelli",
+            "nombre": "Luca",
+            "apellido": "Figurelli",
+            "apodo": "LUCA F",
+            "displayName": "LUCA F",
+            "dorsal": "23",
+            "posicion": "LI",
+            "photoUrl": "/assets/as/players/luca-figurelli.webp"
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66fe7",
+            "slug": "markito",
+            "nombreCompleto": "Marcos Prez",
+            "nombre": "Marcos",
+            "apellido": "Prez",
+            "apodo": "Markito",
+            "displayName": "Markito",
+            "dorsal": "10",
+            "posicion": "MP",
+            "photoUrl": "/assets/as/players/marquitos.webp"
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66ff4",
+            "slug": "massi",
+            "nombreCompleto": "Massimo Pomponio",
+            "nombre": "Massimo",
+            "apellido": "Pomponio",
+            "apodo": "Massi",
+            "displayName": "Massi",
+            "dorsal": "77",
+            "posicion": "DC",
+            "photoUrl": "/assets/as/players/massi.webp"
+          },
+          {
+            "webId": "6ab721ada833b4754f1eadb0",
+            "slug": "matias-lopez",
+            "nombreCompleto": "Matias Lopez",
+            "nombre": "Matias",
+            "apellido": "Lopez",
+            "apodo": "",
+            "displayName": "Matias Lopez",
+            "dorsal": "3",
+            "posicion": "DEF",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66ffe",
+            "slug": "mauri",
+            "nombreCompleto": "Mauricio Jordan Del Castillo",
+            "nombre": "Mauricio Jordan",
+            "apellido": "Del Castillo",
+            "apodo": "MAURI",
+            "displayName": "MAURI",
+            "dorsal": "29",
+            "posicion": "MCO",
+            "photoUrl": "/assets/as/players/mauri-delca.webp"
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66fea",
+            "slug": "momo",
+            "nombreCompleto": "Geronimo Benavidez",
+            "nombre": "Geronimo",
+            "apellido": "Benavidez",
+            "apodo": "MOMO",
+            "displayName": "MOMO",
+            "dorsal": "19",
+            "posicion": "DT",
+            "photoUrl": "/assets/as/players/momo.webp"
+          },
+          {
+            "webId": "6a580a190571f0e19fe0934a",
+            "slug": "nacho-cp",
+            "nombreCompleto": "Juan Ignacio Castañares",
+            "nombre": "Juan Ignacio",
+            "apellido": "Castañares",
+            "apodo": "NACHO CP",
+            "displayName": "NACHO CP",
+            "dorsal": "11",
+            "posicion": "ED",
+            "photoUrl": "/assets/as/players/nacho-cp.webp"
+          },
+          {
+            "webId": "6a559deb9264fd9d6d31dc7f",
+            "slug": "nacho-pellizari",
+            "nombreCompleto": "Nacho Pellizari",
+            "nombre": "Nacho",
+            "apellido": "Pellizari",
+            "apodo": "",
+            "displayName": "Nacho Pellizari",
+            "dorsal": "9",
+            "posicion": "DC",
+            "photoUrl": "https://api.gla.futbol/api/media/file/pellizari-1.jpg"
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66ff1",
+            "slug": "nahu-senger",
+            "nombreCompleto": "Nahuel Senger",
+            "nombre": "Nahuel",
+            "apellido": "Senger",
+            "apodo": "NAHU SENGER",
+            "displayName": "NAHU SENGER",
+            "dorsal": "4",
+            "posicion": "LD",
+            "photoUrl": "/assets/as/players/nahu-senger.webp"
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66fef",
+            "slug": "pablito-nonis",
+            "nombreCompleto": "Pablo Nonis",
+            "nombre": "Pablo",
+            "apellido": "Nonis",
+            "apodo": "Pablito Nonis",
+            "displayName": "Pablito Nonis",
+            "dorsal": "80",
+            "posicion": "EI",
+            "photoUrl": "/assets/as/players/pablito-nonis.webp"
+          },
+          {
+            "webId": "6a559deb9264fd9d6d31dc4c",
+            "slug": "pelozo",
+            "nombreCompleto": "Luca Pelozo",
+            "nombre": "Luca",
+            "apellido": "Pelozo",
+            "apodo": "Pelozo",
+            "displayName": "Pelozo",
+            "dorsal": "22",
+            "posicion": "DFC",
+            "photoUrl": "/assets/as/players/pelozo.webp"
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66ffd",
+            "slug": "pimpeano",
+            "nombreCompleto": "Galo Blasco",
+            "nombre": "Galo",
+            "apellido": "Blasco",
+            "apodo": "Pimpeano",
+            "displayName": "Pimpeano",
+            "dorsal": "21",
+            "posicion": "LD",
+            "photoUrl": "/assets/as/players/pimpeano.webp"
+          },
+          {
+            "webId": "6a580a180571f0e19fe092d1",
+            "slug": "roy",
+            "nombreCompleto": "Damian Dario Martino",
+            "nombre": "Damian Dario",
+            "apellido": "Martino",
+            "apodo": "ROY",
+            "displayName": "ROY",
+            "dorsal": "26",
+            "posicion": "GK",
+            "photoUrl": "/assets/as/players/roy.webp"
+          },
+          {
+            "webId": "6a47e31706c86e93e88ca6b4",
+            "slug": "santi",
+            "nombreCompleto": "Santiago Grizas",
+            "nombre": "Santiago",
+            "apellido": "Grizas",
+            "apodo": "Santi",
+            "displayName": "Santi",
+            "dorsal": "19",
+            "posicion": "DC",
+            "photoUrl": "/assets/as/players/santi-grizas.webp"
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66fee",
+            "slug": "santiago-argibay",
+            "nombreCompleto": "Santiago Argibay",
+            "nombre": "Santiago",
+            "apellido": "Argibay",
+            "apodo": "",
+            "displayName": "Santiago Argibay",
+            "dorsal": "5",
+            "posicion": "MDC",
+            "photoUrl": "/assets/as/players/santi.webp"
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66ff3",
+            "slug": "scarso",
+            "nombreCompleto": "Valentin Scarso",
+            "nombre": "Valentin",
+            "apellido": "Scarso",
+            "apodo": "SCARSO",
+            "displayName": "SCARSO",
+            "dorsal": "89",
+            "posicion": "MED",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66ff6",
+            "slug": "straka",
+            "nombreCompleto": "Nahuel Vazquez",
+            "nombre": "Nahuel",
+            "apellido": "Vazquez",
+            "apodo": "STRAKA",
+            "displayName": "STRAKA",
+            "dorsal": "44",
+            "posicion": "MED",
+            "photoUrl": "/assets/as/players/straka.webp"
+          },
+          {
+            "webId": "6a559deb9264fd9d6d31dc91",
+            "slug": "tadeo",
+            "nombreCompleto": "Tadeo Torres",
+            "nombre": "Tadeo",
+            "apellido": "Torres",
+            "apodo": "TADEO",
+            "displayName": "TADEO",
+            "dorsal": "2",
+            "posicion": "DFC",
+            "photoUrl": "/assets/as/players/tadeo.webp"
+          },
+          {
+            "webId": "6a56a82b1bc7ab9d19117836",
+            "slug": "teico",
+            "nombreCompleto": "Mateo Leszkiewicz",
+            "nombre": "Mateo",
+            "apellido": "Leszkiewicz",
+            "apodo": "TEICO",
+            "displayName": "TEICO",
+            "dorsal": "13",
+            "posicion": "LD",
+            "photoUrl": "https://api.gla.futbol/api/media/file/teico.jpg"
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66fec",
+            "slug": "tita",
+            "nombreCompleto": "Franco Stefano Tita",
+            "nombre": "Franco Stefano",
+            "apellido": "Tita",
+            "apodo": "TITA",
+            "displayName": "TITA",
+            "dorsal": "14",
+            "posicion": "MDC",
+            "photoUrl": "/assets/as/players/tita.webp"
+          },
+          {
+            "webId": "6a559dea9264fd9d6d31dc1c",
+            "slug": "tomas-suraci",
+            "nombreCompleto": "Tomas Suraci",
+            "nombre": "Tomas",
+            "apellido": "Suraci",
+            "apodo": "",
+            "displayName": "Tomas Suraci",
+            "dorsal": "36",
+            "posicion": "MED",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66ff7",
+            "slug": "tyc-del-potrero",
+            "nombreCompleto": "Alejo Martin Leguiza",
+            "nombre": "Alejo Martin",
+            "apellido": "Leguiza",
+            "apodo": "TYC DEL POTRERO",
+            "displayName": "TYC DEL POTRERO",
+            "dorsal": "20",
+            "posicion": "MED",
+            "photoUrl": ""
+          }
+        ],
+        "goleadores": [
+          {
+            "posicion": "01",
+            "webId": "6a5a79a0d8f54d7f55c66ff4",
+            "slug": "massi",
+            "nombre": "Massi",
+            "dorsal": "77",
+            "count": 19
+          },
+          {
+            "posicion": "02",
+            "webId": "6a47e31706c86e93e88ca6ae",
+            "slug": "franbar",
+            "nombre": "FRANBAR",
+            "dorsal": "7",
+            "count": 4
+          },
+          {
+            "posicion": "03",
+            "webId": "6a5a79a0d8f54d7f55c66fef",
+            "slug": "pablito-nonis",
+            "nombre": "Pablito Nonis",
+            "dorsal": "80",
+            "count": 4
+          },
+          {
+            "posicion": "04",
+            "webId": "6a47e31706c86e93e88ca6b4",
+            "slug": "santi",
+            "nombre": "Santi",
+            "dorsal": "19",
+            "count": 3
+          },
+          {
+            "posicion": "05",
+            "webId": "6a47e31706c86e93e88ca6b7",
+            "slug": "chichi",
+            "nombre": "CHICHI",
+            "dorsal": "25",
+            "count": 2
+          },
+          {
+            "posicion": "06",
+            "webId": "6a559deb9264fd9d6d31dc46",
+            "slug": "igna-lopez",
+            "nombre": "Igna Lopez",
+            "dorsal": "32",
+            "count": 2
+          },
+          {
+            "posicion": "07",
+            "webId": "6a47e31706c86e93e88ca6af",
+            "slug": "blito",
+            "nombre": "Blito",
+            "dorsal": "8",
+            "count": 1
+          },
+          {
+            "posicion": "08",
+            "webId": "6a5a79a0d8f54d7f55c66fe7",
+            "slug": "markito",
+            "nombre": "Markito",
+            "dorsal": "10",
+            "count": 1
+          },
+          {
+            "posicion": "09",
+            "webId": "6a580a190571f0e19fe0934a",
+            "slug": "nacho-cp",
+            "nombre": "NACHO CP",
+            "dorsal": "11",
+            "count": 1
+          },
+          {
+            "posicion": "10",
+            "webId": "6a5a79a0d8f54d7f55c66fee",
+            "slug": "santiago-argibay",
+            "nombre": "Santiago Argibay",
+            "dorsal": "5",
+            "count": 1
+          },
+          {
+            "posicion": "11",
+            "webId": "6a559deb9264fd9d6d31dc91",
+            "slug": "tadeo",
+            "nombre": "TADEO",
+            "dorsal": "2",
+            "count": 1
+          }
+        ],
+        "asistidores": [
+          {
+            "posicion": "01",
+            "webId": "6a5a79a0d8f54d7f55c66fe7",
+            "slug": "markito",
+            "nombre": "Markito",
+            "dorsal": "10",
+            "count": 7
+          },
+          {
+            "posicion": "02",
+            "webId": "6a559deb9264fd9d6d31dc46",
+            "slug": "igna-lopez",
+            "nombre": "Igna Lopez",
+            "dorsal": "32",
+            "count": 3
+          },
+          {
+            "posicion": "03",
+            "webId": "6a5a79a0d8f54d7f55c66ff0",
+            "slug": "facu-nvj",
+            "nombre": "FACU NVJ",
+            "dorsal": "15",
+            "count": 2
+          },
+          {
+            "posicion": "04",
+            "webId": "6a47e31706c86e93e88ca6ae",
+            "slug": "franbar",
+            "nombre": "FRANBAR",
+            "dorsal": "7",
+            "count": 2
+          },
+          {
+            "posicion": "05",
+            "webId": "6a559dea9264fd9d6d31dc25",
+            "slug": "luca-f",
+            "nombre": "LUCA F",
+            "dorsal": "23",
+            "count": 2
+          },
+          {
+            "posicion": "06",
+            "webId": "6a5a79a0d8f54d7f55c66fef",
+            "slug": "pablito-nonis",
+            "nombre": "Pablito Nonis",
+            "dorsal": "80",
+            "count": 2
+          },
+          {
+            "posicion": "07",
+            "webId": "6a5a79a0d8f54d7f55c66ff5",
+            "slug": "axel-de-fiorito",
+            "nombre": "AXEL DE FIORITO",
+            "dorsal": "30",
+            "count": 1
+          },
+          {
+            "posicion": "08",
+            "webId": "6a47e31706c86e93e88ca6b7",
+            "slug": "chichi",
+            "nombre": "CHICHI",
+            "dorsal": "25",
+            "count": 1
+          },
+          {
+            "posicion": "09",
+            "webId": "6a5a79a0d8f54d7f55c67007",
+            "slug": "cola",
+            "nombre": "COLA",
+            "dorsal": "17",
+            "count": 1
+          },
+          {
+            "posicion": "10",
+            "webId": "6a5a79a0d8f54d7f55c66ff4",
+            "slug": "massi",
+            "nombre": "Massi",
+            "dorsal": "77",
+            "count": 1
+          },
+          {
+            "posicion": "11",
+            "webId": "6a580a190571f0e19fe0934a",
+            "slug": "nacho-cp",
+            "nombre": "NACHO CP",
+            "dorsal": "11",
+            "count": 1
+          },
+          {
+            "posicion": "12",
+            "webId": "6a5a79a0d8f54d7f55c66fee",
+            "slug": "santiago-argibay",
+            "nombre": "Santiago Argibay",
+            "dorsal": "5",
+            "count": 1
+          },
+          {
+            "posicion": "13",
+            "webId": "6a559deb9264fd9d6d31dc91",
+            "slug": "tadeo",
+            "nombre": "TADEO",
+            "dorsal": "2",
+            "count": 1
+          }
+        ],
+        "presencias": [
+          {
+            "posicion": "01",
+            "webId": "6a559deb9264fd9d6d31dc70",
+            "slug": "cedrola",
+            "nombre": "CEDROLA",
+            "dorsal": "1",
+            "count": 27
+          },
+          {
+            "posicion": "02",
+            "webId": "6a5a79a0d8f54d7f55c66fee",
+            "slug": "santiago-argibay",
+            "nombre": "Santiago Argibay",
+            "dorsal": "5",
+            "count": 27
+          },
+          {
+            "posicion": "03",
+            "webId": "6a47e31706c86e93e88ca6af",
+            "slug": "blito",
+            "nombre": "Blito",
+            "dorsal": "8",
+            "count": 26
+          },
+          {
+            "posicion": "04",
+            "webId": "6a559deb9264fd9d6d31dc46",
+            "slug": "igna-lopez",
+            "nombre": "Igna Lopez",
+            "dorsal": "32",
+            "count": 26
+          },
+          {
+            "posicion": "05",
+            "webId": "6a5a79a0d8f54d7f55c66fef",
+            "slug": "pablito-nonis",
+            "nombre": "Pablito Nonis",
+            "dorsal": "80",
+            "count": 26
+          },
+          {
+            "posicion": "06",
+            "webId": "6a56a82b1bc7ab9d19117836",
+            "slug": "teico",
+            "nombre": "TEICO",
+            "dorsal": "13",
+            "count": 26
+          },
+          {
+            "posicion": "07",
+            "webId": "6a559deb9264fd9d6d31dc91",
+            "slug": "tadeo",
+            "nombre": "TADEO",
+            "dorsal": "2",
+            "count": 24
+          },
+          {
+            "posicion": "08",
+            "webId": "6a5a79a0d8f54d7f55c66ff0",
+            "slug": "facu-nvj",
+            "nombre": "FACU NVJ",
+            "dorsal": "15",
+            "count": 23
+          },
+          {
+            "posicion": "09",
+            "webId": "6a47e31706c86e93e88ca6ae",
+            "slug": "franbar",
+            "nombre": "FRANBAR",
+            "dorsal": "7",
+            "count": 23
+          },
+          {
+            "posicion": "10",
+            "webId": "6a559dea9264fd9d6d31dc25",
+            "slug": "luca-f",
+            "nombre": "LUCA F",
+            "dorsal": "23",
+            "count": 23
+          },
+          {
+            "posicion": "11",
+            "webId": "6a5a79a0d8f54d7f55c66ff4",
+            "slug": "massi",
+            "nombre": "Massi",
+            "dorsal": "77",
+            "count": 23
+          },
+          {
+            "posicion": "12",
+            "webId": "6a5a79a0d8f54d7f55c66ff2",
+            "slug": "arquero-sin-guantes",
+            "nombre": "ARQUERO SIN GUANTES",
+            "dorsal": "27",
+            "count": 21
+          },
+          {
+            "posicion": "13",
+            "webId": "6a5a79a0d8f54d7f55c66fe7",
+            "slug": "markito",
+            "nombre": "Markito",
+            "dorsal": "10",
+            "count": 21
+          },
+          {
+            "posicion": "14",
+            "webId": "6a580a190571f0e19fe0934a",
+            "slug": "nacho-cp",
+            "nombre": "NACHO CP",
+            "dorsal": "11",
+            "count": 20
+          },
+          {
+            "posicion": "15",
+            "webId": "6a5a79a0d8f54d7f55c66ff5",
+            "slug": "axel-de-fiorito",
+            "nombre": "AXEL DE FIORITO",
+            "dorsal": "30",
+            "count": 19
+          },
+          {
+            "posicion": "16",
+            "webId": "6a5a79a0d8f54d7f55c66ff1",
+            "slug": "nahu-senger",
+            "nombre": "NAHU SENGER",
+            "dorsal": "4",
+            "count": 19
+          },
+          {
+            "posicion": "17",
+            "webId": "6a47e31706c86e93e88ca6b4",
+            "slug": "santi",
+            "nombre": "Santi",
+            "dorsal": "19",
+            "count": 15
+          },
+          {
+            "posicion": "18",
+            "webId": "6a559deb9264fd9d6d31dc4c",
+            "slug": "pelozo",
+            "nombre": "Pelozo",
+            "dorsal": "22",
+            "count": 14
+          },
+          {
+            "posicion": "19",
+            "webId": "6a47e31706c86e93e88ca6b7",
+            "slug": "chichi",
+            "nombre": "CHICHI",
+            "dorsal": "25",
+            "count": 12
+          },
+          {
+            "posicion": "20",
+            "webId": "6a5a79a0d8f54d7f55c66ff9",
+            "slug": "goyo",
+            "nombre": "GOYO",
+            "dorsal": "4",
+            "count": 11
+          },
+          {
+            "posicion": "21",
+            "webId": "6a5a79a0d8f54d7f55c66fec",
+            "slug": "tita",
+            "nombre": "TITA",
+            "dorsal": "14",
+            "count": 10
+          },
+          {
+            "posicion": "22",
+            "webId": "6a5c145298463ecfab32c3f1",
+            "slug": "augusto",
+            "nombre": "AUGUSTO",
+            "dorsal": "",
+            "count": 8
+          },
+          {
+            "posicion": "23",
+            "webId": "6a5a79a0d8f54d7f55c66fe5",
+            "slug": "benjamin-calero",
+            "nombre": "Benjamin Calero",
+            "dorsal": "33",
+            "count": 8
+          },
+          {
+            "posicion": "24",
+            "webId": "6a5a79a0d8f54d7f55c66fe9",
+            "slug": "joaco",
+            "nombre": "JOACO",
+            "dorsal": "18",
+            "count": 8
+          },
+          {
+            "posicion": "25",
+            "webId": "6a5a79a0d8f54d7f55c67005",
+            "slug": "ariolo",
+            "nombre": "ARIOLO",
+            "dorsal": "6",
+            "count": 4
+          },
+          {
+            "posicion": "26",
+            "webId": "6a5a79a0d8f54d7f55c66feb",
+            "slug": "c0ker",
+            "nombre": "C0KER",
+            "dorsal": "99",
+            "count": 4
+          },
+          {
+            "posicion": "27",
+            "webId": "6a5a79a0d8f54d7f55c67007",
+            "slug": "cola",
+            "nombre": "COLA",
+            "dorsal": "17",
+            "count": 4
+          },
+          {
+            "posicion": "28",
+            "webId": "6a580a180571f0e19fe092d1",
+            "slug": "roy",
+            "nombre": "ROY",
+            "dorsal": "26",
+            "count": 4
+          },
+          {
+            "posicion": "29",
+            "webId": "6a47e31706c86e93e88ca6ac",
+            "slug": "coscu",
+            "nombre": "COSCU",
+            "dorsal": "4",
+            "count": 3
+          },
+          {
+            "posicion": "30",
+            "webId": "6a5a79a0d8f54d7f55c66fe8",
+            "slug": "la-cobra",
+            "nombre": "LA COBRA",
+            "dorsal": "9",
+            "count": 3
+          },
+          {
+            "posicion": "31",
+            "webId": "6a5a79a0d8f54d7f55c66fea",
+            "slug": "momo",
+            "nombre": "MOMO",
+            "dorsal": "19",
+            "count": 3
+          },
+          {
+            "posicion": "32",
+            "webId": "6a5a79a0d8f54d7f55c66ff7",
+            "slug": "tyc-del-potrero",
+            "nombre": "TYC DEL POTRERO",
+            "dorsal": "20",
+            "count": 3
+          },
+          {
+            "posicion": "33",
+            "webId": "6a47e31706c86e93e88ca6b2",
+            "slug": "balanza",
+            "nombre": "BALANZA",
+            "dorsal": "10",
+            "count": 2
+          },
+          {
+            "posicion": "34",
+            "webId": "6a559deb9264fd9d6d31dc64",
+            "slug": "benca",
+            "nombre": "BENCA",
+            "dorsal": "28",
+            "count": 2
+          },
+          {
+            "posicion": "35",
+            "webId": "6a5a79a0d8f54d7f55c66fe6",
+            "slug": "khea",
+            "nombre": "KHEA",
+            "dorsal": "43",
+            "count": 2
+          },
+          {
+            "posicion": "36",
+            "webId": "6a5a79a0d8f54d7f55c66ffe",
+            "slug": "mauri",
+            "nombre": "MAURI",
+            "dorsal": "29",
+            "count": 2
+          },
+          {
+            "posicion": "37",
+            "webId": "6a5a79a0d8f54d7f55c66ffd",
+            "slug": "pimpeano",
+            "nombre": "Pimpeano",
+            "dorsal": "21",
+            "count": 2
+          },
+          {
+            "posicion": "38",
+            "webId": "6a559deb9264fd9d6d31dc94",
+            "slug": "chapu",
+            "nombre": "CHAPU",
+            "dorsal": "21",
+            "count": 1
+          },
+          {
+            "posicion": "39",
+            "webId": "6a580a190571f0e19fe0931c",
+            "slug": "ciro-burchakchi",
+            "nombre": "Ciro Burchakchi",
+            "dorsal": "6",
+            "count": 1
+          },
+          {
+            "posicion": "40",
+            "webId": "6a5a79a0d8f54d7f55c66ffc",
+            "slug": "el-nene",
+            "nombre": "EL NENE",
+            "dorsal": "20",
+            "count": 1
+          },
+          {
+            "posicion": "41",
+            "webId": "6a807b90b3a7188d56f1e3ba",
+            "slug": "joaquin-cartelle",
+            "nombre": "Joaquin Cartelle",
+            "dorsal": "12",
+            "count": 1
+          },
+          {
+            "posicion": "42",
+            "webId": "6a47e31706c86e93e88ca6b5",
+            "slug": "kun",
+            "nombre": "KUN",
+            "dorsal": "20",
+            "count": 1
+          },
+          {
+            "posicion": "43",
+            "webId": "6a71125ba98274c2ce3544d6",
+            "slug": "la-joya",
+            "nombre": "La Joya",
+            "dorsal": "16",
+            "count": 1
+          },
+          {
+            "posicion": "44",
+            "webId": "6ab721ada833b4754f1eadb0",
+            "slug": "matias-lopez",
+            "nombre": "Matias Lopez",
+            "dorsal": "3",
+            "count": 1
+          },
+          {
+            "posicion": "45",
+            "webId": "6a5a79a0d8f54d7f55c66ff3",
+            "slug": "scarso",
+            "nombre": "SCARSO",
+            "dorsal": "89",
+            "count": 1
+          },
+          {
+            "posicion": "46",
+            "webId": "6a5a79a0d8f54d7f55c66ff6",
+            "slug": "straka",
+            "nombre": "STRAKA",
+            "dorsal": "44",
+            "count": 1
+          },
+          {
+            "posicion": "47",
+            "webId": "6a559dea9264fd9d6d31dc1c",
+            "slug": "tomas-suraci",
+            "nombre": "Tomas Suraci",
+            "dorsal": "36",
+            "count": 1
+          }
+        ],
+        "sanciones": [
+          {
+            "posicion": "01",
+            "webId": "6a47e31706c86e93e88ca6b7",
+            "slug": "chichi",
+            "nombre": "CHICHI",
+            "dorsal": "25",
+            "count": 1,
+            "amarillas": 1,
+            "rojas": 0
+          },
+          {
+            "posicion": "02",
+            "webId": "6a559deb9264fd9d6d31dc46",
+            "slug": "igna-lopez",
+            "nombre": "Igna Lopez",
+            "dorsal": "32",
+            "count": 1,
+            "amarillas": 1,
+            "rojas": 0
+          },
+          {
+            "posicion": "03",
+            "webId": "6a559deb9264fd9d6d31dc7f",
+            "slug": "nacho-pellizari",
+            "nombre": "Nacho Pellizari",
+            "dorsal": "9",
+            "count": 1,
+            "amarillas": 1,
+            "rojas": 0
+          },
+          {
+            "posicion": "04",
+            "webId": "6a559deb9264fd9d6d31dc91",
+            "slug": "tadeo",
+            "nombre": "TADEO",
+            "dorsal": "2",
+            "count": 1,
+            "amarillas": 1,
+            "rojas": 0
+          }
+        ],
+        "contribuciones": [
+          {
+            "posicion": "01",
+            "webId": "6a5a79a0d8f54d7f55c66ff4",
+            "slug": "massi",
+            "nombre": "Massi",
+            "dorsal": "77",
+            "count": 20,
+            "goles": 19,
+            "asistencias": 1
+          },
+          {
+            "posicion": "02",
+            "webId": "6a5a79a0d8f54d7f55c66fe7",
+            "slug": "markito",
+            "nombre": "Markito",
+            "dorsal": "10",
+            "count": 8,
+            "goles": 1,
+            "asistencias": 7
+          },
+          {
+            "posicion": "03",
+            "webId": "6a47e31706c86e93e88ca6ae",
+            "slug": "franbar",
+            "nombre": "FRANBAR",
+            "dorsal": "7",
+            "count": 6,
+            "goles": 4,
+            "asistencias": 2
+          },
+          {
+            "posicion": "04",
+            "webId": "6a5a79a0d8f54d7f55c66fef",
+            "slug": "pablito-nonis",
+            "nombre": "Pablito Nonis",
+            "dorsal": "80",
+            "count": 6,
+            "goles": 4,
+            "asistencias": 2
+          },
+          {
+            "posicion": "05",
+            "webId": "6a559deb9264fd9d6d31dc46",
+            "slug": "igna-lopez",
+            "nombre": "Igna Lopez",
+            "dorsal": "32",
+            "count": 5,
+            "goles": 2,
+            "asistencias": 3
+          },
+          {
+            "posicion": "06",
+            "webId": "6a47e31706c86e93e88ca6b4",
+            "slug": "santi",
+            "nombre": "Santi",
+            "dorsal": "19",
+            "count": 3,
+            "goles": 3,
+            "asistencias": 0
+          },
+          {
+            "posicion": "07",
+            "webId": "6a47e31706c86e93e88ca6b7",
+            "slug": "chichi",
+            "nombre": "CHICHI",
+            "dorsal": "25",
+            "count": 3,
+            "goles": 2,
+            "asistencias": 1
+          },
+          {
+            "posicion": "08",
+            "webId": "6a580a190571f0e19fe0934a",
+            "slug": "nacho-cp",
+            "nombre": "NACHO CP",
+            "dorsal": "11",
+            "count": 2,
+            "goles": 1,
+            "asistencias": 1
+          },
+          {
+            "posicion": "09",
+            "webId": "6a5a79a0d8f54d7f55c66fee",
+            "slug": "santiago-argibay",
+            "nombre": "Santiago Argibay",
+            "dorsal": "5",
+            "count": 2,
+            "goles": 1,
+            "asistencias": 1
+          },
+          {
+            "posicion": "10",
+            "webId": "6a559deb9264fd9d6d31dc91",
+            "slug": "tadeo",
+            "nombre": "TADEO",
+            "dorsal": "2",
+            "count": 2,
+            "goles": 1,
+            "asistencias": 1
+          },
+          {
+            "posicion": "11",
+            "webId": "6a5a79a0d8f54d7f55c66ff0",
+            "slug": "facu-nvj",
+            "nombre": "FACU NVJ",
+            "dorsal": "15",
+            "count": 2,
+            "goles": 0,
+            "asistencias": 2
+          },
+          {
+            "posicion": "12",
+            "webId": "6a559dea9264fd9d6d31dc25",
+            "slug": "luca-f",
+            "nombre": "LUCA F",
+            "dorsal": "23",
+            "count": 2,
+            "goles": 0,
+            "asistencias": 2
+          },
+          {
+            "posicion": "13",
+            "webId": "6a47e31706c86e93e88ca6af",
+            "slug": "blito",
+            "nombre": "Blito",
+            "dorsal": "8",
+            "count": 1,
+            "goles": 1,
+            "asistencias": 0
+          },
+          {
+            "posicion": "14",
+            "webId": "6a5a79a0d8f54d7f55c66ff5",
+            "slug": "axel-de-fiorito",
+            "nombre": "AXEL DE FIORITO",
+            "dorsal": "30",
+            "count": 1,
+            "goles": 0,
+            "asistencias": 1
+          },
+          {
+            "posicion": "15",
+            "webId": "6a5a79a0d8f54d7f55c67007",
+            "slug": "cola",
+            "nombre": "COLA",
+            "dorsal": "17",
+            "count": 1,
+            "goles": 0,
+            "asistencias": 1
+          }
+        ],
+        "mvps": {
+          "6a5a79a0d8f54d7f55c66ff4": 6,
+          "6a5a79a0d8f54d7f55c66fe7": 2,
+          "6a5a79a0d8f54d7f55c66fee": 1,
+          "6a5a79a0d8f54d7f55c66ff2": 1,
+          "6a580a190571f0e19fe0934a": 1,
+          "6a5a79a0d8f54d7f55c66ff0": 1,
+          "6a47e31706c86e93e88ca6b7": 1,
+          "6a47e31706c86e93e88ca6ae": 2,
+          "6a559deb9264fd9d6d31dc70": 1,
+          "6a5a79a0d8f54d7f55c66fef": 1,
+          "6a47e31706c86e93e88ca6b4": 2,
+          "6a559deb9264fd9d6d31dc46": 1
+        },
+        "disponibles": {
+          "goles": true,
+          "asistencias": true,
+          "presencias": true,
+          "sanciones": true,
+          "mvps": true
+        }
+      },
+      "ultimaActualizacion": "2026-10-09T18:26:19.779Z",
+      "fuente": "argentinastreamers.com · ESTADÍSTICAS · MASCULINO",
+      "ultimoIntento": "2026-10-09T18:26:19.779Z",
+      "ultimoResultado": "ok",
+      "ultimoError": null
+    },
+    "femenino": {
+      "data": {
+        "jugadores": [
+          {
+            "webId": "6aa05e8b3d3ca5e4630997f6",
+            "slug": "ana-gabriela-de-biasi",
+            "nombreCompleto": "Ana Gabriela De Biasi",
+            "nombre": "Ana Gabriela",
+            "apellido": "De Biasi",
+            "apodo": "",
+            "displayName": "Ana Gabriela De Biasi",
+            "dorsal": "11",
+            "posicion": "EI",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-878bcdbe9d6f2ad391f8.jpeg"
+          },
+          {
+            "webId": "6aa05e8b3d3ca5e4630997f0",
+            "slug": "anto",
+            "nombreCompleto": "Antonela Fantini",
+            "nombre": "Antonela",
+            "apellido": "Fantini",
+            "apodo": "Anto",
+            "displayName": "Anto",
+            "dorsal": "5",
+            "posicion": "DFC",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-335d460fa018e1dd2587.jpeg"
+          },
+          {
+            "webId": "6aa85331fde3badf1f247275",
+            "slug": "barbi",
+            "nombreCompleto": "Barbara Roskin",
+            "nombre": "Barbara",
+            "apellido": "Roskin",
+            "apodo": "Barbi",
+            "displayName": "Barbi",
+            "dorsal": "20",
+            "posicion": "MED",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6aa85331fde3badf1f247267",
+            "slug": "becca",
+            "nombreCompleto": "Delfina Beccacece",
+            "nombre": "Delfina",
+            "apellido": "Beccacece",
+            "apodo": "Becca",
+            "displayName": "Becca",
+            "dorsal": "8",
+            "posicion": "MDC",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-2b13941d9263166a4fa6.jpeg"
+          },
+          {
+            "webId": "6aa85331fde3badf1f24726b",
+            "slug": "bianca",
+            "nombreCompleto": "Bianca Di Pascuale",
+            "nombre": "Bianca",
+            "apellido": "Di Pascuale",
+            "apodo": "Bianca",
+            "displayName": "Bianca",
+            "dorsal": "16",
+            "posicion": "EI",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-26482d93b95cde9bb15a.jpeg"
+          },
+          {
+            "webId": "6a6a2d3dc2efc7298cf57fea",
+            "slug": "camilitafer",
+            "nombreCompleto": "Camila Fernández",
+            "nombre": "Camila",
+            "apellido": "Fernández",
+            "apodo": "Camilitafer",
+            "displayName": "Camilitafer",
+            "dorsal": "19",
+            "posicion": "LI",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-40c537f0682bcc3c8504.jpeg"
+          },
+          {
+            "webId": "6aa85331fde3badf1f247269",
+            "slug": "cande",
+            "nombreCompleto": "Candela Simoneit",
+            "nombre": "Candela",
+            "apellido": "Simoneit",
+            "apodo": "Cande",
+            "displayName": "Cande",
+            "dorsal": "6",
+            "posicion": "DFC",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-538bf8f10b9607228590.jpeg"
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c67008",
+            "slug": "carito",
+            "nombreCompleto": "Carolina Muller",
+            "nombre": "Carolina",
+            "apellido": "Muller",
+            "apodo": "CARITO",
+            "displayName": "CARITO",
+            "dorsal": "99",
+            "posicion": "DEL",
+            "photoUrl": "/assets/as/players/carito.webp"
+          },
+          {
+            "webId": "6aa05e8b3d3ca5e4630997f4",
+            "slug": "chiara-mancuso",
+            "nombreCompleto": "Chiara Mancuso",
+            "nombre": "Chiara",
+            "apellido": "Mancuso",
+            "apodo": "",
+            "displayName": "Chiara Mancuso",
+            "dorsal": "26",
+            "posicion": "DEL",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-fbb4d5688a7448134021.jpeg"
+          },
+          {
+            "webId": "e9b130bff7e2c395c1dd8c51",
+            "slug": "coty",
+            "nombreCompleto": "Constanza Romero",
+            "nombre": "Constanza",
+            "apellido": "Romero",
+            "apodo": "Coty",
+            "displayName": "Coty",
+            "dorsal": "18",
+            "posicion": "DC",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-d4b09c3e63d657f68c69.jpeg"
+          },
+          {
+            "webId": "6a6a2d3dc2efc7298cf57fd9",
+            "slug": "danu",
+            "nombreCompleto": "Daniela Guerrero",
+            "nombre": "Daniela",
+            "apellido": "Guerrero",
+            "apodo": "Danu",
+            "displayName": "Danu",
+            "dorsal": "32",
+            "posicion": "LD",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-5afc111a357d2b160f87.jpeg"
+          },
+          {
+            "webId": "6aa85331fde3badf1f24726d",
+            "slug": "emi",
+            "nombreCompleto": "Emilia Boema",
+            "nombre": "Emilia",
+            "apellido": "Boema",
+            "apodo": "Emi",
+            "displayName": "Emi",
+            "dorsal": "15",
+            "posicion": "EI",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-8e77d87173a8403e8b6f.jpeg"
+          },
+          {
+            "webId": "6ac905f43d1cc3c14027c1df",
+            "slug": "eve",
+            "nombreCompleto": "Evelyn Argañaraz",
+            "nombre": "Evelyn",
+            "apellido": "Argañaraz",
+            "apodo": "Eve",
+            "displayName": "Eve",
+            "dorsal": "26",
+            "posicion": "ARQ",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6aa85331fde3badf1f24726a",
+            "slug": "faty",
+            "nombreCompleto": "Fatima Danura",
+            "nombre": "Fatima",
+            "apellido": "Danura",
+            "apodo": "Faty",
+            "displayName": "Faty",
+            "dorsal": "17",
+            "posicion": "MI",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-25ab6caffb343aa6ee92.jpeg"
+          },
+          {
+            "webId": "6a6a2d3dc2efc7298cf57fcf",
+            "slug": "federikita",
+            "nombreCompleto": "Federica Riccio",
+            "nombre": "Federica",
+            "apellido": "Riccio",
+            "apodo": "FederiKita",
+            "displayName": "FederiKita",
+            "dorsal": "7",
+            "posicion": "LD",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-c6e97cebdd08a482079e.jpeg"
+          },
+          {
+            "webId": "6aa85331fde3badf1f247268",
+            "slug": "fio",
+            "nombreCompleto": "Fiorella Gimenez",
+            "nombre": "Fiorella",
+            "apellido": "Gimenez",
+            "apodo": "Fio",
+            "displayName": "Fio",
+            "dorsal": "21",
+            "posicion": "DC",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-c705c563119a0bf6cc81.jpeg"
+          },
+          {
+            "webId": "6aa05e8b3d3ca5e463099804",
+            "slug": "guadalupe-vergara",
+            "nombreCompleto": "Guadalupe Vergara",
+            "nombre": "Guadalupe",
+            "apellido": "Vergara",
+            "apodo": "",
+            "displayName": "Guadalupe Vergara",
+            "dorsal": "13",
+            "posicion": "MDC",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-6621fd01e6cb81b6f690.jpeg"
+          },
+          {
+            "webId": "6aa05e8b3d3ca5e4630997f2",
+            "slug": "hui",
+            "nombreCompleto": "Huilén De Angelo",
+            "nombre": "Huilén",
+            "apellido": "De Angelo",
+            "apodo": "Hui",
+            "displayName": "Hui",
+            "dorsal": "30",
+            "posicion": "MDC",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-fa1d58034ed7513f2f6d.jpeg"
+          },
+          {
+            "webId": "6aa85331fde3badf1f247273",
+            "slug": "jachu",
+            "nombreCompleto": "Jacinta Maidana",
+            "nombre": "Jacinta",
+            "apellido": "Maidana",
+            "apodo": "Jachu",
+            "displayName": "Jachu",
+            "dorsal": "24",
+            "posicion": "MED",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6aa85331fde3badf1f247279",
+            "slug": "jaz",
+            "nombreCompleto": "Jazmin De Leon",
+            "nombre": "Jazmin",
+            "apellido": "De Leon",
+            "apodo": "Jaz",
+            "displayName": "Jaz",
+            "dorsal": "4",
+            "posicion": "DEF",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c67009",
+            "slug": "jova",
+            "nombreCompleto": "Josefina Valicenti",
+            "nombre": "Josefina",
+            "apellido": "Valicenti",
+            "apodo": "JOVA",
+            "displayName": "JOVA",
+            "dorsal": "14",
+            "posicion": "DEF",
+            "photoUrl": "/assets/as/players/jova.webp"
+          },
+          {
+            "webId": "6aa85331fde3badf1f24727a",
+            "slug": "july",
+            "nombreCompleto": "Julieta Peña",
+            "nombre": "Julieta",
+            "apellido": "Peña",
+            "apodo": "July",
+            "displayName": "July",
+            "dorsal": "25",
+            "posicion": "DEF",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6aa05e8b3d3ca5e46309980e",
+            "slug": "kacu",
+            "nombreCompleto": "Bianca Castaño",
+            "nombre": "Bianca",
+            "apellido": "Castaño",
+            "apodo": "Kacu",
+            "displayName": "Kacu",
+            "dorsal": "31",
+            "posicion": "MDC",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6a6a2d3dc2efc7298cf57fda",
+            "slug": "lucia-maidana-cornejo",
+            "nombreCompleto": "Lucia Maidana Cornejo",
+            "nombre": "Lucia",
+            "apellido": "Maidana Cornejo",
+            "apodo": "",
+            "displayName": "Lucia Maidana Cornejo",
+            "dorsal": "3",
+            "posicion": "DEL",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6aa85331fde3badf1f247277",
+            "slug": "mai",
+            "nombreCompleto": "Mailen Zalazar",
+            "nombre": "Mailen",
+            "apellido": "Zalazar",
+            "apodo": "Mai",
+            "displayName": "Mai",
+            "dorsal": "29",
+            "posicion": "DEL",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6aa85331fde3badf1f24726f",
+            "slug": "mora",
+            "nombreCompleto": "Mora Jabornisky",
+            "nombre": "Mora",
+            "apellido": "Jabornisky",
+            "apodo": "Mora",
+            "displayName": "Mora",
+            "dorsal": "2",
+            "posicion": "DFC",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-40da9ace3172471d3659.jpeg"
+          },
+          {
+            "webId": "6aa85331fde3badf1f247271",
+            "slug": "pachu",
+            "nombreCompleto": "Maria Paz Zubiri",
+            "nombre": "Maria Paz",
+            "apellido": "Zubiri",
+            "apodo": "Pachu",
+            "displayName": "Pachu",
+            "dorsal": "26",
+            "posicion": "GK",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6aa05e8b3d3ca5e463099808",
+            "slug": "portena",
+            "nombreCompleto": "Isis Nerea Lezcano",
+            "nombre": "Isis Nerea",
+            "apellido": "Lezcano",
+            "apodo": "Porteña",
+            "displayName": "Porteña",
+            "dorsal": "9",
+            "posicion": "MDC",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-2bbeb9c0b15b8a8dc136.jpeg"
+          },
+          {
+            "webId": "6aa05e8b3d3ca5e4630997fc",
+            "slug": "puma",
+            "nombreCompleto": "Maria Florencia Lattanzio",
+            "nombre": "Maria Florencia",
+            "apellido": "Lattanzio",
+            "apodo": "Puma",
+            "displayName": "Puma",
+            "dorsal": "1",
+            "posicion": "GK",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-65318a93022759846a09.jpeg"
+          },
+          {
+            "webId": "6aa05e8b3d3ca5e46309980c",
+            "slug": "rocio-oliva",
+            "nombreCompleto": "Rocio Oliva",
+            "nombre": "Rocio",
+            "apellido": "Oliva",
+            "apodo": "",
+            "displayName": "Rocio Oliva",
+            "dorsal": "10",
+            "posicion": "MCO",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-802c2e2390ca279e3b49.jpeg"
+          },
+          {
+            "webId": "6aa85331fde3badf1f24726c",
+            "slug": "sofi-b",
+            "nombreCompleto": "Sofia Ricci",
+            "nombre": "Sofia",
+            "apellido": "Ricci",
+            "apodo": "Sofi B",
+            "displayName": "Sofi B",
+            "dorsal": "14",
+            "posicion": "ED",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-ecf52c4a36e04d77d2e2.jpeg"
+          },
+          {
+            "webId": "6aa05e8b3d3ca5e463099810",
+            "slug": "tiziana-torino",
+            "nombreCompleto": "Tiziana Torino",
+            "nombre": "Tiziana",
+            "apellido": "Torino",
+            "apodo": "",
+            "displayName": "Tiziana Torino",
+            "dorsal": "33",
+            "posicion": "MDC",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6aa85331fde3badf1f247272",
+            "slug": "vicky",
+            "nombreCompleto": "Victoria Moran",
+            "nombre": "Victoria",
+            "apellido": "Moran",
+            "apodo": "Vicky",
+            "displayName": "Vicky",
+            "dorsal": "23",
+            "posicion": "DEL",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6aa85331fde3badf1f24726e",
+            "slug": "yami",
+            "nombreCompleto": "Yamila Sanchez",
+            "nombre": "Yamila",
+            "apellido": "Sanchez",
+            "apodo": "Yami",
+            "displayName": "Yami",
+            "dorsal": "77",
+            "posicion": "DFC",
+            "photoUrl": ""
+          }
+        ],
+        "goleadores": [
+          {
+            "posicion": "01",
+            "webId": "6aa85331fde3badf1f24726a",
+            "slug": "faty",
+            "nombre": "Faty",
+            "dorsal": "17",
+            "count": 1
+          }
+        ],
+        "asistidores": [],
+        "presencias": [
+          {
+            "posicion": "01",
+            "webId": "6a5a79a0d8f54d7f55c67008",
+            "slug": "carito",
+            "nombre": "CARITO",
+            "dorsal": "99",
+            "count": 8
+          },
+          {
+            "posicion": "02",
+            "webId": "6a5a79a0d8f54d7f55c67009",
+            "slug": "jova",
+            "nombre": "JOVA",
+            "dorsal": "14",
+            "count": 8
+          },
+          {
+            "posicion": "03",
+            "webId": "6aa85331fde3badf1f247267",
+            "slug": "becca",
+            "nombre": "Becca",
+            "dorsal": "8",
+            "count": 2
+          },
+          {
+            "posicion": "04",
+            "webId": "6a6a2d3dc2efc7298cf57fea",
+            "slug": "camilitafer",
+            "nombre": "Camilitafer",
+            "dorsal": "19",
+            "count": 2
+          },
+          {
+            "posicion": "05",
+            "webId": "6aa85331fde3badf1f247269",
+            "slug": "cande",
+            "nombre": "Cande",
+            "dorsal": "6",
+            "count": 2
+          },
+          {
+            "posicion": "06",
+            "webId": "e9b130bff7e2c395c1dd8c51",
+            "slug": "coty",
+            "nombre": "Coty",
+            "dorsal": "18",
+            "count": 2
+          },
+          {
+            "posicion": "07",
+            "webId": "6aa85331fde3badf1f247268",
+            "slug": "fio",
+            "nombre": "Fio",
+            "dorsal": "21",
+            "count": 2
+          },
+          {
+            "posicion": "08",
+            "webId": "6aa05e8b3d3ca5e463099808",
+            "slug": "portena",
+            "nombre": "Porteña",
+            "dorsal": "9",
+            "count": 2
+          },
+          {
+            "posicion": "09",
+            "webId": "6aa05e8b3d3ca5e46309980c",
+            "slug": "rocio-oliva",
+            "nombre": "Rocio Oliva",
+            "dorsal": "10",
+            "count": 2
+          },
+          {
+            "posicion": "10",
+            "webId": "6aa85331fde3badf1f24726e",
+            "slug": "yami",
+            "nombre": "Yami",
+            "dorsal": "77",
+            "count": 2
+          },
+          {
+            "posicion": "11",
+            "webId": "6aa05e8b3d3ca5e4630997f6",
+            "slug": "ana-gabriela-de-biasi",
+            "nombre": "Ana Gabriela De Biasi",
+            "dorsal": "11",
+            "count": 1
+          },
+          {
+            "posicion": "12",
+            "webId": "6aa05e8b3d3ca5e4630997f0",
+            "slug": "anto",
+            "nombre": "Anto",
+            "dorsal": "5",
+            "count": 1
+          },
+          {
+            "posicion": "13",
+            "webId": "6aa85331fde3badf1f247275",
+            "slug": "barbi",
+            "nombre": "Barbi",
+            "dorsal": "20",
+            "count": 1
+          },
+          {
+            "posicion": "14",
+            "webId": "6aa85331fde3badf1f24726b",
+            "slug": "bianca",
+            "nombre": "Bianca",
+            "dorsal": "16",
+            "count": 1
+          },
+          {
+            "posicion": "15",
+            "webId": "6a6a2d3dc2efc7298cf57fd9",
+            "slug": "danu",
+            "nombre": "Danu",
+            "dorsal": "32",
+            "count": 1
+          },
+          {
+            "posicion": "16",
+            "webId": "6aa85331fde3badf1f24726d",
+            "slug": "emi",
+            "nombre": "Emi",
+            "dorsal": "15",
+            "count": 1
+          },
+          {
+            "posicion": "17",
+            "webId": "6ac905f43d1cc3c14027c1df",
+            "slug": "eve",
+            "nombre": "Eve",
+            "dorsal": "26",
+            "count": 1
+          },
+          {
+            "posicion": "18",
+            "webId": "6aa85331fde3badf1f24726a",
+            "slug": "faty",
+            "nombre": "Faty",
+            "dorsal": "17",
+            "count": 1
+          },
+          {
+            "posicion": "19",
+            "webId": "6a6a2d3dc2efc7298cf57fcf",
+            "slug": "federikita",
+            "nombre": "FederiKita",
+            "dorsal": "7",
+            "count": 1
+          },
+          {
+            "posicion": "20",
+            "webId": "6aa05e8b3d3ca5e463099804",
+            "slug": "guadalupe-vergara",
+            "nombre": "Guadalupe Vergara",
+            "dorsal": "13",
+            "count": 1
+          },
+          {
+            "posicion": "21",
+            "webId": "6aa05e8b3d3ca5e4630997f2",
+            "slug": "hui",
+            "nombre": "Hui",
+            "dorsal": "30",
+            "count": 1
+          },
+          {
+            "posicion": "22",
+            "webId": "6aa85331fde3badf1f247279",
+            "slug": "jaz",
+            "nombre": "Jaz",
+            "dorsal": "4",
+            "count": 1
+          },
+          {
+            "posicion": "23",
+            "webId": "6aa85331fde3badf1f24727a",
+            "slug": "july",
+            "nombre": "July",
+            "dorsal": "25",
+            "count": 1
+          },
+          {
+            "posicion": "24",
+            "webId": "6aa05e8b3d3ca5e46309980e",
+            "slug": "kacu",
+            "nombre": "Kacu",
+            "dorsal": "31",
+            "count": 1
+          },
+          {
+            "posicion": "25",
+            "webId": "6aa85331fde3badf1f24726f",
+            "slug": "mora",
+            "nombre": "Mora",
+            "dorsal": "2",
+            "count": 1
+          },
+          {
+            "posicion": "26",
+            "webId": "6aa85331fde3badf1f247271",
+            "slug": "pachu",
+            "nombre": "Pachu",
+            "dorsal": "26",
+            "count": 1
+          },
+          {
+            "posicion": "27",
+            "webId": "6aa05e8b3d3ca5e4630997fc",
+            "slug": "puma",
+            "nombre": "Puma",
+            "dorsal": "1",
+            "count": 1
+          },
+          {
+            "posicion": "28",
+            "webId": "6aa85331fde3badf1f24726c",
+            "slug": "sofi-b",
+            "nombre": "Sofi B",
+            "dorsal": "14",
+            "count": 1
+          },
+          {
+            "posicion": "29",
+            "webId": "6aa05e8b3d3ca5e463099810",
+            "slug": "tiziana-torino",
+            "nombre": "Tiziana Torino",
+            "dorsal": "33",
+            "count": 1
+          },
+          {
+            "posicion": "30",
+            "webId": "6aa85331fde3badf1f247272",
+            "slug": "vicky",
+            "nombre": "Vicky",
+            "dorsal": "23",
+            "count": 1
+          }
+        ],
+        "sanciones": [
+          {
+            "posicion": "01",
+            "webId": "6aa85331fde3badf1f24726a",
+            "slug": "faty",
+            "nombre": "Faty",
+            "dorsal": "17",
+            "count": 1,
+            "amarillas": 1,
+            "rojas": 0
+          }
+        ],
+        "contribuciones": [
+          {
+            "posicion": "01",
+            "webId": "6aa85331fde3badf1f24726a",
+            "slug": "faty",
+            "nombre": "Faty",
+            "dorsal": "17",
+            "count": 1,
+            "goles": 1,
+            "asistencias": 0
+          }
+        ],
+        "mvps": {},
+        "disponibles": {
+          "goles": true,
+          "asistencias": true,
+          "presencias": true,
+          "sanciones": true,
+          "mvps": true
+        }
+      },
+      "ultimaActualizacion": "2026-10-09T18:26:19.779Z",
+      "fuente": "argentinastreamers.com · ESTADÍSTICAS · FEMENINO",
+      "ultimoIntento": "2026-10-09T18:26:19.779Z",
+      "ultimoResultado": "ok",
+      "ultimoError": null
+    }
+  },
+  "convocados": {
+    "masculino": {
+      "data": {
+        "partido": {
+          "matchId": "fc3195347fd25476f16cab71",
+          "fecha": "2026-10-11T19:15:00.000Z",
+          "rival": "Actores",
+          "competencia": "Amistosos"
+        },
+        "jugadores": [
+          {
+            "webId": "6a5a79a0d8f54d7f55c66ffc",
+            "slug": "el-nene",
+            "nombreCompleto": "Agustin Pablo Saguillo",
+            "nombre": "Agustin Pablo",
+            "apellido": "Saguillo",
+            "apodo": "EL NENE",
+            "displayName": "EL NENE",
+            "dorsal": "20",
+            "posicion": "MP",
+            "photoUrl": "/assets/as/players/el-nene.webp"
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66fef",
+            "slug": "pablito-nonis",
+            "nombreCompleto": "Pablo Nonis",
+            "nombre": "Pablo",
+            "apellido": "Nonis",
+            "apodo": "Pablito Nonis",
+            "displayName": "Pablito Nonis",
+            "dorsal": "80",
+            "posicion": "EI",
+            "photoUrl": "/assets/as/players/pablito-nonis.webp"
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66ff4",
+            "slug": "massi",
+            "nombreCompleto": "Massimo Pomponio",
+            "nombre": "Massimo",
+            "apellido": "Pomponio",
+            "apodo": "Massi",
+            "displayName": "Massi",
+            "dorsal": "77",
+            "posicion": "DC",
+            "photoUrl": "/assets/as/players/massi.webp"
+          },
+          {
+            "webId": "6a47e31706c86e93e88ca6b4",
+            "slug": "santi",
+            "nombreCompleto": "Santiago Grizas",
+            "nombre": "Santiago",
+            "apellido": "Grizas",
+            "apodo": "Santi",
+            "displayName": "Santi",
+            "dorsal": "19",
+            "posicion": "DC",
+            "photoUrl": "/assets/as/players/santi-grizas.webp"
+          },
+          {
+            "webId": "6a559dea9264fd9d6d31dc1c",
+            "slug": "tomas-suraci",
+            "nombreCompleto": "Tomas Suraci",
+            "nombre": "Tomas",
+            "apellido": "Suraci",
+            "apodo": "",
+            "displayName": "Tomas Suraci",
+            "dorsal": "36",
+            "posicion": "MED",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6a71125ba98274c2ce3544d6",
+            "slug": "la-joya",
+            "nombreCompleto": "Tomas Riguera",
+            "nombre": "Tomas",
+            "apellido": "Riguera",
+            "apodo": "La Joya",
+            "displayName": "La Joya",
+            "dorsal": "16",
+            "posicion": "MED",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6a559deb9264fd9d6d31dc46",
+            "slug": "igna-lopez",
+            "nombreCompleto": "Ignacio Lopez",
+            "nombre": "Ignacio",
+            "apellido": "Lopez",
+            "apodo": "Igna Lopez",
+            "displayName": "Igna Lopez",
+            "dorsal": "32",
+            "posicion": "MD",
+            "photoUrl": "/assets/as/players/igna-lopez.webp"
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66fee",
+            "slug": "santiago-argibay",
+            "nombreCompleto": "Santiago Argibay",
+            "nombre": "Santiago",
+            "apellido": "Argibay",
+            "apodo": "",
+            "displayName": "Santiago Argibay",
+            "dorsal": "5",
+            "posicion": "MDC",
+            "photoUrl": "/assets/as/players/santi.webp"
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66fec",
+            "slug": "tita",
+            "nombreCompleto": "Franco Stefano Tita",
+            "nombre": "Franco Stefano",
+            "apellido": "Tita",
+            "apodo": "TITA",
+            "displayName": "TITA",
+            "dorsal": "14",
+            "posicion": "MDC",
+            "photoUrl": "/assets/as/players/tita.webp"
+          },
+          {
+            "webId": "6a47e31706c86e93e88ca6af",
+            "slug": "blito",
+            "nombreCompleto": "Pablo Alexis Basualdo",
+            "nombre": "Pablo Alexis",
+            "apellido": "Basualdo",
+            "apodo": "Blito",
+            "displayName": "Blito",
+            "dorsal": "8",
+            "posicion": "DFC",
+            "photoUrl": "/assets/as/players/blito.webp"
+          },
+          {
+            "webId": "6ab721ada833b4754f1eadb0",
+            "slug": "matias-lopez",
+            "nombreCompleto": "Matias Lopez",
+            "nombre": "Matias",
+            "apellido": "Lopez",
+            "apodo": "",
+            "displayName": "Matias Lopez",
+            "dorsal": "3",
+            "posicion": "DEF",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6a580a190571f0e19fe0931c",
+            "slug": "ciro-burchakchi",
+            "nombreCompleto": "Ciro Burchakchi",
+            "nombre": "Ciro",
+            "apellido": "Burchakchi",
+            "apodo": "",
+            "displayName": "Ciro Burchakchi",
+            "dorsal": "6",
+            "posicion": "DEF",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6a559dea9264fd9d6d31dc25",
+            "slug": "luca-f",
+            "nombreCompleto": "Luca Figurelli",
+            "nombre": "Luca",
+            "apellido": "Figurelli",
+            "apodo": "LUCA F",
+            "displayName": "LUCA F",
+            "dorsal": "23",
+            "posicion": "LI",
+            "photoUrl": "/assets/as/players/luca-figurelli.webp"
+          },
+          {
+            "webId": "6a559deb9264fd9d6d31dc91",
+            "slug": "tadeo",
+            "nombreCompleto": "Tadeo Torres",
+            "nombre": "Tadeo",
+            "apellido": "Torres",
+            "apodo": "TADEO",
+            "displayName": "TADEO",
+            "dorsal": "2",
+            "posicion": "DFC",
+            "photoUrl": "/assets/as/players/tadeo.webp"
+          },
+          {
+            "webId": "6a559deb9264fd9d6d31dc4c",
+            "slug": "pelozo",
+            "nombreCompleto": "Luca Pelozo",
+            "nombre": "Luca",
+            "apellido": "Pelozo",
+            "apodo": "Pelozo",
+            "displayName": "Pelozo",
+            "dorsal": "22",
+            "posicion": "DFC",
+            "photoUrl": "/assets/as/players/pelozo.webp"
+          },
+          {
+            "webId": "6a807b90b3a7188d56f1e3ba",
+            "slug": "joaquin-cartelle",
+            "nombreCompleto": "Joaquin Cartelle",
+            "nombre": "Joaquin",
+            "apellido": "Cartelle",
+            "apodo": "",
+            "displayName": "Joaquin Cartelle",
+            "dorsal": "12",
+            "posicion": "ARQ",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6a559deb9264fd9d6d31dc70",
+            "slug": "cedrola",
+            "nombreCompleto": "Luciano Cedrola",
+            "nombre": "Luciano",
+            "apellido": "Cedrola",
+            "apodo": "CEDROLA",
+            "displayName": "CEDROLA",
+            "dorsal": "1",
+            "posicion": "GK",
+            "photoUrl": "/assets/as/players/cedrola.webp"
+          },
+          {
+            "webId": "6a5a79a0d8f54d7f55c66ffd",
+            "slug": "pimpeano",
+            "nombreCompleto": "Galo Blasco",
+            "nombre": "Galo",
+            "apellido": "Blasco",
+            "apodo": "Pimpeano",
+            "displayName": "Pimpeano",
+            "dorsal": "21",
+            "posicion": "LD",
+            "photoUrl": "/assets/as/players/pimpeano.webp"
+          }
+        ]
+      },
+      "ultimaActualizacion": "2026-10-09T18:22:41.869Z",
+      "fuente": "argentinastreamers.com · CONVOCADOS · MASCULINO",
+      "ultimoIntento": "2026-10-09T18:22:41.869Z",
+      "ultimoResultado": "ok",
+      "ultimoError": null
+    },
+    "femenino": {
+      "data": {
+        "partido": {
+          "matchId": "6146ae1a390ba1296bd0175b",
+          "fecha": "2026-10-11T17:30:00.000Z",
+          "rival": "ACTRICES",
+          "competencia": "Amistosos"
+        },
+        "jugadores": [
+          {
+            "webId": "6aa85331fde3badf1f247268",
+            "slug": "fio",
+            "nombreCompleto": "Fiorella Gimenez",
+            "nombre": "Fiorella",
+            "apellido": "Gimenez",
+            "apodo": "Fio",
+            "displayName": "Fio",
+            "dorsal": "21",
+            "posicion": "DC",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-c705c563119a0bf6cc81.jpeg"
+          },
+          {
+            "webId": "6aa85331fde3badf1f24726e",
+            "slug": "yami",
+            "nombreCompleto": "Yamila Sanchez",
+            "nombre": "Yamila",
+            "apellido": "Sanchez",
+            "apodo": "Yami",
+            "displayName": "Yami",
+            "dorsal": "77",
+            "posicion": "DFC",
+            "photoUrl": ""
+          },
+          {
+            "webId": "e9b130bff7e2c395c1dd8c51",
+            "slug": "coty",
+            "nombreCompleto": "Constanza Romero",
+            "nombre": "Constanza",
+            "apellido": "Romero",
+            "apodo": "Coty",
+            "displayName": "Coty",
+            "dorsal": "18",
+            "posicion": "DC",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-d4b09c3e63d657f68c69.jpeg"
+          },
+          {
+            "webId": "6aa85331fde3badf1f247267",
+            "slug": "becca",
+            "nombreCompleto": "Delfina Beccacece",
+            "nombre": "Delfina",
+            "apellido": "Beccacece",
+            "apodo": "Becca",
+            "displayName": "Becca",
+            "dorsal": "8",
+            "posicion": "MDC",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-2b13941d9263166a4fa6.jpeg"
+          },
+          {
+            "webId": "6aa05e8b3d3ca5e463099810",
+            "slug": "tiziana-torino",
+            "nombreCompleto": "Tiziana Torino",
+            "nombre": "Tiziana",
+            "apellido": "Torino",
+            "apodo": "",
+            "displayName": "Tiziana Torino",
+            "dorsal": "33",
+            "posicion": "MDC",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6aa85331fde3badf1f247272",
+            "slug": "vicky",
+            "nombreCompleto": "Victoria Moran",
+            "nombre": "Victoria",
+            "apellido": "Moran",
+            "apodo": "Vicky",
+            "displayName": "Vicky",
+            "dorsal": "23",
+            "posicion": "DEL",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6aa05e8b3d3ca5e46309980e",
+            "slug": "kacu",
+            "nombreCompleto": "Bianca Castaño",
+            "nombre": "Bianca",
+            "apellido": "Castaño",
+            "apodo": "Kacu",
+            "displayName": "Kacu",
+            "dorsal": "31",
+            "posicion": "MDC",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6aa05e8b3d3ca5e46309980c",
+            "slug": "rocio-oliva",
+            "nombreCompleto": "Rocio Oliva",
+            "nombre": "Rocio",
+            "apellido": "Oliva",
+            "apodo": "",
+            "displayName": "Rocio Oliva",
+            "dorsal": "10",
+            "posicion": "MCO",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-802c2e2390ca279e3b49.jpeg"
+          },
+          {
+            "webId": "6aa85331fde3badf1f247275",
+            "slug": "barbi",
+            "nombreCompleto": "Barbara Roskin",
+            "nombre": "Barbara",
+            "apellido": "Roskin",
+            "apodo": "Barbi",
+            "displayName": "Barbi",
+            "dorsal": "20",
+            "posicion": "MED",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6aa05e8b3d3ca5e463099808",
+            "slug": "portena",
+            "nombreCompleto": "Isis Nerea Lezcano",
+            "nombre": "Isis Nerea",
+            "apellido": "Lezcano",
+            "apodo": "Porteña",
+            "displayName": "Porteña",
+            "dorsal": "9",
+            "posicion": "MDC",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-2bbeb9c0b15b8a8dc136.jpeg"
+          },
+          {
+            "webId": "6aa85331fde3badf1f247279",
+            "slug": "jaz",
+            "nombreCompleto": "Jazmin De Leon",
+            "nombre": "Jazmin",
+            "apellido": "De Leon",
+            "apodo": "Jaz",
+            "displayName": "Jaz",
+            "dorsal": "4",
+            "posicion": "DEF",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6aa05e8b3d3ca5e463099804",
+            "slug": "guadalupe-vergara",
+            "nombreCompleto": "Guadalupe Vergara",
+            "nombre": "Guadalupe",
+            "apellido": "Vergara",
+            "apodo": "",
+            "displayName": "Guadalupe Vergara",
+            "dorsal": "13",
+            "posicion": "MDC",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-6621fd01e6cb81b6f690.jpeg"
+          },
+          {
+            "webId": "6a6a2d3dc2efc7298cf57fea",
+            "slug": "camilitafer",
+            "nombreCompleto": "Camila Fernández",
+            "nombre": "Camila",
+            "apellido": "Fernández",
+            "apodo": "Camilitafer",
+            "displayName": "Camilitafer",
+            "dorsal": "19",
+            "posicion": "LI",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-40c537f0682bcc3c8504.jpeg"
+          },
+          {
+            "webId": "6aa85331fde3badf1f247269",
+            "slug": "cande",
+            "nombreCompleto": "Candela Simoneit",
+            "nombre": "Candela",
+            "apellido": "Simoneit",
+            "apodo": "Cande",
+            "displayName": "Cande",
+            "dorsal": "6",
+            "posicion": "DFC",
+            "photoUrl": "https://api.gla.futbol/api/media/file/as-fem-20261006-538bf8f10b9607228590.jpeg"
+          },
+          {
+            "webId": "6aa85331fde3badf1f24727a",
+            "slug": "july",
+            "nombreCompleto": "Julieta Peña",
+            "nombre": "Julieta",
+            "apellido": "Peña",
+            "apodo": "July",
+            "displayName": "July",
+            "dorsal": "25",
+            "posicion": "DEF",
+            "photoUrl": ""
+          },
+          {
+            "webId": "6ac905f43d1cc3c14027c1df",
+            "slug": "eve",
+            "nombreCompleto": "Evelyn Argañaraz",
+            "nombre": "Evelyn",
+            "apellido": "Argañaraz",
+            "apodo": "Eve",
+            "displayName": "Eve",
+            "dorsal": "26",
+            "posicion": "ARQ",
+            "photoUrl": ""
+          }
+        ]
+      },
+      "ultimaActualizacion": "2026-10-09T18:22:41.869Z",
+      "fuente": "argentinastreamers.com · CONVOCADOS · FEMENINO",
+      "ultimoIntento": "2026-10-09T18:22:41.869Z",
+      "ultimoResultado": "ok",
+      "ultimoError": null
+    }
+  }
+}

@@ -8,7 +8,13 @@
 // plantel: { [id]: { dorsal, nombre, foto } } } -- IDs de PLANTELES; "plantel"
 // es la copia visible que refresca el panel. teamId = lado elegido del
 // Marcador.
+//
+// VISUAL (2026-11-06): 'foto' = foto del plantel y, si no hay, la CAMISETA
+// del equipo; 'camiseta' = siempre la camiseta. La camiseta es un SVG simple
+// con los colores del equipo (shared/themes.js, kit) y el DORSAL del
+// plantel; el nombre sigue en la barra de abajo como siempre.
 import { parseFormation } from '../../../shared/bb-match.js';
+import { bbTeamKit } from '../../../shared/themes.js';
 import { team, anim, crestHtml, upper, fitFontPx, markStatic, escapeHtml, photoUrl, BB_FONT_TEXT } from './bb-common.js';
 
 const PITCH = { w: 1124, h: 860 };
@@ -19,13 +25,43 @@ const MAX_GAP_Y = 262;
 const SPREAD_Y = 640;
 const MAX_SUBS = 8;
 
-function playerHtml(p, x, y, d, o, isGk, teamId) {
+// Camiseta gráfica (viewBox 120x120): cuerpo, cuello y puños con los colores
+// del equipo; "sash" = banda diagonal (TEAM BAULETI); dorsal sobre el pecho.
+const SHIRT_PATH = 'M42 12 L52 8 C55 14 65 14 68 8 L78 12 L104 26 L95 52 L84 47 L84 110 Q60 114 36 110 L36 47 L25 52 L16 26 Z';
+
+function shirtSvg(kit, dorsal, uid, d) {
+  const num = String(dorsal || '').trim().slice(0, 3);
+  const numPx = num.length >= 3 ? 30 : num.length === 2 ? 40 : 46;
+  const gold = kit.number === 'gold';
+  const numFill = gold ? `url(#${uid}-n)` : kit.number;
+  const sash = kit.style === 'sash'
+    ? `<rect x="-30" y="52" width="180" height="21" fill="${kit.accent}" transform="rotate(38 60 62)"/>`
+    : `<path d="M38.5 50 V108 M81.5 50 V108" stroke="${kit.trim}" stroke-width="1" opacity="0.55"/>`;
+  return `
+    <svg class="bb-shirt bb-a" ${anim(d + 0.12, 0)} viewBox="0 0 120 120" aria-hidden="true">
+      <defs>
+        <clipPath id="${uid}-c"><path d="${SHIRT_PATH}"/></clipPath>
+        <linearGradient id="${uid}-s" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0.2"/><stop offset="0.55" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.22"/></linearGradient>
+        <linearGradient id="${uid}-n" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F3D78F"/><stop offset="0.55" stop-color="#D6AA4E"/><stop offset="1" stop-color="#9C7426"/></linearGradient>
+      </defs>
+      <g clip-path="url(#${uid}-c)">
+        <path d="${SHIRT_PATH}" fill="${kit.body}"/>
+        ${sash}
+        <path d="M16 26 L25 52 M104 26 L95 52" stroke="${kit.trim}" stroke-width="7"/>
+        <path d="${SHIRT_PATH}" fill="url(#${uid}-s)"/>
+      </g>
+      <path d="M52 8 C55 14 65 14 68 8" fill="none" stroke="${kit.trim}" stroke-width="3.4" stroke-linecap="round"/>
+      ${num ? `<text x="60" y="${num.length >= 3 ? 86 : 90}" text-anchor="middle" font-family="'GLA Anton', Impact, sans-serif" font-size="${numPx}" fill="${numFill}" stroke="${kit.numberStroke}" stroke-width="${gold ? 1.6 : 3.2}" paint-order="stroke" stroke-linejoin="round">${escapeHtml(num)}</text>` : ''}
+    </svg>`;
+}
+
+function playerHtml(p, x, y, d, o, isGk, teamId, visual, uid) {
   const name = upper(p?.nombre || '');
   const px = fitFontPx(name, { maxPx: 20, minPx: 12, maxWidth: 116, family: BB_FONT_TEXT, weight: 700 });
-  const src = photoUrl(teamId, p?.foto);
+  const src = visual === 'camiseta' ? null : photoUrl(teamId, p?.foto);
   const photo = src
     ? `<img class="bb-a" ${anim(d + 0.12, 0)} src="${escapeHtml(src)}" alt="" decoding="async">`
-    : `<div class="bb-player-silhouette">${escapeHtml(p?.dorsal || '')}</div>`;
+    : shirtSvg(bbTeamKit(teamId), p?.dorsal, uid, d);
   return `
     <div class="bb-player bb-a${isGk ? ' is-gk' : ''}" ${anim(d, o, `left:${x}px;top:${y}px`)}>
       <div class="bb-player-photo">${photo}${isGk ? '<span class="bb-player-tag">ARQ</span>' : ''}</div>
@@ -48,7 +84,8 @@ export default function renderBbFormacion(contentEl, data, justTaken, _onEnded, 
   const suplentes = (Array.isArray(conf.suplentes) ? conf.suplentes : []).filter((id) => plantel[id]).slice(0, MAX_SUBS);
   const showSubs = data?.mostrarSuplentes !== false && suplentes.length > 0;
 
-  const signature = JSON.stringify([t, rival, side, conf, data?.titulo, showSubs]);
+  const visual = data?.visual === 'camiseta' ? 'camiseta' : 'foto';
+  const signature = JSON.stringify([t, rival, side, conf, data?.titulo, showSubs, visual]);
   if (!justTaken && contentEl._bbSignature === signature) return;
   const isStatic = !justTaken && contentEl._bbBuilt === true;
   contentEl._bbSignature = signature;
@@ -65,7 +102,7 @@ export default function renderBbFormacion(contentEl, data, justTaken, _onEnded, 
   const players = slots.map((slot, i) => {
     const d = slot.gk ? 0.62 : 0.76 + slot.line * 0.12 + i * 0.04;
     const o = (total - i) * 0.022;
-    return playerHtml(plantel[titulares[i]], slot.x, slot.y, d, o, slot.gk, t.id);
+    return playerHtml(plantel[titulares[i]], slot.x, slot.y, d, o, slot.gk, t.id, visual, `bbk-${t.id || 'x'}-${i}`);
   }).join('');
 
   const teamName = upper(t.name || t.abbr);

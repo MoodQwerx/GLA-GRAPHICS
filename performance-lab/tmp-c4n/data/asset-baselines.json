@@ -1,0 +1,322 @@
+{
+  "copa4naciones.c4nMarcador.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 30615,
+    "mtimeMs": 1793975573352
+  },
+  "copa4naciones.c4nTarjeta.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 214154,
+    "mtimeMs": 1793975573357
+  },
+  "copa4naciones.c4nCambio.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 209907,
+    "mtimeMs": 1793975573352
+  },
+  "copa4naciones.c4nZocaloTexto.fondo": {
+    "format": "PNG",
+    "width": 1672,
+    "height": 941,
+    "hasAlpha": true,
+    "sizeBytes": 630887,
+    "mtimeMs": 1793975573382
+  },
+  "copa4naciones.c4nZocaloCorto.fondo": {
+    "format": "PNG",
+    "width": 1672,
+    "height": 941,
+    "hasAlpha": true,
+    "sizeBytes": 714520,
+    "mtimeMs": 1793975573378
+  },
+  "copa4naciones.c4nZocaloCompuesto.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 389617,
+    "mtimeMs": 1793975573376
+  },
+  "copa4naciones.c4nMoscaLogo.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 36095,
+    "mtimeMs": 1793975573355
+  },
+  "copa4naciones.c4nMoscaTexto.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 15736,
+    "mtimeMs": 1793975573355
+  },
+  "copa4naciones.c4nMejoresJugadores.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 226712,
+    "mtimeMs": 1793975573354
+  },
+  "copa4naciones.c4nVsPrepartido.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 2537812,
+    "mtimeMs": 1793975573366
+  },
+  "copa4naciones.c4nVsResultado.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 2733417,
+    "mtimeMs": 1793975573374
+  },
+  "copa4naciones.c4nMarcador.tiempo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 11787,
+    "mtimeMs": 1794326056768
+  },
+  "copa4naciones.c4nMarcador.penales": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 15502,
+    "mtimeMs": 1794326056801
+  },
+  "copa4naciones.c4nGoleadores.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 2970538,
+    "mtimeMs": 1794326056860
+  },
+  "copa4naciones.c4nAsistencias.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 2970538,
+    "mtimeMs": 1794326056860
+  },
+  "copa4naciones.c4nGA.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 2970538,
+    "mtimeMs": 1794326056860
+  },
+  "copa4naciones.c4nPosiciones.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 2970538,
+    "mtimeMs": 1794326056860
+  },
+  "copa4naciones.c4nMejoresJugadores.placa": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 2970538,
+    "mtimeMs": 1794326056860
+  },
+  "copa4naciones.c4nFixture.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 4317238,
+    "mtimeMs": 1794326056835
+  },
+  "copa4naciones.c4nFormacion.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 2970538,
+    "mtimeMs": 1794326056860
+  },
+  "copa4naciones.c4nStatsPrevia.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 2970538,
+    "mtimeMs": 1794326056860
+  },
+  "copa4naciones.c4nStatsEntretiempo.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 2970538,
+    "mtimeMs": 1794326056860
+  },
+  "copa4naciones.c4nStatsFinal.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 2970538,
+    "mtimeMs": 1794326056860
+  },
+  "copa4naciones.c4nZocaloCortoDoble.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 78694,
+    "mtimeMs": 1794429188315
+  },
+  "copa4naciones.c4nTablaVs.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 963604,
+    "mtimeMs": 1794337211252
+  },
+  "copa4naciones.c4nMosca.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 36095,
+    "mtimeMs": 1793975573355
+  },
+  "copa4naciones.c4nMosca.texto": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 15736,
+    "mtimeMs": 1793975573355
+  },
+  "copa4naciones.c4nVar.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 104199,
+    "mtimeMs": 1794447421960
+  },
+  "copa4naciones.c4nPromoWeb.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 963604,
+    "mtimeMs": 1794337211252
+  },
+  "copa4naciones.c4nSponsors.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 622511,
+    "mtimeMs": 1794624809494
+  },
+  "copa4naciones.c4nSponsors.mvp-argentina": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 589855,
+    "mtimeMs": 1794624809602
+  },
+  "copa4naciones.c4nSponsors.mvp-brasil": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 635932,
+    "mtimeMs": 1794624809728
+  },
+  "copa4naciones.c4nSponsors.mvp-chile": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 630039,
+    "mtimeMs": 1794624809881
+  },
+  "copa4naciones.c4nSponsors.mvp-uruguay": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 620938,
+    "mtimeMs": 1794624810005
+  },
+  "copa4naciones.c4nSponsors.balon": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 742116,
+    "mtimeMs": 1794624810140
+  },
+  "copa4naciones.c4nSponsors.guante": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 876029,
+    "mtimeMs": 1794624810288
+  },
+  "copa4naciones.c4nSponsors.botin": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 730041,
+    "mtimeMs": 1794624810483
+  },
+  "copa4naciones.c4nPenalShootout.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 214154,
+    "mtimeMs": 1793975573357
+  },
+  "copa4naciones.c4nTablaFixture.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 963604,
+    "mtimeMs": 1794337211252
+  },
+  "copa4naciones.c4nRotativoSponsors.fondo": {
+    "format": "PNG",
+    "width": 160,
+    "height": 180,
+    "hasAlpha": true,
+    "sizeBytes": 556,
+    "mtimeMs": 1794712061926
+  }
+}

@@ -6,6 +6,10 @@
 // "En cancha" sale de la FORMACIÓN del equipo con los cambios ya hechos
 // aplicados en orden: SALE muestra primero a los que están jugando y ENTRA a
 // los que no. Sin formación cargada, todos los activos van en las dos listas.
+//
+// PLANTEL / MANUAL (2026-11-06): ENTRA y SALE eligen cada uno su origen
+// (bbCambio.modoEntra / modoSale). MANUAL = nombre + número opcional solo
+// para este evento (sin ID); el plantel no se toca.
 import { elapsedMs, parseClockLimit } from '../../../shared/clock.js';
 import { BB_EVENT_TYPES, createMatchEvent, sideTeamId, sortEvents } from '../../../shared/bb-match.js';
 import { el, section, statusLine, teamLabel } from './bb-common.js';
@@ -40,6 +44,13 @@ export function renderBbCambiosPanel(container, ctx) {
   let onAir = null;
 
   const nowMs = () => elapsedMs(m.clock, parseClockLimit(m.clockEndText, 20 * 60000) || 20 * 60000);
+  const cd = ctx.draft.bbCambio;
+  const modo = (key) => (cd[key] === 'manual' ? 'manual' : 'plantel');
+  // Jugador escrito a mano (o null si el nombre está vacío).
+  const manualPlayer = (key) => {
+    const nombre = String(cd[key]?.nombre || '').trim();
+    return nombre ? { id: null, teamId: sideTeamId(m, selSide), nombre, dorsal: String(cd[key]?.dorsal || '').trim() } : null;
+  };
 
   async function load() {
     players = null;
@@ -58,15 +69,44 @@ export function renderBbCambiosPanel(container, ctx) {
   }
 
   function register(show) {
-    if (!outP && !inP) { status.set('error', 'Elegí al menos quién sale o quién entra.'); return; }
-    const ev = createMatchEvent({ type: BB_EVENT_TYPES.SUB, side: selSide, marcador: m, player: inP, playerOut: outP, clockMs: nowMs() });
+    const outPlayer = modo('modoSale') === 'manual' ? manualPlayer('manualSale') : outP;
+    const inPlayer = modo('modoEntra') === 'manual' ? manualPlayer('manualEntra') : inP;
+    if (!outPlayer && !inPlayer) { status.set('error', 'Elegí al menos quién sale o quién entra.'); return; }
+    const ev = createMatchEvent({ type: BB_EVENT_TYPES.SUB, side: selSide, marcador: m, player: inPlayer, playerOut: outPlayer, clockMs: nowMs() });
     m.matchEvents.push(ev);
     commitMatch(ctx);
     if (show) showSub(ctx, ev);
     status.set('ok', `CAMBIO ${teamLabel(ev.teamId)} · ${ev.minute}' ${ev.period} — ENTRA ${playerText(ev.playerName, ev.dorsal, '—')} · SALE ${playerText(ev.playerOutName, ev.playerOutDorsal, '—')}${show ? ' · AL AIRE' : ''}`);
     outP = null;
     inP = null;
+    if (modo('modoSale') === 'manual') cd.manualSale = { nombre: '', dorsal: '' };
+    if (modo('modoEntra') === 'manual') cd.manualEntra = { nombre: '', dorsal: '' };
+    ctx.autosave('bbCambio');
     render();
+  }
+
+  // Columna ENTRA o SALE: selector PLANTEL / MANUAL + lista o campos.
+  function column(which, picker) {
+    const modeKey = which === 'in' ? 'modoEntra' : 'modoSale';
+    const manualKey = which === 'in' ? 'manualEntra' : 'manualSale';
+    const label = which === 'in' ? '▲ ENTRA' : '▼ SALE';
+    const setManual = (key, value) => { cd[manualKey] = { ...(cd[manualKey] || {}), [key]: value }; ctx.autosave('bbCambio'); };
+    const modeBtns = el('div', { class: 'bb-actions' }, [['plantel', 'PLANTEL'], ['manual', 'MANUAL']].map(([id, text]) => el('button', {
+      type: 'button',
+      class: `bb-btn period${modo(modeKey) === id ? ' active' : ''}`,
+      text: `${label.slice(2)} · ${text}`,
+      onclick: () => { cd[modeKey] = id; ctx.autosave('bbCambio'); render(); },
+    })));
+    if (modo(modeKey) !== 'manual') return el('div', {}, [modeBtns, picker]);
+    const nombre = el('input', { type: 'text', maxLength: 40, value: cd[manualKey]?.nombre || '', placeholder: 'NOMBRE DEL JUGADOR', oninput: (e) => setManual('nombre', e.target.value) });
+    const dorsal = el('input', { type: 'text', maxLength: 3, class: 'bb-num', value: cd[manualKey]?.dorsal || '', placeholder: 'N°', oninput: (e) => setManual('dorsal', e.target.value) });
+    return el('div', {}, [modeBtns, el('div', { class: `bb-picker ${which === 'in' ? 'sub-in' : 'sub-out'}` }, [
+      el('div', { class: 'bb-picker-title', text: `${label} — MANUAL (no se guarda en PLANTELES)` }),
+      el('div', { class: 'bb-actions' }, [
+        el('label', { class: 'bb-field grow' }, [el('span', { text: 'NOMBRE' }), nombre]),
+        el('label', { class: 'bb-field' }, [el('span', { text: 'NÚMERO (opcional)' }), dorsal]),
+      ]),
+    ])]);
   }
 
   function paintOnAir() {
@@ -101,14 +141,14 @@ export function renderBbCambiosPanel(container, ctx) {
         }))),
       ]),
       el('div', { class: 'bb-grid2' }, [
-        playerPicker({ title: `▼ SALE${outP ? ` — ${playerText(outP.nombre, outP.dorsal, '')}` : ''}`, cls: 'sub-out', players: outList, onPick: (p) => { outP = outP?.id === p.id ? null : p; if (inP?.id === p.id) inP = null; render(); }, selectedId: outP?.id, dimIds: benchIds }),
-        playerPicker({ title: `▲ ENTRA${inP ? ` — ${playerText(inP.nombre, inP.dorsal, '')}` : ''}`, cls: 'sub-in', players: inList, onPick: (p) => { inP = inP?.id === p.id ? null : p; if (outP?.id === p.id) outP = null; render(); }, selectedId: inP?.id, dimIds: field }),
+        column('out', playerPicker({ title: `▼ SALE${outP ? ` — ${playerText(outP.nombre, outP.dorsal, '')}` : ''}`, cls: 'sub-out', players: outList, onPick: (p) => { outP = outP?.id === p.id ? null : p; if (inP?.id === p.id) inP = null; render(); }, selectedId: outP?.id, dimIds: benchIds })),
+        column('in', playerPicker({ title: `▲ ENTRA${inP ? ` — ${playerText(inP.nombre, inP.dorsal, '')}` : ''}`, cls: 'sub-in', players: inList, onPick: (p) => { inP = inP?.id === p.id ? null : p; if (outP?.id === p.id) outP = null; render(); }, selectedId: inP?.id, dimIds: field })),
       ]),
       section('REGISTRAR', [
         el('div', { class: 'bb-actions' }, [
-          el('button', { type: 'button', class: 'bb-btn primary', text: 'REGISTRAR Y MOSTRAR', disabled: !outP && !inP, onclick: () => register(true) }),
-          el('button', { type: 'button', class: 'bb-btn', text: 'SOLO REGISTRAR', disabled: !outP && !inP, onclick: () => register(false) }),
-          el('button', { type: 'button', class: 'bb-btn', text: 'LIMPIAR', onclick: () => { outP = null; inP = null; render(); } }),
+          el('button', { type: 'button', class: 'bb-btn primary', text: 'REGISTRAR Y MOSTRAR', onclick: () => register(true) }),
+          el('button', { type: 'button', class: 'bb-btn', text: 'SOLO REGISTRAR', onclick: () => register(false) }),
+          el('button', { type: 'button', class: 'bb-btn', text: 'LIMPIAR', onclick: () => { outP = null; inP = null; cd.manualSale = { nombre: '', dorsal: '' }; cd.manualEntra = { nombre: '', dorsal: '' }; ctx.autosave('bbCambio'); render(); } }),
         ]),
         el('div', { class: 'bb-actions' }, [
           autoOut,

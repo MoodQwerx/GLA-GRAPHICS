@@ -4,6 +4,10 @@
 // está activado, manda la placa chica de abajo a la izquierda. Los mismos
 // botones rápidos siguen en el panel del Marcador; acá están todas las
 // tarjetas del partido con ▶ (volver a mostrar) y corrección.
+//
+// JUGADOR: PLANTEL / MANUAL (2026-11-06). MANUAL carga nombre y número de un
+// jugador de último momento SOLO para este evento (sin ID, el plantel no se
+// toca); el modo queda guardado en bbTarjeta.jugadorModo.
 import { elapsedMs, parseClockLimit } from '../../../shared/clock.js';
 import { BB_CARD_TYPES, BB_CARD_LABELS, sideTeamId } from '../../../shared/bb-match.js';
 import { el, section, statusLine, teamLabel } from './bb-common.js';
@@ -39,10 +43,37 @@ export function renderBbTarjetasPanel(container, ctx) {
     }
   }
 
+  const td = ctx.draft.bbTarjeta;
+  const modo = () => (td.jugadorModo === 'manual' ? 'manual' : 'plantel');
+
   function pick(player) {
     const ev = registerCard(ctx, { type: selType, side: selSide, player, clockMs: nowMs() });
     status.set('ok', `TARJETA ${BB_CARD_LABELS[selType]} — ${playerText(ev.playerName, ev.dorsal, 'SIN JUGADOR')} (${teamLabel(ev.teamId)}) · ${ev.minute}' ${ev.period}${bbOptions.showCardOnRegister ? ' · AL AIRE' : ''}`);
     render();
+  }
+
+  function pickManual() {
+    const nombre = String(td.manual?.nombre || '').trim();
+    if (!nombre) { status.set('error', 'MANUAL: escribí el nombre del jugador.'); return; }
+    const dorsal = String(td.manual?.dorsal || '').trim();
+    td.manual = { nombre: '', dorsal: '' };
+    ctx.autosave('bbTarjeta');
+    pick({ id: null, teamId: sideTeamId(m, selSide), nombre, dorsal });
+  }
+
+  function manualBox() {
+    const setManual = (key, value) => { td.manual = { ...(td.manual || {}), [key]: value }; ctx.autosave('bbTarjeta'); };
+    const nombre = el('input', { type: 'text', maxLength: 40, value: td.manual?.nombre || '', placeholder: 'NOMBRE DEL JUGADOR', oninput: (e) => setManual('nombre', e.target.value) });
+    nombre.addEventListener('keydown', (e) => { if (e.key === 'Enter') pickManual(); });
+    const dorsal = el('input', { type: 'text', maxLength: 3, class: 'bb-num', value: td.manual?.dorsal || '', placeholder: 'N°', oninput: (e) => setManual('dorsal', e.target.value) });
+    return el('div', { class: 'bb-picker' }, [
+      el('div', { class: 'bb-picker-title', text: `JUGADOR MANUAL — ${teamLabel(sideTeamId(m, selSide))} (no se guarda en PLANTELES)` }),
+      el('div', { class: 'bb-actions' }, [
+        el('label', { class: 'bb-field grow' }, [el('span', { text: 'NOMBRE' }), nombre]),
+        el('label', { class: 'bb-field' }, [el('span', { text: 'NÚMERO (opcional)' }), dorsal]),
+        el('button', { type: 'button', class: `bb-btn primary card ${CARD_ICON_CLASS[selType]}`, text: `REGISTRAR TARJETA ${BB_CARD_LABELS[selType]}`, onclick: pickManual }),
+      ]),
+    ]);
   }
 
   function paintOnAir() {
@@ -81,7 +112,13 @@ export function renderBbTarjetasPanel(container, ctx) {
         }))),
       ]),
       section('3 · JUGADOR', [
-        playerPicker({
+        el('div', { class: 'bb-actions' }, [['plantel', 'PLANTEL'], ['manual', 'MANUAL']].map(([id, text]) => el('button', {
+          type: 'button',
+          class: `bb-btn period${modo() === id ? ' active' : ''}`,
+          text,
+          onclick: () => { td.jugadorModo = id; ctx.autosave('bbTarjeta'); render(); },
+        }))),
+        modo() === 'manual' ? manualBox() : playerPicker({
           title: `TARJETA ${BB_CARD_LABELS[selType]} — ${teamLabel(sideTeamId(m, selSide))}`,
           cls: `card ${CARD_ICON_CLASS[selType]}`,
           players,

@@ -71,6 +71,8 @@ function teardown(target) {
 function showPreview(moduleId, data, allData, replay = false) {
   const target = els[moduleId];
   if (!target) return;
+  // Una composición multicapa previa (C4N) se limpia: este es el modo de una pieza.
+  if (stackShown.size || stackExit.size) clearStack();
   const isNewModule = shownId !== moduleId;
   if (isNewModule && shownId && els[shownId]) {
     teardown(els[shownId]);
@@ -94,9 +96,78 @@ function showPreview(moduleId, data, allData, replay = false) {
   }
 }
 
-connect({
+// PREVIEW MULTICAPA (2026-11-12, COPA 4 NACIONES): Master manda la
+// composición ENTERA (PREVIEW_STACK: orden + datos de cada pieza). Cada pieza
+// es independiente, como en Program: la que llega nueva entra con su
+// animación, la que ya estaba solo se actualiza (sin repetir la entrada) y la
+// que se saca sale con su propia animación de salida y después se desmonta.
+// Mismos nodos y CSS que Program (mismo orden de capas). Un solo timer de
+// salida por pieza (se cancela si vuelve a entrar): nada se acumula.
+const stackShown = new Set();
+const stackExit = new Map();
+function exitHoldMs(root) {
+  const s = parseFloat(getComputedStyle(root).getPropertyValue('--c4n-exit-hold'));
+  return (Number.isFinite(s) ? s * 1000 : 600) + 450;
+}
+function stackIn(id, data, allData, replay) {
+  const target = els[id];
+  if (!target || !renderers[id]) return;
+  if (stackExit.has(id)) {
+    // Vuelve a entrar mientras salía: se rearma de cero.
+    clearTimeout(stackExit.get(id));
+    stackExit.delete(id);
+    teardown(target);
+  }
+  const isNew = !stackShown.has(id);
+  const safeData = data || {};
+  const safeAllData = allData || {};
+  if (replay && !isNew) {
+    teardown(target);
+    stackShown.delete(id);
+  }
+  renderers[id](target.content, safeData, isNew || replay, () => {}, safeAllData);
+  applyComposition(target, safeData, id, safeAllData);
+  applyElementAdjustRegistry(id, target, safeData, safeAllData);
+  if (!stackShown.has(id)) {
+    stackShown.add(id);
+    target.root.classList.remove('is-hidden');
+    void target.root.offsetWidth;
+    target.root.classList.add('is-in');
+  }
+}
+function stackOut(id) {
+  const target = els[id];
+  stackShown.delete(id);
+  if (!target) return;
+  target.root.classList.remove('is-in');
+  clearTimeout(stackExit.get(id));
+  stackExit.set(id, setTimeout(() => { stackExit.delete(id); teardown(target); }, exitHoldMs(target.root)));
+}
+function clearStack() {
+  for (const [id, timer] of stackExit) { clearTimeout(timer); if (els[id]) teardown(els[id]); }
+  stackExit.clear();
+  for (const id of stackShown) if (els[id]) teardown(els[id]);
+  stackShown.clear();
+}
+function showStack(msg) {
+  if (shownId && els[shownId]) teardown(els[shownId]);
+  shownId = null;
+  const order = Array.isArray(msg.order) ? msg.order : [];
+  for (const id of [...stackShown]) if (!order.includes(id)) stackOut(id);
+  for (const id of order) stackIn(id, msg.items?.[id], msg.allData, msg.replay === id);
+}
+// Para inspección / pruebas (solo lectura).
+window.__previewStack = () => [...stackShown];
+
+const conn = connect({
+  onOpen() {
+    // Monitor recién abierto o reconectado: pide la composición actual.
+    conn?.send({ type: 'PREVIEW_HELLO' });
+  },
   onMessage(msg) {
-    if (msg.type === 'PREVIEW_MODULE') {
+    if (msg.type === 'PREVIEW_STACK') {
+      showStack(msg);
+    } else if (msg.type === 'PREVIEW_MODULE') {
       showPreview(msg.moduleId, msg.data, msg.allData, msg.replay === true);
     } else if (msg.type === WS_MSG.ASSET_VERSIONS) {
       setAssetVersions(msg.versions);

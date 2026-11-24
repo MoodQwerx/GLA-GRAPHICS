@@ -4,7 +4,7 @@
 // bbMarcador.matchEvents (equipo, jugador, convertido/errado, orden), así
 // el Marcador de Penales, VS Resultado y CHARTS leen la misma tanda. El
 // resultado del partido no se toca.
-import { BB_EVENT_TYPES, BB_PENALTY_ROUNDS, createMatchEvent, penaltyTally, sideTeamId } from '../../../shared/bb-match.js';
+import { BB_EVENT_TYPES, BB_PENALTY_ROUND_OPTIONS, createMatchEvent, penaltyRounds, penaltyTally, sideTeamId } from '../../../shared/bb-match.js';
 import { el, section, statusLine, teamLabel } from './bb-common.js';
 import { bbOptions, commitMatch, playerPicker, activePlayers, eventsEditor, playerText } from './bb-incidents.js';
 
@@ -20,6 +20,10 @@ export function renderBbPenalesPanel(container, ctx) {
   let picker = null; // { side, scored, players }
 
   const first = () => (m.penalties.first === 'visitante' ? 'visitante' : 'local');
+  // TANDA DE 3 O 5 (2026-11-06): remates iniciales por equipo, guardados en
+  // el partido (bbMarcador.penalties.rounds) para que Penales, VS Resultado y
+  // CHARTS lean lo mismo.
+  const tallyNow = () => penaltyTally(m.matchEvents, first(), penaltyRounds(m.penalties));
 
   function commit() {
     commitMatch(ctx);
@@ -28,7 +32,7 @@ export function renderBbPenalesPanel(container, ctx) {
   }
 
   function register(side, scored, player) {
-    const tally = penaltyTally(m.matchEvents, first());
+    const tally = tallyNow();
     const ev = createMatchEvent({ type: BB_EVENT_TYPES.PENALTY, side, marcador: m, player, scored, order: tally.total + 1 });
     m.matchEvents.push(ev);
     m.penalties.active = true;
@@ -53,13 +57,13 @@ export function renderBbPenalesPanel(container, ctx) {
   }
 
   function undo(side) {
-    const tally = penaltyTally(m.matchEvents, first());
+    const tally = tallyNow();
     const last = tally[side].kicks[tally[side].kicks.length - 1];
     if (!last) { status.set('error', `${teamLabel(sideTeamId(m, side))} no tiene remates cargados.`); return; }
     m.matchEvents = m.matchEvents.filter((ev) => ev.id !== last.id);
     // Orden de la tanda sin huecos.
-    penaltyTally(m.matchEvents, first()).kicks.forEach((k, i) => { k.order = i + 1; });
-    if (!penaltyTally(m.matchEvents, first()).total) m.penalties.active = false;
+    tallyNow().kicks.forEach((k, i) => { k.order = i + 1; });
+    if (!tallyNow().total) m.penalties.active = false;
     commit();
     status.set('ok', `DESHECHO: penal #${last.order} de ${teamLabel(last.teamId)}.`);
     render();
@@ -67,14 +71,14 @@ export function renderBbPenalesPanel(container, ctx) {
 
   function render() {
     root.innerHTML = '';
-    const tally = penaltyTally(m.matchEvents, first());
+    const tally = tallyNow();
     const askToggle = el('input', { type: 'checkbox', checked: bbOptions.askPenaltyTaker, onchange: (e) => { bbOptions.askPenaltyTaker = e.target.checked; picker = null; render(); } });
     const showMain = el('input', {
       type: 'checkbox',
       checked: ctx.draft.bbPenales?.mostrarResultado !== false,
       onchange: (e) => { ctx.draft.bbPenales.mostrarResultado = e.target.checked; ctx.autosave('bbPenales'); if (ctx.isOn('bbPenales')) ctx.sendLive('bbPenales'); },
     });
-    const roundText = tally.suddenDeath ? 'MUERTE SÚBITA' : `TANDA ${Math.min(BB_PENALTY_ROUNDS, tally.round)} DE ${BB_PENALTY_ROUNDS}`;
+    const roundText = tally.suddenDeath ? 'MUERTE SÚBITA' : `TANDA ${Math.min(tally.regulation, tally.round)} DE ${tally.regulation}`;
 
     const sideBlock = (side) => {
       const t = tally[side];
@@ -95,6 +99,15 @@ export function renderBbPenalesPanel(container, ctx) {
     root.append(
       el('p', { class: 'bb-desc', text: `Resultado del partido: ${teamLabel(m.teamA)} ${m.scoreA || 0} - ${m.scoreB || 0} ${teamLabel(m.teamB)} (no cambia con los penales).` }),
       section(`TANDA — ${roundText}`, [
+        el('div', { class: 'bb-actions' }, [
+          el('span', { class: 'bb-field-label', text: 'TANDA:' }),
+          ...BB_PENALTY_ROUND_OPTIONS.map((n) => el('button', {
+            type: 'button',
+            class: `bb-btn period${tally.regulation === n ? ' active' : ''}`,
+            text: `${n} PENALES`,
+            onclick: () => { m.penalties.rounds = n; commit(); status.set('ok', `TANDA DE ${n} PENALES POR EQUIPO.`); render(); },
+          })),
+        ]),
         el('div', { class: 'bb-actions' }, [
           el('span', { class: 'bb-field-label', text: 'EMPIEZA:' }),
           ...['local', 'visitante'].map((side) => el('button', {

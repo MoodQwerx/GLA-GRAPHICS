@@ -1,0 +1,14 @@
+SPONSORS — COPA 4 NACIONES (SOFTX [4])
+
+Poné en esta carpeta los logos de los sponsors (PNG con transparencia, o WEBP / JPG).
+
+1. Copiar los archivos acá (el nombre no importa; se ordenan alfabéticamente).
+2. En Master Control, ZÓCALO COMPUESTO -> RECARGAR SPONSORS.
+3. Los logos aparecen solos en el recuadro derecho del ZÓCALO COMPUESTO
+   (también con la placa al aire), ajustados al recuadro sin deformarse.
+
+ROTACIÓN SPONSORS: ACTIVA (rotan todos) o DESACTIVADA (queda fijo el primero).
+INTERVALO: segundos por logo (2 a 60).
+
+Carpeta vacía = el recuadro queda vacío (sin errores ni imágenes rotas).
+Este archivo de texto no se muestra: solo se leen imágenes.

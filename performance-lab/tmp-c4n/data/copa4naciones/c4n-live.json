@@ -1,0 +1,71 @@
+{
+  "matchId": "67726f75702d310000000000",
+  "snapshot": {
+    "webMatchId": "67726f75702d310000000000",
+    "homeTeamId": "argentina",
+    "awayTeamId": "uruguay",
+    "homeLabel": "Argentina",
+    "awayLabel": "Uruguay",
+    "status": "live",
+    "statusRaw": "scheduled",
+    "score": {
+      "local": 1,
+      "visitante": 0
+    },
+    "penalties": null,
+    "mvp": null,
+    "events": [
+      {
+        "id": "web-wc",
+        "source": "web",
+        "type": "goal",
+        "side": "local",
+        "ownGoal": false,
+        "penalty": false,
+        "minuteText": "9",
+        "minute": {
+          "base": 9,
+          "extra": 0,
+          "sec": null
+        },
+        "playerName": "Pelozo",
+        "staff": false,
+        "dorsal": "22",
+        "assistName": "",
+        "playerOutName": "",
+        "playerOutDorsal": "",
+        "order": 0
+      },
+      {
+        "id": "web-wd",
+        "source": "web",
+        "type": "substitution",
+        "side": "local",
+        "ownGoal": false,
+        "penalty": false,
+        "minuteText": "14",
+        "minute": {
+          "base": 14,
+          "extra": 0,
+          "sec": null
+        },
+        "playerName": "Tadeo",
+        "staff": false,
+        "dorsal": "13",
+        "assistName": "",
+        "playerOutName": "Teico",
+        "playerOutDorsal": "13",
+        "order": 1
+      }
+    ],
+    "missedPenalties": [],
+    "unsupported": {},
+    "fetchedAt": "2026-11-15T03:26:18.689Z"
+  },
+  "lastOkAt": "2026-11-15T03:26:18.689Z",
+  "lastAttemptAt": "2026-11-15T03:26:18.689Z",
+  "state": "ok",
+  "message": "WEB CONECTADA",
+  "detail": "",
+  "source": "mock"
+}

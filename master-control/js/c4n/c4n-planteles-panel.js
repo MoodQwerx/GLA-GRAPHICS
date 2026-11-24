@@ -11,6 +11,9 @@ import { TEAMS } from '../../../shared/teams.js';
 import { api, el, section, statusLine, sortByDorsal, invalidatePlantel, fmtDate, C4N_POSITIONS, C4N_ROLES } from './c4n-common.js';
 
 let selectedTeamId = '';
+// VISUAL DE JUGADORES al aire (FOTO / LOGO): configuración C4N del servidor
+// (c4n-config.json, publicada en c4nDatos). Solo cambia la representación.
+let visualJugadores = null;
 const SAVE_DEBOUNCE_MS = 450;
 const PHOTOS_URL = '/assets/themes/copa4naciones/jugadores/';
 
@@ -24,6 +27,26 @@ export function renderC4nPlantelesPanel(container, { lifecycle }) {
   let manual = [];
   let photos = [];
   let saveTimer = null;
+
+  async function loadVisual() {
+    try {
+      const st = await api('/api/c4n/state');
+      if (lifecycle.destroyed) return;
+      visualJugadores = st.config?.visualJugadores === 'logo' ? 'logo' : 'foto';
+      render();
+    } catch { /* sin estado: el selector queda sin marcar */ }
+  }
+  async function setVisual(mode) {
+    try {
+      const st = await api('/api/c4n/config', { method: 'POST', body: { visualJugadores: mode } });
+      if (lifecycle.destroyed) return;
+      visualJugadores = st.config?.visualJugadores === 'logo' ? 'logo' : 'foto';
+      status.set('ok', visualJugadores === 'logo' ? 'VISUAL DE JUGADORES: LOGO (escudo de la selección en lugar de la foto).' : 'VISUAL DE JUGADORES: FOTO (foto si existe; si no, escudo).');
+      render();
+    } catch (err) {
+      status.set('error', `NO SE PUDO GUARDAR EL VISUAL DE JUGADORES: ${err.message}`);
+    }
+  }
 
   async function load() {
     if (!selectedTeamId) { render(); return; }
@@ -172,6 +195,12 @@ export function renderC4nPlantelesPanel(container, { lifecycle }) {
     const web = info?.web || [];
 
     root.append(
+      section('VISUAL DE JUGADORES (AL AIRE)', [
+        el('div', { class: 'bb-actions c4n-fuente' }, [
+          ...[['foto', 'FOTO'], ['logo', 'LOGO']].map(([id, text]) => el('button', { type: 'button', class: `bb-btn period${visualJugadores === id ? ' active' : ''}`, text, onclick: () => setVisual(id) })),
+        ]),
+        el('div', { class: 'bb-desc', text: 'FOTO: la foto del jugador si existe; si no, el escudo, nunca una imagen rota. LOGO: siempre el escudo de su selección. Vale para JUGADORES A SEGUIR, TARJETAS y CAMBIOS; FORMACIÓN usa siempre la remera de la selección con el dorsal. Los datos del jugador no se tocan.' }),
+      ]),
       el('div', { class: 'bb-actions' }, [
         el('label', { class: 'bb-field' }, [el('span', { text: 'SELECCIÓN' }), teamSelect]),
         el('span', { class: 'bb-field-label', text: 'FUENTE:' }),
@@ -217,4 +246,5 @@ export function renderC4nPlantelesPanel(container, { lifecycle }) {
 
   render();
   load();
+  loadVisual();
 }

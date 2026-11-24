@@ -357,7 +357,7 @@ export const THEMES = {
 // Módulos BxB: todos dibujados en CSS (sin asset de video), siempre listos.
 const MODULE_IDS_BB = [
   'bbMarcador', 'bbPenales', 'bbTarjeta', 'bbCambio', 'bbVar', 'bbGol',
-  'bbFormacion', 'bbVs', 'bbVsResultado',
+  'bbFormacion', 'bbVs', 'bbVsResultado', 'bbYaComenzamos', 'bbGraciasPorVer', 'bbMoscaPdm',
   'bbZocaloLargo', 'bbZocaloCorto', 'bbZocaloCortoDoble', 'bbCharts',
 ];
 
@@ -372,13 +372,50 @@ THEMES.bauletiBalanza = {
     accent: '#D4A84B',
     base: '#F7F4EC',
   },
+  // IDENTIDAD DEFINITIVA (2026-11-06): "id"/"abbr" internos sin cambios
+  // (bauleti / balanza, BAU / BAL); "name" es el nombre visible oficial.
+  // "crestScale" = compensación óptica automática del logo, medida sobre el
+  // alfa real de cada PNG (assets/themes/bauleti-balanza/escudos/): el área
+  // visible de TEAM BALANZA ocupa 70% del alto de su lienzo (1458/2084, mucho
+  // margen transparente) y la de TEAM BAULETI 92% (1223/1328); escalando
+  // BALANZA x1.32 los dos logos quedan con el mismo alto y ancho visibles
+  // (92% x 74% de la caja). Se ajusta a mano por equipo en EQUIPOS.
+  // "kit" = camiseta gráfica de FORMACIÓN (sin foto o con VISUAL = CAMISETA).
   teams: [
-    { id: 'bauleti', name: 'BAULETI', abbr: 'BAU', file: '/assets/themes/bauleti-balanza/escudos/bauleti.png' },
-    { id: 'balanza', name: 'BALANZA', abbr: 'BAL', file: '/assets/themes/bauleti-balanza/escudos/balanza.png' },
+    {
+      id: 'bauleti',
+      name: 'TEAM BAULETI',
+      abbr: 'BAU',
+      file: '/assets/themes/bauleti-balanza/escudos/bauleti.png',
+      crestScale: 1,
+      kit: { style: 'sash', body: '#F4F1EA', accent: '#D9202A', trim: '#D9202A', number: '#141416', numberStroke: '#F4F1EA' },
+    },
+    {
+      id: 'balanza',
+      name: 'TEAM BALANZA',
+      abbr: 'BAL',
+      file: '/assets/themes/bauleti-balanza/escudos/balanza.png',
+      crestScale: 1.32,
+      kit: { style: 'plain', body: '#0C0C10', accent: '#C9A24A', trim: '#C9A24A', number: 'gold', numberStroke: '#070709' },
+    },
   ],
+  // Evento (metadata disponible para las gráficas): TEAM BAULETI y TEAM
+  // BALANZA van a pelear en Párense de Manos el 18 de diciembre (PDM).
+  event: {
+    name: 'EL PARTIDO DEL MOMENTO',
+    short: 'PDM',
+    date: '2026-12-18',
+    context: 'Párense de Manos',
+  },
   assets: Object.fromEntries(MODULE_IDS_BB
     .map((moduleId) => [moduleId, { status: 'ready' }])),
 };
+
+// Camiseta de FORMACIÓN de un equipo BxB (o la genérica negra/dorada).
+export const BB_DEFAULT_KIT = { style: 'plain', body: '#0C0C10', accent: '#D6AA4E', trim: '#D6AA4E', number: 'gold', numberStroke: '#070709' };
+export function bbTeamKit(teamId) {
+  return THEMES.bauletiBalanza.teams.find((t) => t.id === teamId)?.kit || BB_DEFAULT_KIT;
+}
 
 // COPA 4 NACIONES (SOFTX [4], 2026-11-04). Paquete "PNG estático + motion
 // web": cada módulo "c4n*" tiene capa de FONDO (PNG del diseñador, opcional:
@@ -389,9 +426,9 @@ THEMES.bauletiBalanza = {
 // assets/themes/copa4naciones/crests/).
 export const COPA4N_THEME_ID = 'copa4naciones';
 const MODULE_IDS_C4N = [
-  'c4nMarcador', 'c4nTarjeta', 'c4nCambio', 'c4nZocaloTexto', 'c4nZocaloTextoDoble', 'c4nZocaloCorto', 'c4nZocaloCortoDoble',
-  'c4nZocaloCompuesto', 'c4nMoscaLogo', 'c4nMoscaTexto', 'c4nRotativoSponsors', 'c4nGoleadores', 'c4nAsistencias', 'c4nGA',
-  'c4nPosiciones', 'c4nPromoWeb', 'c4nMejoresJugadores', 'c4nFixture', 'c4nVsPrepartido',
+  'c4nMarcador', 'c4nTarjeta', 'c4nCambio', 'c4nPenalShootout', 'c4nVar', 'c4nMosca', 'c4nZocaloTexto', 'c4nZocaloTextoDoble', 'c4nZocaloCorto', 'c4nZocaloCortoDoble',
+  'c4nZocaloCompuesto', 'c4nSponsors', 'c4nMoscaLogo', 'c4nMoscaTexto', 'c4nRotativoSponsors', 'c4nGoleadores', 'c4nAsistencias', 'c4nGA',
+  'c4nPosiciones', 'c4nTablaVs', 'c4nTablaFixture', 'c4nPromoWeb', 'c4nMejoresJugadores', 'c4nFixture', 'c4nVsPrepartido',
   'c4nVsResultado', 'c4nFormacion', 'c4nStatsPrevia', 'c4nStatsEntretiempo', 'c4nStatsFinal', 'c4nDatos',
 ];
 

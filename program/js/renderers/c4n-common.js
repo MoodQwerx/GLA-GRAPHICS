@@ -13,7 +13,7 @@ import { escapeHtml } from '../../../shared/dom-utils.js';
 import { assetAvailable, versionedAssetUrl } from '../asset-versions.js';
 import { measureTextWidth } from '../text-fit.js';
 import { buildMatchState } from '../../../shared/bb-match.js';
-import { c4nBox, c4nFondo, c4nUrl, C4N_EVENT_LOGO, C4N_ELEMENTS, C4N_FOLDERS } from '../../../shared/c4n-assets.js';
+import { c4nBox, c4nFondo, c4nUrl, C4N_EVENT_LOGO, C4N_ELEMENTS, C4N_FOLDERS, PLACA_AREA, C4N_SHORT_NAMES } from '../../../shared/c4n-assets.js';
 
 export const C4N_FONT_TITLE = '"GLA Segoe Bold", "Segoe UI", Arial, sans-serif';
 export const C4N_FONT_NUM = '"GLA Anton", Impact, sans-serif';
@@ -27,6 +27,7 @@ export function team(teamId) {
   return {
     id: teamId || '',
     name: t?.name || '',
+    short: C4N_SHORT_NAMES[teamId] || t?.name || '',
     abbr: t?.abbr || (t?.name ? t.name.slice(0, 3).toUpperCase() : ''),
     file: t?.file || null,
     color: t?.color || null,
@@ -55,8 +56,11 @@ export function crestHtml(t, cls = '', attrs = '') {
 // lo dibuja object-fit: contain) y se lo escala para que todos ocupen la misma
 // superficie visible, centrando su contenido real. Sirve para cualquier escudo
 // nuevo sin cargar datos a mano. Cacheado por URL.
+// Cada recuadro puede pedir su propio llenado con data-optics="objetivo,tope,máx"
+// en el .c4n-crest (MARCADOR: escudos que llenan casi todo el recuadro gris);
+// sin eso, 0.46 / 0.98 / 1.3 como siempre. La medida cruda se cachea por URL.
 const OPTICS = new Map();
-const OPTICS_TARGET = 0.46; // superficie visible objetivo (fracción del recuadro)
+const OPTICS_DEFAULT = [0.46, 0.98, 1.3]; // superficie visible objetivo · tope del lado mayor · escala máxima
 function measureCrest(img) {
   const N = 96;
   const iw = img.naturalWidth;
@@ -78,14 +82,15 @@ function measureCrest(img) {
     if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
   }
   if (!n) return null;
-  const maxDim = Math.max(x1 - x0 + 1, y1 - y0 + 1) / N;
-  const s = Math.max(0.6, Math.min(Math.sqrt(OPTICS_TARGET / (n / (N * N))), 0.98 / maxDim, 1.3));
-  const cx = (x0 + x1 + 1) / 2;
-  const cy = (y0 + y1 + 1) / 2;
-  return { s, dx: ((N / 2 - cx) / N) * 100 * s, dy: ((N / 2 - cy) / N) * 100 * s };
+  return { fill: n / (N * N), maxDim: Math.max(x1 - x0 + 1, y1 - y0 + 1) / N, cx: (x0 + x1 + 1) / 2 / N, cy: (y0 + y1 + 1) / 2 / N };
 }
-function applyOptics(img, o) {
-  if (o) img.style.transform = `translate(${o.dx.toFixed(2)}%, ${o.dy.toFixed(2)}%) scale(${o.s.toFixed(3)})`;
+function applyOptics(img, m) {
+  if (m) {
+    const spec = String(img.closest('.c4n-crest')?.dataset.optics || '').split(',').map(Number);
+    const [target, cap, max] = OPTICS_DEFAULT.map((d, i) => (spec[i] > 0 ? spec[i] : d));
+    const s = Math.max(0.6, Math.min(Math.sqrt(target / m.fill), cap / m.maxDim, max));
+    img.style.transform = `translate(${((0.5 - m.cx) * 100 * s).toFixed(2)}%, ${((0.5 - m.cy) * 100 * s).toFixed(2)}%) scale(${s.toFixed(3)})`;
+  }
   img.classList.add('is-measured');
 }
 export function opticalCrests(root) {
@@ -102,6 +107,58 @@ export function photoUrl(teamId, file) {
   if (!teamId || !file) return null;
   if (/^\/assets\//.test(file)) return file;
   return `${PHOTOS_URL}${encodeURIComponent(teamId)}/${encodeURIComponent(file)}`;
+}
+
+// VISUAL DE JUGADORES (2026-11-11, PLANTELES -> c4nDatos.visualJugadores):
+//   'foto' (de fábrica)  foto del jugador si existe; si no, el respaldo de cada
+//                        pieza (escudo / remera), nunca una imagen rota
+//   'logo'               siempre el escudo de su selección
+// Solo cambia la representación: los datos del jugador no se tocan.
+export function playerVisual(allData) {
+  return allData?.c4nDatos?.visualJugadores === 'logo' ? 'logo' : 'foto';
+}
+// Foto a usar (o null = respaldo) según el modo.
+export function playerPhoto(allData, teamId, file) {
+  return playerVisual(allData) === 'logo' ? null : photoUrl(teamId, file);
+}
+// Foto con respaldo limpio: si el archivo no carga, la imagen se quita y
+// queda visible el respaldo (escudo / remera) que va justo después.
+export function photoWithFallback(src, fallbackHtml) {
+  if (!src) return fallbackHtml;
+  return `<img class="c4n-ph" src="${escapeHtml(src)}" alt="" decoding="async" onerror="this.nextElementSibling.hidden=false;this.remove()"><div class="c4n-ph-fb" hidden>${fallbackHtml}</div>`;
+}
+
+// AUTO-SCROLL de listados (2026-11-11): ".c4n-scroll" es el viewport (recorta
+// en Y al área útil de la placa) y su primer hijo el contenido. Si el
+// contenido no entra, una animación CSS lo desplaza lento (pausa arriba,
+// baja, pausa abajo, vuelve); si entra, no se mueve. Sin timers ni
+// observers: se mide al armar (primer frame visible) y en cada repintado
+// (los módulos "live" repintan cada 500 ms; solo cambia algo si cambió la
+// medida). Al hacer OUT la animación se va con el DOM.
+const SCROLL_SPEED = 16; // px/s bajando
+export function fitAutoScroll(root) {
+  for (const vp of root.querySelectorAll('.c4n-scroll')) {
+    const inner = vp.firstElementChild;
+    if (!inner) continue;
+    const vh = vp.clientHeight;
+    if (!vh) continue;
+    const over = Math.ceil(inner.offsetHeight - vh);
+    const dist = over > 4 ? over : 0;
+    if (inner._scrollDist === dist) continue;
+    inner._scrollDist = dist;
+    if (dist) {
+      // 37 % del ciclo es la bajada (ver @keyframes c4nAutoScroll).
+      const dur = Math.max(12, dist / SCROLL_SPEED / 0.37);
+      inner.style.setProperty('--sc-dist', `${dist}px`);
+      inner.style.setProperty('--sc-dur', `${dur.toFixed(2)}s`);
+      inner.classList.add('is-auto');
+    } else {
+      inner.classList.remove('is-auto');
+    }
+  }
+}
+export function armAutoScroll(contentEl) {
+  requestAnimationFrame(() => { if (contentEl.isConnected) fitAutoScroll(contentEl); });
 }
 
 // Fondo PNG del módulo (registro central de RECURSO GRÁFICO), solo si el
@@ -149,6 +206,16 @@ export function applyLayer(contentEl, data) {
   }
 }
 
+// AJUSTE POR TEXTO dentro de filas / grillas (FIXTURE, tablas, estadísticas):
+// mismas variables de ELEMENTOS (--c4n-e-<clave>-x/y/s) aplicadas con las
+// propiedades individuales "translate" / "scale", que se suman al transform
+// de la animación sin pelearse con ella y no rompen el flujo de la grilla.
+// Devuelve el texto de un atributo style (o para sumar a uno).
+export function tadj(key) {
+  const k = key.toLowerCase();
+  return `translate:var(--c4n-e-${k}-x,0px) var(--c4n-e-${k}-y,0px);scale:var(--c4n-e-${k}-s,1)`;
+}
+
 // Parte ajustable del contenido: un envoltorio SIN animación (la animación
 // vive en sus hijos), así el ajuste nunca pelea con el motion. "flow" = ítem
 // de grilla/flex; si no, capa absoluta del tamaño del marco.
@@ -162,10 +229,10 @@ export function adj(key, inner, flow = false) {
 // (--c4n-shift en c4n.css): reveal del fondo -> escudos -> textos -> números;
 // a la salida el fondo es lo último. Sin fondo, la misma animación solo con
 // el contenido.
-export function shell(moduleId, kind, data, contentHtml, { extraClass = '' } = {}) {
-  const bg = backgroundUrl(moduleId);
-  const box = c4nBox(moduleId);
-  const slices = bg ? c4nFondo(moduleId)?.reveal : null;
+export function shell(moduleId, kind, data, contentHtml, { extraClass = '', slot = 'fondo' } = {}) {
+  const bg = backgroundUrl(moduleId, slot);
+  const box = c4nBox(moduleId, slot);
+  const slices = bg ? c4nFondo(moduleId, slot)?.reveal : null;
   const bgHtml = !bg ? '' : slices?.length
     ? `<div class="c4n-bg c4n-sliced">${slices.map((s) => sliceHtml(s, bg, box)).join('')}</div>`
     : `<div class="c4n-bg c4n-a m-bg"><img src="${escapeHtml(bg)}" alt="" decoding="async"></div>`;
@@ -311,6 +378,67 @@ export function fitFontPx(text, { maxPx, minPx, maxWidth, family = C4N_FONT_TITL
   const width = measureTextWidth(text, maxPx, { weight, family });
   if (!width || width <= maxWidth) return maxPx;
   return Math.max(minPx, Math.floor(maxPx * (maxWidth / width)));
+}
+
+// NOMBRES DE EQUIPO EN PAREJA (o en grupo): los equipos de una misma pieza usan
+// la MISMA lógica tipográfica -- mismo tamaño, mismo interlineado, misma
+// cantidad de renglones. Si uno necesita 2 renglones, todos pasan a la
+// estructura de 2 (cada nombre se parte en el espacio que deja los renglones
+// más parejos; una sola palabra queda centrada dentro del mismo alto de
+// bloque). Nunca se achica uno solo ni se corta con "...".
+//   -> { px, rows: 1 | 2, lines: [[renglón, ...] por nombre] }
+export function balancedNames(names, { maxWidth, maxPx, minPx, family = C4N_FONT_NUM, weight = 400, spacing = 0.02, twoLineAt = 0.86, rows = 0 }) {
+  const width = (t, px) => measureTextWidth(t, px, { weight, family, letterSpacing: px * spacing });
+  const fit = (t) => Math.max(minPx, Math.min(maxPx, Math.floor(maxPx * (maxWidth / Math.max(1, width(t, maxPx))))));
+  const split = (name) => {
+    const words = name.split(/\s+/).filter(Boolean);
+    if (words.length < 2) return [name];
+    let best = null;
+    for (let i = 1; i < words.length; i++) {
+      const l = [words.slice(0, i).join(' '), words.slice(i).join(' ')];
+      const w = Math.max(width(l[0], maxPx), width(l[1], maxPx));
+      if (!best || w < best.w) best = { w, l };
+    }
+    return best.l;
+  };
+  const list = names.map((n) => String(n || '').trim());
+  if (!list.length) return { px: maxPx, rows: 1, lines: [] };
+  const onePx = Math.min(...list.map(fit));
+  const twoLines = list.map(split);
+  const twoPx = Math.min(...twoLines.map((l) => Math.min(...l.map(fit))));
+  const useTwo = rows === 2 || (rows !== 1 && onePx < maxPx * twoLineAt && twoPx > onePx);
+  return { px: useTwo ? twoPx : onePx, rows: useTwo ? 2 : 1, lines: useTwo ? twoLines : list.map((n) => [n]) };
+}
+
+// REGLA GLOBAL DE RENGLONES DE EQUIPO (2026-11-10): si un equipo va en dos
+// renglones, el otro también, y la decisión es LA MISMA EN TODAS LAS PLACAS
+// (VS, VS RESULTADO, estadísticas, FIXTURE...): depende solo de los nombres,
+// nunca del ancho de cada placa. Un nombre de más de C4N_TWO_LINE_EM (ancho en
+// "em" de Anton; ej. URUGUAY CREADORES 8,04 · ARGENTINA STREAMERS 8,90 ·
+// SELECCIÓN CHILENA DE CREADORES 13,22; BRASIL CRIADORES 7,07 entra en uno)
+// pasa a 2 renglones y arrastra al resto de los equipos de la pieza.
+export const C4N_TWO_LINE_EM = 7.5;
+export function teamRows(names) {
+  const em = (n) => measureTextWidth(n, 100, { weight: 400, family: C4N_FONT_NUM, letterSpacing: 2 }) / 100;
+  return names.some((n) => /\s/.test(String(n || '').trim()) && em(String(n).trim()) > C4N_TWO_LINE_EM) ? 2 : 1;
+}
+// Nombres de EQUIPO de una pieza: balancedNames con la regla global de renglones.
+export function teamNames(names, opts) {
+  return balancedNames(names, { ...opts, rows: teamRows(names) });
+}
+
+// Bloque de nombre con la estructura de la pareja: siempre "rows" renglones de
+// alto (c4n.css .c4n-nb), los renglones en <span>.
+export function nameBlock(lines, rows) {
+  return `<span class="c4n-nb rows-${rows}">${lines.map((l) => `<span>${escapeHtml(l)}</span>`).join('')}</span>`;
+}
+
+// ZONA DE CONTENIDO DE LA PLACA VACÍA (shared/c4n-assets.js, PLACA_AREA): las
+// placas de pantalla completa arman su contenido en coordenadas de esta zona
+// (dentro del papel, sin tocar el borde difuminado).
+export function placaArea(inner, cls = '') {
+  const a = PLACA_AREA;
+  return `<div class="c4n-placa-area ${cls}" style="left:${a.x}px;top:${a.y}px;width:${a.w}px;height:${a.h}px">${inner}</div>`;
 }
 
 // Partido en juego (mismo modelo que BAULETI vs BALANZA, ver shared/bb-match.js).

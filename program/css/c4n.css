@@ -226,14 +226,17 @@ body:has(.c4n-fs.is-in) .c4n-root:not(.c4n-fs) > .content { opacity: 0; transiti
 .c4n .nowrap { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* =====================================================================
-   MARCADOR — PNG real (lienzo 1920×1080, barra y 62-101). Cada dato va en su
-   hueco medido del archivo (ver c4nMarcador.js).
+   MARCADOR — PNG real MARCADOR2 (lienzo 1920×1080, barra y 62-101). Cada dato
+   va en su hueco medido del archivo (ver c4nMarcador.js). Capas TIEMPO
+   ADICIONAL y PENALES: PNG propios debajo de la barra.
    ===================================================================== */
 #mod-c4nMarcador { --c4n-exit-hold: 0.56s; }
 .c4n-sb2 .c4n-content { text-shadow: none; }
-.c4n-m2-crest { position: absolute; top: 66px; width: 32px; height: 32px; --c4n-mono-size: 32px; }
-.c4n-m2-crest.a { left: 41.5px; }
-.c4n-m2-crest.b { left: 286.5px; }
+/* Escudo: recuadro gris 40×40 (x 38-77 / 283-322, y 62-101). La escala óptica
+   (data-optics) lo lleva casi al borde del recuadro sin recortarlo. */
+.c4n-m2-crest { position: absolute; top: 62px; width: 40px; height: 40px; --c4n-mono-size: 40px; }
+.c4n-m2-crest.a { left: 38px; }
+.c4n-m2-crest.b { left: 283px; }
 .c4n-m2-crest img { filter: none; }
 .c4n-m2-crest .c4n-mono { border-width: 2px; color: #1B2C5C; border-color: #1B2C5C; }
 .c4n-m2-abbr, .c4n-m2-num, .c4n-m2-period, .c4n-m2-time {
@@ -250,28 +253,62 @@ body:has(.c4n-fs.is-in) .c4n-root:not(.c4n-fs) > .content { opacity: 0; transiti
 .c4n-m2-num.b { left: 184px; }
 .c4n-m2-num.bump { animation: c4nScoreRoll 0.55s var(--c4n-ease-out) both !important; }
 @keyframes c4nScoreRoll { from { opacity: 0; transform: translateY(60%); } to { opacity: 1; transform: none; } }
+/* Guion entre los goles (MARCADOR2 trae el negro liso): mismo gris y medida
+   que el guion del PNG anterior. */
+.c4n-m2-dash { position: absolute; left: 176px; top: 82px; width: 8px; height: 3px; background: #727272; }
 .c4n-m2-period { left: 324px; width: 34px; font-size: calc(19px * var(--c4n-font)); color: #1D1D1D; letter-spacing: 0.02em; }
 .c4n-m2-time { left: 358px; width: 86px; font-size: calc(26px * var(--c4n-font)); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
-/* Tiempo adicional: pestaña roja que sale del reloj hacia la derecha. */
-.c4n-m2-extra {
-  position: absolute; left: 444px; top: 63px; width: 40px; height: 39px;
-  display: flex; align-items: center; justify-content: center;
-  background: #E1262E; color: #FFFFFF; font-family: var(--c4n-font-num); font-size: calc(21px * var(--c4n-font));
-  clip-path: inset(0 100% 0 0); transition: clip-path 0.36s cubic-bezier(0.7, 0, 0.18, 1);
-}
-.c4n-m2-extra.is-shown { clip-path: inset(0 0 0 0); }
-/* Penales: pestaña negra que baja debajo de los goles. */
-.c4n-m2-pens {
-  position: absolute; left: 139px; top: 102px; width: 82px; height: 21px;
-  display: flex; align-items: center; justify-content: center;
-  background: #171717; color: #FFFFFF; font-family: var(--c4n-font-num); font-size: calc(14px * var(--c4n-font)); letter-spacing: 0.08em;
-  clip-path: inset(0 0 100% 0); transition: clip-path 0.32s cubic-bezier(0.7, 0, 0.18, 1);
-}
-.c4n-m2-pens.is-shown { clip-path: inset(0 0 0 0); }
-.c4n-root:not(.is-in) .c4n-m2-extra, .c4n-root:not(.is-in) .c4n-m2-pens { clip-path: inset(0 100% 0 0); transition-duration: 0.2s; }
 /* Sin PNG: el período (texto oscuro) pasa a blanco. */
 .c4n-sb2:not(.has-bg) .c4n-m2-period { color: #FFFFFF; }
 .c4n-sb2:not(.has-bg) .c4n-content { text-shadow: var(--c4n-shadow); }
+
+/* CAPAS DEBAJO DE LA BARRA (TIEMPO ADICIONAL / PENALES). Dos niveles:
+   .c4n-m2-strip      motion de TAKE / OUT (como el resto de la pieza)
+   .c4n-m2-strip-in   mostrar / ocultar al aire: baja desde la barra
+                      revelándose (clip de arriba hacia abajo) y se recoge
+                      hacia arriba. Solo clip-path / transform. */
+.c4n-m2-strip { position: absolute; }
+.c4n-m2-strip-in {
+  position: absolute; inset: 0;
+  clip-path: inset(0 0 100% 0); transform: translateY(-8px);
+  transition: clip-path 0.42s cubic-bezier(0.7, 0, 0.18, 1), transform 0.42s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.c4n-m2-strip-in.is-shown { clip-path: inset(-30px -30px -30px -30px); transform: none; }
+.c4n-a.m-strip { --c4n-in-anim: c4nStripIn; --c4n-out-anim: c4nStripOut; --c4n-dur: 0.46s; --c4n-dur-out: 0.22s; --c4n-ease: cubic-bezier(0.7, 0, 0.18, 1); }
+@keyframes c4nStripIn { from { clip-path: inset(0 0 100% 0); transform: translateY(-8px); } to { clip-path: inset(-30px -30px -30px -30px); transform: none; } }
+@keyframes c4nStripOut { from { clip-path: inset(-30px -30px -30px -30px); transform: none; } to { clip-path: inset(0 0 100% 0); transform: translateY(-8px); } }
+/* El PNG de lienzo completo pintado solo en la franja (fondo del contenedor). */
+.c4n-m2-stripbg { position: absolute; inset: 0; background-size: 1920px 1080px; background-repeat: no-repeat; pointer-events: none; }
+
+/* TIEMPO ADICIONAL: "+N" en el gris, cuenta en el negro. */
+.c4n-m2-xplus, .c4n-m2-xtime {
+  position: absolute; top: 0; height: 39px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--c4n-font-num); font-weight: 400; line-height: 1; white-space: nowrap;
+}
+.c4n-m2-xplus { font-size: calc(19px * var(--c4n-font)); color: #1D1D1D; letter-spacing: 0.02em; }
+.c4n-m2-xtime { font-size: calc(24px * var(--c4n-font)); color: #FFFFFF; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.c4n-m2-xs:not(.has-png) .c4n-m2-xplus { color: #FFFFFF; text-shadow: var(--c4n-shadow); }
+.c4n-m2-xs:not(.has-png) .c4n-m2-xtime { text-shadow: var(--c4n-shadow); }
+
+/* PENALES: un disco por remate DETRÁS de cada hueco del PNG (colores de
+   BLANCO / verde / rojo_PENALES, en el manifest); el resultado de la tanda en
+   el negro del centro. Tanda definida: el número del que perdió se apaga. */
+.c4n-pk { position: absolute; border-radius: 50%; background: var(--pk-neutro, #FFFFFF); transition: background-color 0.22s linear; }
+.c4n-pk.s-convertido { background: var(--pk-convertido, #09B812); }
+.c4n-pk.s-errado { background: var(--pk-errado, #FF0000); }
+.c4n-pk.pop { animation: c4nPkPop 0.42s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@keyframes c4nPkPop { from { transform: scale(0.35); } to { transform: none; } }
+.c4n-m2-ps:not(.has-png) .c4n-pk { box-shadow: 0 0 0 2px rgba(10, 20, 45, 0.6); }
+.c4n-m2-pscore {
+  position: absolute; top: 0; height: 27px;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  font-family: var(--c4n-font-num); font-size: calc(19px * var(--c4n-font)); line-height: 1; color: #FFFFFF; font-variant-numeric: tabular-nums;
+}
+.c4n-m2-pscore b { font-weight: 400; transition: opacity 0.3s linear; }
+.c4n-m2-pscore span { font-size: 0.8em; opacity: 0.7; }
+.c4n-m2-pscore.win-l b[data-k="v"], .c4n-m2-pscore.win-v b[data-k="l"] { opacity: 0.42; }
+.c4n-m2-ps:not(.has-png) .c4n-m2-pscore { text-shadow: var(--c4n-shadow); }
 
 /* =====================================================================
    TARJETA / CAMBIO (300×150)
@@ -332,26 +369,13 @@ body:has(.c4n-fs.is-in) .c4n-root:not(.c4n-fs) > .content { opacity: 0; transiti
 .c4n-sponsors { position: absolute; inset: 10px; }
 
 /* =====================================================================
-   GRUPO L (400×600)
+   GRUPO L: PROMO WEB (400×600) y las TABLAS sobre TABLA_L (2026-11-10:
+   GOLEADORES / ASISTENCIAS / G+A / POSICIONES, ver más abajo).
    ===================================================================== */
-#mod-c4nGoleadores, #mod-c4nAsistencias, #mod-c4nGA, #mod-c4nPosiciones, #mod-c4nPromoWeb { --c4n-exit-hold: 0.55s; }
+#mod-c4nPromoWeb { --c4n-exit-hold: 0.62s; }
+#mod-c4nTablaFixture { --c4n-exit-hold: 0.62s; }
+#mod-c4nGoleadores, #mod-c4nAsistencias, #mod-c4nGA, #mod-c4nPosiciones, #mod-c4nTablaVs { --c4n-exit-hold: 0.62s; }
 .c4n-l-title { position: absolute; left: 24px; right: 24px; top: 24px; font-size: calc(36px * var(--c4n-font)); letter-spacing: 0.04em; }
-.c4n-l-sub { position: absolute; left: 24px; right: 24px; top: 72px; font-size: calc(17px * var(--c4n-font)); letter-spacing: 0.12em; color: var(--c4n-dim); }
-.c4n-l-rows { position: absolute; left: 20px; right: 20px; top: 110px; bottom: 24px; display: flex; flex-direction: column; gap: calc(8px * var(--c4n-gap)); }
-.c4n-l-row { display: grid; grid-template-columns: 34px 40px 1fr 54px; align-items: center; gap: 10px; height: calc(46px * var(--c4n-gap)); }
-.c4n-l-pos { font-size: calc(26px * var(--c4n-font)); text-align: center; }
-.c4n-l-row .c4n-crest { width: 36px; height: 36px; --c4n-mono-size: 36px; }
-.c4n-l-name { font-size: calc(21px * var(--c4n-font)); }
-.c4n-l-val { font-size: calc(32px * var(--c4n-font)); text-align: right; }
-.c4n-l-empty { position: absolute; left: 28px; right: 28px; top: 180px; font-size: calc(22px * var(--c4n-font)); line-height: 1.35; text-align: center; color: var(--c4n-dim); }
-.c4n-pos-head, .c4n-pos-row { display: grid; grid-template-columns: 28px 34px 56px repeat(7, 1fr); align-items: center; gap: 4px; }
-.c4n-pos-head { position: absolute; left: 14px; right: 14px; top: 112px; font-size: calc(14px * var(--c4n-font)); letter-spacing: 0.06em; color: var(--c4n-dim); text-align: center; }
-.c4n-pos-rows { position: absolute; left: 14px; right: 14px; top: 140px; display: flex; flex-direction: column; gap: calc(10px * var(--c4n-gap)); }
-.c4n-pos-row { height: 56px; font-size: calc(22px * var(--c4n-font)); text-align: center; }
-.c4n-pos-row .c4n-crest { width: 32px; height: 32px; --c4n-mono-size: 32px; }
-.c4n-pos-row .pts { font-family: var(--c4n-font-num); font-size: calc(30px * var(--c4n-font)); }
-.c4n-pos-row .abbr { text-align: left; }
-.c4n-pos-note { position: absolute; left: 14px; right: 14px; bottom: 20px; font-size: calc(14px * var(--c4n-font)); color: var(--c4n-faint); text-align: center; }
 .c4n-promo-text { position: absolute; left: 28px; right: 28px; top: 150px; font-size: calc(30px * var(--c4n-font)); line-height: 1.3; }
 .c4n-promo-url { position: absolute; left: 28px; right: 28px; bottom: 60px; font-size: calc(34px * var(--c4n-font)); letter-spacing: 0.04em; }
 
@@ -377,24 +401,52 @@ body:has(.c4n-fs.is-in) .c4n-root:not(.c4n-fs) > .content { opacity: 0; transiti
 #mod-c4nFixture, #mod-c4nVsPrepartido, #mod-c4nVsResultado, #mod-c4nFormacion, #mod-c4nStatsPrevia, #mod-c4nStatsEntretiempo, #mod-c4nStatsFinal { --c4n-exit-hold: 0.65s; }
 .c4n-line { position: absolute; height: 3px; background: var(--c4n-white); opacity: 0.85; transform-origin: 50% 50%; }
 
-/* FIXTURE (un día: sábado o domingo; filas = partidos del fixture efectivo) */
-.c4n-fx-title { position: absolute; left: 0; right: 0; top: 56px; text-align: center; font-size: calc(54px * var(--c4n-font)); letter-spacing: 0.08em; }
-.c4n-fx-sub { position: absolute; left: 0; right: 0; top: 128px; text-align: center; font-size: calc(22px * var(--c4n-font)); letter-spacing: 0.24em; color: var(--c4n-dim); }
-.c4n-fx-rows { position: absolute; left: 60px; right: 60px; top: 190px; bottom: 50px; display: flex; flex-direction: column; justify-content: center; gap: calc(14px * var(--c4n-gap)); }
-.c4n-fx-row { display: grid; grid-template-columns: 100px minmax(0, 1fr) 76px 190px 76px minmax(0, 1fr) 170px; align-items: center; gap: 14px; height: calc(var(--c4n-fx-h, 100px) * var(--c4n-gap)); max-height: 112px; }
-.c4n-fx-time { font-family: var(--c4n-font-num); font-size: calc(36px * var(--c4n-font)); text-align: left; }
-.c4n-fx-team { font-size: calc(32px * var(--c4n-font)); line-height: 1.05; white-space: nowrap; overflow: hidden; }
-.c4n-fx-team.home { text-align: right; }
-.c4n-fx-team.tbd { color: var(--c4n-dim); }
-.c4n-fx-row .c4n-crest { width: 70px; height: 70px; --c4n-mono-size: 70px; }
-.c4n-fx-center { text-align: center; line-height: 1; }
-.c4n-fx-score { font-family: var(--c4n-font-num); font-size: calc(54px * var(--c4n-font)); }
-.c4n-fx-vs { font-family: var(--c4n-font-num); font-size: calc(36px * var(--c4n-font)); opacity: 0.75; }
-.c4n-fx-pen { display: block; margin-top: 4px; font-size: calc(16px * var(--c4n-font)); letter-spacing: 0.14em; color: var(--c4n-dim); }
-.c4n-fx-stage { font-size: calc(19px * var(--c4n-font)); letter-spacing: 0.1em; line-height: 1.15; text-align: right; }
-.c4n-fx-state { display: block; font-size: calc(16px * var(--c4n-font)); letter-spacing: 0.16em; color: var(--c4n-dim); }
-.c4n-fx-state.live { color: var(--c4n-red); }
-.c4n-fx-empty { position: absolute; left: 80px; right: 80px; top: 420px; text-align: center; font-size: calc(30px * var(--c4n-font)); color: var(--c4n-dim); }
+/* FIXTURE — PNG real "fixture.png" (lienzo 1920×1080). Título y bajada arriba
+   de la franja de 4 colores (y 204-220); partidos debajo (y 252-1012), en el
+   azul del paquete sobre el papel, con un divisor fino entre filas. */
+.c4n-fx2 .c4n-content { text-shadow: none; color: #1B2C5C; }
+.c4n-fx2-title { position: absolute; left: 96px; width: 1728px; top: 54px; text-align: center; font-family: var(--c4n-font-num); line-height: 1; letter-spacing: 0.06em; white-space: nowrap; color: #1B2C5C; }
+.c4n-fx2-sub { position: absolute; left: 96px; width: 1728px; top: 154px; text-align: center; font-family: var(--c4n-font-num); font-size: calc(26px * var(--c4n-font)); line-height: 1; letter-spacing: 0.24em; white-space: nowrap; color: #E1262E; }
+.c4n-fx2-rows { position: absolute; left: 120px; width: 1680px; top: 252px; height: 760px; display: flex; flex-direction: column; justify-content: center; }
+/* FIXTURE con nombres en UNA línea (2026-11-13): columnas de escudo 86 (el
+   escudo mide 84) y separación 12 -> cada nombre gana 24 px (433). La columna
+   del resultado / VS no se mueve (empieza en x 665 de la fila con cualquier
+   separación y escudo, mientras horario y fase midan 110 y 250): los ajustes
+   guardados de FILAS / HORARIOS siguen valiendo. */
+.c4n-fx2-row { position: relative; display: grid; grid-template-columns: 110px minmax(0, 1fr) 86px 210px 86px minmax(0, 1fr) 250px; align-items: center; column-gap: 12px; }
+.c4n-fx2-row + .c4n-fx2-row::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: rgba(27, 44, 92, 0.16); }
+.c4n-fx2-time { font-family: var(--c4n-font-num); font-size: calc(44px * var(--c4n-font)); line-height: 1; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; }
+.c4n-fx2-team { font-family: var(--c4n-font-num); line-height: 1; letter-spacing: 0.01em; white-space: nowrap; }
+.c4n-fx2-team.home { text-align: right; }
+.c4n-fx2-team.tbd { color: rgba(27, 44, 92, 0.55); }
+.c4n-fx2-crest { width: 84px; height: 84px; --c4n-mono-size: 84px; }
+.c4n-fx2-crest img { filter: drop-shadow(0 4px 8px rgba(27, 44, 92, 0.22)); }
+.c4n-fx2-crest .c4n-mono { color: rgba(27, 44, 92, 0.6); border-color: rgba(27, 44, 92, 0.35); border-width: 2px; }
+.c4n-fx2-center { text-align: center; line-height: 1; font-family: var(--c4n-font-num); }
+.c4n-fx2-score { display: inline-flex; align-items: center; gap: 0.22em; font-size: calc(64px * var(--c4n-font)); font-variant-numeric: tabular-nums; }
+.c4n-fx2-score i { font-style: normal; font-size: 0.7em; color: #E1262E; }
+.c4n-fx2-vs { font-size: calc(42px * var(--c4n-font)); color: #E1262E; letter-spacing: 0.04em; }
+/* Resultado por penales (2026-11-14): el resultado del partido grande, a la
+   altura de los nombres como en las demás filas, y la tanda colgada debajo
+   como dato secundario claro ("PENALES 4 - 3"), dentro de la fila. */
+.c4n-fx2-center > div { position: relative; }
+.c4n-fx2-pen { position: absolute; left: 50%; top: calc(100% + 2px); transform: translateX(-50%); font-size: calc(22px * var(--c4n-font)); line-height: 1; letter-spacing: 0.1em; color: #E1262E; white-space: nowrap; }
+.c4n-fx2-stage { text-align: right; font-family: var(--c4n-font-num); line-height: 1.04; }
+.c4n-fx2-stage > span:first-child { display: block; font-size: calc(24px * var(--c4n-font)); letter-spacing: 0.06em; }
+.c4n-fx2-state { display: block; margin-top: 4px; font-size: calc(18px * var(--c4n-font)); letter-spacing: 0.16em; color: rgba(27, 44, 92, 0.6); }
+.c4n-fx2-state.live { color: #E1262E; }
+.c4n-fx2-empty { position: absolute; left: 96px; width: 1728px; top: 560px; text-align: center; font-family: var(--c4n-font-num); font-size: calc(40px * var(--c4n-font)); letter-spacing: 0.08em; color: rgba(27, 44, 92, 0.6); }
+.c4n-fx2:not(.has-bg) .c4n-content { color: #FFFFFF; text-shadow: var(--c4n-shadow); }
+.c4n-fx2:not(.has-bg) .c4n-fx2-team.tbd, .c4n-fx2:not(.has-bg) .c4n-fx2-state { color: var(--c4n-dim); }
+
+/* NOMBRES EN PAREJA (balancedNames / nameBlock): mismo alto de bloque a los
+   dos lados; con estructura de 2 renglones, un nombre de una palabra queda
+   centrado en ese mismo alto. */
+.c4n-nb { display: inline-flex; flex-direction: column; justify-content: center; vertical-align: middle; line-height: 1; }
+.c4n-nb > span { display: block; }
+.c4n-nb.rows-2 { height: 2.06em; }
+.c4n-nb.rows-2 > span + span { margin-top: 0.06em; }
+.c4n-nb.rows-1 { height: 1em; }
 
 /* VS PREPARTIDO / VS RESULTADO — PNG real (lienzo 1920×1080). */
 #mod-c4nVsPrepartido, #mod-c4nVsResultado { --c4n-exit-hold: 0.72s; }
@@ -420,69 +472,131 @@ body:has(.c4n-fs.is-in) .c4n-root:not(.c4n-fs) > .content { opacity: 0; transiti
 .c4n-vs2-detail { left: 460px; width: 1000px; top: 878px; font-size: calc(34px * var(--c4n-font)); letter-spacing: 0.1em; }
 
 /* RESULTADO: guion rojo en (959, 537); goles a cada lado. */
-.c4n-rs2-title { left: 410px; width: 1100px; top: 198px; letter-spacing: 0.06em; }
-.c4n-rs2-state { left: 560px; width: 800px; top: 324px; font-size: calc(28px * var(--c4n-font)); letter-spacing: 0.18em; color: #E1262E; }
-.c4n-rs2-crest { top: 370px; width: 250px; height: 250px; --c4n-mono-size: 250px; }
-.c4n-rs2-crest.left { left: 345px; }
-.c4n-rs2-crest.right { left: 1323px; }
-.c4n-rs2-name { top: 624px; width: 400px; }
-.c4n-rs2-name.left { left: 270px; }
-.c4n-rs2-name.right { left: 1248px; }
-.c4n-rs2-score { top: 537px; width: 300px; height: 1em; margin-top: -0.5em; display: flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
-.c4n-rs2-score.left { left: 640px; }
-.c4n-rs2-score.right { left: 978px; }
-.c4n-rs2-pen { top: 664px; width: 300px; font-size: calc(56px * var(--c4n-font)); color: #E1262E; }
-.c4n-rs2-pen.left { left: 640px; }
-.c4n-rs2-pen.right { left: 978px; }
-.c4n-rs2-penlabel { left: 859px; width: 200px; top: 680px; font-size: calc(22px * var(--c4n-font)); letter-spacing: 0.22em; }
 
-/* FORMACIÓN */
-.c4n-fo-head { position: absolute; left: 60px; top: 50px; display: flex; align-items: center; gap: 24px; }
-.c4n-fo-head .c4n-crest { width: 130px; height: 130px; --c4n-mono-size: 130px; }
-.c4n-fo-kicker { font-size: calc(22px * var(--c4n-font)); letter-spacing: 0.24em; color: var(--c4n-dim); }
-.c4n-fo-team { font-size: calc(58px * var(--c4n-font)); }
-.c4n-fo-scheme { font-size: calc(30px * var(--c4n-font)); letter-spacing: 0.1em; color: var(--c4n-dim); }
-.c4n-fo-field { position: absolute; left: 60px; top: 230px; width: 1000px; height: 680px; }
+/* FORMACIÓN sobre PLACA VACÍA (coordenadas de PLACA_AREA, 1448×740):
+   encabezado arriba, titulares en la cancha (1040×600) y suplentes a la
+   derecha, en el azul del paquete. */
+/* CABECERA (2026-11-12) a todo el ancho de la zona (1448): identidad a la
+   izquierda (x 20-760, sobre la cancha), ESQUEMA + PARTIDO a la derecha
+   (x 800-1428, sobre SUPLENTES), filete en y 122 (la cancha empieza en 128). */
+.c4n-fo-head { position: absolute; left: 0; right: 0; top: 0; height: 124px; }
+.c4n-fo-id { position: absolute; left: 20px; top: 0; width: 740px; height: 120px; display: flex; align-items: center; gap: 24px; }
+.c4n-fo-head .c4n-crest { flex: none; }
+.c4n-fo-crest { width: 112px; height: 112px; --c4n-mono-size: 112px; }
+.c4n-fo-head .c4n-crest img { filter: drop-shadow(0 6px 12px rgba(27, 44, 92, 0.25)); }
+.c4n-fo-head .c4n-mono { color: #1B2C5C; border-color: #1B2C5C; }
+.c4n-fo-idtext { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.c4n-fo-kicker { font-family: var(--c4n-font-num); font-size: calc(24px * var(--c4n-font)); line-height: 1; letter-spacing: 0.24em; color: #E1262E; }
+.c4n-fo-team { font-family: var(--c4n-font-num); line-height: 1.02; letter-spacing: 0.02em; white-space: nowrap; }
+.c4n-fo-meta { position: absolute; left: 800px; right: 20px; top: 8px; height: 104px; display: flex; align-items: center; gap: 22px; }
+.c4n-fo-scheme { flex: none; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; font-family: var(--c4n-font-num); line-height: 1; }
+.c4n-fo-scheme small { font-size: calc(17px * var(--c4n-font)); letter-spacing: 0.24em; color: #E1262E; }
+.c4n-fo-scheme b { font-weight: 400; font-size: calc(62px * var(--c4n-font)); letter-spacing: 0.04em; color: #1B2C5C; }
+.c4n-fo-vrule { flex: none; width: 2px; height: 84px; background: rgba(27, 44, 92, 0.22); }
+.c4n-fo-rival { min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 8px; font-family: var(--c4n-font-num); line-height: 1; }
+.c4n-fo-vs { display: flex; align-items: center; gap: 12px; white-space: nowrap; }
+.c4n-fo-vs small { font-size: calc(20px * var(--c4n-font)); letter-spacing: 0.12em; color: #E1262E; }
+.c4n-fo-rcrest { flex: none; width: 52px; height: 52px; --c4n-mono-size: 52px; }
+.c4n-fo-vs span { color: #1B2C5C; letter-spacing: 0.02em; }
+.c4n-fo-match { letter-spacing: 0.14em; color: rgba(27, 44, 92, 0.7); white-space: nowrap; }
+.c4n-fo-hrule { position: absolute; left: 20px; right: 20px; top: 122px; height: 2px; background: rgba(27, 44, 92, 0.2); }
+.c4n-pl:not(.has-bg) .c4n-fo-vrule, .c4n-pl:not(.has-bg) .c4n-fo-hrule { background: rgba(255, 255, 255, 0.35); }
+.c4n-fo-field { position: absolute; left: 20px; top: 128px; } /* cancha vertical (720×606, inline) */
+.c4n-fo-field.no-subs { left: 364px; } /* sin suplentes: la cancha al centro del papel */
+.c4n-fo-pitch { position: absolute; inset: 0; }
+.c4n-fo-pitch svg { width: 100%; height: 100%; display: block; }
+.c4n-fo-pitch svg * { fill: none; stroke: rgba(27, 44, 92, 0.32); stroke-width: 2.5; }
+.c4n-fo-pitch svg .f { fill: rgba(255, 255, 255, 0.22); }
+.c4n-fo-pitch svg .dot { fill: rgba(27, 44, 92, 0.32); stroke: none; }
 /* fútbol 11: tarjetas compactas (hasta 5 por línea sin superponerse) */
-.c4n-fo-player { position: absolute; width: 150px; margin: -64px 0 0 -75px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.c4n-fo-photo { width: 92px; height: 92px; position: relative; }
-.c4n-fo-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; }
-.c4n-fo-num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--c4n-font-num); font-size: 52px; color: transparent; -webkit-text-stroke: 2px rgba(255, 255, 255, 0.8); }
-.c4n-fo-name { font-size: calc(17px * var(--c4n-font)); text-align: center; max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
-.c4n-fo-name b { font-family: var(--c4n-font-num); font-weight: 400; margin-right: 6px; }
-.c4n-fo-subs { position: absolute; left: 1110px; right: 40px; top: 230px; display: flex; flex-direction: column; gap: calc(9px * var(--c4n-gap)); }
-.c4n-fo-subs-title { font-size: calc(20px * var(--c4n-font)); letter-spacing: 0.22em; color: var(--c4n-dim); margin-bottom: 6px; }
-.c4n-fo-sub { font-size: calc(20px * var(--c4n-font)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.c4n-fo-sub small { font-family: var(--c4n-font-text); font-size: 0.7em; color: var(--c4n-faint); margin-left: 6px; }
-.c4n-fo-sub b { font-family: var(--c4n-font-num); font-weight: 400; display: inline-block; min-width: 38px; }
+.c4n-fo-player { position: absolute; margin-top: -42px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.c4n-fo-photo { width: 62px; height: 62px; position: relative; }
+.c4n-fo-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; filter: drop-shadow(0 4px 8px rgba(27, 44, 92, 0.25)); }
+.c4n-fo-num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--c4n-font-num); font-size: 52px; color: transparent; -webkit-text-stroke: 2px rgba(27, 44, 92, 0.8); }
+.c4n-fo-name { font-family: var(--c4n-font-num); line-height: 1.12; letter-spacing: 0.02em; text-align: center; max-width: 150px; overflow: hidden; text-overflow: ellipsis; color: #1B2C5C; }
+.c4n-fo-name b { font-weight: 400; margin-right: 6px; color: #E1262E; }
+.c4n-fo-subs { position: absolute; left: 800px; right: 0; top: 150px; display: flex; flex-direction: column; gap: calc(8px * var(--c4n-gap)); }
+.c4n-fo-subs-title { font-family: var(--c4n-font-num); font-size: calc(22px * var(--c4n-font)); letter-spacing: 0.22em; color: #E1262E; margin-bottom: 6px; }
+.c4n-fo-sub { font-family: var(--c4n-font-num); font-size: calc(24px * var(--c4n-font)); letter-spacing: 0.02em; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.c4n-fo-sub small { font-size: 0.7em; letter-spacing: 0.08em; color: rgba(27, 44, 92, 0.55); margin-left: 6px; }
+.c4n-fo-sub b { font-weight: 400; display: inline-block; min-width: 42px; color: #E1262E; }
 
-/* ESTADÍSTICAS */
-.c4n-st-head { position: absolute; left: 0; right: 0; top: 40px; height: 190px; }
-.c4n-st-kicker { position: absolute; left: 0; right: 0; top: 0; text-align: center; font-size: calc(26px * var(--c4n-font)); letter-spacing: 0.24em; color: var(--c4n-dim); }
-.c4n-st-crest { position: absolute; top: 46px; width: 130px; height: 130px; --c4n-mono-size: 130px; }
-.c4n-st-crest.left { left: 80px; }
-.c4n-st-crest.right { right: 80px; }
-.c4n-st-name { position: absolute; top: 84px; width: 420px; font-size: calc(46px * var(--c4n-font)); }
-.c4n-st-name.left { left: 230px; text-align: left; }
-.c4n-st-name.right { right: 230px; text-align: right; }
-.c4n-st-score { position: absolute; left: 50%; top: 52px; width: 300px; margin-left: -150px; text-align: center; font-size: calc(110px * var(--c4n-font)); }
-.c4n-st-pens { position: absolute; left: 0; right: 0; top: 178px; text-align: center; font-size: calc(22px * var(--c4n-font)); letter-spacing: 0.16em; color: var(--c4n-dim); }
-.c4n-st-cols { position: absolute; left: 60px; right: 60px; top: 270px; bottom: 50px; display: grid; grid-template-columns: 1fr 440px 1fr; gap: 40px; }
-.c4n-st-col { display: flex; flex-direction: column; gap: calc(10px * var(--c4n-gap)); min-width: 0; }
-.c4n-st-col.right { align-items: flex-end; text-align: right; }
-.c4n-st-sec { font-size: calc(18px * var(--c4n-font)); letter-spacing: 0.22em; color: var(--c4n-dim); margin-top: 8px; }
-.c4n-st-row { display: flex; align-items: center; gap: 12px; font-size: calc(24px * var(--c4n-font)); white-space: nowrap; max-width: 100%; }
-.c4n-st-col.right .c4n-st-row { flex-direction: row-reverse; }
-.c4n-st-row .min { font-family: var(--c4n-font-num); font-size: calc(26px * var(--c4n-font)); min-width: 56px; }
-.c4n-st-row small { font-family: var(--c4n-font-text); color: var(--c4n-faint); font-size: calc(17px * var(--c4n-font)); }
-.c4n-st-cmp { display: grid; grid-template-columns: 70px 1fr 70px; align-items: center; gap: 12px; height: calc(46px * var(--c4n-gap)); }
-.c4n-st-cmp .v { font-family: var(--c4n-font-num); font-size: calc(34px * var(--c4n-font)); text-align: center; }
-.c4n-st-cmp .l { font-size: calc(16px * var(--c4n-font)); letter-spacing: 0.18em; text-align: center; color: var(--c4n-dim); }
-.c4n-st-empty { grid-column: 1 / -1; align-self: center; text-align: center; font-size: calc(28px * var(--c4n-font)); color: var(--c4n-dim); line-height: 1.4; }
-.c4n-st-cols.has-tl { top: 384px; }
-.c4n-tl { position: absolute; left: 60px; right: 60px; top: 284px; height: 4px; background: rgba(255, 255, 255, 0.35); transform-origin: 0 50%; }
-.c4n-tl-mk { position: absolute; top: -34px; width: 30px; margin-left: -15px; text-align: center; font-size: 22px; }
-.c4n-tl-mk.down { top: 10px; }
+/* ESTADÍSTICAS (PREVIA / ENTRETIEMPO / FINAL) sobre PLACA VACÍA: coordenadas
+   de PLACA_AREA (1448×740 dentro del papel). Encabezado arriba (título,
+   escudos, nombres balanceados, resultado), timeline y datos debajo. */
+.c4n-st-head { position: absolute; left: 0; right: 0; top: 0; height: 160px; }
+.c4n-st-kicker { position: absolute; left: 0; right: 0; top: 0; text-align: center; font-family: var(--c4n-font-num); font-size: calc(30px * var(--c4n-font)); line-height: 1; letter-spacing: 0.24em; color: #E1262E; white-space: nowrap; }
+.c4n-st-crest { position: absolute; top: 30px; width: 124px; height: 124px; --c4n-mono-size: 124px; }
+.c4n-st-crest.left { left: 24px; }
+.c4n-st-crest.right { right: 24px; }
+.c4n-st-crest img { filter: drop-shadow(0 6px 12px rgba(27, 44, 92, 0.25)); }
+.c4n-st-crest .c4n-mono { color: #1B2C5C; border-color: #1B2C5C; }
+.c4n-st-name { position: absolute; top: 30px; height: 124px; width: 440px; display: flex; align-items: center; font-family: var(--c4n-font-num); letter-spacing: 0.02em; white-space: nowrap; }
+.c4n-st-name.left { left: 172px; justify-content: flex-start; text-align: left; }
+.c4n-st-name.right { right: 172px; justify-content: flex-end; text-align: right; }
+.c4n-st-score { position: absolute; left: 50%; top: 32px; width: 320px; margin-left: -160px; text-align: center; font-family: var(--c4n-font-num); font-size: calc(104px * var(--c4n-font)); line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.c4n-st-vs { font-size: 0.66em; color: #E1262E; letter-spacing: 0.04em; }
+.c4n-st-dash { display: inline-block; margin: 0 0.18em; color: #E1262E; transform: translateY(-0.04em); }
+.c4n-st-pens { position: absolute; left: 0; right: 0; top: 138px; text-align: center; font-family: var(--c4n-font-num); font-size: calc(22px * var(--c4n-font)); line-height: 1; letter-spacing: 0.16em; color: #E1262E; }
+.c4n-st-cols { position: absolute; left: 24px; right: 24px; top: 190px; bottom: 0; display: grid; grid-template-columns: 1fr 440px 1fr; grid-template-rows: minmax(0, 1fr); column-gap: 40px; }
+/* Con timeline (ENTRETIEMPO / FINAL) las columnas de eventos terminan SIEMPRE
+   en el borde útil del papel (y 912), aunque el bloque DATOS o el CONTENIDO
+   estén corridos en Y con AJUSTE DE CAPAS: el borde inferior descuenta ese
+   corrimiento. Lo que no entra, scrollea. */
+.c4n-st-cols.has-tl { top: 322px; bottom: calc(var(--c4n-e-body-y, 0px) + var(--c4n-c-y, 0px)); }
+.c4n-st-col { min-width: 0; min-height: 0; }
+/* ENTRETIEMPO (2026-11-12): con un solo tiempo y sin penales, el bloque central
+   (timeline + goles / tarjetas / cambios + comparativa) quedaba arriba y el
+   papel vacío abajo (~170 px debajo de la comparativa contra ~65 px arriba
+   del título). Se baja el bloque 34 / 54 px y la comparativa crece (filas de
+   56 px, números más grandes): termina en y ~688 de la zona (antes ~572) y la
+   placa queda centrada en Y. Las columnas siguen terminando en el borde útil
+   (y 912) y scrollean si no entran. FINAL no cambia. */
+.c4n-st.is-et .c4n-tl2 { top: 34px; bottom: -34px; }
+.c4n-st.is-et .c4n-st-cols.has-tl { top: 376px; }
+.c4n-st.is-et .c4n-st-cmp { height: calc(56px * var(--c4n-gap)); }
+.c4n-st.is-et .c4n-st-cmp .v { font-size: calc(42px * var(--c4n-font)); }
+.c4n-st.is-et .c4n-st-cmp .l { font-size: calc(20px * var(--c4n-font)); }
+.c4n-st-mid { display: flex; flex-direction: column; gap: calc(8px * var(--c4n-gap)); }
+/* Columnas de eventos: viewport con el alto útil de la placa (recorta solo en
+   Y: los textos largos no se cortan a lo ancho) + auto-scroll si no entran. */
+.c4n-scroll { overflow-x: visible; overflow-y: clip; }
+.c4n-scroll-in { display: flex; flex-direction: column; gap: calc(8px * var(--c4n-gap)); }
+.c4n-scroll-in.is-auto { animation: c4nAutoScroll var(--sc-dur, 16s) linear 2.2s infinite; will-change: transform; }
+@keyframes c4nAutoScroll {
+  0%, 18% { transform: none; animation-timing-function: ease-in-out; }
+  55%, 73% { transform: translateY(calc(-1 * var(--sc-dist, 0px))); animation-timing-function: ease-in-out; }
+  91%, 100% { transform: none; }
+}
+.c4n-st-col.right .c4n-scroll-in { align-items: flex-end; text-align: right; }
+.c4n-st-sec { font-family: var(--c4n-font-num); font-size: calc(19px * var(--c4n-font)); letter-spacing: 0.22em; color: #E1262E; margin-top: 6px; }
+/* Grilla de cada evento: ícono | minuto | jugador. El ícono va pegado al borde
+   del escudo / inicio de la línea de tiempo (izquierda) y al borde opuesto en
+   la selección de la derecha. */
+.c4n-st-row { display: grid; grid-template-columns: 30px 56px minmax(0, auto); column-gap: 10px; align-items: center; font-family: var(--c4n-font-num); font-size: calc(26px * var(--c4n-font)); line-height: 1.1; white-space: nowrap; }
+.c4n-st-row .ico { grid-column: 1; display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; }
+.c4n-st-row .min { grid-column: 2; font-variant-numeric: tabular-nums; color: #E1262E; }
+.c4n-st-row .txt { grid-column: 3; }
+.c4n-st-row .ico, .c4n-st-row .min, .c4n-st-row .txt { grid-row: 1; }
+.c4n-st-row.two .r2 { grid-row: 2; }
+.c4n-st-row.two .txt.r2 { grid-column: 3; }
+.c4n-st-row.two { row-gap: 2px; }
+.c4n-st-col.right .c4n-st-row { grid-template-columns: minmax(0, auto) 56px 30px; }
+.c4n-st-col.right .c4n-st-row .ico { grid-column: 3; }
+.c4n-st-col.right .c4n-st-row .min { grid-column: 2; text-align: right; }
+.c4n-st-col.right .c4n-st-row .txt { grid-column: 1; text-align: right; }
+.c4n-st-row.is-empty { color: rgba(27, 44, 92, 0.45); }
+.c4n-st-row.is-empty .min { color: rgba(27, 44, 92, 0.45); }
+.c4n-st-row small { font-size: 0.68em; letter-spacing: 0.06em; color: rgba(27, 44, 92, 0.62); }
+.c4n-st-row .txt.note { line-height: 1; }
+.c4n-st-row .txt.note small { font-size: 0.66em; }
+.c4n-st-row .ico .c4n-ico-ball { width: 24px; height: 24px; vertical-align: 0; }
+.c4n-st-row .ico .c4n-ico-card { width: 15px; height: 21px; }
+.c4n-arr { width: 18px; height: 24px; display: block; }
+.c4n-st-cmp { display: grid; grid-template-columns: 76px 1fr 76px; align-items: center; gap: 12px; height: calc(44px * var(--c4n-gap)); border-bottom: 2px solid rgba(27, 44, 92, 0.12); }
+.c4n-st-cmp .v { font-family: var(--c4n-font-num); font-size: calc(36px * var(--c4n-font)); line-height: 1; text-align: center; font-variant-numeric: tabular-nums; }
+.c4n-st-cmp .l { font-family: var(--c4n-font-num); font-size: calc(18px * var(--c4n-font)); letter-spacing: 0.18em; text-align: center; color: rgba(27, 44, 92, 0.7); }
+.c4n-st-empty { grid-column: 1 / -1; align-self: center; text-align: center; font-family: var(--c4n-font-num); font-size: calc(32px * var(--c4n-font)); letter-spacing: 0.06em; line-height: 1.35; color: rgba(27, 44, 92, 0.6); padding: 0 120px; }
 .c4n-ico-ball { display: inline-block; width: 1em; height: 1em; vertical-align: -0.12em; }
 .c4n-ico-card { display: inline-block; width: 0.62em; height: 0.86em; border-radius: 0.1em; background: var(--c4n-yellow); transform: rotate(-8deg); vertical-align: -0.1em; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
 .c4n-ico-card.is-red { background: var(--c4n-red); }
@@ -526,13 +640,6 @@ body.c4n-preview-bg .c4n-bg img { opacity: var(--c4n-preview-bg-opacity, 1); }
    COPA 4 NACIONES — 2026-11-05: PNG reales nuevos y ajustes.
    ===================================================================== */
 /* VS RESULTADO: placa blanca suave detrás de cada nombre. */
-.c4n-rs2-namebox { position: relative; display: inline-block; padding: 0.16em 0.5em 0.12em; }
-.c4n-rs2-plate { position: absolute; inset: 0; background: rgba(255, 255, 255, 0.8); border-radius: 5px; box-shadow: 0 6px 18px rgba(27, 44, 92, 0.16); transform-origin: 50% 50%; }
-.c4n-rs2-nametext { position: relative; }
-.c4n-a.m-plate { --c4n-in-anim: c4nPlateIn; --c4n-out-anim: c4nPlateOut; --c4n-dur: 0.5s; --c4n-dur-out: 0.26s; }
-@keyframes c4nPlateIn { from { opacity: 0; transform: scaleX(0.15); } 45% { opacity: 1; } to { opacity: 1; transform: none; } }
-@keyframes c4nPlateOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: scaleX(0.4); } }
-.c4n-rs2:not(.has-bg) .c4n-rs2-plate { background: rgba(10, 20, 45, 0.55); }
 
 /* FORMACIÓN: remera genérica por selección (número encima). */
 .c4n-fo-shirt { position: absolute; inset: 4px; width: calc(100% - 8px); height: calc(100% - 8px); filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.35)); }
@@ -565,56 +672,79 @@ body.c4n-preview-bg .c4n-bg img { opacity: var(--c4n-preview-bg-opacity, 1); }
 .c4n-mj2-name span { color: #E1262E; margin-right: 6px; }
 .c4n-mj2-stat { position: absolute; left: 100px; top: 54px; width: 186px; font-family: var(--c4n-font-num); font-size: calc(18px * var(--c4n-font)); letter-spacing: 0.1em; color: rgba(27, 44, 92, 0.75); white-space: nowrap; overflow: hidden; }
 .c4n-mj2-stat b { font-weight: 400; font-size: 1.5em; color: #E1262E; margin-right: 6px; vertical-align: -0.08em; }
+/* Selección sin datos en el ranking (2026-11-12): escudo + nombre atenuados, "SIN DATOS DE ...". */
+.c4n-mj2-item.is-empty .c4n-mj2-name { color: rgba(27, 44, 92, 0.55); }
+.c4n-mj2-item.is-empty .c4n-mj2-stat { color: rgba(27, 44, 92, 0.5); }
 .c4n-mj2:not(.has-bg) .c4n-content { text-shadow: var(--c4n-shadow); }
 .c4n-mj2:not(.has-bg) .c4n-mj2-name, .c4n-mj2:not(.has-bg) .c4n-mj2-stat { color: #FFFFFF; }
 
-/* ESTADÍSTICAS PREVIA: barras comparativas a todo el ancho + tarjetas abajo. */
-.c4n-pv { position: absolute; inset: 0; }
-.c4n-pv-rows { position: absolute; left: 70px; right: 70px; top: 258px; display: flex; flex-direction: column; gap: calc(4px * var(--c4n-gap)); }
-.c4n-pv-row { display: grid; grid-template-columns: 1fr 86px 230px 86px 1fr; align-items: center; height: 38px; column-gap: 10px; }
-.c4n-pv-bar { position: relative; height: 16px; border-radius: 3px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
-.c4n-pv-bar i { position: absolute; inset: 0; border-radius: 3px; transform: scaleX(var(--w, 0)); }
-.c4n-pv-bar.a i { background: var(--ca); transform-origin: 100% 50%; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25); }
-.c4n-pv-bar.b i { background: var(--cb); transform-origin: 0 50%; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25); }
-.c4n-root.is-in .c4n-pv-row:not(.c4n-static) .c4n-pv-bar i { animation: c4nBarGrow 0.75s var(--c4n-ease-out) both; animation-delay: calc(var(--d, 0s) + 0.14s); }
-@keyframes c4nBarGrow { from { transform: scaleX(0); } to { transform: scaleX(var(--w, 0)); } }
-.c4n-pv-v { font-family: var(--c4n-font-num); font-size: calc(30px * var(--c4n-font)); text-align: center; color: rgba(255, 255, 255, 0.72); font-variant-numeric: tabular-nums; }
-.c4n-pv-v.lead { color: #FFFFFF; font-size: calc(34px * var(--c4n-font)); }
-.c4n-pv-l { font-family: var(--c4n-font-title); font-size: calc(17px * var(--c4n-font)); letter-spacing: 0.2em; text-align: center; color: rgba(255, 255, 255, 0.8); text-transform: uppercase; }
-.c4n-pv-cards { position: absolute; left: 70px; right: 70px; top: 712px; display: grid; grid-template-columns: repeat(4, 1fr); column-gap: 16px; }
+/* ESTADÍSTICAS PREVIA (2026-11-11): tratamiento editorial sobre PLACA VACÍA
+   (coordenadas de PLACA_AREA). Duelos de números grandes, récord de partidos
+   (única barra: G + GXP + PXP + P = PJ), goles a favor / en contra y tarjetas
+   de goleador / asistidor. */
+.c4n-pv2 { position: absolute; inset: 0; }
+.c4n-pv2-duels { position: absolute; left: 24px; right: 24px; top: 184px; height: 118px; display: grid; grid-template-columns: repeat(3, 1fr); column-gap: 18px; }
+.c4n-pv2-goals { position: absolute; left: 24px; right: 24px; top: 452px; height: 92px; display: grid; grid-template-columns: repeat(2, 1fr); column-gap: 18px; }
+.c4n-pv2-duel { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; column-gap: 14px; padding: 0 26px; border-radius: 6px; background: rgba(255, 255, 255, 0.42); box-shadow: 0 4px 14px rgba(27, 44, 92, 0.08); font-family: var(--c4n-font-num); }
+.c4n-pv2-duel b { font-weight: 400; font-size: calc(54px * var(--c4n-font)); line-height: 1; color: #1B2C5C; font-variant-numeric: tabular-nums; text-align: center; }
+.c4n-pv2-duel.big b { font-size: calc(74px * var(--c4n-font)); }
+.c4n-pv2-duel b.trail { color: rgba(27, 44, 92, 0.38); }
+.c4n-pv2-duel b.lead { color: #1B2C5C; }
+.c4n-pv2-duel b .ord { display: inline-block; vertical-align: top; margin: 0.1em 0 0 0.04em; font-size: 0.36em; line-height: 0.9; border-bottom: 0.14em solid currentColor; }
+.c4n-pv2-duel span { font-size: calc(17px * var(--c4n-font)); letter-spacing: 0.2em; color: #E1262E; text-align: center; white-space: nowrap; }
+.c4n-pv2-recs { position: absolute; left: 24px; right: 24px; top: 318px; display: grid; grid-template-columns: 1fr 1fr; column-gap: 40px; }
+.c4n-pv2-rec .cap { display: flex; align-items: baseline; justify-content: flex-start; gap: 12px; margin-bottom: 8px; font-family: var(--c4n-font-num); }
+.c4n-pv2-rec .cap span { font-size: calc(17px * var(--c4n-font)); letter-spacing: 0.18em; color: rgba(27, 44, 92, 0.75); }
+.c4n-pv2-rec .cap b { font-weight: 400; font-size: calc(34px * var(--c4n-font)); line-height: 1; color: #1B2C5C; }
+.c4n-pv2-rec.b .cap { flex-direction: row-reverse; }
+.c4n-pv2-rec .bar { display: flex; height: 46px; border-radius: 5px; overflow: hidden; gap: 3px; }
+.c4n-pv2-rec .seg { display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 64px; font-style: normal; font-family: var(--c4n-font-num); color: #FFFFFF; }
+.c4n-pv2-rec .seg b { font-weight: 400; font-size: calc(28px * var(--c4n-font)); line-height: 1; }
+.c4n-pv2-rec .seg em { font-style: normal; font-size: calc(15px * var(--c4n-font)); letter-spacing: 0.1em; opacity: 0.85; }
+.c4n-pv2-rec .seg.g { background: #1B2C5C; }
+.c4n-pv2-rec .seg.gxp { background: #4F6290; }
+.c4n-pv2-rec .seg.pxp { background: #E77C80; }
+.c4n-pv2-rec .seg.p { background: #E1262E; }
+.c4n-pv2-rec .seg.none { flex: 1; background: rgba(27, 44, 92, 0.1); color: rgba(27, 44, 92, 0.55); font-size: calc(16px * var(--c4n-font)); letter-spacing: 0.16em; }
+.c4n-pv2-legend { position: absolute; left: 24px; right: 24px; top: 420px; display: flex; justify-content: center; gap: 28px; font-family: var(--c4n-font-num); font-size: calc(14px * var(--c4n-font)); letter-spacing: 0.12em; color: rgba(27, 44, 92, 0.62); white-space: nowrap; }
+.c4n-pv2-legend b { font-weight: 400; color: #1B2C5C; margin-right: 4px; }
+.c4n-pv-cards { position: absolute; left: 24px; right: 24px; top: 568px; display: grid; grid-template-columns: repeat(4, 1fr); column-gap: 16px; }
 .c4n-pv-cards > :nth-child(3) { margin-left: 24px; }
-.c4n-pv-card { position: relative; height: 172px; border-radius: 6px; background: rgba(8, 18, 40, 0.62); border-top: 5px solid var(--team, #FFFFFF); padding: 14px 18px; box-sizing: border-box; overflow: hidden; }
+.c4n-pv-card { position: relative; height: 156px; border-radius: 6px; background: rgba(255, 255, 255, 0.5); border-top: 5px solid var(--team, #1B2C5C); padding: 12px 18px; box-sizing: border-box; overflow: hidden; box-shadow: 0 4px 14px rgba(27, 44, 92, 0.12); }
 .c4n-pv-card.is-empty { opacity: 0.6; }
-.c4n-pv-card-top { display: flex; align-items: center; gap: 10px; font-family: var(--c4n-font-title); font-size: calc(16px * var(--c4n-font)); letter-spacing: 0.2em; color: rgba(255, 255, 255, 0.78); }
+.c4n-pv-card-top { display: flex; align-items: center; gap: 10px; font-family: var(--c4n-font-num); font-size: calc(17px * var(--c4n-font)); letter-spacing: 0.2em; color: rgba(27, 44, 92, 0.75); }
 .c4n-pv-card-ico { width: 26px; height: 26px; display: flex; }
 .c4n-pv-card-ico svg { width: 100%; height: 100%; }
-.c4n-pv-card-team { margin-left: auto; font-family: var(--c4n-font-num); letter-spacing: 0.08em; color: var(--team, #FFFFFF); font-size: calc(20px * var(--c4n-font)); }
-.c4n-pv-card-body { position: absolute; left: 18px; right: 18px; bottom: 16px; display: flex; align-items: baseline; gap: 14px; }
-.c4n-pv-card-body b { font-family: var(--c4n-font-num); font-weight: 400; font-size: calc(70px * var(--c4n-font)); line-height: 0.9; color: #FFFFFF; }
-.c4n-pv-card-body span { font-family: var(--c4n-font-num); line-height: 1.05; color: #FFFFFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.c4n-pv-card-ico .c4n-ico-assist path { stroke: #1B2C5C; }
+.c4n-pv-card-ico .c4n-ico-assist circle { fill: #1B2C5C; }
+.c4n-pv-card-team { margin-left: auto; font-family: var(--c4n-font-num); letter-spacing: 0.08em; color: #1B2C5C; font-size: calc(20px * var(--c4n-font)); }
+.c4n-pv-card-body { position: absolute; left: 18px; right: 18px; bottom: 14px; display: flex; align-items: baseline; gap: 14px; }
+.c4n-pv-card-body b { font-family: var(--c4n-font-num); font-weight: 400; font-size: calc(64px * var(--c4n-font)); line-height: 0.9; color: #E1262E; }
+.c4n-pv-card-body span { font-family: var(--c4n-font-num); line-height: 1.05; color: #1B2C5C; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 
-/* TIMELINE (ENTRETIEMPO / FINAL). */
+/* TIMELINE (ENTRETIEMPO / FINAL) sobre PLACA VACÍA: línea en y 230, eventos
+   del local arriba y del visitante abajo (chip azul con ícono + minuto). */
 .c4n-tl2 { position: absolute; inset: 0; }
-.c4n-tl2-track { position: absolute; top: 300px; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.55); transform-origin: 0 50%; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35); }
+.c4n-tl2-track { position: absolute; top: 230px; height: 6px; border-radius: 3px; background: rgba(27, 44, 92, 0.45); transform-origin: 0 50%; }
 .c4n-tl2-ticks { position: absolute; inset: 0; }
-.c4n-tl2-tick { position: absolute; top: 296px; width: 2px; height: 14px; margin-left: -1px; background: rgba(255, 255, 255, 0.55); }
-.c4n-tl2-tlabel { position: absolute; top: 312px; width: 60px; margin-left: -30px; text-align: center; font-family: var(--c4n-font-num); font-size: calc(15px * var(--c4n-font)); color: rgba(255, 255, 255, 0.6); }
-.c4n-tl2-cap { position: absolute; top: 312px; font-family: var(--c4n-font-title); font-size: calc(14px * var(--c4n-font)); letter-spacing: 0.22em; color: rgba(255, 255, 255, 0.78); white-space: nowrap; }
-.c4n-tl2-split { position: absolute; top: 262px; width: 0; height: 90px; }
-.c4n-tl2-split span { position: absolute; left: -1.5px; top: 0; width: 3px; height: 100%; background: #FFFFFF; border-radius: 2px; box-shadow: 0 0 0 1px rgba(10, 20, 45, 0.35); }
-.c4n-tl2-split b { position: absolute; left: -20px; top: 32px; width: 40px; height: 22px; border-radius: 11px; background: #FFFFFF; color: #0B1220; font-family: var(--c4n-font-num); font-weight: 400; font-size: 14px; line-height: 22px; text-align: center; letter-spacing: 0.06em; }
-.c4n-tl2-stem { position: absolute; width: 2px; margin-left: -1px; background: rgba(255, 255, 255, 0.7); }
-.c4n-tl2-stem.a { top: 291px; height: 9px; }
-.c4n-tl2-stem.b { top: 306px; height: 12px; }
+.c4n-tl2-tick { position: absolute; top: 226px; width: 2px; height: 14px; margin-left: -1px; background: rgba(27, 44, 92, 0.4); }
+.c4n-tl2-tlabel { position: absolute; top: 242px; width: 60px; margin-left: -30px; text-align: center; font-family: var(--c4n-font-num); font-size: calc(15px * var(--c4n-font)); color: rgba(27, 44, 92, 0.6); }
+.c4n-tl2-cap { position: absolute; top: 242px; font-family: var(--c4n-font-num); font-size: calc(15px * var(--c4n-font)); letter-spacing: 0.22em; color: rgba(27, 44, 92, 0.75); white-space: nowrap; }
+.c4n-tl2-split { position: absolute; top: 192px; width: 0; height: 90px; }
+.c4n-tl2-split span { position: absolute; left: -1.5px; top: 0; width: 3px; height: 100%; background: #1B2C5C; border-radius: 2px; }
+.c4n-tl2-split b { position: absolute; left: -20px; top: 32px; width: 40px; height: 22px; border-radius: 11px; background: #1B2C5C; color: #FFFFFF; font-family: var(--c4n-font-num); font-weight: 400; font-size: 14px; line-height: 22px; text-align: center; letter-spacing: 0.06em; }
+.c4n-tl2-stem { position: absolute; width: 2px; margin-left: -1px; background: rgba(27, 44, 92, 0.6); }
+.c4n-tl2-stem.a { top: 221px; height: 9px; }
+.c4n-tl2-stem.b { top: 236px; height: 12px; }
 .c4n-tl2-mk { position: absolute; width: 30px; margin-left: -15px; }
-.c4n-tl2-mk.a { top: 236px; }
-.c4n-tl2-mk.b { top: 318px; }
-.c4n-tl2-chip { width: 30px; height: 30px; border-radius: 50%; background: rgba(8, 18, 40, 0.92); border: 2px solid var(--c4n-white); box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.c4n-tl2-mk.a { top: 166px; }
+.c4n-tl2-mk.b { top: 248px; }
+.c4n-tl2-chip { width: 30px; height: 30px; border-radius: 50%; background: #1B2C5C; border: 2px solid #FFFFFF; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 2px 6px rgba(27, 44, 92, 0.3); }
 .c4n-tl2-mk.a .c4n-tl2-chip { margin-top: 24px; }
 .c4n-tl2-chip .c4n-ico-ball { width: 20px; height: 20px; vertical-align: 0; }
 .c4n-tl2-chip .c4n-ico-card { width: 11px; height: 15px; }
 .c4n-tl2-chip .c4n-ico-sub { width: 18px; height: 18px; }
-.c4n-tl2-min { position: absolute; left: -20px; width: 70px; text-align: center; font-family: var(--c4n-font-num); font-size: calc(17px * var(--c4n-font)); color: #FFFFFF; }
+.c4n-tl2-min { position: absolute; left: -20px; width: 70px; text-align: center; font-family: var(--c4n-font-num); font-size: calc(17px * var(--c4n-font)); color: #1B2C5C; }
 .c4n-tl2-mk.a .c4n-tl2-min { top: 0; }
 .c4n-tl2-mk.b .c4n-tl2-min { top: 32px; }
 
@@ -651,6 +781,28 @@ body.c4n-preview-bg .c4n-bg img { opacity: var(--c4n-preview-bg-opacity, 1); }
 .c4n-zc2-l1 { top: 938px; height: 93px; color: #FFFFFF; letter-spacing: 0.03em; }
 .c4n-zc2-l2 { top: 1032px; height: 47px; color: #1B2C5C; letter-spacing: 0.08em; }
 .c4n-zc2-sponsors { position: absolute; left: 1500px; top: 960px; width: 390px; height: 104px; }
+/* VAR + SPONSORS A LA DERECHA (2026-11-13): el recuadro de sponsors del ZÓCALO
+   COMPUESTO (textura navy de su PNG, x 1469-1919 / y 938-1079) escalado al
+   alto de la placa VAR (k = 86 / 142). Logos en la misma caja relativa que en
+   el COMPUESTO (390 × 104 desde x 1500 / y 960), con "contain".
+   POSICIÓN (2026-11-14): abajo a la DERECHA del Program, separado del VAR,
+   dentro del área segura con el mismo margen que el VAR del otro lado
+   (VAR x 52; recuadro termina en x 1868) y la misma base (y 1018). Coordenadas
+   del PNG del VAR (corrido +10 / -33): x 1585 -> 1595 en pantalla. Ajuste
+   propio: ELEMENTOS -> SPONSORS A LA DERECHA (X / Y / ESCALA). */
+.c4n-var-sp { position: absolute; left: 1585px; top: 967px; width: 273px; height: 86px; background-color: #000D22; background-repeat: no-repeat; background-size: 1162.8px 654.1px; background-position: -889.7px -568.1px; }
+.c4n-var-sp-logos { position: absolute; left: 19px; top: 13px; width: 236px; height: 63px; }
+.c4n-var-sp-logos .c4n-rot { position: absolute; inset: 0; width: auto; height: auto; }
+.c4n-var-sp-logos img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+/* SPONSORS (2026-11-13): el NOMBRE en el renglón que deja el PNG arriba del
+   filete. La caja (centro = centro de la etiqueta del premio, ancho = papel
+   libre, alto 120) apoya su borde inferior en la línea de base: el renglón
+   (line-height 1) baja 0,0765 em = (1 - ascent + descent) / 2 de "GLA Anton"
+   (ascent 1,176 / descent 0,329), así la base queda justo en ese borde con
+   cualquier tamaño de letra. */
+.c4n-spj .c4n-content { text-shadow: none; }
+.c4n-spj-name { position: absolute; display: flex; align-items: flex-end; justify-content: center; font-family: var(--c4n-font-num); line-height: 1; letter-spacing: 0.02em; white-space: nowrap; }
+.c4n-spj-name > .c4n-swap { display: block; margin-bottom: -0.0765em; }
 .c4n-zc2-sponsors .c4n-rot { position: absolute; inset: 0; width: auto; height: auto; }
 .c4n-zc2-sponsors img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 .c4n-zc2:not(.has-bg) .c4n-content { text-shadow: var(--c4n-shadow); }
@@ -665,7 +817,6 @@ body.c4n-preview-bg .c4n-bg img { opacity: var(--c4n-preview-bg-opacity, 1); }
 .c4n-ev2-head { position: absolute; left: 64px; top: 857px; width: 452px; height: 40px; display: flex; align-items: center; gap: 10px; color: #FFFFFF; font-family: var(--c4n-font-num); letter-spacing: 0.05em; white-space: nowrap; }
 .c4n-ev2-hcrest { width: 30px; height: 30px; --c4n-mono-size: 30px; flex: 0 0 30px; }
 .c4n-ev2-htext { overflow: hidden; text-overflow: clip; }
-.c4n-ev2-min { margin-left: auto; font-size: calc(26px * var(--c4n-font)); color: #FFFFFF; }
 .c4n-ev2-pic { position: absolute; left: 62px; top: 912px; width: 72px; height: 72px; }
 .c4n-ev2-pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; }
 .c4n-ev2-pic .c4n-crest { position: absolute; inset: 0; --c4n-mono-size: 72px; }
@@ -688,5 +839,239 @@ body.c4n-preview-bg .c4n-bg img { opacity: var(--c4n-preview-bg-opacity, 1); }
 .c4n-ev2-num { flex: 0 0 34px; font-size: calc(26px * var(--c4n-font)); color: #1B2C5C; text-align: right; }
 .c4n-ev2-pname { color: #1B2C5C; overflow: hidden; }
 .c4n-ev2-row.out .c4n-ev2-pname, .c4n-ev2-row.out .c4n-ev2-num { opacity: 0.82; }
+/* PENAL SHOOTOUT (2026-11-15): placa de TARJETAS; reloj grande y fase
+   debajo, a la derecha del escudo (misma columna que el nombre de TARJETAS). */
+.c4n-shoot-clock { position: absolute; left: 160px; top: 904px; height: 62px; display: flex; align-items: center; font-family: var(--c4n-font-num); font-size: calc(62px * var(--c4n-font)); line-height: 1; letter-spacing: 0.02em; color: #1B2C5C; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.c4n-shoot-clock span { display: inline-block; min-width: 4.4ch; }
+.c4n-shoot-phase { position: absolute; left: 162px; top: 968px; width: 420px; font-family: var(--c4n-font-num); line-height: 1.1; letter-spacing: 0.12em; color: #E1262E; white-space: nowrap; overflow: hidden; }
+.c4n-ev2:not(.has-bg) .c4n-shoot-clock { color: #FFFFFF; }
 .c4n-ev2:not(.has-bg) .c4n-content { text-shadow: var(--c4n-shadow); }
 .c4n-ev2:not(.has-bg) .c4n-ev2-name, .c4n-ev2:not(.has-bg) .c4n-ev2-sub, .c4n-ev2:not(.has-bg) .c4n-ev2-num, .c4n-ev2:not(.has-bg) .c4n-ev2-pname { color: #FFFFFF; }
+
+
+/* =====================================================================
+   COPA 4 NACIONES — 2026-11-10: PLACA VACÍA como base común de las placas
+   de pantalla completa sin PNG propio (ESTADÍSTICAS y FORMACIÓN). El
+   contenido va en .c4n-placa-area (PLACA_AREA del manifest, dentro del
+   papel) en el azul del paquete; sin PNG pasa a blanco con sombra.
+   ===================================================================== */
+.c4n-placa-area { position: absolute; }
+.c4n-pl .c4n-content { text-shadow: none; color: #1B2C5C; }
+.c4n-pl:not(.has-bg) .c4n-content { color: #FFFFFF; text-shadow: var(--c4n-shadow); }
+.c4n-pl:not(.has-bg) .c4n-content * { color: inherit; }
+
+/* TABLAS sobre TABLA_L (PNG real "tabla-l.png": panel de papel x 1471-1919,
+   y 0-936, la parte vertical de la "L" con el ZÓCALO COMPUESTO). Contenido en
+   .c4n-tl-area (TABLA_L_AREA: x 1500, y 34, 390×870). El panel se despliega
+   desde el borde derecho de la pantalla y las filas entran en el mismo
+   sentido. Coordenadas de abajo = de la zona. */
+.c4n-a.sl-wipe-l { --c4n-in-anim: c4nSlWipeL; --c4n-out-anim: c4nSlCollapseR; --c4n-ease: cubic-bezier(0.7, 0, 0.18, 1); }
+@keyframes c4nSlWipeL { from { clip-path: inset(var(--t) var(--r) var(--b) calc(100% - var(--r))); } to { clip-path: inset(var(--t) var(--r) var(--b) var(--l)); } }
+@keyframes c4nSlCollapseR { from { clip-path: inset(var(--t) var(--r) var(--b) var(--l)); } to { clip-path: inset(var(--t) var(--r) var(--b) calc(100% - var(--r))); } }
+.c4n-tl .c4n-content { text-shadow: none; color: #1B2C5C; }
+.c4n-tl:not(.has-bg) .c4n-content { color: #FFFFFF; text-shadow: var(--c4n-shadow); }
+.c4n-tl:not(.has-bg) .c4n-content * { color: inherit; }
+.c4n-tl-area { position: absolute; }
+/* TABLA FIXTURE (2026-11-15): coordenadas de la zona de TABLA_L (390×870).
+   Encabezado (copa + logo + título + filete), hasta 5 tarjetas blancas (como
+   la TABLA DE POSICIONES) y el pie COPA4NACIONES.COM abajo. */
+.c4n-tfx-kicker { position: absolute; left: 0; right: 0; top: 6px; text-align: center; font-family: var(--c4n-font-num); line-height: 1; letter-spacing: 0.26em; color: #E1262E; white-space: nowrap; }
+.c4n-tfx-logo { position: absolute; left: 50%; top: 30px; width: 150px; height: 76px; margin-left: -75px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(27, 44, 92, 0.2)); }
+.c4n-tfx-title { position: absolute; left: 0; right: 0; top: 116px; text-align: center; font-family: var(--c4n-font-num); line-height: 1; letter-spacing: 0.05em; white-space: nowrap; }
+.c4n-tfx-rule { position: absolute; left: 40px; right: 40px; top: 170px; height: 2px; background: rgba(27, 44, 92, 0.3); }
+.c4n-tfx-rows { position: absolute; left: 6px; right: 6px; top: 190px; height: 572px; display: flex; flex-direction: column; justify-content: flex-start; gap: calc(12px * var(--c4n-gap)); }
+.c4n-tfx-card { flex: 0 0 auto; display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 0 10px 0 12px; border-radius: 6px; background: rgba(255, 255, 255, 0.74); border: 1px solid rgba(27, 44, 92, 0.08); box-shadow: inset 4px 0 0 #1B2C5C, 0 2px 6px rgba(27, 44, 92, 0.1); }
+.c4n-tfx-match { display: grid; grid-template-columns: 46px minmax(0, 1fr) 98px minmax(0, 1fr) 46px; align-items: center; column-gap: 6px; }
+.c4n-tfx-crest { width: 46px; height: 46px; --c4n-mono-size: 46px; }
+.c4n-tfx-crest img { filter: drop-shadow(0 2px 4px rgba(27, 44, 92, 0.22)); }
+.c4n-tfx-crest .c4n-mono { color: #1B2C5C; border-color: rgba(27, 44, 92, 0.5); border-width: 2px; }
+.c4n-tfx-abbr { font-family: var(--c4n-font-num); line-height: 1; letter-spacing: 0.03em; text-align: center; white-space: nowrap; color: #1B2C5C; }
+.c4n-tfx-abbr.tbd { color: rgba(27, 44, 92, 0.6); }
+.c4n-tfx-center { display: flex; justify-content: center; font-family: var(--c4n-font-num); line-height: 1; white-space: nowrap; }
+.c4n-tfx-vs { font-size: calc(26px * var(--c4n-font)); letter-spacing: 0.06em; color: #E1262E; }
+.c4n-tfx-score { font-size: calc(38px * var(--c4n-font)); color: #1B2C5C; font-variant-numeric: tabular-nums; }
+.c4n-tfx-score i { font-style: normal; color: #E1262E; margin: 0 6px; }
+.c4n-tfx-info { display: flex; justify-content: center; align-items: center; gap: 6px; font-family: var(--c4n-font-num); font-size: calc(15px * var(--c4n-font)); line-height: 1; letter-spacing: 0.1em; white-space: nowrap; color: rgba(27, 44, 92, 0.78); }
+.c4n-tfx-dot { font-style: normal; color: rgba(27, 44, 92, 0.4); }
+.c4n-tfx-hora { color: #1B2C5C; font-size: calc(17px * var(--c4n-font)); }
+.c4n-tfx-fase { color: rgba(27, 44, 92, 0.78); }
+.c4n-tfx-final { color: rgba(27, 44, 92, 0.6); }
+.c4n-tfx-live { color: #E1262E; }
+.c4n-tfx-pen { color: #E1262E; }
+.c4n-tfx-foot { position: absolute; left: 10px; right: 10px; top: 786px; text-align: center; font-family: var(--c4n-font-num); line-height: 1.3; letter-spacing: 0.14em; color: rgba(27, 44, 92, 0.72); }
+.c4n-tl-title { position: absolute; left: 0; right: 0; top: 14px; text-align: center; font-family: var(--c4n-font-num); line-height: 1; letter-spacing: 0.05em; white-space: nowrap; }
+.c4n-tl-sub { position: absolute; left: 0; right: 0; top: 80px; text-align: center; font-family: var(--c4n-font-num); line-height: 1; letter-spacing: 0.22em; color: #E1262E; white-space: nowrap; }
+.c4n-tl-rule { position: absolute; left: 40px; right: 40px; top: 112px; height: 2px; background: rgba(27, 44, 92, 0.3); transform-origin: 50% 50%; }
+.c4n-tl-rows { position: absolute; left: 0; right: 0; display: flex; flex-direction: column; }
+.c4n-tl-row { display: grid; grid-template-columns: 32px 46px minmax(0, 1fr) 56px; align-items: center; column-gap: 10px; padding: 0 10px; border-bottom: 2px solid rgba(27, 44, 92, 0.12); border-radius: 4px; }
+.c4n-tl-row.is-top { background: rgba(255, 255, 255, 0.5); border-bottom-color: transparent; box-shadow: 0 3px 10px rgba(27, 44, 92, 0.1); }
+.c4n-tl-pos { font-family: var(--c4n-font-num); font-size: calc(30px * var(--c4n-font)); line-height: 1; text-align: center; color: #E1262E; }
+.c4n-tl-crest { width: 42px; height: 42px; --c4n-mono-size: 42px; }
+.c4n-tl-crest img, .c4n-ps-crest img { filter: drop-shadow(0 2px 4px rgba(27, 44, 92, 0.22)); }
+.c4n-tl-crest .c4n-mono, .c4n-ps-crest .c4n-mono { color: #1B2C5C; border-color: rgba(27, 44, 92, 0.5); border-width: 2px; }
+.c4n-tl-who { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.c4n-tl-name { font-family: var(--c4n-font-num); line-height: 1; letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; }
+.c4n-tl-name span { color: #E1262E; margin-right: 0.28em; }
+.c4n-tl-team { font-family: var(--c4n-font-num); line-height: 1; letter-spacing: 0.06em; color: rgba(27, 44, 92, 0.6); white-space: nowrap; }
+.c4n-tl-val { font-family: var(--c4n-font-num); font-size: calc(40px * var(--c4n-font)); line-height: 1; text-align: right; font-variant-numeric: tabular-nums; }
+.c4n-tl-empty { position: absolute; left: 20px; right: 20px; top: 320px; text-align: center; font-family: var(--c4n-font-num); font-size: calc(26px * var(--c4n-font)); line-height: 1.35; letter-spacing: 0.06em; color: rgba(27, 44, 92, 0.6); }
+
+/* TABLA DE POSICIONES en TABLA_L (2026-11-11: más grande, misma presencia que
+   las tablas de jugadores): ESCUDO | NOMBRE | PTS | GANADOS | GXP | PXP | P
+   (2026-11-14: + PXP, + GXP, PERDIDOS -> P; escudo y tamaños de letra iguales,
+   columnas medidas: encabezados de 12 px PTS 17 / GANADOS 42 / GXP y PXP 18 px;
+   valores de un dígito), uno o dos bloques (GRUPO A / GRUPO B, asignación del
+   operador). */
+/* 2026-11-11: el bloque arranca debajo del filete (antes iba centrado y quedaba flotando abajo). */
+.c4n-ps-blocks { position: absolute; left: 0; right: 0; display: flex; flex-direction: column; justify-content: flex-start; gap: calc(26px * var(--c4n-gap)); }
+.c4n-ps-group { font-family: var(--c4n-font-num); font-size: calc(26px * var(--c4n-font)); line-height: 1; letter-spacing: 0.24em; color: #E1262E; margin: 0 0 4px 6px; }
+.c4n-ps-grid { display: grid; grid-template-columns: 58px minmax(0, 1fr) 38px 46px 34px 34px 30px; align-items: center; column-gap: 4px; padding: 0 8px 0 10px; }
+.c4n-ps-head { height: 24px; font-family: var(--c4n-font-num); font-size: calc(12px * var(--c4n-font)); letter-spacing: 0.02em; text-align: center; white-space: nowrap; color: rgba(27, 44, 92, 0.62); }
+/* Tarjeta blanca por selección (2026-11-11): blanco translúcido sobre el
+   papel, borde finito y un filete del color de la selección a la izquierda. */
+.c4n-ps-row { height: calc(92px * var(--c4n-gap)); margin-bottom: calc(8px * var(--c4n-gap)); text-align: center; border-radius: 6px; background: rgba(255, 255, 255, 0.74); border: 1px solid rgba(27, 44, 92, 0.08); box-shadow: inset 4px 0 0 var(--tc, #1B2C5C), 0 2px 6px rgba(27, 44, 92, 0.1); }
+.c4n-ps-blocks:not(.is-grouped) .c4n-ps-row { height: calc(100px * var(--c4n-gap)); }
+.c4n-tl:not(.has-bg) .c4n-ps-row { background: rgba(10, 16, 32, 0.55); }
+.c4n-ps-crest { width: 58px; height: 58px; --c4n-mono-size: 58px; }
+.c4n-ps-name { font-family: var(--c4n-font-num); line-height: 1; letter-spacing: 0.02em; text-align: left; white-space: nowrap; }
+.c4n-ps-v { font-family: var(--c4n-font-num); font-size: calc(34px * var(--c4n-font)); font-variant-numeric: tabular-nums; }
+.c4n-ps-pts { font-family: var(--c4n-font-num); font-size: calc(42px * var(--c4n-font)); color: #E1262E; font-variant-numeric: tabular-nums; }
+.c4n-ps-none { padding: 14px 6px; font-family: var(--c4n-font-num); font-size: calc(17px * var(--c4n-font)); letter-spacing: 0.12em; color: rgba(27, 44, 92, 0.55); }
+.c4n-ps-note { margin-top: -10px; text-align: center; font-family: var(--c4n-font-num); font-size: calc(15px * var(--c4n-font)); letter-spacing: 0.14em; color: rgba(27, 44, 92, 0.6); }
+
+/* TABLA VS (2026-11-11) sobre TABLA_L. Coordenadas de la zona (390×870):
+   cabecera de las tablas (fase, día, filete en y 112), bloque central
+   y 124-764 (escudo 1, nombre 1, VS, nombre 2, escudo 2; centrado, así con
+   nombres de 1 renglón queda parejo), filete en y 772 y horario abajo. */
+.c4n-tvs-stack { position: absolute; left: 0; right: 0; top: 124px; bottom: 106px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(14px * var(--c4n-gap)); }
+.c4n-tvs-stack > .c4n-adj.flow { display: flex; flex-direction: column; align-items: center; gap: calc(10px * var(--c4n-gap)); width: 100%; }
+.c4n-tvs-crest { flex: none; width: 150px; height: 150px; --c4n-mono-size: 150px; }
+.c4n-tvs-crest img { filter: drop-shadow(0 6px 12px rgba(27, 44, 92, 0.26)); }
+.c4n-tvs-crest .c4n-mono { color: #1B2C5C; border-color: rgba(27, 44, 92, 0.5); }
+.c4n-tvs-name { font-family: var(--c4n-font-num); line-height: 1; letter-spacing: 0.02em; text-align: center; white-space: nowrap; }
+.c4n-tvs-name.tbd { color: rgba(27, 44, 92, 0.55); }
+/* Indicador ordinal ("1º" de un cruce sin definir): chico y subrayado; en Anton, «º» a tamaño completo se lee como un cero. */
+.c4n-ord { display: inline-block; vertical-align: top; margin: 0.08em 0 0 0.04em; font-size: 0.42em; line-height: 0.9; border-bottom: 0.14em solid currentColor; }
+.c4n-tvs-crest .c4n-mono { opacity: 0.7; }
+.c4n-tvs-vs { flex: none; width: 100%; display: flex; align-items: center; gap: 14px; padding: 0 16px; }
+.c4n-tvs-line { flex: 1; height: 3px; background: #1B2C5C; opacity: 0.85; }
+.c4n-tvs-line.l { transform-origin: 100% 50%; }
+.c4n-tvs-line.r { transform-origin: 0 50%; }
+.c4n-tvs-plate { flex: none; width: 118px; height: 84px; display: flex; align-items: center; justify-content: center; background: #16213F; border-bottom: 10px solid #E1262E; box-shadow: 0 8px 18px rgba(27, 44, 92, 0.28); }
+.c4n-tvs-plate span { padding-top: 4px; font-family: var(--c4n-font-num); font-size: calc(58px * var(--c4n-font)); line-height: 1; letter-spacing: 0.04em; color: #F3E9D2; }
+.c4n-tvs-rule { position: absolute; left: 40px; right: 40px; top: 772px; height: 2px; background: rgba(27, 44, 92, 0.3); }
+.c4n-tvs-time { position: absolute; left: 0; right: 0; top: 790px; height: 66px; display: flex; align-items: baseline; justify-content: center; gap: 8px; font-family: var(--c4n-font-num); line-height: 1; white-space: nowrap; }
+.c4n-tvs-time b { font-weight: 400; letter-spacing: 0.03em; }
+.c4n-tvs-time span { font-size: calc(26px * var(--c4n-font)); letter-spacing: 0.1em; color: #E1262E; }
+.c4n-tl:not(.has-bg) .c4n-tvs-plate span { color: #F3E9D2; }
+/* Escudos: el de arriba baja y el de abajo sube (traslado corto + opacidad, sin rebote). */
+@keyframes c4nTvsDown { from { opacity: 0; transform: translateY(-18px) scale(0.94); } to { opacity: 1; transform: none; } }
+@keyframes c4nTvsUp { from { opacity: 0; transform: translateY(18px) scale(0.94); } to { opacity: 1; transform: none; } }
+.c4n-a.m-tvs-down { --c4n-in-anim: c4nTvsDown; --c4n-out-anim: c4nLift; --c4n-dur: 0.6s; --c4n-dur-out: 0.3s; }
+.c4n-a.m-tvs-up { --c4n-in-anim: c4nTvsUp; --c4n-out-anim: c4nSink; --c4n-dur: 0.6s; --c4n-dur-out: 0.3s; }
+
+/* PROMO WEB (2026-11-11) sobre TABLA_L. Coordenadas de la zona (390×870):
+   mensaje + filete (y 112), escudos 2 × 2 (y 134-450), cartel de la web
+   (y 478-588), texto secundario, filete (y 694), SPEED CAMP y pie. */
+.c4n-pw-l1, .c4n-pw-l2, .c4n-pw-foot { position: absolute; left: 0; right: 0; text-align: center; font-family: var(--c4n-font-num); line-height: 1; white-space: nowrap; }
+.c4n-pw-l1 { top: 16px; letter-spacing: 0.04em; }
+.c4n-pw-l2 { top: 72px; letter-spacing: 0.16em; color: #E1262E; }
+.c4n-pw-crests { position: absolute; left: 37px; top: 134px; width: 316px; display: grid; grid-template-columns: repeat(2, 150px); gap: 16px; }
+.c4n-pw-crest { width: 150px; height: 150px; --c4n-mono-size: 150px; }
+.c4n-pw-crest img { filter: drop-shadow(0 6px 12px rgba(27, 44, 92, 0.24)); }
+.c4n-pw-crest .c4n-mono { color: #1B2C5C; border-color: rgba(27, 44, 92, 0.5); }
+.c4n-pw-band { position: absolute; left: 4px; right: 4px; top: 478px; height: 110px; display: flex; align-items: center; justify-content: center; background: #16213F; border-bottom: 10px solid #E1262E; box-shadow: 0 8px 18px rgba(27, 44, 92, 0.28); }
+.c4n-pw-band span { padding-top: 4px; font-family: var(--c4n-font-num); line-height: 1; letter-spacing: 0.03em; color: #F3E9D2; white-space: nowrap; }
+.c4n-tl:not(.has-bg) .c4n-pw-band span { color: #F3E9D2; }
+.c4n-pw-text { position: absolute; left: 24px; right: 24px; top: 608px; text-align: center; font-family: var(--c4n-font-num); font-size: calc(24px * var(--c4n-font)); line-height: 1.18; letter-spacing: 0.05em; color: rgba(27, 44, 92, 0.82); }
+.c4n-pw-rule { position: absolute; left: 40px; right: 40px; top: 694px; height: 2px; background: rgba(27, 44, 92, 0.3); }
+.c4n-pw-venue { position: absolute; left: 0; right: 0; top: 718px; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: var(--c4n-font-num); line-height: 1; letter-spacing: 0.04em; white-space: nowrap; }
+.c4n-pw-pin { width: 0.82em; height: 0.82em; flex: none; }
+.c4n-pw-foot { top: 786px; letter-spacing: 0.2em; color: #E1262E; }
+
+/* MOSCA C4N (2026-11-11): logo arriba a la derecha y texto que se despliega
+   a su izquierda (ciclo CSS generado en la pieza). Escala / posición con
+   COMPOSICIÓN, anclada en el logo. */
+#mod-c4nMosca { --c4n-exit-hold: 0.4s; }
+#mod-c4nMosca > .content { transform-origin: 1837px 69px; }
+.c4n-mosca2 .c4n-content { text-shadow: none; }
+.c4n-mo, .c4n-mo-part { position: absolute; inset: 0; transform-origin: 1837px 69px; }
+.c4n-mo-logo, .c4n-mo-text { position: absolute; background-repeat: no-repeat; }
+.c4n-mo-logo { transform-origin: 50% 50%; }
+.c4n-mo-text { transform-origin: 100% 50%; opacity: 0; clip-path: inset(-4px -4px -4px 100%); }
+.c4n-mo-fallback { width: 100%; height: 100%; --c4n-mono-size: 100px; }
+.c4n-a.m-mo { --c4n-in-anim: c4nSlZoom; --c4n-out-anim: c4nSlUnstamp; --c4n-dur: 0.5s; --c4n-dur-out: 0.28s; --c4n-ease: cubic-bezier(0.2, 0.9, 0.25, 1); }
+
+/* VAR (2026-11-11) sobre "zocalo-var.png": bloque azul x 42-214 ("VAR"),
+   papel x 215-556 (decisión), y 972-1051 (debajo de la franja de colores).
+   Coordenadas del lienzo; el marco del manifest lo corre a x 52 / base 1018.
+   Escala / posición con COMPOSICIÓN, anclada abajo a la izquierda. */
+#mod-c4nVar { --c4n-exit-hold: 0.5s; }
+#mod-c4nVar > .content { transform-origin: 52px 1018px; }
+.c4n-var .c4n-content { text-shadow: none; }
+.c4n-var-badge { position: absolute; left: 42px; top: 972px; width: 173px; height: 80px; display: flex; align-items: center; justify-content: center; gap: 12px; color: #F3E9D2; }
+.c4n-var-badge b { padding-top: 3px; font-family: var(--c4n-font-num); font-weight: 400; font-size: calc(46px * var(--c4n-font)); line-height: 1; letter-spacing: 0.06em; }
+.c4n-var-screen { position: relative; width: 26px; height: 19px; border: 3px solid #F3E9D2; border-radius: 3px; }
+.c4n-var-screen::after { content: ''; position: absolute; left: 50%; bottom: -8px; width: 12px; height: 3px; margin-left: -6px; background: #F3E9D2; border-radius: 2px; }
+.c4n-var-texts { position: absolute; left: 232px; top: 974px; width: 312px; height: 76px; display: flex; flex-direction: column; justify-content: center; gap: 4px; color: #1B2C5C; }
+.c4n-var-kicker { display: flex; align-items: center; gap: 8px; font-family: var(--c4n-font-num); font-size: calc(14px * var(--c4n-font)); line-height: 1; letter-spacing: 0.2em; color: #E1262E; white-space: nowrap; }
+.c4n-var-live { width: 9px; height: 9px; flex: none; border-radius: 50%; background: #E1262E; animation: c4nVarPulse 1.1s ease-in-out infinite; }
+@keyframes c4nVarPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.7); } }
+.c4n-var-decision { display: flex; align-items: center; gap: 8px; font-family: var(--c4n-font-num); line-height: 1; letter-spacing: 0.03em; white-space: nowrap; }
+.c4n-var-decision .c4n-ico-card { width: 0.5em; height: 0.7em; box-shadow: none; }
+.c4n-var-motivo { font-family: var(--c4n-font-num); line-height: 1; letter-spacing: 0.06em; color: rgba(27, 44, 92, 0.72); white-space: nowrap; }
+.c4n-var-scan { position: absolute; left: 215px; top: 972px; width: 342px; height: 80px; overflow: hidden; pointer-events: none; }
+.c4n-var-scan i { position: absolute; top: 0; bottom: 0; left: 0; width: 90px; background: linear-gradient(90deg, rgba(225, 38, 46, 0), rgba(225, 38, 46, 0.16), rgba(225, 38, 46, 0)); animation: c4nVarScan 2.2s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+@keyframes c4nVarScan { from { transform: translateX(-100px); } to { transform: translateX(352px); } }
+.c4n-var:not(.has-bg) .c4n-var-texts, .c4n-var:not(.has-bg) .c4n-var-motivo { color: #FFFFFF; }
+
+/* VS PREPARTIDO / RESULTADO: nombres en pareja con la misma estructura de
+   renglones (balancedNames): con 2 renglones los dos bloques miden lo mismo
+   y un nombre de una palabra queda centrado en ese alto. */
+.c4n-vs2-name.rows-2 { height: 2.06em; display: flex; flex-direction: column; justify-content: center; }
+
+
+/* VS RESULTADO (2026-11-10): misma placa y composición que VS PREPARTIDO; en el
+   lugar del cartel VS (centro 960, 546) el CARTEL DE RESULTADO: placa azul
+   inclinada como el cartel del PNG, franja roja abajo y goles en crema. */
+.c4n-vs3-cartel { position: absolute; left: 960px; top: 546px; width: 0; height: 0; }
+.c4n-vs3-plate { position: absolute; left: -165px; top: -88px; width: 330px; height: 176px; background: #16213F; border-bottom: 16px solid #E1262E; box-shadow: 0 10px 22px rgba(27, 44, 92, 0.3); display: flex; align-items: center; justify-content: center; }
+.c4n-vs3-cartel.is-wide .c4n-vs3-plate { left: -195px; width: 390px; }
+.c4n-vs3-score { display: flex; align-items: center; gap: 0.16em; font-family: var(--c4n-font-num); font-size: calc(132px * var(--c4n-font)); line-height: 1; color: #F3E9D2; font-variant-numeric: tabular-nums; }
+.c4n-vs3-score b { font-weight: 400; }
+.c4n-vs3-score i { font-style: normal; font-size: 0.6em; color: #E1262E; }
+.c4n-a.m-stamp { --c4n-in-anim: c4nStampIn; --c4n-out-anim: c4nSlUnstamp; --c4n-dur: 0.42s; --c4n-dur-out: 0.22s; --c4n-ease: cubic-bezier(0.2, 0.9, 0.25, 1); }
+.c4n-vs3-pens { position: absolute; left: 760px; width: 400px; top: 672px; display: flex; align-items: baseline; justify-content: center; gap: 14px; font-family: var(--c4n-font-num); line-height: 1; }
+.c4n-vs3-pens b { font-weight: 400; font-size: calc(58px * var(--c4n-font)); color: #E1262E; }
+.c4n-vs3-pens span { font-size: calc(26px * var(--c4n-font)); letter-spacing: 0.2em; }
+@keyframes c4nStampIn { from { opacity: 0; transform: scale(1.16); } 60% { opacity: 1; } to { opacity: 1; transform: none; } }
+
+/* FIXTURE (2026-11-11): barrido de cada fila con MARGEN LATERAL. El barrido
+   común (c4nWipeR) termina en clip-path: inset(-30% 0 -30% 0) y, como queda
+   fijo (fill-mode both), recortaba en X justo en el borde de la fila: un
+   horario corrido a la izquierda con AJUSTE (HORARIOS X) desaparecía. Este
+   barrido deja 600 px libres a cada lado (la placa real manda). */
+.c4n-a.m-wiperx { --c4n-in-anim: c4nWipeRWide; --c4n-out-anim: c4nUnwipeRWide; --c4n-ease: var(--c4n-ease-inout); }
+@keyframes c4nWipeRWide { from { clip-path: inset(-30% calc(100% + 600px) -30% -600px); } to { clip-path: inset(-30% -600px -30% -600px); } }
+@keyframes c4nUnwipeRWide { from { clip-path: inset(-30% -600px -30% -600px); } to { clip-path: inset(-30% calc(100% + 600px) -30% -600px); } }
+
+/* ZÓCALO CORTO DOBLE = ZÓCALO CASTER (2026-11-11): placa del PNG (311×96:
+   papel arriba con el NOMBRE, franja azul abajo con el CARGO) 1, 2 o 3 veces.
+   Izquierda: texto a la izquierda; derecha: placa espejada y texto a la
+   derecha (el texto nunca se espeja); centro: texto centrado. */
+#mod-c4nZocaloCortoDoble { --c4n-exit-hold: 0.7s; }
+.c4n-zcs .c4n-content { text-shadow: none; }
+.c4n-cs { position: absolute; }
+.c4n-cs-frame { position: absolute; inset: 0; }
+.c4n-cs-plate { position: absolute; inset: 0; background-size: 1920px 1080px; background-repeat: no-repeat; }
+.c4n-cs-plate.is-mirror { transform: scaleX(-1); }
+.c4n-cs-plate.is-fallback { background: linear-gradient(#F3E6CC 0 52%, #0F2A73 52% 100%); }
+.c4n-cs-name, .c4n-cs-role { position: absolute; left: 17px; right: 17px; display: flex; align-items: center; font-family: var(--c4n-font-num); font-weight: 400; line-height: 1; white-space: nowrap; text-transform: uppercase; }
+.c4n-cs-name { top: 0; height: 51px; color: #1B2C5C; letter-spacing: 0.03em; }
+.c4n-cs-role { top: 51px; height: 45px; color: #FFFFFF; letter-spacing: 0.1em; }
+.c4n-cs.pos-r .c4n-cs-name, .c4n-cs.pos-r .c4n-cs-role { justify-content: flex-end; }
+.c4n-cs.pos-c .c4n-cs-name, .c4n-cs.pos-c .c4n-cs-role { justify-content: center; }
+.c4n-cs-wrap:not(.has-png) .c4n-cs-name { color: #1B2C5C; }
+
+/* VISUAL DE JUGADORES (2026-11-11): respaldo de una foto que no carga (queda
+   el escudo). FORMACIÓN no lo usa: sus titulares son siempre la remera. */

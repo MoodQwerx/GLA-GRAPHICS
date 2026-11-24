@@ -25,13 +25,15 @@ async function photoOf(teamId, playerId) {
   return roster.find((p) => p.id === playerId)?.foto || '';
 }
 
+// El draft se actualiza EN EL LUGAR (2026-11-12): reemplazar el objeto dejaba a
+// AJUSTE DE CAPAS escribiendo en una copia vieja (sus controles no llegaban).
 export async function showCard(ctx, ev) {
-  ctx.draft.c4nTarjeta = { ...ctx.draft.c4nTarjeta, event: { ...ev, foto: await photoOf(ev.playerTeamId || ev.teamId, ev.playerId) } };
+  ctx.draft.c4nTarjeta.event = { ...ev, foto: await photoOf(ev.playerTeamId || ev.teamId, ev.playerId) };
   ctx.take('c4nTarjeta');
 }
 
 export async function showSub(ctx, ev) {
-  ctx.draft.c4nCambio = { ...ctx.draft.c4nCambio, event: { ...ev, foto: await photoOf(ev.teamId, ev.playerId) } };
+  ctx.draft.c4nCambio.event = { ...ev, foto: await photoOf(ev.teamId, ev.playerId) };
   ctx.take('c4nCambio');
 }
 
@@ -47,7 +49,7 @@ export function registerCard(ctx, { type, side, player, clockMs }) {
 function refreshOnAir(ctx, ev) {
   const moduleId = ev.type === 'substitution' ? 'c4nCambio' : ['yellowCard', 'redCard', 'blueCard'].includes(ev.type) ? 'c4nTarjeta' : null;
   if (!moduleId || !ctx.isOn(moduleId) || ctx.draft[moduleId]?.event?.id !== ev.id) return;
-  ctx.draft[moduleId] = { ...ctx.draft[moduleId], event: { ...ctx.draft[moduleId].event, ...ev } };
+  ctx.draft[moduleId].event = { ...ctx.draft[moduleId].event, ...ev };
   ctx.sendLive(moduleId);
 }
 

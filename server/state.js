@@ -96,6 +96,27 @@ function persist() {
   }
 }
 
+// BAULETI vs BALANZA — IDENTIDAD DEFINITIVA (2026-11-06): los textos que
+// todavía tengan EXACTAMENTE el placeholder anterior pasan al nombre oficial
+// (TEAM BAULETI / TEAM BALANZA, EL PARTIDO DEL MOMENTO). Un texto escrito por
+// el operador nunca se toca.
+{
+  const bb = (id) => state[id]?.byTheme?.bauletiBalanza;
+  const renames = [
+    ['bbVs', 'evento', 'PARTIDO DEL AÑO', 'EL PARTIDO DEL MOMENTO'],
+    ['bbZocaloLargo', 'linea1', 'BAULETI VS BALANZA', 'TEAM BAULETI VS TEAM BALANZA'],
+    ['bbZocaloLargo', 'linea2', 'EL PARTIDO DEL AÑO', 'EL PARTIDO DEL MOMENTO'],
+  ];
+  let renamed = false;
+  for (const [id, key, before, after] of renames) {
+    if (bb(id)?.[key] === before) {
+      bb(id)[key] = after;
+      renamed = true;
+    }
+  }
+  if (renamed) persist();
+}
+
 function assertModule(moduleId) {
   if (!state[moduleId]) {
     throw new Error(`Modulo desconocido: ${moduleId}`);

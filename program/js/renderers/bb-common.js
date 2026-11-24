@@ -23,6 +23,9 @@ export function team(teamId) {
     abbr: t?.abbr || (t?.name ? t.name.slice(0, 3).toUpperCase() : '---'),
     file: t?.file || null,
     color: t?.color || null,
+    // Compensación óptica del logo (catálogo BxB: medida automática o ajuste
+    // manual de EQUIPOS); 1 = tamaño del archivo.
+    crestScale: Number(t?.crestScale) > 0 ? Number(t.crestScale) : 1,
   };
 }
 
@@ -33,8 +36,10 @@ export function anim(d = 0, o = 0, extra = '') {
 }
 
 export function crestHtml(t, cls = '', attrs = '') {
+  // La escala va en la imagen (el contenedor ya lleva el style de animación).
+  const scale = Number(t.crestScale) > 0 && Number(t.crestScale) !== 1 ? ` style="--bb-crest-scale:${Number(t.crestScale)}"` : '';
   const inner = t.file
-    ? `<img src="${escapeHtml(t.file)}" alt="" decoding="async">`
+    ? `<img src="${escapeHtml(t.file)}" alt="" decoding="async"${scale}>`
     : `<div class="bb-monogram">${escapeHtml((t.abbr || '?').slice(0, 3))}</div>`;
   return `<div class="bb-crest ${cls}" ${attrs}>${inner}</div>`;
 }

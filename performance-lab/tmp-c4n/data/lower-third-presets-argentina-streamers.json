@@ -1,0 +1,112 @@
+[
+  {
+    "id": "preset-1791489504727-li9i",
+    "label": "LEO MESSI  | APLAUSOS PARA EL MAS GRANDE DE LA HISTORIA",
+    "type": "complete",
+    "fields": {
+      "main": "LEO MESSI ",
+      "sub": "APLAUSOS PARA EL MAS GRANDE DE LA HISTORIA "
+    },
+    "createdAt": "2026-10-08T19:58:24.727Z"
+  },
+  {
+    "id": "preset-1788729110556-6kvj",
+    "label": "ARGENTINA SENIOR GANO EL PARTIDO POR 3-1  | EN VIVO EN EL ESTADIO GUILLERMO LAZA",
+    "type": "complete",
+    "fields": {
+      "main": "ARGENTINA SENIOR GANO EL PARTIDO POR 3-1 ",
+      "sub": "EN VIVO EN EL ESTADIO GUILLERMO LAZA "
+    },
+    "createdAt": "2026-09-06T21:11:50.556Z"
+  },
+  {
+    "id": "preset-1788729087614-dl0g",
+    "label": "EL SENIOR SE LLEVA EL AMISTOSO EN EL GUILLERMO LAZA  | ARGENTINA SENIOR (3) ARGENTINA STREAMERS (1)",
+    "type": "complete",
+    "fields": {
+      "main": "EL SENIOR SE LLEVA EL AMISTOSO EN EL GUILLERMO LAZA ",
+      "sub": "ARGENTINA SENIOR (3) ARGENTINA STREAMERS (1) "
+    },
+    "createdAt": "2026-09-06T21:11:27.614Z"
+  },
+  {
+    "id": "preset-1788725006167-vz3d",
+    "label": "EN INSTANTES VOLVEMOS CON EL SEGUNDO TIEMPO  | ARGENTINA STREAMERS VS ARGENTINA SENIOR",
+    "type": "complete",
+    "fields": {
+      "main": "EN INSTANTES VOLVEMOS CON EL SEGUNDO TIEMPO ",
+      "sub": "ARGENTINA STREAMERS VS ARGENTINA SENIOR "
+    },
+    "createdAt": "2026-09-06T20:03:26.167Z"
+  },
+  {
+    "id": "preset-1788724870823-tb92",
+    "label": "ARGENTINA STREAMERS Y ARGENTINA SENIOR IGUALADOS  | ESTAMOS EN VIVO DESDE EL ESTADIO GUILLERMO LAZA",
+    "type": "complete",
+    "fields": {
+      "main": "ARGENTINA STREAMERS Y ARGENTINA SENIOR IGUALADOS ",
+      "sub": "ESTAMOS EN VIVO DESDE EL ESTADIO GUILLERMO LAZA "
+    },
+    "createdAt": "2026-09-06T20:01:10.823Z"
+  },
+  {
+    "id": "preset-1788712821213-r138",
+    "label": "LA PREVIA CON LOS REALATORES FACUCITTA Y FELIMANYI  | DE LA MANO DE CHIARA Y LISA EN VIVO DESDE RIESTRA",
+    "type": "complete",
+    "fields": {
+      "main": "LA PREVIA CON LOS REALATORES FACUCITTA Y FELIMANYI ",
+      "sub": "DE LA MANO DE CHIARA Y LISA EN VIVO DESDE RIESTRA "
+    },
+    "createdAt": "2026-09-06T16:40:21.213Z"
+  },
+  {
+    "id": "preset-1788711479787-c68m",
+    "label": "ARG FEM VS OXEN 14.30HS | ESTAMOS EN VIVO DESDE EL ESTADIO GUILLERMO LAZA",
+    "type": "complete",
+    "fields": {
+      "main": "ARGENTINA STREAMERS FEMENINO VS OXEN - A LAS 14.30HS",
+      "sub": "ESTAMOS EN VIVO DESDE EL ESTADIO GUILLERMO LAZA "
+    },
+    "createdAt": "2026-09-06T16:17:59.787Z"
+  },
+  {
+    "id": "preset-1788723057286-qc8j",
+    "label": "ARGENTINA STREAMERS SE LLEVA EL PRIMER TIEMPO  | EN VIVO DESDE EL ESTADIO GUILLERMO LAZA",
+    "type": "complete",
+    "fields": {
+      "main": "ARGENTINA STREAMERS SE LLEVA EL PRIMER TIEMPO ",
+      "sub": "EN VIVO DESDE EL ESTADIO GUILLERMO LAZA "
+    },
+    "createdAt": "2026-09-06T19:30:57.286Z"
+  },
+  {
+    "id": "preset-1788719798158-01en",
+    "label": "A LAS 16.00HS COMIENZA ARGENTINA STREAMERS VS SENIOR AFA  | EN VIVO DESDE EL ESTADIO GUILLERMO LAZA",
+    "type": "complete",
+    "fields": {
+      "main": "A LAS 16.00HS COMIENZA ARGENTINA STREAMERS VS SENIOR AFA ",
+      "sub": "EN VIVO DESDE EL ESTADIO GUILLERMO LAZA"
+    },
+    "createdAt": "2026-09-06T18:36:38.158Z"
+  },
+  {
+    "id": "preset-1788719765865-mtbd",
+    "label": "VICKY DE OXEN  | A LAS 16.00HS COMIENZA ARGENTINA STREAMERS VS SENIOR AFA",
+    "type": "complete",
+    "fields": {
+      "main": "VICKY DE OXEN ",
+      "sub": "A LAS 16.00HS COMIENZA ARGENTINA STREAMERS VS SENIOR AFA "
+    },
+    "createdAt": "2026-09-06T18:36:05.865Z"
+  },
+  {
+    "id": "preset-1788713909111-b1lt",
+    "label": "SENIOR AFA: LA SELECCION DE EX JUGADORES PROFESIONALES  | A LAS 16.00HS COMIENZA ARGENTINA STREAMEARS VS SENIOR AFA",
+    "type": "complete",
+    "fields": {
+      "main": "SENIOR AFA: LA SELECCION DE EX JUGADORES PROFESIONALES ",
+      "sub": "A LAS 16.00HS COMIENZA ARGENTINA STREAMEARS VS SENIOR AFA "
+    },
+    "createdAt": "2026-09-06T16:58:29.111Z"
+  }
+]

@@ -194,7 +194,7 @@ function verdict(name, before, after, extra = {}) {
   const golIn = await waitIn('bbGol');
   const gol1 = await P(`const c = document.querySelector('#mod-bbGol'); return { team: c.querySelector('.bb-gol-team')?.textContent, author: c.querySelector('.bb-gol-author')?.textContent, word: c.querySelector('.bb-gol-word')?.textContent }`);
   check(11, 'autor seleccionado', gol1.author?.includes('PRUEBA BAU 9'), gol1.author);
-  check(12, 'animación GOL BAULETI', golIn && gol1.team === 'BAULETI' && gol1.word === 'GOOOL', JSON.stringify(gol1));
+  check(12, 'animación GOL BAULETI', golIn && gol1.team === 'TEAM BAULETI' && gol1.word === 'GOOOL', JSON.stringify(gol1));
   // 13: tarjeta amarilla (panel TARJETAS)
   await M(`await window.__t.select('bbTarjeta'); await window.__t.sleep(700); window.__t.click('AMARILLA'); [...document.querySelectorAll('#mc-panel button')].find((b) => b.textContent.startsWith('VISITANTE')).click(); await window.__t.sleep(700); window.__t.pick('PRUEBA BAL 4');`);
   const cardIn = await waitIn('bbTarjeta');
@@ -211,7 +211,7 @@ function verdict(name, before, after, extra = {}) {
   await sleep(300);
   const gol2 = await P(`return { team: document.querySelector('#mod-bbGol .bb-gol-team')?.textContent, b: document.querySelector('#mod-bbMarcador [data-k="b"]').textContent }`);
   check(15, 'gol BALANZA', gol2.b === '1', `marcador visitante ${gol2.b}`);
-  check(16, 'animación GOL BALANZA', gol2.team === 'BALANZA', gol2.team);
+  check(16, 'animación GOL BALANZA', gol2.team === 'TEAM BALANZA', gol2.team);
   // 17: tiempo adicional
   await M(`window.__t.click('+2'); await window.__t.sleep(150); window.__t.click('MOSTRAR +');`); await sleep(700);
   const extra = await P(`const e = document.querySelector('#mod-bbMarcador .bb-sb-extra'); return e.classList.contains('is-shown') ? e.textContent.trim() : ''`);

@@ -132,6 +132,11 @@ app.use('/api', noStoreMiddleware);
 // servir un asset viejo para siempre: la proxima vez que ese archivo
 // cambie, el ETag ya no matchea y el navegador lo vuelve a pedir.
 const noCacheRevalidate = { setHeaders: (res) => res.set('Cache-Control', 'no-cache') };
+// SOLO PRUEBAS (2026-11-13): carpeta de sponsors de C4N reemplazada por una
+// copia (GLA_C4N_SPONSORS_DIR, ver server/copa4naciones.js), en la misma URL.
+if (process.env.GLA_C4N_SPONSORS_DIR) {
+  app.use('/assets/themes/copa4naciones/sponsors', express.static(process.env.GLA_C4N_SPONSORS_DIR, noCacheRevalidate));
+}
 app.use('/assets', express.static(path.join(root, 'assets'), noCacheRevalidate));
 app.use('/assets/sponsors', express.static(path.join(root, 'assets', 'shared', 'sponsors'), noCacheRevalidate));
 
@@ -275,6 +280,8 @@ app.post('/api/teams/team', (req, res) => {
       // los ignora para Argentina Streamers).
       crestFile: typeof body.crestFile === 'string' ? body.crestFile : undefined,
       color: typeof body.color === 'string' ? body.color : undefined,
+      // BAULETI vs BALANZA (2026-11-06): tamaño visual del logo (solo si viene).
+      ...('crestScale' in body ? { crestScale: body.crestScale } : {}),
     });
     broadcast({ type: 'TEAM_CATALOG_UPDATE', catalog });
     res.json({ ok: true, catalog });
@@ -784,6 +791,31 @@ await registerCopa4NacionesRoutes(app, {
     const moduleState = applyUpdate(moduleId, data);
     if (wsReady) broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId, moduleState, isAutoSave: false, isExplicitUpdate: true });
   },
+  // Sync en vivo de incidencias C4N (2026-11-11): lee las placas que lo usan
+  // y avisa su estado a Master (mensaje propio; Program y los demás sistemas
+  // lo ignoran).
+  getModuleData(moduleId) {
+    return getModuleState(moduleId)?.data || null;
+  },
+  broadcastMessage(msg) {
+    if (wsReady) broadcast(msg);
+  },
+  // REINICIAR TODO (2026-11-14): OUT de las piezas al aire (mismo mensaje que
+  // un OUT de Master) y Preview vacío (composición multicapa en blanco).
+  stopModules(ids) {
+    const out = [];
+    for (const id of ids) {
+      if (getModuleState(id)?.status !== MODULE_STATUS.ON) continue;
+      const moduleState = applyOut(id);
+      out.push(id);
+      if (wsReady) broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId: id, moduleState, isAutoSave: false, isExplicitUpdate: false });
+    }
+    return out;
+  },
+  clearPreview() {
+    lastPreviewStack = null;
+    if (wsReady) broadcast({ type: 'PREVIEW_STACK', order: [], items: {}, allData: {}, replay: null, from: 'reiniciar-todo' });
+  },
   refreshTeamCatalog() {
     if (wsReady) broadcast({ type: 'TEAM_CATALOG_UPDATE', catalog: getTeamCatalog(getActiveThemeId()) });
   },
@@ -988,6 +1020,11 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: WS_PATH });
 wsReady = true;
 
+// PREVIEW MULTICAPA (2026-11-12, COPA 4 NACIONES): última composición de
+// Preview (solo en memoria, nunca toca el estado de los módulos ni Program),
+// para el monitor Preview / Master que se conecta o se recarga.
+let lastPreviewStack = null;
+
 function broadcast(message) {
   const payload = JSON.stringify(message);
   for (const client of wss.clients) {
@@ -1122,6 +1159,27 @@ wss.on('connection', (socket) => {
       // animacion de un modulo ya mostrado en Preview (un oneShot no se
       // repite solo). Ausente = comportamiento de siempre.
       broadcast({ type: 'PREVIEW_MODULE', moduleId: msg.moduleId, data: msg.data, allData: msg.allData, replay: msg.replay === true });
+      return;
+    }
+
+    // PREVIEW MULTICAPA (2026-11-12, COPA 4 NACIONES): la composición entera de
+    // Preview (varias piezas a la vez). Mismo criterio que PREVIEW_MODULE: puro
+    // RELAY, nunca toca "status"/"data" ni el Program real. PREVIEW_HELLO: el
+    // que se conecta (monitor Preview recargado, otro Master) recibe la última.
+    if (msg.type === 'PREVIEW_STACK') {
+      lastPreviewStack = {
+        type: 'PREVIEW_STACK',
+        order: Array.isArray(msg.order) ? msg.order.filter((id) => typeof id === 'string').slice(0, 40) : [],
+        items: msg.items && typeof msg.items === 'object' ? msg.items : {},
+        allData: msg.allData && typeof msg.allData === 'object' ? msg.allData : {},
+        replay: typeof msg.replay === 'string' ? msg.replay : null,
+        from: typeof msg.from === 'string' ? msg.from.slice(0, 40) : '',
+      };
+      broadcast(lastPreviewStack);
+      return;
+    }
+    if (msg.type === 'PREVIEW_HELLO') {
+      if (lastPreviewStack && socket.readyState === socket.OPEN) socket.send(JSON.stringify({ ...lastPreviewStack, replay: null, hello: true }));
       return;
     }
 
