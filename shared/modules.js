@@ -67,6 +67,12 @@ const C4N_LAYER = {
   contentOffsetX: 0, contentOffsetY: 0, contentScale: 1,
   fontScale: 1, spacingScale: 1,
 };
+// GLA SUPERCOPA: mismo ajuste de capas, constante propia (no depende de C4N).
+const SC_LAYER = {
+  bgOffsetX: 0, bgOffsetY: 0, bgScale: 1,
+  contentOffsetX: 0, contentOffsetY: 0, contentScale: 1,
+  fontScale: 1, spacingScale: 1,
+};
 
 export const MODULES = {
   // ---------------------------------------------------------------------
@@ -2512,6 +2518,420 @@ export const MODULES = {
       webUpdatedAt: '',
       updatedAt: '',
     },
+  },
+
+  // =====================================================================
+  // GLA SUPERCOPA (SOFTX [5], 2026-11-24): módulos "sc*" (solo en su
+  // navegación). Misma operación que COPA 4 NACIONES (partido en juego con el
+  // modelo de shared/bb-match.js, FIXTURE / MANUAL, ajuste de capas,
+  // Preview multicapa, REINICIAR TODO), identidad propia: PNG de
+  // shared/sc-assets.js y motion de program/css/sc.css. SIN ESTADÍSTICAS.
+  // =====================================================================
+  scMarcador: {
+    id: 'scMarcador',
+    label: 'MARCADOR',
+    category: 'Partido',
+    layer: 'scoreboard',
+    live: true,
+    fields: [],
+    // Sin equipos precargados: se eligen en el panel (FIXTURE o MANUAL).
+    // Tiempo adicional: "+N" es solo el aviso; la cuenta sigue sin tope
+    // (shared/c4n-match.js extraTimeState). Penales: tanda de 3 (como GLA) o 5.
+    defaults: {
+      fuentePartido: 'fixture',
+      matchId: '',
+      stageLabel: '',
+      teamA: '',
+      teamB: '',
+      scoreA: 0,
+      scoreB: 0,
+      clock: emptyClock(),
+      clockEndText: '20:00',
+      period: '1T',
+      extraMinutes: 0,
+      extraAuto: true,
+      showExtra: false,
+      extraClock: emptyClock(),
+      extraFor: '',
+      matchEvents: [],
+      penalties: { active: false, first: 'local', show: false, rounds: 3 },
+      ...SC_LAYER,
+    },
+  },
+
+  scTarjeta: {
+    id: 'scTarjeta',
+    label: 'TARJETAS',
+    category: 'Partido',
+    layer: 'event',
+    fields: [],
+    defaults: { event: null, autoOutSec: 7, ...SC_LAYER },
+  },
+
+  // CAMBIOS v2: "lista" = CAMBIO 1..N preparados en el panel (equipo, sale,
+  // entra, dorsales, minuto); "secuencia" = lo que sale al aire en el TAKE:
+  // un cambio (pieza normal, sale sola a los autoOutSec) o varios en orden,
+  // "segPorCambio" segundos cada uno (solo cambian los textos) y al terminar
+  // el último sale la pieza entera.
+  scCambio: {
+    id: 'scCambio',
+    label: 'CAMBIOS',
+    category: 'Partido',
+    layer: 'event',
+    fields: [],
+    defaults: { event: null, secuencia: [], lista: [], segPorCambio: 5, autoOutSec: 8, ...SC_LAYER },
+  },
+
+  // VAR: placa del PNG real en una de sus 3 posiciones; decisión con un clic,
+  // MOTIVO y cambio al aire sin rearmar la placa.
+  scVar: {
+    id: 'scVar',
+    label: 'VAR',
+    category: 'Partido',
+    layer: 'event',
+    fields: [
+      {
+        key: 'posicion',
+        label: 'Posición de la placa',
+        type: FIELD_TYPES.SELECT,
+        options: [
+          { id: 'abajoIzq', label: 'ABAJO A LA IZQUIERDA' },
+          { id: 'arribaDer', label: 'ARRIBA A LA DERECHA' },
+          { id: 'abajoDer', label: 'ABAJO A LA DERECHA' },
+        ],
+      },
+    ],
+    defaults: { decision: 'chequeo', motivo: '', posicion: 'abajoIzq', ...SC_LAYER },
+  },
+
+  // PENAL SHOOTOUT v2 (referencia 2026-11-25): [ESCUDO] | "10. MASSI" /
+  // filete / "CRONÓMETRO: 00:00". Equipo (lado del Marcador o teamId elegido),
+  // jugador del plantel o manual; cronómetro desde 00:00 en cada TAKE (toma
+  // nueva), sin tope. "live": el tick de Program lo repinta, sin timers propios.
+  scPenalShootout: {
+    id: 'scPenalShootout',
+    label: 'PENAL SHOOTOUT',
+    category: 'Partido',
+    layer: 'event',
+    live: true,
+    fields: [],
+    defaults: { lado: 'local', teamId: '', jugador: null, fase: '', toma: 0, ...SC_LAYER },
+  },
+
+  scVsPrepartido: {
+    id: 'scVsPrepartido',
+    label: 'VS PREPARTIDO',
+    category: 'Presentación',
+    layer: 'lowerThird',
+    // ESTADO (v2): la placa de arriba (A CONTINUACIÓN / EN JUEGO - 1T /
+    // ENTRETIEMPO / EN JUEGO - 2T / FINAL / MANUAL) se maneja en la sección
+    // ESTADO del panel (automático desde el Marcador o elegido a mano). "live":
+    // en AUTOMÁTICO sigue al Marcador.
+    live: true,
+    fields: [
+      { key: 'titulo', label: 'Fase (vacío = la del partido)', type: FIELD_TYPES.TEXT },
+      { key: 'detalle', label: 'Horario / detalle (vacío = el del fixture; solo con A CONTINUACIÓN)', type: FIELD_TYPES.TEXT },
+    ],
+    defaults: { titulo: '', detalle: '', estadoModo: 'auto', estadoManual: '', ...SC_LAYER },
+  },
+
+  scVsResultado: {
+    id: 'scVsResultado',
+    label: 'VS RESULTADO',
+    category: 'Presentación',
+    layer: 'lowerThird',
+    live: true,
+    // ESTADO (v2): sección ESTADO del panel (misma que VS PREPARTIDO).
+    fields: [
+      {
+        key: 'penales',
+        label: 'Penales',
+        type: FIELD_TYPES.SELECT,
+        options: [
+          { id: 'auto', label: 'AUTOMÁTICO (si hubo tanda)' },
+          { id: 'si', label: 'MOSTRAR' },
+          { id: 'no', label: 'NO MOSTRAR' },
+        ],
+      },
+    ],
+    defaults: { estado: '', estadoModo: 'auto', estadoManual: '', penales: 'auto', ...SC_LAYER },
+  },
+
+  // FORMACIÓN: equipos[teamId] = { esquema, titulares[], suplentes[], plantel{} }
+  // (misma operación que la COPA: MANUAL, POR LISTA, GUARDAR / USAR ANTERIOR).
+  // "formato": jugadores por equipo (6 = GLA, 11 = fútbol 11).
+  scFormacion: {
+    id: 'scFormacion',
+    label: 'FORMACIÓN',
+    category: 'Presentación',
+    layer: 'fullscreen',
+    fields: [],
+    defaults: { side: 'local', titulo: 'FORMACIÓN', mostrarSuplentes: true, formato: '6', equipos: {}, ...SC_LAYER },
+  },
+
+  // FIXTURE: partidos de "scDatos".fixture (WEB SUPERCOPA o MANUAL; el
+  // resultado llega desde el MARCADOR) sobre la PLACA nueva. Por jugar = barra
+  // VS; jugado = barra VS RESULTADO (penales aparte, nunca mezclados con el
+  // resultado). "dia": 'auto' (el próximo día con partidos por jugar), 'todos'
+  // o la fecha AAAA-MM-DD (hasta 9 partidos por placa).
+  scFixture: {
+    id: 'scFixture',
+    label: 'FIXTURE',
+    category: 'Presentación',
+    layer: 'fullscreen',
+    live: true,
+    fields: [{ key: 'titulo', label: 'Título', type: FIELD_TYPES.TEXT }],
+    defaults: { titulo: 'FIXTURE', dia: 'auto', ocultos: [], ...SC_LAYER },
+  },
+
+  // PRESENTACIÓN DE PARTIDO (v3, 2026-11-25): sobre la misma PLACA de
+  // FORMACIÓN, cumple la función de la placa VS de la COPA con el partido del
+  // MARCADOR: escudos grandes, nombre abajo de cada uno con zócalo gris (mismo
+  // tamaño y mismos renglones en los dos) y zócalo con la FASE / INSTANCIA.
+  // "live": sigue al Marcador (equipos) y al fixture (fase / horario).
+  scPresentacion: {
+    id: 'scPresentacion',
+    label: 'PRESENTACIÓN DE PARTIDO',
+    category: 'Presentación',
+    layer: 'fullscreen',
+    live: true,
+    fields: [
+      {
+        key: 'fase',
+        label: 'Fase / instancia (zócalo de abajo)',
+        type: FIELD_TYPES.SELECT,
+        options: [
+          { id: 'auto', label: 'DEL PARTIDO (fixture / Marcador)' },
+          { id: 'grupos', label: 'FASE DE GRUPOS' },
+          { id: 'semi1', label: 'SEMIFINAL 1' },
+          { id: 'semi2', label: 'SEMIFINAL 2' },
+          { id: 'final', label: 'FINAL' },
+          { id: 'granFinal', label: 'GRAN FINAL' },
+          { id: 'manual', label: 'MANUAL (texto de abajo)' },
+          { id: 'ninguna', label: 'SIN ZÓCALO DE FASE' },
+        ],
+      },
+      { key: 'faseTexto', label: 'Fase MANUAL (con "MANUAL")', type: FIELD_TYPES.TEXT },
+      { key: 'titulo', label: 'Título de la cabecera', type: FIELD_TYPES.TEXT },
+      { key: 'detalle', label: 'Día / horario (cabecera; vacío = el del fixture)', type: FIELD_TYPES.TEXT },
+    ],
+    defaults: { fase: 'auto', faseTexto: '', titulo: 'GLA SUPERCOPA', detalle: '', ...SC_LAYER },
+  },
+
+  // PLACA VS RESULTADO (v3): misma familia que PRESENTACIÓN DE PARTIDO, con el
+  // recuadro de goles claro al centro. "resultado": 'normal' (2 - 1),
+  // 'penales' (2(3) - 2(2)) o 'auto' (con penales si hubo tanda en el
+  // Marcador). Penales MANUALES opcionales (vacío = los de la tanda). ESTADO
+  // (cabecera) con la misma sección del panel que VS RESULTADO.
+  scPlacaResultado: {
+    id: 'scPlacaResultado',
+    label: 'PLACA VS RESULTADO',
+    category: 'Presentación',
+    layer: 'fullscreen',
+    live: true,
+    fields: [
+      {
+        key: 'resultado',
+        label: 'Resultado',
+        type: FIELD_TYPES.SELECT,
+        options: [
+          { id: 'auto', label: 'AUTOMÁTICO (con penales si hubo tanda)' },
+          { id: 'normal', label: 'NORMAL · 2 - 1' },
+          { id: 'penales', label: 'CON PENALES · 2(3) - 2(2)' },
+        ],
+      },
+      { key: 'penLocal', label: 'Penales LOCAL (vacío = tanda del Marcador)', type: FIELD_TYPES.TEXT },
+      { key: 'penVisitante', label: 'Penales VISITANTE (vacío = tanda del Marcador)', type: FIELD_TYPES.TEXT },
+      {
+        key: 'fase',
+        label: 'Fase / instancia (zócalo de abajo)',
+        type: FIELD_TYPES.SELECT,
+        options: [
+          { id: 'auto', label: 'DEL PARTIDO (fixture / Marcador)' },
+          { id: 'grupos', label: 'FASE DE GRUPOS' },
+          { id: 'semi1', label: 'SEMIFINAL 1' },
+          { id: 'semi2', label: 'SEMIFINAL 2' },
+          { id: 'final', label: 'FINAL' },
+          { id: 'granFinal', label: 'GRAN FINAL' },
+          { id: 'manual', label: 'MANUAL (texto de abajo)' },
+          { id: 'ninguna', label: 'SIN ZÓCALO DE FASE' },
+        ],
+      },
+      { key: 'faseTexto', label: 'Fase MANUAL (con "MANUAL")', type: FIELD_TYPES.TEXT },
+      { key: 'titulo', label: 'Título de la cabecera', type: FIELD_TYPES.TEXT },
+    ],
+    defaults: { resultado: 'auto', penLocal: '', penVisitante: '', fase: 'auto', faseTexto: '', titulo: 'GLA SUPERCOPA', estadoModo: 'auto', estadoManual: '', ...SC_LAYER },
+  },
+
+  // ZÓCALO CORTO: una persona. Con CARGO usa la placa CORTO DOBLE; sin cargo,
+  // la CORTO SIMPLE.
+  scZocaloCorto: {
+    id: 'scZocaloCorto',
+    label: 'ZÓCALO CORTO',
+    category: 'Zocalos',
+    layer: 'lowerThird',
+    fields: [
+      { key: 'linea1', label: 'Nombre', type: FIELD_TYPES.TEXT },
+      { key: 'linea2', label: 'Cargo (vacío = placa simple, solo el nombre)', type: FIELD_TYPES.TEXT },
+    ],
+    defaults: { linea1: 'NOMBRE APELLIDO', linea2: 'CARGO / DESCRIPCIÓN', ...SC_LAYER },
+  },
+
+  // TALENTOS: 1 / 2 / 3 / 4 placas CORTO DOBLE simétricas (la mitad derecha
+  // espejada, el texto nunca), cada una con nombre y cargo. v2: todas con el
+  // tamaño compacto de 4.
+  scTalentos: {
+    id: 'scTalentos',
+    label: 'TALENTOS',
+    category: 'Zocalos',
+    layer: 'lowerThird',
+    fields: [
+      {
+        key: 'cantidad',
+        label: 'CANTIDAD',
+        type: FIELD_TYPES.SELECT,
+        options: [
+          { id: '1', label: '1 TALENTO' },
+          { id: '2', label: '2 TALENTOS' },
+          { id: '3', label: '3 TALENTOS' },
+          { id: '4', label: '4 TALENTOS' },
+        ],
+      },
+      { key: 'nombre1', label: 'TALENTO 1 — nombre', type: FIELD_TYPES.TEXT },
+      { key: 'cargo1', label: 'TALENTO 1 — cargo', type: FIELD_TYPES.TEXT },
+      { key: 'nombre2', label: 'TALENTO 2 — nombre (con 2, 3 o 4)', type: FIELD_TYPES.TEXT },
+      { key: 'cargo2', label: 'TALENTO 2 — cargo', type: FIELD_TYPES.TEXT },
+      { key: 'nombre3', label: 'TALENTO 3 — nombre (con 3 o 4)', type: FIELD_TYPES.TEXT },
+      { key: 'cargo3', label: 'TALENTO 3 — cargo', type: FIELD_TYPES.TEXT },
+      { key: 'nombre4', label: 'TALENTO 4 — nombre (con 4)', type: FIELD_TYPES.TEXT },
+      { key: 'cargo4', label: 'TALENTO 4 — cargo', type: FIELD_TYPES.TEXT },
+    ],
+    defaults: {
+      cantidad: '2',
+      nombre1: 'NOMBRE APELLIDO', cargo1: 'RELATOR',
+      nombre2: 'NOMBRE APELLIDO', cargo2: 'COMENTARISTA',
+      nombre3: 'NOMBRE APELLIDO', cargo3: 'ANALISTA',
+      nombre4: 'NOMBRE APELLIDO', cargo4: 'CAMPO DE JUEGO',
+      ...SC_LAYER,
+    },
+  },
+
+  // ZÓCALO LARGO: con texto secundario usa LARGO DOBLE; sin él, LARGO SIMPLE.
+  scZocaloLargo: {
+    id: 'scZocaloLargo',
+    label: 'ZÓCALO LARGO',
+    category: 'Zocalos',
+    layer: 'lowerThird',
+    fields: [
+      { key: 'linea1', label: 'Texto principal', type: FIELD_TYPES.TEXT },
+      { key: 'linea2', label: 'Texto secundario (vacío = placa simple)', type: FIELD_TYPES.TEXT },
+    ],
+    defaults: { linea1: 'GLA SUPERCOPA', linea2: '', ...SC_LAYER },
+  },
+
+  // ZÓCALO L (compuesto, franja inferior): izquierda SUPERCOPA (emblema GLA +
+  // rótulo) o PARTIDO (escudos del Marcador), dos renglones y sponsors (logos
+  // de assets/themes/supercopa/sponsors/; sin logos, el emblema). "live":
+  // sigue al partido del Marcador.
+  scZocaloL: {
+    id: 'scZocaloL',
+    label: 'ZÓCALO L',
+    category: 'Zocalos',
+    layer: 'lowerThird',
+    live: true,
+    fields: [
+      {
+        key: 'izquierda',
+        label: 'Sector izquierdo',
+        type: FIELD_TYPES.SELECT,
+        options: [
+          { id: 'supercopa', label: 'SUPERCOPA (emblema GLA)' },
+          { id: 'partido', label: 'PARTIDO (escudos del Marcador)' },
+        ],
+      },
+      { key: 'texto', label: 'Renglón 1 (papel claro)', type: FIELD_TYPES.TEXT },
+      { key: 'texto2', label: 'Renglón 2 (franja oscura)', type: FIELD_TYPES.TEXT },
+      {
+        key: 'sponsorsRotacion',
+        label: 'Sponsors (recuadro derecho)',
+        type: FIELD_TYPES.SELECT,
+        options: [
+          { id: 'si', label: 'ROTACIÓN ACTIVA (todos los logos de la carpeta)' },
+          { id: 'no', label: 'SOLO EL PRIMER LOGO' },
+        ],
+      },
+      { key: 'intervaloSec', label: 'Segundos por sponsor (2 a 60)', type: FIELD_TYPES.TEXT },
+    ],
+    defaults: { izquierda: 'supercopa', texto: 'GLA SUPERCOPA', texto2: 'EL TORNEO DE LOS CAMPEONES', sponsorsRotacion: 'si', intervaloSec: '6', ...SC_LAYER },
+  },
+
+  // MOSCA v2 (MOSCA_SUPERCOPA.png): emblema GLA + LocalStrike + VIVO; en el
+  // recuadro blanco, la HORA REAL DE ARGENTINA (HH:MM, America/Argentina/
+  // Buenos_Aires, nunca la zona de la PC). "live": el tick de Program actualiza
+  // solo el texto de la hora (sin timers propios).
+  scMosca: {
+    id: 'scMosca',
+    label: 'MOSCA SUPERCOPA',
+    category: 'Branding',
+    layer: 'bug',
+    live: true,
+    fields: [],
+    defaults: { ...SC_LAYER },
+  },
+
+  // GRUPOS (L DERECHA): GRUPO A (A1 A2 A3) y GRUPO B (B1 B2 B3), asignados a
+  // mano. Es la FUENTE DE VERDAD del seeding de FIXTURE L
+  // (shared/sc-seeding.js). REINICIAR TODO no lo toca.
+  scGrupos: {
+    id: 'scGrupos',
+    label: 'GRUPOS',
+    category: 'Grupos',
+    layer: 'lowerThird',
+    fields: [{ key: 'titulo', label: 'Título', type: FIELD_TYPES.TEXT }],
+    defaults: { titulo: 'GRUPOS', slots: { A1: '', A2: '', A3: '', B1: '', B2: '', B3: '' }, ...SC_LAYER },
+  },
+
+  // FIXTURE L (L DERECHA): SÁBADO 28 = P1..P9 derivados de GRUPOS (horario,
+  // fase, local / visitante y resultado manuales van APARTE en "sabado");
+  // DOMINGO 29 = SEMIFINAL 1, SEMIFINAL 2 y GRAN FINAL (A CONFIRMAR hasta
+  // definirlos a mano en "domingo"). "live": sigue a GRUPOS.
+  // PANTALLA SORTEO (2026-11-25): sorteo televisivo de los equipos de la
+  // SUPERCOPA en GRUPO A / GRUPO B. "equipos": participantes (de la web
+  // SUPERCOPA o, sin web, del catálogo; los carga el panel), "slots": A1..B3
+  // (mismo formato que GRUPOS, shared/sc-seeding.js). Se ve SIEMPRE en la salida
+  // propia /pantalla (program/pantalla.html, en vivo) y, con TAKE, en Program
+  // (pantalla completa). Independiente de GRUPOS (el seeding real no cambia).
+  scSorteo: {
+    id: 'scSorteo',
+    label: 'PANTALLA SORTEO',
+    category: 'Grupos',
+    layer: 'fullscreen',
+    fields: [
+      { key: 'titulo', label: 'Título', type: FIELD_TYPES.TEXT },
+      { key: 'subtitulo', label: 'Subtítulo', type: FIELD_TYPES.TEXT },
+    ],
+    defaults: { titulo: 'SUPERCOPA', subtitulo: 'SORTEO DE EQUIPOS', equipos: [], slots: { A1: '', A2: '', A3: '', B1: '', B2: '', B3: '' }, ...SC_LAYER },
+  },
+
+  scFixtureL: {
+    id: 'scFixtureL',
+    label: 'FIXTURE L',
+    category: 'Grupos',
+    layer: 'lowerThird',
+    live: true,
+    fields: [],
+    defaults: { dia: 'sabado', titulo: '', sabado: {}, domingo: {}, ...SC_LAYER },
+  },
+
+  // Vista efectiva del torneo (la escribe SOLO server/supercopa.js): fixture,
+  // visual de jugadores y sponsors. Nunca va al aire ni tiene pestaña.
+  scDatos: {
+    id: 'scDatos',
+    label: 'DATOS SUPERCOPA',
+    category: 'General',
+    layer: 'data',
+    fields: [],
+    defaults: { fixture: [], fixtureSource: 'manual', visualJugadores: 'foto', sponsors: [], tournament: { name: 'GLA SUPERCOPA' }, webUpdatedAt: '', updatedAt: '' },
   },
 
 };

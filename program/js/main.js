@@ -261,6 +261,7 @@ function finishOut(id) {
   if (!target || target.root.classList.contains('is-in')) return;
   cancelExitCleanup(id);
   target.root.classList.add('is-hidden');
+  target.root.classList.remove('sc-handoff-out');
   teardownContent(target.content, id);
   if (pendingAssetReload.delete(id)) rebuildModuleAssets(id);
 }
@@ -418,6 +419,22 @@ function syncBbMarcadorFollowers() {
   }
 }
 
+// GLA SUPERCOPA v3 (2026-11-25): GRUPOS <-> FIXTURE L comparten la placa
+// L_DERECHA. TAKE de una con la otra AL AIRE = RELEVO: la entrante monta la
+// placa SIN animar ("sc-handoff-in") y su contenido entra un poco después; la
+// saliente oculta su placa en el mismo cuadro y queda ENCIMA mientras su
+// contenido sale ("sc-handoff-out"). La placa nunca desaparece; solo cambia
+// el contenido (en los dos sentidos). Master manda TAKE + OUT juntos (bbTake).
+const SC_L_HANDOFF = { scGrupos: 'scFixtureL', scFixtureL: 'scGrupos' };
+function prepareScHandoff(id) {
+  const partner = els[SC_L_HANDOFF[id]];
+  const root = els[id].root;
+  const handoff = Boolean(partner && partner.root.classList.contains('is-in'));
+  root.classList.toggle('sc-handoff-in', handoff);
+  root.classList.remove('sc-handoff-out');
+  if (handoff) partner.root.classList.add('sc-handoff-out');
+}
+
 function applyModuleState(id, moduleState) {
   const target = els[id];
   if (!target || !moduleState) return;
@@ -441,6 +458,7 @@ function applyModuleState(id, moduleState) {
     // pool -- trackWarm()/markPlaying() con la misma key ("id") no rompen
     // nada si la key todavía no existía en el registro.
     if (isHotModule(id)) markPlaying(id);
+    if (justTaken && SC_L_HANDOFF[id]) prepareScHandoff(id);
 
     if (sequenced && justTaken) {
       // Ciclo nuevo: cancela cualquier revelado/salida pendiente de un

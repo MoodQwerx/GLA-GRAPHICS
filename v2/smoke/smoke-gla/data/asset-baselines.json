@@ -1,0 +1,436 @@
+{
+  "gla.scoreboard.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 5,
+    "stackedAlpha": true,
+    "sizeBytes": 64164,
+    "mtimeMs": 1793280927386
+  },
+  "gla.gol.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 5,
+    "stackedAlpha": true,
+    "sizeBytes": 196206,
+    "mtimeMs": 1790219626940
+  },
+  "gla.marcadorTiempoAdicional.principal": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 11845,
+    "mtimeMs": 1788285046554
+  },
+  "gla.marcadorEntretiempo.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 50032,
+    "mtimeMs": 1793280927415
+  },
+  "gla.marcadorPenales.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 5,
+    "stackedAlpha": true,
+    "sizeBytes": 58276,
+    "mtimeMs": 1788285049186
+  },
+  "gla.marcadorZocalo.principal": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 10954,
+    "mtimeMs": 1788285046554
+  },
+  "gla.tarjeta.amarilla": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 5,
+    "stackedAlpha": true,
+    "sizeBytes": 58452,
+    "mtimeMs": 1790219626973
+  },
+  "gla.tarjeta.roja": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 5,
+    "stackedAlpha": true,
+    "sizeBytes": 59701,
+    "mtimeMs": 1790216590081
+  },
+  "gla.tarjeta.azul": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 5,
+    "stackedAlpha": true,
+    "sizeBytes": 59903,
+    "mtimeMs": 1790216590129
+  },
+  "gla.cambios.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 5,
+    "stackedAlpha": true,
+    "sizeBytes": 58205,
+    "mtimeMs": 1790219627017
+  },
+  "gla.varCheck.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 5,
+    "stackedAlpha": true,
+    "sizeBytes": 96397,
+    "mtimeMs": 1788285048708
+  },
+  "gla.varCheck.motivo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 13169,
+    "mtimeMs": 1788285046628
+  },
+  "gla.replay.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 5,
+    "stackedAlpha": true,
+    "sizeBytes": 92158,
+    "mtimeMs": 1788285048754
+  },
+  "gla.bug.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 5,
+    "stackedAlpha": true,
+    "sizeBytes": 51120,
+    "mtimeMs": 1790219627063
+  },
+  "gla.longDouble.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 70219,
+    "mtimeMs": 1790219627096
+  },
+  "gla.shortSimple.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 58713,
+    "mtimeMs": 1790216853352
+  },
+  "gla.shortDouble.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 5,
+    "stackedAlpha": true,
+    "sizeBytes": 73738,
+    "mtimeMs": 1790216853379
+  },
+  "gla.vs.normal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 5,
+    "stackedAlpha": true,
+    "sizeBytes": 207068,
+    "mtimeMs": 1790216914431
+  },
+  "gla.vs.alto": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 5,
+    "stackedAlpha": true,
+    "sizeBytes": 226701,
+    "mtimeMs": 1790216914474
+  },
+  "gla.vs.medio": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 5,
+    "stackedAlpha": true,
+    "sizeBytes": 190242,
+    "mtimeMs": 1790216914514
+  },
+  "gla.vs.fino": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 5,
+    "stackedAlpha": true,
+    "sizeBytes": 216627,
+    "mtimeMs": 1790216914562
+  },
+  "gla.zocaloCompuesto.equipos": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 109705,
+    "mtimeMs": 1788285048535
+  },
+  "gla.zocaloCompuesto.logo": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 109594,
+    "mtimeMs": 1788285048595
+  },
+  "gla.zocaloCompuesto.logoImagen": {
+    "format": "PNG",
+    "width": 1018,
+    "height": 990,
+    "hasAlpha": true,
+    "sizeBytes": 265211,
+    "mtimeMs": 1788285046549
+  },
+  "gla.zocaloFinal.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 109594,
+    "mtimeMs": 1788285048595
+  },
+  "gla.zocaloFinal.logoImagen": {
+    "format": "PNG",
+    "width": 1018,
+    "height": 990,
+    "hasAlpha": true,
+    "sizeBytes": 265211,
+    "mtimeMs": 1788285046549
+  },
+  "gla.zocaloFinalDiv.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 109705,
+    "mtimeMs": 1788285048535
+  },
+  "gla.vsPrepartido.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 194111,
+    "mtimeMs": 1788285048520
+  },
+  "gla.vsResultado.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 139892,
+    "mtimeMs": 1788285048515
+  },
+  "gla.estrellas.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 212952,
+    "mtimeMs": 1788285048325
+  },
+  "gla.formacionEquipos.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 107624,
+    "mtimeMs": 1788285048669
+  },
+  "gla.formacionEquipos.camisetas": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 50887,
+    "mtimeMs": 1788285046558
+  },
+  "gla.formacionEquipos.camisetasBlancas": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 46871,
+    "mtimeMs": 1788285046557
+  },
+  "gla.grupos.grupo1": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 96089,
+    "mtimeMs": 1788285046545
+  },
+  "gla.grupos.grupo2": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 96001,
+    "mtimeMs": 1788285046546
+  },
+  "gla.sideTable.fondo": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 22118,
+    "mtimeMs": 1788285046595
+  },
+  "gla.posiciones.pagina1": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 356487,
+    "mtimeMs": 1788285048107
+  },
+  "gla.posiciones.pagina2": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 330866,
+    "mtimeMs": 1788285048302
+  },
+  "gla.posicionesTorneo.pagina1": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 356487,
+    "mtimeMs": 1788285048107
+  },
+  "gla.posicionesTorneo.pagina2": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 330866,
+    "mtimeMs": 1788285048302
+  },
+  "gla.goleadores.principal": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 47875,
+    "mtimeMs": 1788285046597
+  },
+  "gla.asistidores.principal": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 48277,
+    "mtimeMs": 1793280925186
+  },
+  "gla.jugadores.principal": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 50683,
+    "mtimeMs": 1788285046592
+  }
+}

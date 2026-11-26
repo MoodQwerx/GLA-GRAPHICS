@@ -1,0 +1,386 @@
+{
+  "argentinaStreamers.scoreboard.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 62467,
+    "mtimeMs": 1788285049129
+  },
+  "argentinaStreamers.marcadorTiempoAdicional.imagen": {
+    "format": "PNG",
+    "width": 1366,
+    "height": 768,
+    "hasAlpha": true,
+    "sizeBytes": 6755,
+    "mtimeMs": 1787842232000
+  },
+  "argentinaStreamers.marcadorEntretiempo.imagen": {
+    "format": "PNG",
+    "width": 1366,
+    "height": 768,
+    "hasAlpha": true,
+    "sizeBytes": 8969,
+    "mtimeMs": 1788545486129
+  },
+  "argentinaStreamers.marcadorPenales.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 109975,
+    "mtimeMs": 1788285048489
+  },
+  "argentinaStreamers.marcadorZocalo.imagen": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 11535,
+    "mtimeMs": 1788171002000
+  },
+  "argentinaStreamers.tarjeta.amarilla": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 68782,
+    "mtimeMs": 1788285049109
+  },
+  "argentinaStreamers.tarjeta.roja": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 70978,
+    "mtimeMs": 1788285049015
+  },
+  "argentinaStreamers.tarjeta.azul": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 71206,
+    "mtimeMs": 1788285048936
+  },
+  "argentinaStreamers.cambios.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 92020,
+    "mtimeMs": 1788285048762
+  },
+  "argentinaStreamers.gol.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 216756,
+    "mtimeMs": 1788285048280
+  },
+  "argentinaStreamers.varCheck.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 85774,
+    "mtimeMs": 1788285048844
+  },
+  "argentinaStreamers.varCheckMotivo.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 60988,
+    "mtimeMs": 1788480307988
+  },
+  "argentinaStreamers.replay.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 44145,
+    "mtimeMs": 1788285049191
+  },
+  "argentinaStreamers.bug.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 121054,
+    "mtimeMs": 1788285048486
+  },
+  "argentinaStreamers.longDouble.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 103149,
+    "mtimeMs": 1788285048659
+  },
+  "argentinaStreamers.shortSimple.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 74322,
+    "mtimeMs": 1788285048961
+  },
+  "argentinaStreamers.shortDouble.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 60988,
+    "mtimeMs": 1788480307988
+  },
+  "argentinaStreamers.zocaloCompuesto.logo": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 226790,
+    "mtimeMs": 1788297628959
+  },
+  "argentinaStreamers.zocaloCompuesto.equipos": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 225305,
+    "mtimeMs": 1788297625337
+  },
+  "argentinaStreamers.zocaloCompuestoEquipos.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 225305,
+    "mtimeMs": 1788297625337
+  },
+  "argentinaStreamers.zocaloCompuestoLogo.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 226790,
+    "mtimeMs": 1788297628959
+  },
+  "argentinaStreamers.zocaloCompuestoLogo.imagen": {
+    "format": "PNG",
+    "width": 3440,
+    "height": 1440,
+    "hasAlpha": true,
+    "sizeBytes": 151038,
+    "mtimeMs": 1785532622198
+  },
+  "argentinaStreamers.zocaloVs.solo": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 66908,
+    "mtimeMs": 1793280927419
+  },
+  "argentinaStreamers.zocaloVs.goles": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 68749,
+    "mtimeMs": 1793280927216
+  },
+  "argentinaStreamers.vsPrepartido.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 232643,
+    "mtimeMs": 1788293889441
+  },
+  "argentinaStreamers.vsResultado.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 149487,
+    "mtimeMs": 1788285048470
+  },
+  "argentinaStreamers.formacionEquipos.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 328797,
+    "mtimeMs": 1788360182925
+  },
+  "argentinaStreamers.formacionEquipos.kit-formacion-arg": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 63272,
+    "mtimeMs": 1788358952346
+  },
+  "argentinaStreamers.formacionEquipos.kit-formacion-oxen": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 66464,
+    "mtimeMs": 1788372180978
+  },
+  "argentinaStreamers.formacionEquipos.kit-formacion-peru": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 59569,
+    "mtimeMs": 1788372273488
+  },
+  "argentinaStreamers.estrellas.principal": {
+    "format": "MP4",
+    "codec": "avc1",
+    "width": 1920,
+    "height": 2160,
+    "fps": 30,
+    "durationSec": 6,
+    "stackedAlpha": true,
+    "sizeBytes": 191710,
+    "mtimeMs": 1788293892773
+  },
+  "argentinaStreamers.goleadores.imagen": {
+    "format": "PNG",
+    "width": 962,
+    "height": 541,
+    "hasAlpha": true,
+    "sizeBytes": 10838,
+    "mtimeMs": 1788379334115
+  },
+  "argentinaStreamers.asistidores.imagen": {
+    "format": "PNG",
+    "width": 962,
+    "height": 541,
+    "hasAlpha": true,
+    "sizeBytes": 10838,
+    "mtimeMs": 1788379334115
+  },
+  "argentinaStreamers.jugadores.imagen": {
+    "format": "PNG",
+    "width": 962,
+    "height": 541,
+    "hasAlpha": true,
+    "sizeBytes": 10838,
+    "mtimeMs": 1788379334115
+  },
+  "argentinaStreamers.fichaJugador.imagen": {
+    "format": "PNG",
+    "width": 1920,
+    "height": 1080,
+    "hasAlpha": true,
+    "sizeBytes": 39045,
+    "mtimeMs": 1788990602026
+  },
+  "argentinaStreamers.cronogramaHoy.imagen": {
+    "format": "PNG",
+    "width": 962,
+    "height": 541,
+    "hasAlpha": true,
+    "sizeBytes": 13689,
+    "mtimeMs": 1788379384446
+  },
+  "argentinaStreamers.resultadosParciales.imagen": {
+    "format": "PNG",
+    "width": 962,
+    "height": 541,
+    "hasAlpha": true,
+    "sizeBytes": 19849,
+    "mtimeMs": 1788452462630
+  },
+  "argentinaStreamers.historial.imagen": {
+    "format": "PNG",
+    "width": 962,
+    "height": 541,
+    "hasAlpha": true,
+    "sizeBytes": 35632,
+    "mtimeMs": 1788375711268
+  },
+  "argentinaStreamers.sitioWebPromoL.argentina-streamers": {
+    "format": "PNG",
+    "width": 962,
+    "height": 541,
+    "hasAlpha": true,
+    "sizeBytes": 166646,
+    "mtimeMs": 1788463597669
+  }
+}

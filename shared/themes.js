@@ -457,6 +457,36 @@ THEMES.copa4naciones = {
   assets: Object.fromEntries(MODULE_IDS_C4N.map((moduleId) => [moduleId, { status: 'ready' }])),
 };
 
+// GLA SUPERCOPA (SOFTX [5], 2026-11-24): el torneo de los campeones de cada
+// edición de GLA RELÁMPAGO del año. Misma operación que COPA 4 NACIONES
+// (módulos propios "sc*", datos, estado y perfiles aislados por theme) con
+// identidad gráfica propia: los PNG de "gla_supercopa.zip" (manifest
+// shared/sc-assets.js, carpeta assets/themes/supercopa/). Sin módulos de
+// estadísticas por ahora. Equipos: catálogo manual extendido (server/teams.js)
+// desde assets/themes/supercopa/escudos/ -- no se precarga ningún equipo.
+export const SUPERCOPA_THEME_ID = 'supercopa';
+export const MODULE_IDS_SC = [
+  'scMarcador', 'scTarjeta', 'scCambio', 'scVar', 'scPenalShootout',
+  'scVsPrepartido', 'scVsResultado', 'scFormacion', 'scFixture', 'scPresentacion', 'scPlacaResultado',
+  'scZocaloCorto', 'scTalentos', 'scZocaloLargo', 'scZocaloL',
+  'scMosca', 'scGrupos', 'scFixtureL', 'scSorteo', 'scDatos',
+];
+
+THEMES.supercopa = {
+  id: SUPERCOPA_THEME_ID,
+  name: 'GLA SUPERCOPA',
+  shortName: 'SUPERCOPA',
+  ready: true,
+  dataSource: 'manual',
+  palette: {
+    primary: '#0A0A0A',
+    accent: '#F4F4F4',
+    base: '#BCC2C2',
+  },
+  teams: [],
+  assets: Object.fromEntries(MODULE_IDS_SC.map((moduleId) => [moduleId, { status: 'ready' }])),
+};
+
 export function listThemes() {
   return Object.values(THEMES);
 }

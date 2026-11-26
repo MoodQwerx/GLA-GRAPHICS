@@ -48,6 +48,16 @@ import { renderC4nTablaFixturePanel } from './c4n/c4n-tablafixture-panel.js';
 import { setC4nLiveStatus } from './c4n/c4n-live-panel.js';
 import { renderC4nVarPanel } from './c4n/c4n-var-panel.js';
 import { renderC4nSponsorsJugadorPanel } from './c4n/c4n-sponsors-jugador-panel.js';
+// GLA SUPERCOPA (SOFTX [5]): paneles propios (master-control/js/sc/).
+import { renderScMarcadorPanel } from './sc/sc-marcador-panel.js';
+import { renderScTarjetasPanel, renderScCambiosPanel, renderScPenalShootoutPanel } from './sc/sc-eventos-panels.js';
+import { renderScVarPanel } from './sc/sc-var-panel.js';
+import { renderScFormacionPanel } from './sc/sc-formacion-panel.js';
+import { renderScPlantelesPanel } from './sc/sc-planteles-panel.js';
+import { renderScLayerAdjust } from './sc/sc-layer-adjust.js';
+import { renderScFixturePanel, renderScZocaloLPanel, renderScInfoPanel } from './sc/sc-misc-panels.js';
+import { renderScGruposPanel, renderScFixtureLPanel } from './sc/sc-lateral-panels.js';
+import { renderScSorteoPanel } from './sc/sc-sorteo-panel.js';
 import { createPanelLifecycle, setCurrentPanelLifecycle } from './panel-lifecycle.js';
 import { renderJugadoresPanel } from './jugadores-panel.js';
 import { renderZocaloEscudosPanel } from './zocalo-escudos-panel.js';
@@ -57,7 +67,7 @@ import { renderActualizadorDatosPanel } from './actualizador-datos-panel.js';
 import { loadGlaTorneoEdicion, setGlaTorneoEdicion } from './gla-torneo-source.js';
 import { updateLocalTeamCatalog, teamName } from '../../shared/teams.js';
 import { CUSTOM_COLOR_ID, colorHex, normalizeHexColor } from '../../shared/team-colors.js';
-import { isThemeReady, getTheme, getModuleAssetStatus, DEFAULT_THEME_ID, ARGENTINA_STREAMERS_THEME_ID, BAULETI_BALANZA_THEME_ID, COPA4N_THEME_ID } from '../../shared/themes.js';
+import { isThemeReady, getTheme, getModuleAssetStatus, DEFAULT_THEME_ID, ARGENTINA_STREAMERS_THEME_ID, BAULETI_BALANZA_THEME_ID, COPA4N_THEME_ID, SUPERCOPA_THEME_ID } from '../../shared/themes.js';
 import { ADJUST_REGISTRY } from '../../shared/adjust-registry.js';
 
 // Draft local por modulo: lo que el operador esta editando. Se inicializa
@@ -203,7 +213,8 @@ loadGlaTorneoEdicion();
 // Orden de categorias en el panel (broadcast: lo mas usado en vivo primero).
 // Orden pedido explicitamente: Mosca arriba de todo, Marcador justo
 // debajo, despues el resto sin cambios (2026-08-15).
-const CATEGORY_ORDER = ['Partido', 'Mosca', 'Marcador', 'Eventos', 'VAR / Replay', 'Zocalos', 'Sponsors', 'Placas', 'Charts', 'Grupos', 'Tablas', 'Brackets', 'General'];
+// 'Presentación' y 'Branding': categorías de GLA SUPERCOPA (ningún otro sistema las usa).
+const CATEGORY_ORDER = ['Partido', 'Presentación', 'Mosca', 'Marcador', 'Eventos', 'VAR / Replay', 'Zocalos', 'Branding', 'Sponsors', 'Placas', 'Charts', 'Grupos', 'Tablas', 'Brackets', 'General'];
 
 // "MARCADOR unificado" (2026-08-15, pedido explicito del usuario): en vez
 // de varias tabs sueltas en la navegacion (Marcador principal, Tiempo
@@ -264,7 +275,7 @@ function isArgentinaLiveModule(moduleId) {
 // C4N (2026-11-11): ZÓCALO TEXTO DOBLE fuera del panel (no operativo); MOSCA
 // LOGO y MOSCA TEXTO quedan reemplazadas por MOSCA C4N (c4nMosca). Siguen
 // definidas (datos guardados y funciones compartidas intactos), sin pestaña.
-const HIDDEN_FROM_NAV_IDS = new Set(['gol', 'zocaloFinal', 'zocaloFinalDiv', 'zocaloCompuestoLogo', 'bbGol', 'c4nZocaloTextoDoble', 'c4nMoscaLogo', 'c4nMoscaTexto']);
+const HIDDEN_FROM_NAV_IDS = new Set(['gol', 'zocaloFinal', 'zocaloFinalDiv', 'zocaloCompuestoLogo', 'bbGol', 'c4nZocaloTextoDoble', 'c4nMoscaLogo', 'c4nMoscaTexto', 'scDatos']);
 
 // BAULETI vs BALANZA (SOFTX [3], 2026-10-30): sus módulos "bb*" solo existen
 // en su navegación y el resto de los módulos no aparece en la suya. GOL no
@@ -277,11 +288,22 @@ const isBbTheme = () => activeThemeId === BAULETI_BALANZA_THEME_ID;
 // siempre: prefijo vacío).
 const isC4nModuleId = (id) => /^c4n[A-Z]/.test(id);
 const isC4nTheme = () => activeThemeId === COPA4N_THEME_ID;
-const moduleSystemPrefix = (id) => (isBbModuleId(id) ? 'bb' : isC4nModuleId(id) ? 'c4n' : '');
-const themeSystemPrefix = () => (isBbTheme() ? 'bb' : isC4nTheme() ? 'c4n' : '');
+// GLA SUPERCOPA (SOFTX [5], 2026-11-24): mismo criterio con sus módulos "sc*".
+const isScModuleId = (id) => /^sc[A-Z]/.test(id);
+const isScTheme = () => activeThemeId === SUPERCOPA_THEME_ID;
+// Sistemas de la familia "PNG + motion" (COPA 4 NACIONES y SUPERCOPA): Preview
+// multicapa, grupos exclusivos, REINICIAR TODO y ajuste de capas. Cada sistema
+// usa SUS constantes (las de C4N no cambian).
+const isPngFamilyTheme = () => isC4nTheme() || isScTheme();
+const moduleSystemPrefix = (id) => (isBbModuleId(id) ? 'bb' : isC4nModuleId(id) ? 'c4n' : isScModuleId(id) ? 'sc' : '');
+const themeSystemPrefix = () => (isBbTheme() ? 'bb' : isC4nTheme() ? 'c4n' : isScTheme() ? 'sc' : '');
 // C4N: pestaña de datos (no va al aire) y piezas en vivo / manejadas por su panel.
 const C4N_DATA_IDS = new Set(['c4nDatos']);
 const C4N_NO_UPDATE_IDS = new Set(['c4nMarcador', 'c4nTarjeta', 'c4nCambio']);
+const SC_DATA_IDS = new Set(['scDatos']);
+const SC_NO_UPDATE_IDS = new Set(['scMarcador', 'scTarjeta', 'scCambio']);
+const SC_MATCH_READERS = new Set(['scVsPrepartido', 'scVsResultado', 'scFormacion', 'scZocaloL', 'scPenalShootout', 'scFixture', 'scPresentacion', 'scPlacaResultado']);
+const familyDataIds = () => (isScTheme() ? SC_DATA_IDS : C4N_DATA_IDS);
 const C4N_MATCH_READERS = new Set(['c4nVsPrepartido', 'c4nVsResultado', 'c4nFormacion', 'c4nStatsPrevia', 'c4nStatsEntretiempo', 'c4nStatsFinal', 'c4nZocaloCompuesto', 'c4nPenalShootout']);
 // Ganchos del panel BxB visible (estado de la placa de tarjeta, etc.).
 let bbPanelHooks = null;
@@ -311,6 +333,20 @@ const C4N_EXCLUSIVE_GROUPS = [
   ['c4nFixture', 'c4nVsPrepartido', 'c4nVsResultado', 'c4nFormacion', 'c4nStatsPrevia', 'c4nStatsEntretiempo', 'c4nStatsFinal'], // pantalla completa
   ['c4nTarjeta', 'c4nCambio', 'c4nPenalShootout', 'c4nVar', 'c4nZocaloTexto', 'c4nZocaloCorto', 'c4nZocaloCortoDoble', 'c4nZocaloCompuesto', 'c4nMejoresJugadores', 'c4nSponsors'], // zona inferior
 ];
+// GLA SUPERCOPA: pantalla completa y zona inferior (placa de TARJETAS, VAR,
+// zócalos y barras VS). Marcador y mosca conviven con todo.
+// v3: PRESENTACIÓN DE PARTIDO y PLACA VS RESULTADO (sobre la PLACA) se suman a
+// la pantalla completa.
+const SC_EXCLUSIVE_GROUPS = [
+  ['scFixture', 'scFormacion', 'scPresentacion', 'scPlacaResultado', 'scSorteo'], // pantalla completa
+  ['scTarjeta', 'scCambio', 'scPenalShootout', 'scVar', 'scZocaloCorto', 'scTalentos', 'scZocaloLargo', 'scZocaloL', 'scVsPrepartido', 'scVsResultado'], // zona inferior
+  ['scGrupos', 'scFixtureL'], // L DERECHA (v2): comparten el brazo derecho de la L
+];
+const familyGroups = () => (isScTheme() ? SC_EXCLUSIVE_GROUPS : C4N_EXCLUSIVE_GROUPS);
+// v3: GRUPOS <-> FIXTURE L = RELEVO sobre la misma placa L_DERECHA: TAKE de la
+// nueva y OUT de la anterior en el mismo instante (sin esperar la salida);
+// Program deja la placa fija y solo cambia el contenido (SC_L_HANDOFF).
+const SC_HANDOFF_GROUP = SC_EXCLUSIVE_GROUPS[2];
 const BB_SWAP_WAIT_MS = 750;
 let bbSwapTimer = null;
 
@@ -323,11 +359,16 @@ function cancelBbSwap() {
 
 function bbTake(id, doTake) {
   cancelBbSwap();
-  const groups = isBbTheme() ? BB_EXCLUSIVE_GROUPS : isC4nTheme() ? C4N_EXCLUSIVE_GROUPS : [];
+  const groups = isBbTheme() ? BB_EXCLUSIVE_GROUPS : isC4nTheme() ? C4N_EXCLUSIVE_GROUPS : isScTheme() ? SC_EXCLUSIVE_GROUPS : [];
   const group = groups.find((g) => g.includes(id)) || null;
   const blockers = group ? group.filter((other) => other !== id && serverState[other]?.status === MODULE_STATUS.ON) : [];
   if (!blockers.length) {
     doTake();
+    return;
+  }
+  if (isScTheme() && group === SC_HANDOFF_GROUP) {
+    doTake();
+    for (const other of blockers) ws.send({ type: WS_MSG.OUT, moduleId: other });
     return;
   }
   for (const other of blockers) ws.send({ type: WS_MSG.OUT, moduleId: other });
@@ -454,7 +495,69 @@ async function runC4nReset() {
   }
   result.hidden = false;
 }
-resetAllBtn?.addEventListener('click', openC4nResetModal);
+// GLA SUPERCOPA: mismo REINICIAR TODO con su endpoint (POST /api/sc/reiniciar-todo).
+let scResetModal = null;
+function openScResetModal() {
+  if (!scResetModal) {
+    scResetModal = document.createElement('div');
+    scResetModal.className = 'c4n-reset-modal';
+    scResetModal.innerHTML = `<div class="c4n-reset-box" role="dialog" aria-modal="true" aria-labelledby="sc-reset-title">
+        <h2 id="sc-reset-title">¿REINICIAR TODO EL ESTADO OPERATIVO DE SUPERCOPA?</h2>
+        <p>Deja el sistema listo para empezar la transmisión.</p>
+        <ul>
+          <li>MARCADOR a 0 - 0: reloj, período, tiempo adicional, penales e incidencias (goles, tarjetas, cambios, VAR) limpios.</li>
+          <li>FIXTURE: los partidos con resultado vuelven a VS (equipos, fecha y horario quedan).</li>
+          <li>Todo fuera del aire y Preview vacío.</li>
+        </ul>
+        <p class="c4n-reset-keep">No se tocan equipos, planteles, fotos, configuración, perfiles, ajustes gráficos ni PNG.</p>
+        <div class="c4n-reset-result" hidden></div>
+        <div class="c4n-reset-actions">
+          <button type="button" class="c4n-reset-cancel" data-act="cancel">CANCELAR</button>
+          <button type="button" class="c4n-reset-confirm" data-act="confirm">REINICIAR TODO</button>
+        </div>
+      </div>`;
+    scResetModal.addEventListener('click', (e) => {
+      const act = e.target.closest('[data-act]')?.dataset.act;
+      if (e.target === scResetModal || act === 'cancel' || act === 'close') scResetModal.hidden = true;
+      else if (act === 'confirm') runScReset();
+    });
+    document.body.appendChild(scResetModal);
+  }
+  const confirmBtn = scResetModal.querySelector('[data-act]:not([data-act="cancel"])');
+  confirmBtn.dataset.act = 'confirm';
+  confirmBtn.textContent = 'REINICIAR TODO';
+  confirmBtn.disabled = false;
+  scResetModal.querySelector('.c4n-reset-cancel').hidden = false;
+  const result = scResetModal.querySelector('.c4n-reset-result');
+  result.hidden = true;
+  result.textContent = '';
+  scResetModal.hidden = false;
+  scResetModal.querySelector('.c4n-reset-cancel').focus();
+}
+async function runScReset() {
+  const confirmBtn = scResetModal.querySelector('[data-act="confirm"]');
+  const result = scResetModal.querySelector('.c4n-reset-result');
+  confirmBtn.disabled = true;
+  confirmBtn.textContent = 'REINICIANDO…';
+  try {
+    const res = await fetch('/api/sc/reiniciar-todo', { method: 'POST' });
+    const r = await res.json();
+    if (!res.ok || !r.ok) throw new Error(r.error || `HTTP ${res.status}`);
+    result.className = 'c4n-reset-result ok';
+    result.textContent = `SUPERCOPA REINICIADA. Partidos del fixture que volvieron a VS: ${r.partidos}. Fuera del aire: ${r.fueraDelAire.length ? r.fueraDelAire.map((id) => MODULES[id]?.label || id).join(', ') : 'nada estaba al aire'}.`;
+    scResetModal.querySelector('.c4n-reset-cancel').hidden = true;
+    confirmBtn.dataset.act = 'close';
+    confirmBtn.textContent = 'CERRAR';
+    confirmBtn.disabled = false;
+  } catch (err) {
+    result.className = 'c4n-reset-result error';
+    result.textContent = `NO SE PUDO REINICIAR: ${err.message}`;
+    confirmBtn.textContent = 'REINTENTAR';
+    confirmBtn.disabled = false;
+  }
+  result.hidden = false;
+}
+resetAllBtn?.addEventListener('click', () => (isScTheme() ? openScResetModal() : openC4nResetModal()));
 
 // Auto-guardado: cada edicion de campo (onDirty, ver field-editors.js)
 // programa un UPDATE al servidor con un debounce corto, para que todo lo
@@ -496,8 +599,8 @@ function sendC4nPreviewStack(replayId = null) {
   renderC4nPreviewBar();
 }
 function c4nPreviewAdd(id) {
-  if (!id || !MODULES[id] || C4N_DATA_IDS.has(id)) return;
-  const group = C4N_EXCLUSIVE_GROUPS.find((g) => g.includes(id)) || null;
+  if (!id || !MODULES[id] || familyDataIds().has(id)) return;
+  const group = familyGroups().find((g) => g.includes(id)) || null;
   for (let i = c4nPreviewStack.length - 1; i >= 0; i--) {
     const other = c4nPreviewStack[i];
     if (other !== id && group?.includes(other)) c4nPreviewStack.splice(i, 1);
@@ -517,7 +620,7 @@ function c4nPreviewClear() {
   sendC4nPreviewStack();
 }
 function renderC4nPreviewBar() {
-  if (!isC4nTheme()) {
+  if (!isPngFamilyTheme()) {
     if (c4nPreviewBar) c4nPreviewBar.hidden = true;
     const b = document.getElementById('btn-preview-out');
     if (b) b.hidden = true;
@@ -571,16 +674,17 @@ function renderC4nPreviewBar() {
 }
 
 function sendPreviewSnapshot(moduleId) {
-  // C4N: solo se reenvía la composición si la pieza está en Preview (nunca la agrega).
-  if (isC4nTheme()) {
+  // C4N / SUPERCOPA: solo se reenvía la composición si la pieza está en Preview (nunca la agrega).
+  if (isPngFamilyTheme()) {
     if (c4nPreviewStack.includes(moduleId)) sendC4nPreviewStack();
     return;
   }
   ws.send({ type: 'PREVIEW_MODULE', moduleId, data: draft[moduleId], allData: draft });
 }
 function sendPreviewUpdateIfActive(moduleId) {
-  if (isC4nTheme()) {
-    if (c4nPreviewStack.includes(moduleId)) sendC4nPreviewStack();
+  if (isPngFamilyTheme()) {
+    // SUPERCOPA: FIXTURE L sigue a GRUPOS (fuente de verdad del seeding).
+    if (c4nPreviewStack.includes(moduleId) || (moduleId === 'scGrupos' && c4nPreviewStack.includes('scFixtureL'))) sendC4nPreviewStack();
     return;
   }
   if (moduleId === previewedModuleId) sendPreviewSnapshot(moduleId);
@@ -1110,6 +1214,10 @@ function buildTabs() {
     // BxB: PLANTELES antes que EQUIPOS; abre en MARCADOR.
     byCategory.get('General').push('jugadoresAdmin', 'abreviaturas');
     if (!isBbModuleId(activeId) && activeId !== 'abreviaturas' && activeId !== 'jugadoresAdmin') activeId = 'bbMarcador';
+  } else if (isScTheme()) {
+    // SUPERCOPA: PLANTELES y EQUIPOS; abre en MARCADOR.
+    byCategory.get('General').push('jugadoresAdmin', 'abreviaturas');
+    if (!isScModuleId(activeId) && activeId !== 'abreviaturas' && activeId !== 'jugadoresAdmin') activeId = 'scMarcador';
   } else if (isC4nTheme()) {
     // C4N: ACTUALIZADOR DE DATOS (módulo c4nDatos), PLANTELES y EQUIPOS; abre en MARCADOR.
     byCategory.get('General').push('jugadoresAdmin', 'abreviaturas');
@@ -1545,12 +1653,13 @@ function bbPanelContext() {
       // Las piezas que leen el partido (matchState) siguen al Marcador en Preview.
       if (id === 'bbMarcador' && BB_MATCH_READERS.has(previewedModuleId)) sendPreviewSnapshot(previewedModuleId);
       if (id === 'c4nMarcador' && c4nPreviewStack.some((x) => x === 'c4nMarcador' || C4N_MATCH_READERS.has(x))) sendC4nPreviewStack();
+      if (id === 'scMarcador' && c4nPreviewStack.some((x) => x === 'scMarcador' || SC_MATCH_READERS.has(x))) sendC4nPreviewStack();
     },
     take: (id) => bbTake(id, () => ws.send({ type: WS_MSG.TAKE, moduleId: id, data: draft[id] })),
     out: (id) => ws.send({ type: WS_MSG.OUT, moduleId: id }),
     preview(id) {
       previewedModuleId = id;
-      if (isC4nTheme()) c4nPreviewAdd(id);
+      if (isPngFamilyTheme()) c4nPreviewAdd(id);
       else sendPreviewSnapshot(id);
     },
     setHooks(hooks) {
@@ -1587,6 +1696,17 @@ function renderPanel() {
     previewBtn.style.display = 'none';
     if (isBbTheme()) {
       renderBbEquiposPanel(extraContainer, { lifecycle: panelLifecycle });
+      updatePanelStatus();
+      return;
+    }
+    if (isScTheme()) {
+      renderBbEquiposPanel(extraContainer, {
+        lifecycle: panelLifecycle,
+        themeId: SUPERCOPA_THEME_ID,
+        description: 'Equipos de GLA SUPERCOPA (campeones de cada edición). Marcador, VS, Formación, Fixture y Planteles usan esta lista. Escudo = cualquier PNG de assets/themes/supercopa/escudos/ (un PNG nuevo aparece como PENDIENTE DE CONFIRMAR). Ocultar no borra nada.',
+        pendingBadge: 'PENDIENTE DE CONFIRMAR',
+        pendingText: 'PENDIENTE DE CONFIRMAR: escudo nuevo en la carpeta. No se usa en las gráficas hasta que lo confirmes.',
+      });
       updatePanelStatus();
       return;
     }
@@ -1648,6 +1768,12 @@ function renderPanel() {
       updatePanelStatus();
       return;
     }
+    if (isScTheme()) {
+      panelTitle.textContent = 'Planteles';
+      renderScPlantelesPanel(extraContainer, { lifecycle: panelLifecycle });
+      updatePanelStatus();
+      return;
+    }
     if (isC4nTheme()) {
       panelTitle.textContent = 'Planteles';
       renderC4nPlantelesPanel(extraContainer, { lifecycle: panelLifecycle });
@@ -1676,11 +1802,11 @@ function renderPanel() {
   // criterio que MARCADOR): ACTUALIZAR queda redundante ahi tambien, ver
   // "sendFormacionLive" mas abajo. "ALWAYS_LIVE_MODULE_IDS" (mismo dia,
   // ronda de correcciones siguiente): VAR Chequeo y Replay, mismo criterio.
-  if (MARCADOR_SUBSECTION_IDS.has(activeId) || activeId === 'formacionEquipos' || ALWAYS_LIVE_MODULE_IDS.has(activeId) || isArgentinaLiveModule(activeId) || BB_NO_UPDATE_IDS.has(activeId) || C4N_NO_UPDATE_IDS.has(activeId)) {
+  if (MARCADOR_SUBSECTION_IDS.has(activeId) || activeId === 'formacionEquipos' || ALWAYS_LIVE_MODULE_IDS.has(activeId) || isArgentinaLiveModule(activeId) || BB_NO_UPDATE_IDS.has(activeId) || C4N_NO_UPDATE_IDS.has(activeId) || SC_NO_UPDATE_IDS.has(activeId)) {
     updateBtn.style.display = 'none';
   }
   // C4N: ACTUALIZADOR DE DATOS nunca va al aire.
-  if (C4N_DATA_IDS.has(activeId)) {
+  if (C4N_DATA_IDS.has(activeId) || SC_DATA_IDS.has(activeId)) {
     takeBtn.style.display = 'none';
     updateBtn.style.display = 'none';
     outBtn.style.display = 'none';
@@ -2335,6 +2461,30 @@ function renderPanel() {
     renderBbPenalesPanel(extraContainer, bbPanelContext());
   } else if (activeId === 'bbCharts') {
     renderBbChartsPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'scMarcador') {
+    renderScMarcadorPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'scTarjeta') {
+    renderScTarjetasPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'scCambio') {
+    renderScCambiosPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'scPenalShootout') {
+    renderScPenalShootoutPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'scVar') {
+    renderScVarPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'scFormacion') {
+    renderScFormacionPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'scFixture') {
+    renderScFixturePanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'scZocaloL') {
+    renderScZocaloLPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'scGrupos') {
+    renderScGruposPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'scFixtureL') {
+    renderScFixtureLPanel(extraContainer, bbPanelContext());
+  } else if (activeId === 'scSorteo') {
+    renderScSorteoPanel(extraContainer, bbPanelContext());
+  } else if (['scVsPrepartido', 'scVsResultado', 'scPresentacion', 'scPlacaResultado'].includes(activeId)) {
+    renderScInfoPanel(extraContainer, bbPanelContext(), activeId);
   } else if (activeId === 'c4nMarcador') {
     renderC4nMarcadorPanel(extraContainer, bbPanelContext());
   } else if (activeId === 'c4nTarjeta') {
@@ -2415,6 +2565,10 @@ function renderPanel() {
   if (isC4nModuleId(activeId) && !C4N_DATA_IDS.has(activeId)) {
     renderC4nLayerAdjust(compositionContainer, draft[activeId], () => scheduleAutoSave(idForThisRender), activeId);
   }
+  // GLA SUPERCOPA: mismo ajuste de capas con su manifest.
+  if (isScModuleId(activeId) && !SC_DATA_IDS.has(activeId)) {
+    renderScLayerAdjust(compositionContainer, draft[activeId], () => scheduleAutoSave(idForThisRender), activeId);
+  }
 
   // RECURSO GRÁFICO (SOFTX): solo aparece si el módulo tiene recursos
   // registrados para el sistema activo (shared/asset-registry.js).
@@ -2433,13 +2587,13 @@ function previewAfterAssetReload(moduleId) {
     return;
   }
   previewedModuleId = activeId;
-  if (isC4nTheme()) c4nPreviewAdd(activeId);
+  if (isPngFamilyTheme()) c4nPreviewAdd(activeId);
   else sendPreviewSnapshot(activeId);
 }
 
 function updatePanelStatus() {
   renderC4nPreviewBar();
-  if (resetAllBtn) resetAllBtn.hidden = !isC4nTheme();
+  if (resetAllBtn) resetAllBtn.hidden = !isPngFamilyTheme();
   if (activeId === 'abreviaturas' || activeId === 'jugadoresAdmin' || activeId === 'actualizadorDatos') {
     panelStatus.textContent = 'CONFIG';
     panelStatus.className = 'status-pill off';
@@ -2489,21 +2643,21 @@ const ws = connect({
       // SELECT (ver TEAM_OPTIONS en shared/modules.js) -- sin esto, elegir
       // ARGENTINA STREAMERS seguía mostrando el desplegable de equipos de
       // GLA hasta cambiar de tab y volver.
-      if (activeId === 'abreviaturas' || activeId === 'jugadoresAdmin' || activeId === 'zocaloFinalDiv' || activeId === 'zocaloCompuesto' || activeId === 'scoreboard' || (isBbTheme() && isBbModuleId(activeId)) || (isC4nTheme() && isC4nModuleId(activeId))) {
+      if (activeId === 'abreviaturas' || activeId === 'jugadoresAdmin' || activeId === 'zocaloFinalDiv' || activeId === 'zocaloCompuesto' || activeId === 'scoreboard' || (isBbTheme() && isBbModuleId(activeId)) || (isC4nTheme() && isC4nModuleId(activeId)) || (isScTheme() && isScModuleId(activeId))) {
         renderPanel();
       }
     } else if (msg.type === 'PREVIEW_STACK') {
       // Composición de Preview (C4N) armada por este u otro Master: la lista se
       // mantiene igual en todos (solo el orden; los datos salen del draft).
-      if (isC4nTheme() && Array.isArray(msg.order) && (msg.hello || msg.from !== C4N_PREVIEW_CLIENT)) {
+      if (isPngFamilyTheme() && Array.isArray(msg.order) && (msg.hello || msg.from !== C4N_PREVIEW_CLIENT)) {
         c4nPreviewStack.splice(0, c4nPreviewStack.length, ...msg.order.filter((id) => MODULES[id]));
         renderC4nPreviewBar();
       }
-    } else if (msg.type === 'C4N_RESET') {
+    } else if (msg.type === 'C4N_RESET' || msg.type === 'SC_RESET') {
       // REINICIAR TODO (desde este u otro Master): los borradores de los
       // módulos reiniciados pasan a ser el estado limpio del servidor y se
       // cancelan sus autoguardados pendientes (nunca vuelve el estado viejo).
-      if (isC4nTheme() && msg.modules && typeof msg.modules === 'object') {
+      if (((msg.type === 'C4N_RESET' && isC4nTheme()) || (msg.type === 'SC_RESET' && isScTheme())) && msg.modules && typeof msg.modules === 'object') {
         for (const [id, data] of Object.entries(msg.modules)) {
           if (!MODULES[id] || !data || typeof data !== 'object') continue;
           clearTimeout(saveTimers[id]);
@@ -2637,6 +2791,11 @@ const ws = connect({
       bbPanelHooks?.onModuleUpdate?.(msg.moduleId);
       // C4N: la vista del torneo la escribe SOLO el servidor; Master mantiene
       // su copia al día (Preview y paneles la leen desde el draft).
+      if (msg.moduleId === 'scDatos' && isScTheme() && msg.moduleState?.data) {
+        draft.scDatos = JSON.parse(JSON.stringify(msg.moduleState.data));
+        if (c4nPreviewStack.length) sendC4nPreviewStack();
+        bbPanelHooks?.onDatos?.();
+      }
       if (msg.moduleId === 'c4nDatos' && isC4nTheme() && msg.moduleState?.data) {
         draft.c4nDatos = JSON.parse(JSON.stringify(msg.moduleState.data));
         // Preview = Program (2026-11-11): las piezas que leen la vista del torneo
@@ -2858,7 +3017,7 @@ takeBtn.addEventListener('click', () => {
   }
 
   // BAULETI vs BALANZA y COPA 4 NACIONES: sus propios grupos exclusivos (ver bbTake).
-  if (isBbTheme() || isC4nTheme()) {
+  if (isBbTheme() || isPngFamilyTheme()) {
     bbTake(activeId, doTake);
     return;
   }
@@ -2910,12 +3069,12 @@ updateBtn.addEventListener('click', () => {
 previewBtn.addEventListener('click', () => {
   previewedModuleId = activeId;
   // C4N: PREVIEW agrega la pieza a la composición (multicapa).
-  if (isC4nTheme()) c4nPreviewAdd(activeId);
+  if (isPngFamilyTheme()) c4nPreviewAdd(activeId);
   else sendPreviewSnapshot(activeId);
 });
 outBtn.addEventListener('click', () => {
   // BxB: SACAR durante el cambio de placa cancela el TAKE que esperaba.
-  if (isBbTheme() || isC4nTheme()) cancelBbSwap();
+  if (isBbTheme() || isPngFamilyTheme()) cancelBbSwap();
   // Si el operador saca Formacion a mano mientras hay un cambio de equipo
   // en curso (OUT ya disparado, esperando para el TAKE automatico), hay
   // que cancelar ese TAKE pendiente -- si no, el modulo volveria solo al

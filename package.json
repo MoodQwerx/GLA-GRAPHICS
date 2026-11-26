@@ -11,6 +11,7 @@
     "start:as": "node server/index.js --system=argentinaStreamers",
     "start:bb": "node server/index.js --system=bauletiBalanza",
     "start:c4n": "node server/index.js --system=copa4naciones",
+    "start:sc": "node server/index.js --system=supercopa",
     "test:persistence": "node scripts/test-persistence.mjs",
     "migrate:theme-layouts": "node scripts/migrate-theme-layouts.mjs",
     "migrate:theme-layouts:apply": "node scripts/migrate-theme-layouts.mjs --apply"

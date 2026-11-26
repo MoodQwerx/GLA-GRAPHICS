@@ -2,6 +2,49 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [Unreleased] - 2026-11-25 (124)
+
+### Agregado — GLA SUPERCOPA: PANTALLA SORTEO (solo el sistema [5]; los demás sistemas sin cambios)
+
+- **Módulo `scSorteo`** (Master > GRUPOS > PANTALLA SORTEO): sorteo televisivo de los equipos de la SUPERCOPA. Panel: elegir EQUIPO y después LUGAR (A1 A2 A3 / B1 B2 B3); un equipo con lugar se mueve; un lugar ocupado pide confirmación y el equipo que estaba vuelve al centro (nunca duplicados); QUITAR y REINICIAR SORTEO. Participantes: los equipos de la web SUPERCOPA (o el catálogo de EQUIPOS sin web). Independiente de GRUPOS (no cambia el seeding de FIXTURE L); persistido; REINICIAR TODO no lo borra.
+- **Pantalla**: "SUPERCOPA" / "SORTEO DE EQUIPOS", GRUPO A a la izquierda y GRUPO B a la derecha (renglones "1." "2." "3." con zócalo gris, escudo y nombre), escudos sin grupo al centro (3 x 2, lugares fijos). Asignar = el escudo se levanta, vuela en arco con brillo y aterriza en su renglón (destello del zócalo + nombre con wipe); quitar / mover = el mismo vuelo; un reemplazo hace salir primero al que estaba. Cambios seguidos durante un vuelo: el vuelo termina en el acto y arranca el nuevo (sin escudos duplicados ni perdidos, sin acumular nodos). Web Animations, sin timers propios.
+- **Salida propia `/pantalla`** (`program/pantalla.html` + `program/js/pantalla-main.js`, ruta en `server/index.js`): siempre muestra el sorteo y responde en vivo al panel; no depende de TAKE / OUT ni toca Program / Preview. Con TAKE también sale en Program (pantalla completa, grupo exclusivo con FIXTURE / FORMACIÓN / PRESENTACIÓN / PLACA VS RESULTADO) y en Preview. Mismo renderer: `program/js/renderers/scSorteo.js`.
+
+## [Unreleased] - 2026-11-25 (123)
+
+### Cambiado / Agregado — GLA SUPERCOPA v3 (solo el sistema [5]; GLA, Argentina Streamers, Bauleti vs Balanza y Copa 4 Naciones sin cambios de comportamiento)
+
+- **GRUPOS**: renglones "1." "2." "3." debajo de GRUPO A / GRUPO B (los lugares A1-B3 ya no se ven), cada uno sobre un zócalo gris. Con GRUPOS al aire, asignar o cambiar un equipo anima SOLO ese renglón (sale el anterior, entra el nuevo con wipe + fade, brillo del zócalo), sin cut y sin rearmar la placa. Seeding y mapeo de FIXTURE L sin cambios.
+- **Relevo GRUPOS <-> FIXTURE L**: con una al aire, TAKE de la otra deja la placa L_DERECHA fija y cambia solo el contenido, en los dos sentidos (Program y Preview). Master manda TAKE + OUT juntos para ese par; Program / Preview usan las clases `sc-handoff-in` / `sc-handoff-out` (`program/js/main.js`, `program/js/preview-main.js`: solo actúan con scGrupos / scFixtureL).
+- **MOSCA debajo de la tabla L** (como en COPA 4 NACIONES): orden de capas en `program/index.html` y `preview.html`.
+- **PENAL SHOOTOUT**: "CRONÓMETRO: 00:00" sobre un zócalo gris integrado a la placa.
+- **PRESENTACIÓN DE PARTIDO** (`scPresentacion`, nuevo) y **PLACA VS RESULTADO** (`scPlacaResultado`, nuevo) sobre la PLACA de FORMACIÓN: escudos grandes, nombres en pareja (mismo tamaño y mismos renglones) con zócalo gris, zócalo de fase / instancia; VS al centro o recuadro claro de goles ("2 - 1" o "2(3) - 2(2)", penales de la tanda o manuales, guion siempre centrado). Se suman al grupo exclusivo de pantalla completa.
+- **Prueba** `performance-lab/supercopa-test.mjs`: GRUPOS 1/2/3 + zócalos, cambio al aire por renglón, MOSCA debajo de GRUPOS / FIXTURE L, relevo muestreado por cuadro (x10, Preview), zócalo del shootout, las dos placas nuevas (scores, penales, fases, renglones en pareja), exclusión de pantalla completa y Preview = Program.
+
+## [Unreleased] - 2026-11-25 (122)
+
+### Agregado / Cambiado — GLA SUPERCOPA v2 (solo el sistema [5]; GLA, Argentina Streamers, Bauleti vs Balanza y Copa 4 Naciones sin cambios)
+
+- **Datos web**: sección SUPERCOPA de gla.futbol (torneo con ID estable `6ade5b4cc68d5ba9b9a60c81`, nunca Relámpago #1-#4 ni C4N): equipos con nombre oficial y escudo (descargado y confirmado en EQUIPOS), planteles (fuente WEB / MANUAL por equipo, IMPORTAR WEB A MANUAL), fixture con hora Argentina y resultados. Último snapshot válido si la web falla o viene vacía; lo manual nunca se pisa; ajustes de partidos web guardados aparte. `POST /api/sc/sync`, `/api/sc/fixture/copiar-web`, `/api/sc/fixture-web/:matchId`.
+- **TARJETAS** según la referencia: "TARJETA AMARILLA - 12'", tarjeta grande a la izquierda, "10. MASSI", escudo + equipo. **PENAL SHOOTOUT** según la referencia: [escudo] / "10. MASSI" / "CRONÓMETRO: 00:00" (00:00 en cada TAKE), jugador del plantel o manual, intento registrado en la tanda. Placa derivada `fondos/tarjetas-izquierda.png` (filete desde x 160).
+- **CAMBIOS múltiples**: LISTA (CAMBIO 1..N) que sale en secuencia (5 s por cambio, configurable; solo cambian los textos; después del último sale la pieza). Sin timers por cambio.
+- **VAR**: decisión final titulada DECISIÓN CONFIRMADA. **VS PREPARTIDO / RESULTADO**: sección ESTADO (A CONTINUACIÓN / EN JUEGO - 1T / ENTRETIEMPO / EN JUEGO - 2T / FINAL / MANUAL; automático desde el Marcador).
+- **FORMACIÓN** y **FIXTURE** sobre la PLACA nueva (`PLACAS.png`); FIXTURE por día (hasta 9 partidos). **TALENTOS** 1-3 con el tamaño compacto de 4. **MOSCA** nueva (`MOSCA_SUPERCOPA.png`) con la hora real de Argentina (HH:MM, sin timers propios).
+- **GRUPOS** y **FIXTURE L** (nuevos, sobre `L_DERECHA.png`, zona exclusiva): GRUPOS es la fuente de verdad del seeding; SÁBADO 28 P1-P9 con el mapeo del organizador (11:00-19:00) y ajustes aparte; DOMINGO 29 semifinales y gran final (TBD hasta definirlas). Lógica en `shared/sc-seeding.js`. REINICIAR TODO no los toca.
+- `shared/asset-registry.js`: una pieza de SUPERCOPA puede tener id de recurso propio (no hereda la línea de base del PNG anterior). Sin efecto en los demás sistemas.
+- **Prueba** `performance-lab/supercopa-test.mjs` ampliada (web simulada con señuelo, tarjetas, cambios en secuencia, VAR, penal shootout, ESTADO, formación, talentos, mosca en otra zona horaria, grupos / fixture L, persistencia, nodos / listeners / intervalos).
+
+## [Unreleased] - 2026-11-24 (121)
+
+### Agregado — GLA SUPERCOPA, sistema [5] de SOFTX (GLA, Argentina Streamers, Bauleti vs Balanza y Copa 4 Naciones sin cambios de comportamiento)
+
+- **Nuevo sistema** `supercopa` en el selector (opción [5] de START SOFTX, `START GLA SUPERCOPA.bat`, `start.bat supercopa`, `npm run start:sc`). Theme, módulos `sc*`, manifest, datos (`data/supercopa/`), equipos, planteles, estado y rutas (`/api/sc/*`) propios. Detalle: [docs/SUPERCOPA.md](docs/SUPERCOPA.md).
+- **PNG del ZIP** `cosas sueltas/gla_supercopa.zip` (14 archivos, medidos) copiados sin modificar a `assets/themes/supercopa/fondos|logos/`; derivados: emblema 512 px y rótulo SUPERCOPA (recorte del marcador).
+- **Módulos**: MARCADOR (FIXTURE / MANUAL, adicional sin tope, penales de 3 o 5, ENTRETIEMPO), TARJETAS y CAMBIOS (plantel o MANUAL, sin minuto al aire), VAR (3 posiciones del PNG), PENAL SHOOTOUT, VS PREPARTIDO / RESULTADO, FORMACIÓN (fútbol 6 / 11, MANUAL, POR LISTA, guardar / usar anterior, camisetas con dorsal centrado), FIXTURE (barras VS, penales aparte), ZÓCALO CORTO, TALENTOS 1-4, ZÓCALO LARGO, ZÓCALO L y MOSCA. **Estadísticas: no implementadas por ahora.**
+- **Operación compartida con C4N** sin cambiar C4N: Preview multicapa, grupos exclusivos y REINICIAR TODO (`master-control/js/main.js` elige las constantes del sistema activo); categorías nuevas `Presentación` y `Branding` en el orden del panel.
+- `shared/sc-lineup.js`: análisis POR LISTA con la cantidad de titulares como parámetro (copia; `shared/c4n-lineup.js` sin cambios).
+- **Prueba** `performance-lab/supercopa-test.mjs` (copia de datos, puerto 4436, escudos de prueba que se borran siempre).
+
 ## [Unreleased] - 2026-11-14 (120)
 
 ### Agregado / Corregido — COPA 4 NACIONES: REINICIAR TODO (reset operativo) y FIXTURE con resultado por penales (GLA, Argentina Streamers y Bauleti vs Balanza sin cambios)

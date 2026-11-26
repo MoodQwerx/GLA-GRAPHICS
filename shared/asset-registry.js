@@ -9,8 +9,9 @@
 // ARGENTINA STREAMERS: se derivan del manifest que ya existía en
 // shared/themes.js (THEMES.argentinaStreamers.assets) -- mismo archivo que
 // consumen sus renderers, sin copiar ninguna ruta.
-import { THEMES, DEFAULT_THEME_ID, ARGENTINA_STREAMERS_THEME_ID, COPA4N_THEME_ID } from './themes.js';
+import { THEMES, DEFAULT_THEME_ID, ARGENTINA_STREAMERS_THEME_ID, COPA4N_THEME_ID, SUPERCOPA_THEME_ID } from './themes.js';
 import { C4N_FONDOS, C4N_EVENT_LOGO, c4nUrl } from './c4n-assets.js';
+import { SC_FONDOS, scUrl } from './sc-assets.js';
 
 export const ASSET_KIND = {
   ALPHA_VIDEO: 'alpha-video',
@@ -170,14 +171,23 @@ const C4N_ASSETS = {};
 for (const f of C4N_FONDOS) (C4N_ASSETS[f.moduleId] ||= []).push(c4nEntry(f, f.slot || 'fondo'));
 for (const moduleId of C4N_EVENT_LOGO.modules) C4N_ASSETS[moduleId].push(c4nEntry(C4N_EVENT_LOGO, 'logo'));
 
+// GLA SUPERCOPA (SOFTX [5]): mismo criterio, manifest propio (shared/sc-assets.js).
+// Todos los PNG ya están entregados: "pending" solo informa si falta el archivo.
+const SC_ASSETS = {};
+for (const f of SC_FONDOS) {
+  // resourceId (v2): una pieza nueva puede tener id propio (no hereda la línea de base del PNG anterior).
+  (SC_ASSETS[f.moduleId] ||= []).push({ slot: f.slot, label: f.label, path: scUrl(f.folder, f.file), kind: I, pending: true, size: f.size, alpha: f.alpha, required: f.required, resourceId: f.resourceId });
+}
+
 const REGISTRY = {
   [DEFAULT_THEME_ID]: GLA_ASSETS,
   [ARGENTINA_STREAMERS_THEME_ID]: deriveFromThemeManifest(ARGENTINA_STREAMERS_THEME_ID),
   [COPA4N_THEME_ID]: C4N_ASSETS,
+  [SUPERCOPA_THEME_ID]: SC_ASSETS,
 };
 
 function withId(systemId, moduleId, entry) {
-  return { ...entry, id: `${systemId}.${moduleId}.${entry.slot}`, systemId, moduleId };
+  return { ...entry, id: entry.resourceId || `${systemId}.${moduleId}.${entry.slot}`, systemId, moduleId };
 }
 
 // Ruta GLA de un recurso puntual -- la usan los renderers en vez de una
@@ -208,7 +218,7 @@ export function listSystemAssets(systemId) {
 export function getAssetById(assetId) {
   const [systemId, moduleId, slot] = String(assetId || '').split('.');
   if (!systemId || !moduleId || !slot) return null;
-  const entry = REGISTRY[systemId]?.[moduleId]?.find((e) => e.slot === slot);
+  const entry = REGISTRY[systemId]?.[moduleId]?.find((e) => (e.resourceId ? e.resourceId === assetId : e.slot === slot));
   return entry ? withId(systemId, moduleId, entry) : null;
 }
 

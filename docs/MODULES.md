@@ -248,3 +248,30 @@ Solo existen en la navegación de COPA 4 NACIONES. **REINICIAR TODO** (debajo de
 - **Fondos de estudio** (`fondo.mp4`, `fondo-logo.mp4`): son background de escena, no graficas operables desde Program/Master Control.
 
 Todos estos quedan en `ai-gfx/` (archivo fuente, no se sirve en runtime) a la espera de contenido/confirmacion antes de integrarlos.
+
+### GLA SUPERCOPA — módulos `sc*` (SOFTX [5])
+
+Solo existen en la navegación de GLA SUPERCOPA (PARTIDO · PRESENTACIÓN · ZÓCALOS · BRANDING · GRUPOS, más PLANTELES y EQUIPOS). PNG, medidas, fuente web (gla.futbol, torneo SUPERCOPA por ID estable) y faltantes: [SUPERCOPA.md](SUPERCOPA.md). **MÓDULOS DE ESTADÍSTICAS: NO IMPLEMENTADOS.**
+
+| Módulo | PNG / posición | Contenido |
+|---|---|---|
+| MARCADOR `scMarcador` | MARCADOR.png · arriba izq. (+ capas adicional / penales / entretiempo) | FIXTURE / MANUAL, escudos, siglas, goles, reloj, período, adicional sin tope, tanda de 3 o 5, resultado al fixture; `live` |
+| TARJETAS `scTarjeta` | TARJETAS (filete desde x 160) · abajo izq. | v2: "TARJETA AMARILLA - 12'", tarjeta grande (amarilla / roja / azul), "10. MASSI", escudo + equipo |
+| CAMBIOS `scCambio` | TARJETAS.png · abajo izq. | ENTRA / SALE (plantel o manual); v2: LISTA en secuencia (5 s por cambio, sale sola) |
+| VAR `scVar` | ZOCALOS_VAR.png · 3 posiciones | decisión (final = DECISIÓN CONFIRMADA), motivo |
+| PENAL SHOOTOUT `scPenalShootout` | TARJETAS (filete desde x 160) · abajo izq. | v2: [escudo] / "10. MASSI" / CRONÓMETRO desde 00:00 por TAKE (v3: sobre zócalo gris); `live` |
+| VS PREPARTIDO `scVsPrepartido` | ZOCALO_VS.png · abajo | escudos, nombres; ESTADO (automático / fijo / manual) · fase · horario; `live` |
+| VS RESULTADO `scVsResultado` | ZOCALO_vs_marcador.png · abajo | goles, ESTADO, penales aparte; `live` |
+| FORMACIÓN `scFormacion` | PLACAS.png · pantalla completa | fútbol 6 / 11, camisetas + dorsal, suplentes |
+| PRESENTACIÓN DE PARTIDO `scPresentacion` | PLACAS.png · pantalla completa | v3: escudos grandes, nombres en pareja con zócalo gris, VS, zócalo de fase / instancia; `live` |
+| PLACA VS RESULTADO `scPlacaResultado` | PLACAS.png · pantalla completa | v3: misma familia; recuadro de goles "2 - 1" / "2(3) - 2(2)", ESTADO, fase; `live` |
+| FIXTURE `scFixture` | PLACAS.png + barras VS · pantalla completa | WEB / MANUAL, un día (hasta 9 partidos), VS / resultado / penales; `live` |
+| ZÓCALO CORTO `scZocaloCorto` | CORTO SIMPLE / DOBLE · abajo izq. | nombre (+ cargo) |
+| TALENTOS `scTalentos` | CORTO DOBLE · 1 a 4 placas | nombre + cargo por placa (v2: todas del tamaño compacto de 4) |
+| ZÓCALO LARGO `scZocaloLargo` | LARGO SIMPLE / DOBLE · abajo centro | uno o dos renglones |
+| ZÓCALO L `scZocaloL` | ZOCALO_L.png · franja inferior | emblema / escudos, dos renglones, sponsors; `live` |
+| MOSCA SUPERCOPA `scMosca` | MOSCA_SUPERCOPA.png · arriba der. | v2: hora real de Argentina (HH:MM) en el recuadro blanco; v3: DEBAJO de la tabla L; `live` |
+| GRUPOS `scGrupos` | L_DERECHA.png · columna derecha | GRUPO A / GRUPO B, renglones "1." "2." "3." con zócalo gris (lugares A1-A3, B1-B3); fuente de verdad del seeding; v3: cambio de equipo al aire animado; relevo con FIXTURE L sin sacar la placa |
+| PANTALLA SORTEO `scSorteo` | fondo propio · pantalla completa + salida `/pantalla` | sorteo en vivo: escudos del centro que vuelan a GRUPO A / GRUPO B (A1..B3), reasignación, reemplazo controlado |
+| FIXTURE L `scFixtureL` | L_DERECHA.png · columna derecha | SÁBADO 28 (P1-P9 derivados de GRUPOS, 11:00-19:00, ajustes aparte) / DOMINGO 29 (semifinales y final, TBD); `live` |
+| (datos) `scDatos` | — | fixture efectivo (web o manual), visual de jugadores, sponsors (sin pestaña) |

@@ -2,7 +2,7 @@
 
 ## Producto
 
-SOFTX: sistema local de gráficas para transmisiones de fútbol. Cada ejecución inicia un único sistema, fijo hasta cerrar (ARGENTINA STREAMERS, GLA RELÁMPAGO, BAULETI vs BALANZA o COPA 4 NACIONES; internamente un "theme"), elegido con START SOFTX.bat / START GLA RELÁMPAGO.bat / START ARGENTINA STREAMERS.bat / START BAULETI VS BALANZA.bat / START COPA 4 NACIONES.bat (start.bat -> node server/index.js --system=...):
+SOFTX: sistema local de gráficas para transmisiones de fútbol. Cada ejecución inicia un único sistema, fijo hasta cerrar (ARGENTINA STREAMERS, GLA RELÁMPAGO, BAULETI vs BALANZA, COPA 4 NACIONES o GLA SUPERCOPA; internamente un "theme"), elegido con START SOFTX.bat / START GLA RELÁMPAGO.bat / START ARGENTINA STREAMERS.bat / START BAULETI VS BALANZA.bat / START COPA 4 NACIONES.bat / START GLA SUPERCOPA.bat (start.bat -> node server/index.js --system=...):
 
 - **Master Control** en `/master-control/` (acceso abreviado `/master`): operación, carga de datos, estado al aire y Preview Monitor.
 - **Program** en `/program/`: salida transparente 1920×1080 para OBS, vMix o Browser Source equivalente.

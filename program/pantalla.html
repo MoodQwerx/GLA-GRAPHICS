@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>SOFTX — Pantalla Sorteo</title>
+<link rel="icon" type="image/png" sizes="64x64" href="/assets/images/gla-favicon.png" />
+<link rel="stylesheet" href="/program/css/theme.css?v=2" />
+<link rel="stylesheet" href="/program/css/overlay.css?v=24" />
+<link rel="stylesheet" href="/program/css/sc.css" />
+</head>
+<body class="sc-pantalla">
+<!-- PANTALLA SORTEO (GLA SUPERCOPA, 2026-11-25): salida propia /pantalla.
+     Muestra SIEMPRE el sorteo de equipos (módulo "scSorteo", operado desde
+     Master > GRUPOS > PANTALLA SORTEO) y responde en vivo; no depende de
+     TAKE / OUT y nunca toca Program ni Preview. Mismo renderer que Program
+     (program/js/renderers/scSorteo.js). -->
+<div id="stage">
+  <div id="mod-scSorteo" class="gfx gfx-fullstage sc-root sc-fs is-in is-hidden"><div class="content"></div></div>
+  <div id="sc-pantalla-aviso" class="sc-pantalla-aviso" hidden>PANTALLA SORTEO: disponible con GLA SUPERCOPA activo</div>
+</div>
+<script type="module" src="/program/js/pantalla-main.js"></script>
+</body>
+</html>

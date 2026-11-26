@@ -194,3 +194,11 @@ Cuarto sistema (14 y 15 de noviembre de 2026, SpeedCamp Buenos Aires; Argentina 
 
 - **ENTRETIEMPO** muestra lo publicado hasta ese momento (en un partido en juego, el primer tiempo) con "RESULTADO PARCIAL"; **FIN DE PARTIDO** agrega 2º tiempo, penales y MVP. La duración del tiempo para la línea de tiempo es el "FIN DEL CONTADOR" del Marcador (15:00 por defecto). Sin datos: mensajes en el panel y placa con "SIN DATOS"/"SIN INCIDENCIAS", nunca un error.
 - **Animación**: barrido diagonal + apertura del panel y entrada escalonada de textos, números, marcadores y barras (solo en el TAKE real; un UPDATE al aire repinta sin re-animar); salida con desplazamiento + fundido.
+
+## GLA SUPERCOPA (`supercopa`, SOFTX [5], 2026-11-24)
+
+- **Qué es**: el torneo de los campeones de cada edición de GLA RELÁMPAGO del año. Misma operación que COPA 4 NACIONES, identidad gráfica propia (PNG de `cosas sueltas/gla_supercopa.zip`). **Sin módulos de estadísticas por ahora.**
+- **Arranque**: opción [5] de START SOFTX, `START GLA SUPERCOPA.bat`, `start.bat supercopa`, `npm run start:sc` o `--system=supercopa` (alias `gla-supercopa`, `sc`).
+- **Aislamiento**: theme `THEMES.supercopa` (sin equipos precargados), módulos `sc*`, manifest `shared/sc-assets.js`, datos en `data/supercopa/`, escudos en `assets/themes/supercopa/escudos/`, rutas `/api/sc/*` (`server/supercopa.js`), CSS `program/css/sc.css`, paneles `master-control/js/sc/`.
+- **Datos web (v2, 2026-11-25)**: sección SUPERCOPA de gla.futbol, torneo con ID estable `6ade5b4cc68d5ba9b9a60c81` (equipos, escudos, planteles, fixture, resultados); nunca Relámpago #1-#4 ni C4N; MANUAL siempre disponible y nunca pisado.
+- Detalle completo (inventario del ZIP y de los PNG v2, fuente web, asset → módulo, faltantes, módulos, endpoints, prueba): [`SUPERCOPA.md`](SUPERCOPA.md).

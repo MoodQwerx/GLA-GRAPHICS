@@ -55,7 +55,7 @@ function teardown(target) {
   }
   for (const key of Object.keys(content.dataset)) delete content.dataset[key];
   content.innerHTML = '';
-  target.root.classList.remove('is-in');
+  target.root.classList.remove('is-in', 'sc-handoff-out');
   target.root.classList.add('is-hidden');
 }
 
@@ -149,10 +149,23 @@ function clearStack() {
   for (const id of stackShown) if (els[id]) teardown(els[id]);
   stackShown.clear();
 }
+// GLA SUPERCOPA v3: GRUPOS <-> FIXTURE L con la placa L_DERECHA fija, igual
+// que en Program (ver SC_L_HANDOFF en program/js/main.js y sc.css): la que
+// entra monta la placa sin animar; la que sale queda encima con su placa
+// oculta mientras sale su contenido.
+const SC_L_HANDOFF = { scGrupos: 'scFixtureL', scFixtureL: 'scGrupos' };
 function showStack(msg) {
   if (shownId && els[shownId]) teardown(els[shownId]);
   shownId = null;
   const order = Array.isArray(msg.order) ? msg.order : [];
+  for (const id of order) {
+    const partner = SC_L_HANDOFF[id];
+    if (!partner || !els[id] || stackShown.has(id)) continue;
+    const handoff = stackShown.has(partner) && !order.includes(partner) && Boolean(els[partner]);
+    els[id].root.classList.toggle('sc-handoff-in', handoff);
+    els[id].root.classList.remove('sc-handoff-out');
+    if (handoff) els[partner].root.classList.add('sc-handoff-out');
+  }
   for (const id of [...stackShown]) if (!order.includes(id)) stackOut(id);
   for (const id of order) stackIn(id, msg.items?.[id], msg.allData, msg.replay === id);
 }

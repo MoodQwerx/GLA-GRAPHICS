@@ -126,13 +126,16 @@ const THEME_CREST_DIRS = {
   bauletiBalanza: { dir: path.resolve(process.cwd(), 'assets', 'themes', 'bauleti-balanza', 'escudos'), url: '/assets/themes/bauleti-balanza/escudos/' },
   // COPA 4 NACIONES (SOFTX [4], 2026-11-04): carpeta propia de escudos.
   copa4naciones: { dir: path.resolve(process.cwd(), 'assets', 'themes', 'copa4naciones', 'crests'), url: '/assets/themes/copa4naciones/crests/' },
+  // GLA SUPERCOPA (SOFTX [5], 2026-11-24): carpeta propia de escudos (vacía de
+  // fábrica: cada PNG que se copie aparece como equipo PENDIENTE).
+  supercopa: { dir: path.resolve(process.cwd(), 'assets', 'themes', 'supercopa', 'escudos'), url: '/assets/themes/supercopa/escudos/' },
 };
 
 // Themes manuales con EQUIPOS extendido (BAULETI vs BALANZA): escudo elegido
 // de la carpeta del theme ("crestFile"), color propio y orden manual, todo en
 // el mismo theme-team-overrides.json. Argentina Streamers no entra aca: su
 // catalogo sale exactamente igual que siempre.
-const EXTENDED_MANUAL_THEMES = new Set(['bauletiBalanza', 'copa4naciones']);
+const EXTENDED_MANUAL_THEMES = new Set(['bauletiBalanza', 'copa4naciones', 'supercopa']);
 
 export function listThemeCrestFiles(themeId) {
   const config = THEME_CREST_DIRS[themeId];

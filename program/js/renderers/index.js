@@ -74,6 +74,19 @@ import { renderC4nFixture as c4nFixture } from './c4nFixture.js';
 import { renderC4nStatsPrevia as c4nStatsPrevia, renderC4nStatsEntretiempo as c4nStatsEntretiempo, renderC4nStatsFinal as c4nStatsFinal } from './c4nStats.js';
 // "c4nDatos" es solo datos (nunca va al aire).
 const c4nDatos = () => {};
+// GLA SUPERCOPA (SOFTX [5]): renderers sc* (program/css/sc.css).
+import scMarcador from './scMarcador.js';
+import { renderScTarjeta as scTarjeta, renderScCambio as scCambio, renderScPenalShootout as scPenalShootout } from './scEventos.js';
+import { renderScVar as scVar } from './scVar.js';
+import {
+  renderScZocaloCorto as scZocaloCorto, renderScTalentos as scTalentos, renderScZocaloLargo as scZocaloLargo,
+  renderScZocaloL as scZocaloL, renderScMosca as scMosca,
+} from './scZocalos.js';
+import { renderScVsPrepartido as scVsPrepartido, renderScVsResultado as scVsResultado, renderScFixture as scFixture, renderScFormacion as scFormacion, renderScPresentacion as scPresentacion, renderScPlacaResultado as scPlacaResultado } from './scPlacas.js';
+import { renderScGrupos as scGrupos, renderScFixtureL as scFixtureL } from './scLateral.js';
+import { renderScSorteo as scSorteo } from './scSorteo.js';
+// "scDatos" es solo datos (nunca va al aire).
+const scDatos = () => {};
 import zocaloVs from './zocaloVs.js';
 
 // Registro de funciones de render: id de modulo -> (contentEl, data, justTaken, onOneShotEnded) => void
@@ -164,4 +177,24 @@ export const renderers = {
   c4nStatsEntretiempo,
   c4nStatsFinal,
   c4nDatos,
+  scMarcador,
+  scTarjeta,
+  scCambio,
+  scVar,
+  scPenalShootout,
+  scVsPrepartido,
+  scVsResultado,
+  scFormacion,
+  scFixture,
+  scPresentacion,
+  scPlacaResultado,
+  scZocaloCorto,
+  scTalentos,
+  scZocaloLargo,
+  scZocaloL,
+  scMosca,
+  scGrupos,
+  scFixtureL,
+  scSorteo,
+  scDatos,
 };

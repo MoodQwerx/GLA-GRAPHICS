@@ -65,6 +65,7 @@ import { getActiveThemeId, getSystemLaunchSource } from './theme.js';
 import { chartsCatalog, buildChart } from './charts.js';
 import { registerBauletiBalanzaRoutes } from './bauleti-balanza.js';
 import { registerCopa4NacionesRoutes } from './copa4naciones.js';
+import { registerSupercopaRoutes } from './supercopa.js';
 import { initAssetResources, getAssetVersions, describeModuleAssets, reloadAsset, openAssetFolder } from './asset-resources.js';
 import { listThemes, getTheme, ARGENTINA_STREAMERS_THEME_ID } from '../shared/themes.js';
 
@@ -134,6 +135,10 @@ app.use('/api', noStoreMiddleware);
 const noCacheRevalidate = { setHeaders: (res) => res.set('Cache-Control', 'no-cache') };
 // SOLO PRUEBAS (2026-11-13): carpeta de sponsors de C4N reemplazada por una
 // copia (GLA_C4N_SPONSORS_DIR, ver server/copa4naciones.js), en la misma URL.
+// GLA SUPERCOPA: mismo criterio para su carpeta de sponsors (GLA_SC_SPONSORS_DIR).
+if (process.env.GLA_SC_SPONSORS_DIR) {
+  app.use('/assets/themes/supercopa/sponsors', express.static(process.env.GLA_SC_SPONSORS_DIR, noCacheRevalidate));
+}
 if (process.env.GLA_C4N_SPONSORS_DIR) {
   app.use('/assets/themes/copa4naciones/sponsors', express.static(process.env.GLA_C4N_SPONSORS_DIR, noCacheRevalidate));
 }
@@ -294,7 +299,7 @@ app.post('/api/teams/team', (req, res) => {
 // orden arrastrado en EQUIPOS; todos los desplegables lo toman del catalogo.
 app.post('/api/teams/order', (req, res) => {
   const themeId = getActiveThemeId();
-  if (themeId !== 'gla' && themeId !== 'bauletiBalanza' && themeId !== 'copa4naciones') return res.status(409).json({ ok: false, error: 'Este sistema no tiene orden manual de equipos.' });
+  if (themeId !== 'gla' && themeId !== 'bauletiBalanza' && themeId !== 'copa4naciones' && themeId !== 'supercopa') return res.status(409).json({ ok: false, error: 'Este sistema no tiene orden manual de equipos.' });
   try {
     const catalog = themeId === 'gla' ? setGlaTeamOrder(req.body?.order) : setThemeTeamOrder(themeId, req.body?.order);
     broadcast({ type: 'TEAM_CATALOG_UPDATE', catalog });
@@ -307,7 +312,7 @@ app.post('/api/teams/order', (req, res) => {
 // ESCUDOS DISPONIBLES de GLA (2026-10-21): archivos de assets/crests/ para
 // el selector "ESCUDO" de EQUIPOS. Solo nombres de archivo, nunca rutas.
 app.get('/api/teams/crest-files', (req, res) => {
-  if (getActiveThemeId() === 'bauletiBalanza' || getActiveThemeId() === 'copa4naciones') return res.json({ ok: true, files: listThemeCrestFiles(getActiveThemeId()) });
+  if (getActiveThemeId() === 'bauletiBalanza' || getActiveThemeId() === 'copa4naciones' || getActiveThemeId() === 'supercopa') return res.json({ ok: true, files: listThemeCrestFiles(getActiveThemeId()) });
   if (getActiveThemeId() !== 'gla') return res.json({ ok: true, files: [] });
   res.json({ ok: true, files: listGlaCrestFiles() });
 });
@@ -821,6 +826,43 @@ await registerCopa4NacionesRoutes(app, {
   },
 });
 
+// GLA SUPERCOPA (SOFTX [5]): datos propios (server/supercopa.js). El servidor
+// es el único que escribe "scDatos" (fixture, visual de jugadores, sponsors).
+await registerSupercopaRoutes(app, {
+  getActiveThemeId,
+  getTeamCatalog,
+  getRoster,
+  isLoopbackRequest,
+  applyServerModuleUpdate(moduleId, data) {
+    const moduleState = applyUpdate(moduleId, data);
+    if (wsReady) broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId, moduleState, isAutoSave: false, isExplicitUpdate: true });
+  },
+  getModuleData(moduleId) {
+    return getModuleState(moduleId)?.data || null;
+  },
+  broadcastMessage(msg) {
+    if (wsReady) broadcast(msg);
+  },
+  stopModules(ids) {
+    const out = [];
+    for (const id of ids) {
+      if (getModuleState(id)?.status !== MODULE_STATUS.ON) continue;
+      const moduleState = applyOut(id);
+      out.push(id);
+      if (wsReady) broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId: id, moduleState, isAutoSave: false, isExplicitUpdate: false });
+    }
+    return out;
+  },
+  clearPreview() {
+    lastPreviewStack = null;
+    if (wsReady) broadcast({ type: 'PREVIEW_STACK', order: [], items: {}, allData: {}, replay: null, from: 'reiniciar-todo' });
+  },
+  // ACTUALIZAR DESDE WEB (v2): equipos / escudos nuevos -> desplegables de Master.
+  refreshTeamCatalog() {
+    if (wsReady) broadcast({ type: 'TEAM_CATALOG_UPDATE', catalog: getTeamCatalog(getActiveThemeId()) });
+  },
+});
+
 // CHARTS (SOFTX / GLA, ver server/charts.js): catálogo de torneos/días/
 // partidos y armado de la placa estadística desde gla.futbol. Solo GLA;
 // el panel guarda el resultado en el draft del módulo (autoguardado).
@@ -984,6 +1026,9 @@ app.post('/api/estrellas/sync-web', async (req, res) => {
 });
 
 app.get('/master', (req, res) => res.redirect('/master-control/'));
+// PANTALLA SORTEO (GLA SUPERCOPA, 2026-11-25): salida propia del sorteo de
+// equipos (program/pantalla.html, en vivo; aparte de Program y Preview).
+app.get(['/pantalla', '/pantalla/'], noStoreMiddleware, (req, res) => res.sendFile(path.join(root, 'program', 'pantalla.html')));
 app.get('/', (req, res) => res.redirect('/master-control/'));
 
 // Red de seguridad JSON para /api/* (2026-08-18, pedido explicito del

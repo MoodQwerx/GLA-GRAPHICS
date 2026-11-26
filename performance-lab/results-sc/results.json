@@ -1,0 +1,814 @@
+{
+  "config": {
+    "NAV_CYCLES": 60,
+    "TAKE_ROUNDS": 20
+  },
+  "tests": [
+    {
+      "name": "aislamiento",
+      "ok": true,
+      "fails": [],
+      "steps": [
+        {
+          "n": 1,
+          "desc": "SOFTX arranca en GLA SUPERCOPA (selector de sistemas)",
+          "ok": true,
+          "detail": "supercopa"
+        },
+        {
+          "n": 2,
+          "desc": "rutas de COPA 4 NACIONES cerradas; las de SUPERCOPA abiertas",
+          "ok": true,
+          "detail": "c4n 409"
+        },
+        {
+          "n": 3,
+          "desc": "catálogo de equipos propio (solo escudos de assets/themes/supercopa/; sin C4N ni GLA); 2 de prueba PENDIENTES",
+          "ok": true,
+          "detail": "DOU,GAM,NS,OMI,BAL,NEN,ZZP(P),CAL,DOU,GAM,ZZP(P),OXE"
+        },
+        {
+          "n": 4,
+          "desc": "navegación: solo módulos SUPERCOPA (+ PLANTELES y EQUIPOS); SIN estadísticas",
+          "ok": true,
+          "detail": "21 pestañas · ajenas ninguna · stats ninguna"
+        },
+        {
+          "n": 5,
+          "desc": "panel ordenado: PARTIDO · PRESENTACIÓN · ZÓCALOS · BRANDING",
+          "ok": true,
+          "detail": "Partido · Presentación · Zocalos · Branding · Grupos · General"
+        },
+        {
+          "n": 6,
+          "desc": "RECURSO GRÁFICO: PNG de SUPERCOPA LISTOS (MARCADOR: 4 capas)",
+          "ok": true,
+          "detail": "marcador.png:LISTO marcador-adicional.png:LISTO marcador-penales.png:LISTO marcador-entretiempo.png:LISTO"
+        },
+        {
+          "n": 7,
+          "desc": "botón REINICIAR TODO visible",
+          "ok": true,
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "name": "datos-web",
+      "ok": true,
+      "fails": [],
+      "steps": [
+        {
+          "n": 1,
+          "desc": "fuente web = sección SUPERCOPA de gla.futbol con ID estable del torneo",
+          "ok": true,
+          "detail": "6ade5b4cc68d5ba9b9a60c81"
+        },
+        {
+          "n": 2,
+          "desc": "ACTUALIZAR DESDE WEB: torneo, equipos, fixture y planteles (estado por sección)",
+          "ok": true,
+          "detail": "{\"torneo\":\"ok\",\"equipos\":\"ok\",\"fixture\":\"ok\",\"planteles\":\"parcial\",\"resultados\":\"ok\",\"escudos\":\"ok\"}"
+        },
+        {
+          "n": 3,
+          "desc": "equipos importados: los 2 PENDIENTES quedan confirmados con el nombre oficial de la web y su escudo",
+          "ok": true,
+          "detail": "ZZ PRUEBA OMI · ZZ · pendiente false"
+        },
+        {
+          "n": 4,
+          "desc": "NO lee otros torneos (Relámpago señuelo fuera): 6 equipos, ningún \"SENUELO\"",
+          "ok": true,
+          "detail": "zz-prueba-gambeta,zz-prueba-oxen,zz-prueba-calambres,zz-prueba-dou,zz-prueba-omi,zz-prueba-balanza"
+        },
+        {
+          "n": 5,
+          "desc": "fixture web con hora ARGENTINA (14:00 UTC -> 11:00) y resultado publicado",
+          "ok": true,
+          "detail": "2026-11-28 11:00 scheduled · 2026-11-28 12:00 final · 2026-11-28 13:00 scheduled"
+        },
+        {
+          "n": 6,
+          "desc": "el fixture MANUAL no se pisa (sigue siendo la fuente; sus partidos intactos)",
+          "ok": true,
+          "detail": "manual"
+        },
+        {
+          "n": 7,
+          "desc": "planteles: MANUAL válido no se pisa (GAMBETA sigue en MANUAL); OMI usa WEB (8, dorsal + nombre)",
+          "ok": true,
+          "detail": "GAM manual · OMI web 8"
+        },
+        {
+          "n": 8,
+          "desc": "equipo sin plantel publicado: estado claro de dato faltante (MANUAL)",
+          "ok": true,
+          "detail": "sin-plantel"
+        },
+        {
+          "n": 9,
+          "desc": "web caída / ilegible: ERROR informado y se conservan equipos, fixture y planteles",
+          "ok": true,
+          "detail": "Expected property name or '}' in JSON at position 1 (line 1 column 2)"
+        },
+        {
+          "n": 10,
+          "desc": "web vacía: no borra nada (snapshot anterior, secciones en SIN DATOS)",
+          "ok": true,
+          "detail": "{\"e\":\"vacio\",\"f\":\"vacio\"}"
+        },
+        {
+          "n": 11,
+          "desc": "AJUSTE MANUAL de un partido web (horario / fase) guardado APARTE del dato web",
+          "ok": true,
+          "detail": "efectivo 11:30 · web 11:00"
+        },
+        {
+          "n": 12,
+          "desc": "FUENTE WEB / MANUAL del fixture (el MARCADOR y la placa usan la elegida)",
+          "ok": true,
+          "detail": "w-20261128-1,w-20261128-1,w-20261128-1"
+        }
+      ]
+    },
+    {
+      "name": "marcador",
+      "ok": true,
+      "fails": [],
+      "steps": [
+        {
+          "n": 1,
+          "desc": "FIXTURE: GRAN FINAL cargada -> GAM vs CAL al aire",
+          "ok": true,
+          "detail": "GAM 0 0 CAL 1T 00:00 +0 00:00 -"
+        },
+        {
+          "n": 2,
+          "desc": "cada dato en su hueco del PNG (sigla x 79-139, reloj x 381-467, escudo x 14-72; y 35-102)",
+          "ok": true,
+          "detail": "{\"abbrA\":[79,63,139,102],\"time\":[381,63,467,102],\"crest\":[14,35,72,102]}"
+        },
+        {
+          "n": 3,
+          "desc": "reloj corre (Program y panel)",
+          "ok": true,
+          "detail": "00:02 · panel 00:02"
+        },
+        {
+          "n": 4,
+          "desc": "GOL + con autor (plantel)",
+          "ok": true,
+          "detail": "goles local 1"
+        },
+        {
+          "n": 5,
+          "desc": "ADICIONAL sin tope: +1 sigue contando después de 01:00 (01:35) y corriendo",
+          "ok": true,
+          "detail": "{\"visible\":true,\"auto\":true,\"minutes\":1,\"capMs\":60000,\"ms\":95000,\"running\":true}"
+        },
+        {
+          "n": 6,
+          "desc": "ADICIONAL automático al llegar al fin del tiempo: capa visible, \"+1\" y cuenta desde 00:00",
+          "ok": true,
+          "detail": "{\"shown\":true,\"plus\":\"+1\",\"t\":\"00:01\",\"time\":\"00:01\"}"
+        },
+        {
+          "n": 7,
+          "desc": "ENTRETIEMPO: rótulo del PNG debajo del marcador; el adicional se apaga",
+          "ok": true,
+          "detail": "{\"half\":true,\"extra\":false,\"period\":\"ENT\"}"
+        },
+        {
+          "n": 8,
+          "desc": "PENALES en el Marcador: 3 círculos por lado (convertido / errado) y tanda 3-2",
+          "ok": true,
+          "detail": "{\"score\":\"3-2\",\"shown\":true,\"half\":false,\"disks\":\"ccccec\"}"
+        },
+        {
+          "n": 9,
+          "desc": "TERMINAR Y GUARDAR: resultado reglamentario 1-0 y penales APARTE en el fixture",
+          "ok": true,
+          "detail": "{\"score\":{\"home\":1,\"away\":0},\"pen\":{\"home\":3,\"away\":2}}"
+        },
+        {
+          "n": 10,
+          "desc": "MANUAL: OXE vs DOU al aire, GUARDAR deshabilitado",
+          "ok": true,
+          "detail": "OXE 1 0 DOU FINAL 00:01 +0 00:00 3 - 2"
+        },
+        {
+          "n": 11,
+          "desc": "volver a FIXTURE recupera GAM vs CAL; el fixture quedó intacto",
+          "ok": true,
+          "detail": "GAM 1 0 CAL FINAL 00:01 +0 00:00 3 - 2"
+        }
+      ]
+    },
+    {
+      "name": "incidencias",
+      "ok": true,
+      "fails": [],
+      "steps": [
+        {
+          "n": 1,
+          "desc": "TARJETA desde el plantel: \"TARJETA AMARILLA - N'\" + \"4. TOMAS DIAZ\" + equipo",
+          "ok": true,
+          "detail": "TARJETA AMARILLA - 1' 4. TOMAS DIAZ LOS CALAMBRES DEL OESTE"
+        },
+        {
+          "n": "1b",
+          "desc": "layout de la referencia: tarjeta GRANDE a la izquierda (2 renglones), nombre arriba y escudo + equipo abajo del filete",
+          "ok": true,
+          "detail": "{\"card\":[55,940,125,1038],\"name\":[168,922,466,991],\"team\":[220,1019,423,1032],\"crest\":[168,1005,208,1045],\"cls\":\"sc-ev-bigcard sc-a m-bigcard\"}"
+        },
+        {
+          "n": 2,
+          "desc": "el evento guarda minuto y período (aunque no se dibujen)",
+          "ok": true,
+          "detail": "1' FIN"
+        },
+        {
+          "n": 3,
+          "desc": "TARJETA MANUAL (fuera del plantel): ROJA (tarjeta roja), \"77. REFUERZO INVITADO\"",
+          "ok": true,
+          "detail": "TARJETA ROJA - 1' 77. REFUERZO INVITADO LOS CALAMBRES DEL OESTE · sc-ev-bigcard sc-a m-bigcard is-red sc-static"
+        },
+        {
+          "n": "3b",
+          "desc": "TARJETA AZUL con nombre largo: achica (mín. 16 px) y nunca sale de la placa (borde < 470)",
+          "ok": true,
+          "detail": "{\"cls\":\"sc-ev-bigcard sc-a m-bigcard is-blue sc-static\",\"right\":466,\"px\":16,\"t\":\"TARJETA AZUL - 1' 10. MAXIMILIANO BARTOLOMEO DEL CASTILLO RUIZ LOS CALAMBRES DEL OESTE\"}"
+        },
+        {
+          "n": 4,
+          "desc": "CAMBIO del plantel: ENTRA / SALE; saca a la tarjeta (misma zona)",
+          "ok": true,
+          "detail": "CAMBIO · GAM ENTRA 7 PABLO VERA SALE 5 NICOLAS SOSA"
+        },
+        {
+          "n": 5,
+          "desc": "CAMBIO MANUAL independiente del plantel (nombre largo encaja)",
+          "ok": true,
+          "detail": "CAMBIO · GAM ENTRA 21 IGNACIO NOMBRE MUY LARGO DE PRUEBA SALE 14 JUGADOR SALE MANUAL"
+        },
+        {
+          "n": 6,
+          "desc": "nombres dentro de la placa negra (borde derecho < 480)",
+          "ok": true,
+          "detail": "[456,323]"
+        },
+        {
+          "n": 14,
+          "desc": "LISTA de 3 cambios: CAMBIO 1 -> CAMBIO 2 -> CAMBIO 3 (5 s cada uno, uno solo visible a la vez)",
+          "ok": true,
+          "detail": "{\"lista\":3,\"s1\":\"CAMBIO · GAM ENTRA 9 BRUNO PAZ SALE 1 JUAN PEREZ\",\"s2\":\"CAMBIO · GAM ENTRA 10 DIEGO ROMERO SALE 2 LUCAS GOMEZ\",\"s3\":\"CAMBIO · CAL ENTRA 8 IGNACIO MARTINEZ ALVAREZ SALE 3 MATIAS RUIZ\"}"
+        },
+        {
+          "n": 15,
+          "desc": "la placa PNG no se rearma entre cambios y no hay intervalos por cambio",
+          "ok": true,
+          "detail": "{\"same\":true,\"iv0\":3,\"iv\":3}"
+        },
+        {
+          "n": 16,
+          "desc": "después del último cambio la pieza sale sola; los 3 quedan registrados en el partido",
+          "ok": true,
+          "detail": "al aire false · cambios registrados 5"
+        },
+        {
+          "n": 7,
+          "desc": "VAR: CHEQUEO -> PENAL + \"DECISIÓN CONFIRMADA · MOTIVO\" al aire, la placa PNG queda quieta",
+          "ok": true,
+          "detail": "VAR CHEQUEO VAR EN REVISIÓN -> VAR PENAL DECISIÓN CONFIRMADA · MANO EN EL ÁREA"
+        },
+        {
+          "n": 8,
+          "desc": "VAR en otra posición del PNG (arriba a la derecha)",
+          "ok": true,
+          "detail": "[1633,473]"
+        },
+        {
+          "n": 9,
+          "desc": "PENAL SHOOTOUT: CRONÓMETRO desde 00:00, cuenta y vuelve a 00:00 en cada TAKE; fase del fixture",
+          "ok": true,
+          "detail": "00:02 -> 00:00 · PENAL SHOOTOUT · GRAN FINAL 6. FRANCO LOPEZ CRONÓMETRO: 00:00"
+        },
+        {
+          "n": "9b",
+          "desc": "layout de la referencia: [ESCUDO] | \"6. FRANCO LOPEZ\" / filete / \"CRONÓMETRO: 00:00\"",
+          "ok": true,
+          "detail": "{\"crest\":[40,939,140,1039],\"name\":[168,922,466,991],\"clock\":[168,994,440,1056],\"t\":\"6. FRANCO LOPEZ\"}"
+        },
+        {
+          "n": "9d",
+          "desc": "v3: \"CRONÓMETRO: 00:00\" sobre un zócalo gris (rótulo y reloj adentro, debajo del filete, dentro de la placa)",
+          "ok": true,
+          "detail": "{\"box\":[168,1000,450,1050],\"inside\":true,\"gray\":true}"
+        },
+        {
+          "n": "9e",
+          "desc": "PREVIEW = PROGRAM (PENAL SHOOTOUT: escudo, jugador, zócalo del cronómetro)",
+          "ok": true,
+          "detail": "PENAL SHOOTOUT · GRAN FINAL 6. FRANCO LOPEZ CRONÓMETRO: 00:00"
+        },
+        {
+          "n": "9c",
+          "desc": "CONVIRTIÓ registra el intento en la tanda del MARCADOR (con el jugador)",
+          "ok": true,
+          "detail": "FRANCO LOPEZ true"
+        },
+        {
+          "n": "9f",
+          "desc": "OUT y TAKE nuevo: el cronómetro vuelve a 00:00",
+          "ok": true,
+          "detail": "00:00"
+        }
+      ]
+    },
+    {
+      "name": "zocalos-mosca",
+      "ok": true,
+      "fails": [],
+      "steps": [
+        {
+          "n": 1,
+          "desc": "ZÓCALO CORTO con cargo -> placa CORTO DOBLE",
+          "ok": true,
+          "detail": "MARTÍN PÉREZ RELATOR · zocalo-corto-doble.png?v=mwv7laxamc3"
+        },
+        {
+          "n": 2,
+          "desc": "cambio de texto AL AIRE: sale el viejo, entra el nuevo, el PNG no se rearma",
+          "ok": true,
+          "detail": "{\"mid\":true,\"same\":true,\"text\":\"LUCÍA FERNÁNDEZ\",\"inn\":true}"
+        },
+        {
+          "n": 3,
+          "desc": "sin cargo -> placa CORTO SIMPLE",
+          "ok": true,
+          "detail": "zocalo-corto-simple.png?v=mwv7lavyryp"
+        },
+        {
+          "n": 4,
+          "desc": "POSICIÓN DEL TEXTO mueve el nombre +10 px sin mover el PNG",
+          "ok": true,
+          "detail": "162 -> 172"
+        },
+        {
+          "n": "5.1",
+          "desc": "TALENTOS x1: 1 placas del MISMO tamaño compacto que x4 (396 px), entre x 96 y 1824, simétricas, nombres dentro",
+          "ok": true,
+          "detail": "[[96,492,1010]]"
+        },
+        {
+          "n": "5.2",
+          "desc": "TALENTOS x2: 2 placas del MISMO tamaño compacto que x4 (396 px), entre x 96 y 1824, simétricas, nombres dentro",
+          "ok": true,
+          "detail": "[[96,492,1010],[1428,1824,1010]]"
+        },
+        {
+          "n": "5.3",
+          "desc": "TALENTOS x3: 3 placas del MISMO tamaño compacto que x4 (396 px), entre x 96 y 1824, simétricas, nombres dentro",
+          "ok": true,
+          "detail": "[[96,492,1010],[762,1158,1010],[1428,1824,1010]]"
+        },
+        {
+          "n": "5.4",
+          "desc": "TALENTOS x4: 4 placas del MISMO tamaño compacto que x4 (396 px), entre x 96 y 1824, simétricas, nombres dentro",
+          "ok": true,
+          "detail": "[[96,492,1010],[540,936,1010],[984,1380,1010],[1428,1824,1010]]"
+        },
+        {
+          "n": 6,
+          "desc": "ZÓCALO LARGO: SIMPLE sin texto secundario, DOBLE con él",
+          "ok": true,
+          "detail": "zocalo-largo-simple.png?v=mwv7laym1jkp -> zocalo-largo-doble.png?v=mwv7lazw1mst"
+        },
+        {
+          "n": 7,
+          "desc": "ZÓCALO L: SUPERCOPA (emblema + emblema en la red sin sponsors) -> PARTIDO (escudos del Marcador)",
+          "ok": true,
+          "detail": "[\"zz-prueba-gambeta.png\",\"zz-prueba-calambres.png\"]"
+        },
+        {
+          "n": 8,
+          "desc": "MOSCA nueva (MOSCA_SUPERCOPA) con la HORA ARGENTINA HH:MM en el recuadro blanco (PC simulada en Tokio)",
+          "ok": true,
+          "detail": "{\"time\":\"18:04\",\"box\":[1703,87,1799,120],\"png\":[\"mosca.png\",\"mosca.png\",\"mosca.png\"],\"browser\":6,\"ar\":\"18:04\"}"
+        },
+        {
+          "n": 9,
+          "desc": "hora sin timers propios: solo el tick estándar de Program para piezas live (1, no crece) y 0 después del OUT",
+          "ok": true,
+          "detail": "3 -> 4 -> 4 -> 3"
+        }
+      ]
+    },
+    {
+      "name": "presentacion",
+      "ok": true,
+      "fails": [],
+      "steps": [
+        {
+          "n": 1,
+          "desc": "VS PREPARTIDO: escudos, nombres; ESTADO \"A CONTINUACIÓN\" + fase y horario del fixture",
+          "ok": true,
+          "detail": "A CONTINUACIÓN · GRAN FINAL · DOMINGO 6 · 20:00 HS GAMBETA FC LOS CALAMBRES DEL OESTE"
+        },
+        {
+          "n": "1b",
+          "desc": "ESTADO al aire: fijo (EN JUEGO - 2T), MANUAL (DEMORADO) y AUTOMÁTICO desde el Marcador (FINAL)",
+          "ok": true,
+          "detail": "EN JUEGO - 2T · GRAN FINAL | DEMORADO · GRAN FINAL | FINAL · GRAN FINAL"
+        },
+        {
+          "n": 2,
+          "desc": "nombres dentro de sus barras (izq. x 380-905, der. 1013-1533)",
+          "ok": true,
+          "detail": "[[496,882],[1036,1409]]"
+        },
+        {
+          "n": 3,
+          "desc": "VS RESULTADO: ESTADO automático (FINAL), goles y PENALES aparte (\"PENALES 4 - 2\": incluye el intento de PENAL SHOOTOUT); reemplaza al VS",
+          "ok": true,
+          "detail": "FINAL · PENALES 4 - 2 GAMBETA FC 1 0 LOS CALAMBRES DEL OESTE · al aire scMarcador,scVsResultado"
+        },
+        {
+          "n": 4,
+          "desc": "FIXTURE sobre la PLACA nueva: jugados con su barra de resultado (penales aparte), por jugar con VS",
+          "ok": true,
+          "detail": "{\"fxBg\":[\"placa.png\",\"placa.png\"],\"fx\":[{\"bar\":\"RES\",\"t\":\"GAMBETA FC OXEN FC 2 2 18:00 HS SEMIFINAL 1 FINAL PENALES 3 - 2\"},{\"bar\":\"RES\",\"t\":\"LOS CALAMBRES DEL OESTE DOU FC 1 0 19:30 HS SEMIFINAL 2 FINAL\"},{\"bar\":\"RES\",\"t\":\"GAMBETA FC LOS CALAMBRES DEL OESTE 1 0 20:00 HS GRAN FINAL FINAL PENALES 3 - 2\"}]}"
+        },
+        {
+          "n": "4b",
+          "desc": "un día por placa (SÁBADO 5: 2 partidos, título en la cabecera de la placa)",
+          "ok": true,
+          "detail": "{\"n\":2,\"title\":\"FIXTURE · SÁBADO 5\"}"
+        },
+        {
+          "n": 5,
+          "desc": "FORMACIÓN (FÚTBOL 6) sobre la PLACA nueva: 6 titulares con camiseta + dorsal centrado, nunca escudo",
+          "ok": true,
+          "detail": "{\"foBg\":[\"placa.png\",\"placa.png\"],\"n\":6,\"shirts\":true,\"nums\":\"1,2,3,4,5,6\",\"names\":\"JUAN PEREZ|LUCAS GOMEZ|MATIAS RUIZ|TOMAS DIAZ|NICOLAS SOSA|FRANCO LOPEZ\",\"t\":\"FORMACIÓN GAMBETA FC ESQUEMA 2-2-1 · VS LOS CALAMBRES DEL OESTE · GRAN FINAL · 20:00 HS 1 JUAN PEREZ 2 LUCAS GOMEZ 3 MATIAS RUIZ 4 TOMAS DIA\"}"
+        },
+        {
+          "n": 6,
+          "desc": "dorsal centrado en el torso (desvío ≤ 2 px)",
+          "ok": true,
+          "detail": "[0,0]"
+        },
+        {
+          "n": 7,
+          "desc": "POR LISTA: esquema 2-2-1 detectado, ENCONTRADOS y DUDOSO (\"Franko Lopes\")",
+          "ok": true,
+          "detail": "{\"found\":7,\"doubtful\":1,\"notfound\":0,\"scheme\":\"2-2-1\"}"
+        },
+        {
+          "n": 8,
+          "desc": "CONFIRMAR: la formación de la lista va al aire (MANUAL editable después)",
+          "ok": true,
+          "detail": "JUAN PEREZ|LUCAS GOMEZ|MATIAS RUIZ|TOMAS DIAZ|NICOLAS SOSA|FRANCO LOPEZ"
+        },
+        {
+          "n": 9,
+          "desc": "USAR MISMA FORMACIÓN ANTERIOR vuelve a la guardada",
+          "ok": true,
+          "detail": "JUAN PEREZ|LUCAS GOMEZ|MATIAS RUIZ|TOMAS DIAZ|NICOLAS SOSA|FRANCO LOPEZ"
+        },
+        {
+          "n": 10,
+          "desc": "después se puede cambiar un jugador (BUSCADOR + ACTUALIZAR): BRUNO PAZ entra en el lugar 6",
+          "ok": true,
+          "detail": "JUAN PEREZ|LUCAS GOMEZ|MATIAS RUIZ|TOMAS DIAZ|NICOLAS SOSA|BRUNO PAZ"
+        }
+      ]
+    },
+    {
+      "name": "grupos-fixture-l",
+      "ok": true,
+      "fails": [],
+      "steps": [
+        {
+          "n": 1,
+          "desc": "GRUPOS: GRUPO A / GRUPO B con renglones \"1.\" \"2.\" \"3.\" (A1..B3 NO se ven), escudo y nombre; vacío = A CONFIRMAR",
+          "ok": true,
+          "detail": "1.=GAMBETA FC · 2.=OXEN FC · 3.=LOS CALAMBRES DEL OESTE · 1.=DOU FC · 2.=ZZ PRUEBA OMI · 3.=A CONFIRMAR"
+        },
+        {
+          "n": 2,
+          "desc": "zócalo gris por renglón (los 6)",
+          "ok": true,
+          "detail": "[true,true,true,true,true,true]"
+        },
+        {
+          "n": 3,
+          "desc": "MOSCA DEBAJO de GRUPOS (la tabla L la tapa)",
+          "ok": true,
+          "detail": "mod-scGrupos,mod-scMosca"
+        },
+        {
+          "n": 4,
+          "desc": "AL AIRE, asignar un equipo a un lugar vacío (B3): ese renglón sale y entra (sin cut), el zócalo brilla; placa y renglón NO se rearman",
+          "ok": true,
+          "detail": "{\"seen\":[\"sc-swap\",\"sc-swap is-out\",\"sc-swap is-in\"],\"flash\":true,\"others\":[],\"sameSc\":true,\"sameImg\":true,\"sameRow\":true,\"text\":\"3. ZZ PRUEBA BALANZA\"}"
+        },
+        {
+          "n": 5,
+          "desc": "AL AIRE, cambiar A2 y B2 por otro equipo: sale el anterior y entra el nuevo, solo en su renglón",
+          "ok": true,
+          "detail": "{\"A2\":{\"seen\":[\"sc-swap\",\"sc-swap is-out\",\"sc-swap is-in\"],\"flash\":true,\"others\":[],\"sameSc\":true,\"sameImg\":true,\"sameRow\":true,\"text\":\"2. DOU FC\"},\"B2\":{\"seen\":[\"sc-swap\",\"sc-swap is-out\",\"sc-swap is-in\"],\"flash\":true,\"others\":[],\"sameSc\":true,\"sameImg\":true,\"sameRow\":true,\"text\":\"2. LOS CALAMBRES DEL OESTE\"}}"
+        },
+        {
+          "n": 6,
+          "desc": "GRUPOS -> FIXTURE L: la placa L_DERECHA nunca desaparece ni se re-anima (0 cuadros sin placa); sale solo el contenido de GRUPOS",
+          "ok": true,
+          "detail": "{\"frames\":230,\"gaps\":0,\"inAnimated\":false,\"outSeenOut\":true,\"endIn\":true,\"endOutHidden\":true,\"slices\":1}"
+        },
+        {
+          "n": 7,
+          "desc": "FIXTURE L SÁBADO 28: 9 partidos, mapeo exacto (P1 A1-A2 ... P9 A1-B1), 11:00 a 19:00",
+          "ok": true,
+          "detail": "P1 11:00 GAM-OXE · P2 12:00 DOU-ZZ · P3 13:00 CAL-ZZ · P4 14:00 OXE-ZZ · P5 15:00 DOU-ZZ · P6 16:00 GAM-CAL · P7 17:00 ZZ-ZZ · P8 18:00 OXE-CAL · P9 19:00 GAM-DOU"
+        },
+        {
+          "n": 8,
+          "desc": "GRUPOS y FIXTURE L comparten zona: TAKE de FIXTURE L saca a GRUPOS",
+          "ok": true,
+          "detail": "scMosca,scFixtureL,scMarcador"
+        },
+        {
+          "n": 9,
+          "desc": "MOSCA DEBAJO de FIXTURE L",
+          "ok": true,
+          "detail": "mod-scFixtureL,mod-scMosca"
+        },
+        {
+          "n": 10,
+          "desc": "cambiar A2 cambia SOLO P1 visitante, P4 local y P8 local (FIXTURE L al aire; horarios, ajustes e ids intactos)",
+          "ok": true,
+          "detail": "P1.visitante,P4.local,P8.local"
+        },
+        {
+          "n": 11,
+          "desc": "cambiar B2 cambia SOLO P2 visitante, P4 visitante y P7 local",
+          "ok": true,
+          "detail": "P2.visitante,P4.visitante,P7.local"
+        },
+        {
+          "n": 12,
+          "desc": "lógica compartida (shared/sc-seeding.js): mismo resultado sin interfaz",
+          "ok": true,
+          "detail": "P1.visitante,P4.local,P8.local"
+        },
+        {
+          "n": 13,
+          "desc": "DOMINGO 29: SEMIFINAL 1, SEMIFINAL 2 y GRAN FINAL arrancan TBD VS TBD; se definen a mano",
+          "ok": true,
+          "detail": "SEMIFINAL 1 ? TBD VS ? TBD -> SEMIFINAL 1 GAMBETA FC VS DOU FC"
+        },
+        {
+          "n": 14,
+          "desc": "FIXTURE L -> GRUPOS: mismo relevo inverso (placa fija, 0 cuadros sin placa)",
+          "ok": true,
+          "detail": "{\"frames\":227,\"gaps\":0,\"inAnimated\":false,\"outSeenOut\":true,\"endIn\":true,\"endOutHidden\":true,\"slices\":1}"
+        },
+        {
+          "n": 15,
+          "desc": "10 relevos seguidos GRUPOS <-> FIXTURE L: placa siempre entera, una sola tabla al aire, sin acumular nodos ni listeners",
+          "ok": true,
+          "detail": "{\"gaps\":[0,0,0,0,0,0,0,0,0,0],\"n0\":{\"nodes\":1203,\"listeners\":111},\"n1\":{\"nodes\":1203,\"listeners\":111},\"air10\":[\"scMosca\",\"scGrupos\",\"scMarcador\"]}"
+        },
+        {
+          "n": 16,
+          "desc": "PREVIEW = PROGRAM: mismos renglones de GRUPOS y el mismo relevo con la placa fija en los dos sentidos",
+          "ok": true,
+          "detail": "{\"same\":true,\"h3\":{\"frames\":232,\"gaps\":0,\"inAnimated\":false,\"outSeenOut\":true,\"endIn\":true,\"endOutHidden\":true,\"slices\":1},\"h4\":{\"frames\":231,\"gaps\":0,\"inAnimated\":false,\"outSeenOut\":true,\"endIn\":true,\"endOutHidden\":true,\"slices\":1}}"
+        },
+        {
+          "n": 17,
+          "desc": "sin tabla L, la MOSCA vuelve a quedar arriba, en su lugar y SIN rearmarse",
+          "ok": true,
+          "detail": "{\"top17\":\"mod-scMosca\",\"moSame\":true,\"moBox\":[1703,87,1799,120]}"
+        }
+      ]
+    },
+    {
+      "name": "placas-v3",
+      "ok": true,
+      "fails": [],
+      "steps": [
+        {
+          "n": 1,
+          "desc": "nombres en pareja: cortos = un renglón los dos; si uno necesita dos, los dos van en dos (mismo tamaño)",
+          "ok": true,
+          "detail": "[{\"lines\":[[\"DOU FC\"],[\"NS TEAM\"]],\"px\":58,\"two\":false},{\"lines\":[[\"GAMBETA\",\"FC\"],[\"LOS CALAMBRES DEL\",\"OESTE DE LA CIUDAD\"]],\"px\":50,\"two\":true}]"
+        },
+        {
+          "n": 2,
+          "desc": "PRESENTACIÓN DE PARTIDO sobre la PLACA de FORMACIÓN, con animación de entrada (placa por regiones + contenido)",
+          "ok": true,
+          "detail": "{\"bg\":[\"placa.png\",\"placa.png\"],\"pIn\":true}"
+        },
+        {
+          "n": 3,
+          "desc": "escudos grandes (300 px) simétricos; nombres abajo con zócalo gris, mismo tamaño y mismos renglones, sin recortes; VS al centro",
+          "ok": true,
+          "detail": "{\"bg\":[\"placa.png\",\"placa.png\"],\"crests\":[[390,296,690,596],[1230,296,1530,596]],\"names\":[{\"box\":[280,636,800,724],\"px\":\"45px\",\"two\":false,\"lines\":[\"GAMBETA FC\"],\"fits\":true,\"gray\":true},{\"box\":[1120,636,1640,724],\"px\":\"45px\",\"two\":false,\"lines\":[\"LOS CALAMBRES DEL OESTE\"],\"fits\":true,\"gray\":true}],\"vs\":[840,376,1080,516],\"fase\":\"GRAN FINAL\",\"faseGray\":true,\"head\":[\"PRESENTACIÓN\",\"GLA SUPERCOPA\",\"DOMINGO 6 · 20:00 HS\"],\"score\":null,\"cap\":\"\"}"
+        },
+        {
+          "n": 4,
+          "desc": "fase AUTOMÁTICA (la del partido: GRAN FINAL) sobre zócalo gris; cabecera PRESENTACIÓN · GLA SUPERCOPA · día y horario",
+          "ok": true,
+          "detail": "{\"fase\":\"GRAN FINAL\",\"head\":[\"PRESENTACIÓN\",\"GLA SUPERCOPA\",\"DOMINGO 6 · 20:00 HS\"]}"
+        },
+        {
+          "n": 5,
+          "desc": "fase: FASE DE GRUPOS / SEMIFINAL 1 / GRAN FINAL / MANUAL / sin zócalo",
+          "ok": true,
+          "detail": "{\"grupos\":\"FASE DE GRUPOS\",\"semi1\":\"SEMIFINAL 1\",\"granFinal\":\"GRAN FINAL\",\"manual\":\"CUARTOS DE FINAL\",\"ninguna\":\"\"}"
+        },
+        {
+          "n": 6,
+          "desc": "PREVIEW = PROGRAM (PRESENTACIÓN)",
+          "ok": true,
+          "detail": "PRESENTACIÓN GLA SUPERCOPA DOMINGO 6 · 20:00 HS GAMBETA FC LOS CALAMBRES DEL OESTE VS SEMIFINAL 1"
+        },
+        {
+          "n": 7,
+          "desc": "EXCLUSIÓN de placas grandes: cada TAKE saca a la anterior, nunca dos a la vez; Master marca solo la nueva",
+          "ok": true,
+          "detail": "[{\"id\":\"scPlacaResultado\",\"max\":1,\"on\":[\"scPlacaResultado\"],\"tabs\":[\"scPlacaResultado\"]},{\"id\":\"scFormacion\",\"max\":1,\"on\":[\"scFormacion\"],\"tabs\":[\"scFormacion\"]},{\"id\":\"scPresentacion\",\"max\":1,\"on\":[\"scPresentacion\"],\"tabs\":[\"scPresentacion\"]}]"
+        },
+        {
+          "n": 8,
+          "desc": "PREVIEW respeta la exclusión: VS RESULTADO reemplaza a PRESENTACIÓN; el MARCADOR (pieza chica) queda",
+          "ok": true,
+          "detail": "scPresentacion -> scMarcador,scPlacaResultado"
+        },
+        {
+          "n": 9,
+          "desc": "resultado NORMAL: 0-0, 1-0, 2-1 y 10-9 (dos dígitos) en el recuadro claro; guion centrado; números alineados; sin penales",
+          "ok": true,
+          "detail": "{\"0-0\":{\"cells\":[\"0\",\"0\"],\"pens\":0,\"geo\":true},\"1-0\":{\"cells\":[\"1\",\"0\"],\"pens\":0,\"geo\":true},\"2-1\":{\"cells\":[\"2\",\"1\"],\"pens\":0,\"geo\":true},\"10-9\":{\"cells\":[\"10\",\"9\"],\"pens\":0,\"geo\":true}}"
+        },
+        {
+          "n": 10,
+          "desc": "misma familia que PRESENTACIÓN: mismos escudos y zócalos de nombres (misma posición y tamaño), fase y ESTADO en la cabecera",
+          "ok": true,
+          "detail": "{\"head\":[\"RESULTADO\",\"GLA SUPERCOPA\",\"FINAL\"],\"fase\":\"GRAN FINAL\"}"
+        },
+        {
+          "n": 11,
+          "desc": "resultado CON PENALES: \"2(3) - 2(2)\" claro (goles grandes, penales entre paréntesis), guion centrado, aclaración abajo",
+          "ok": true,
+          "detail": "{\"box\":[748,368,1172,524],\"sep\":[948,403,972,489],\"cells\":[\"2(3)\",\"2(2)\"],\"tops\":[379,379],\"pens\":2}"
+        },
+        {
+          "n": 12,
+          "desc": "PREVIEW = PROGRAM (VS RESULTADO con penales)",
+          "ok": true,
+          "detail": "2(3) - 2(2)"
+        },
+        {
+          "n": 13,
+          "desc": "OUT con animación de salida y la placa se desmonta",
+          "ok": true,
+          "detail": "true"
+        }
+      ]
+    },
+    {
+      "name": "preview-multicapa",
+      "ok": true,
+      "fails": [],
+      "steps": [
+        {
+          "n": 1,
+          "desc": "PREVIEW: Marcador + Mosca + Zócalo a la vez",
+          "ok": true,
+          "detail": "[\"scMarcador\",\"scMosca\",\"scZocaloCorto\"]"
+        },
+        {
+          "n": 2,
+          "desc": "grupo exclusivo: TALENTOS reemplaza al ZÓCALO CORTO en Preview",
+          "ok": true,
+          "detail": "[\"scMarcador\",\"scMosca\",\"scTalentos\"]"
+        },
+        {
+          "n": 3,
+          "desc": "OUT individual en Preview; Program no cambió",
+          "ok": true,
+          "detail": "[\"scMarcador\",\"scTalentos\"] · Program []"
+        },
+        {
+          "n": 4,
+          "desc": "Preview = Program (misma pieza, mismos datos)",
+          "ok": true,
+          "detail": "GAM"
+        },
+        {
+          "n": 5,
+          "desc": "Preview multicapa x30 sin acumular nodos",
+          "ok": true,
+          "detail": "558 -> 558"
+        },
+        {
+          "n": 6,
+          "desc": "LIMPIAR PREVIEW",
+          "ok": true,
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "name": "reiniciar-todo",
+      "ok": true,
+      "fails": [],
+      "steps": [
+        {
+          "n": 1,
+          "desc": "REINICIAR TODO pide confirmación",
+          "ok": true,
+          "detail": "¿REINICIAR TODO EL ESTADO OPERATIVO DE SUPERCOPA?"
+        },
+        {
+          "n": 2,
+          "desc": "estado operativo limpio: marcador 0-0, sin eventos ni reloj, fixture sin resultados, nada al aire, Preview vacío",
+          "ok": true,
+          "detail": "{\"sb\":\"0-0\",\"ev\":0,\"air\":[]}"
+        },
+        {
+          "n": 3,
+          "desc": "NO borra planteles, equipos, GRUPOS / seeding, ajustes de FIXTURE L, snapshot web ni formación guardada",
+          "ok": true,
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "name": "navegacion-paneles",
+      "ok": true,
+      "fails": [],
+      "checks": {
+        "masterNodesDelta": 0,
+        "masterListenersDelta": 0,
+        "programNodesDelta": 0,
+        "programListenersDelta": 0,
+        "masterIntervalsDelta": 0,
+        "programIntervalsDelta": 0,
+        "tabs": 21,
+        "ciclos": 60,
+        "detachedDelta": 0
+      }
+    },
+    {
+      "name": "take-out-repetidos",
+      "ok": true,
+      "fails": [],
+      "checks": {
+        "masterNodesDelta": 0,
+        "masterListenersDelta": 0,
+        "programNodesDelta": 0,
+        "programListenersDelta": 0,
+        "masterIntervalsDelta": 0,
+        "programIntervalsDelta": 0,
+        "rondas": 20,
+        "takeOutPorRonda": 13,
+        "detachedDelta": 0,
+        "onAirAlFinal": 0
+      }
+    },
+    {
+      "name": "reinicio-servidor",
+      "ok": true,
+      "fails": [],
+      "steps": [
+        {
+          "n": 1,
+          "desc": "reinicio con MARCADOR y MOSCA al aire: NINGUNA gráfica vuelve sola",
+          "ok": true,
+          "detail": "0 al aire"
+        },
+        {
+          "n": 2,
+          "desc": "persisten: GRUPOS (A2), ajuste de P3, snapshot web (6 equipos / 3 partidos), fixture, formación guardada y equipos",
+          "ok": true,
+          "detail": "{\"slotsUi\":\"zz-prueba-balanza\",\"fx\":3,\"web\":6}"
+        },
+        {
+          "n": 3,
+          "desc": "los datos de COPA 4 NACIONES quedaron intactos (aislamiento)",
+          "ok": true,
+          "detail": "31 módulos C4N iguales"
+        },
+        {
+          "n": 4,
+          "desc": "datos de SUPERCOPA de la prueba solo en la copia; los datos REALES de data/supercopa/ quedaron intactos",
+          "ok": true,
+          "detail": "carpeta real sin cambios"
+        }
+      ]
+    }
+  ]
+}
