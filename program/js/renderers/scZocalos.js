@@ -33,10 +33,19 @@ function plateBg(url, size, { mirror = false, crop = null, d = 0 } = {}) {
   return sliceHtml({ id: 'placa', rect: r, anim: mirror ? 'wipe-l' : 'wipe-r', d, o: 0.14, dur: 0.56, durOut: 0.3 }, url, box);
 }
 
+// FUENTE DE DATOS (2026-11-27): con GOOGLE SHEETS el texto es la COPIA LOCAL
+// del zócalo elegido de la planilla (data.gs, la escribe Master al elegirlo);
+// con LOCAL, los campos de siempre (linea1 / linea2, que nunca se pisan).
+// Misma placa, mismas animaciones y ajustes: solo cambia de dónde sale el texto.
+export function zocaloLines(data) {
+  return data?.fuente === 'google' && data.gs && typeof data.gs === 'object' ? data.gs : (data || {});
+}
+
 // --- ZÓCALO CORTO ---
 export function renderScZocaloCorto(contentEl, data, justTaken) {
-  const name = upper(String(data?.linea1 || '').trim());
-  const role = upper(String(data?.linea2 || '').trim());
+  const src = zocaloLines(data);
+  const name = upper(String(src.linea1 || '').trim());
+  const role = upper(String(src.linea2 || '').trim());
   const doble = Boolean(role);
   const Z = doble ? SC_ZOCALOS.cortoDoble : SC_ZOCALOS.cortoSimple;
   const slot = doble ? 'doble' : 'fondo';
@@ -107,8 +116,9 @@ export function renderScTalentos(contentEl, data, justTaken) {
 
 // --- ZÓCALO LARGO ---
 export function renderScZocaloLargo(contentEl, data, justTaken) {
-  const l1 = upper(String(data?.linea1 || '').trim());
-  const l2 = upper(String(data?.linea2 || '').trim());
+  const src = zocaloLines(data);
+  const l1 = upper(String(src.linea1 || '').trim());
+  const l2 = upper(String(src.linea2 || '').trim());
   const doble = Boolean(l2);
   const Z = doble ? SC_ZOCALOS.largoDoble : SC_ZOCALOS.largoSimple;
   const slot = doble ? 'doble' : 'fondo';

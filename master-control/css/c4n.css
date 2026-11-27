@@ -165,3 +165,22 @@ label.c4n-layer-row { cursor: pointer; }
 .c4n-tfx-row { margin: 6px 0; padding: 6px 8px; border: 1px solid #333; border-radius: 4px; background: #141414; }
 .c4n-tfx-row.off { opacity: 0.55; }
 .c4n-tfx-row .bb-field.check span { font-size: 12px; font-weight: 700; color: #ddd; }
+/* SUPERCOPA · ZÓCALOS · FUENTE DE DATOS (2026-11-27): GOOGLE SHEETS. */
+.sc-gs-panel { margin-bottom: 14px; }
+.sc-gs-state { font-size: 13px; color: #ddd; letter-spacing: 0.04em; }
+.sc-gs-state b { font-weight: 800; }
+.fields-container.sc-gs-dim { opacity: 0.4; }
+.sc-gs-list { display: flex; flex-direction: column; gap: 6px; max-height: 420px; overflow-y: auto; padding-right: 4px; }
+.sc-gs-item { display: grid; grid-template-columns: 86px 1fr auto; gap: 10px; align-items: center; text-align: left; background: #141414; border: 1px solid #333; border-radius: 4px; padding: 8px 10px; color: #e6e6e6; cursor: pointer; font: inherit; }
+.sc-gs-item:hover { border-color: #777; background: #1c1c1c; }
+.sc-gs-item.is-chosen { border-color: #d6aa4e; box-shadow: inset 0 0 0 1px #d6aa4e; }
+.sc-gs-item.is-off { opacity: 0.55; }
+.sc-gs-id { font-size: 11px; font-weight: 800; color: #d6aa4e; letter-spacing: 0.04em; word-break: break-all; }
+.sc-gs-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sc-gs-text b { font-size: 13px; }
+.sc-gs-text span { font-size: 12px; color: #bbb; }
+.sc-gs-text i { font-size: 11px; color: #888; }
+.sc-gs-tags { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+.sc-gs-tags em { font-style: normal; font-size: 10px; font-weight: 800; letter-spacing: 0.06em; padding: 2px 6px; border: 1px solid #444; border-radius: 3px; color: #bbb; }
+.sc-gs-tags em.off { border-color: #7a3333; color: #f0b0b0; }
+.sc-gs-tags em.on { border-color: #d6aa4e; color: #f3d78f; }

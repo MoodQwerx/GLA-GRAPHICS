@@ -266,9 +266,9 @@ Solo existen en la navegación de GLA SUPERCOPA (PARTIDO · PRESENTACIÓN · ZÓ
 | PRESENTACIÓN DE PARTIDO `scPresentacion` | PLACAS.png · pantalla completa | v3: escudos grandes, nombres en pareja con zócalo gris, VS, zócalo de fase / instancia; `live` |
 | PLACA VS RESULTADO `scPlacaResultado` | PLACAS.png · pantalla completa | v3: misma familia; recuadro de goles "2 - 1" / "2(3) - 2(2)", ESTADO, fase; `live` |
 | FIXTURE `scFixture` | PLACAS.png + barras VS · pantalla completa | WEB / MANUAL, un día (hasta 9 partidos), VS / resultado / penales; `live` |
-| ZÓCALO CORTO `scZocaloCorto` | CORTO SIMPLE / DOBLE · abajo izq. | nombre (+ cargo) |
+| ZÓCALO CORTO `scZocaloCorto` | CORTO SIMPLE / DOBLE · abajo izq. | nombre (+ cargo); FUENTE LOCAL o GOOGLE SHEETS (TIPO CORTO; `fuente` / `gs`, ver docs/GOOGLE-SHEETS.md) |
 | TALENTOS `scTalentos` | CORTO DOBLE · 1 a 4 placas | nombre + cargo por placa (v2: todas del tamaño compacto de 4) |
-| ZÓCALO LARGO `scZocaloLargo` | LARGO SIMPLE / DOBLE · abajo centro | uno o dos renglones |
+| ZÓCALO LARGO `scZocaloLargo` | LARGO SIMPLE / DOBLE · abajo centro | uno o dos renglones; FUENTE LOCAL o GOOGLE SHEETS (TIPO DOBLE) |
 | ZÓCALO L `scZocaloL` | ZOCALO_L.png · franja inferior | emblema / escudos, dos renglones, sponsors; `live` |
 | MOSCA SUPERCOPA `scMosca` | MOSCA_SUPERCOPA.png · arriba der. | v2: hora real de Argentina (HH:MM) en el recuadro blanco; v3: DEBAJO de la tabla L; `live` |
 | GRUPOS `scGrupos` | L_DERECHA.png · columna derecha | GRUPO A / GRUPO B, renglones "1." "2." "3." con zócalo gris (lugares A1-A3, B1-B3); fuente de verdad del seeding; v3: cambio de equipo al aire animado; relevo con FIXTURE L sin sacar la placa |

@@ -39,6 +39,7 @@ import { dayLabel } from '../shared/c4n-match.js';
 import { loadPersistentValue, schedulePersistentWrite } from './persistence.js';
 import { extractProductData, fetchGlaFutbolHtml } from './glaFutbolClient.js';
 import { updateThemeTeam } from './teams.js';
+import { registerScSheetsZocalos } from './sc-sheets-zocalos.js';
 
 export const SC_WEB_TOURNAMENT_ID = '6ade5b4cc68d5ba9b9a60c81';
 export const SC_WEB_SOURCE = 'https://gla.futbol (sección SUPERCOPA)';
@@ -829,6 +830,10 @@ export async function registerSupercopaRoutes(app, deps) {
       res.status(err.status || 500).json({ ok: false, error: err.message });
     }
   });
+
+  // ZÓCALOS DESDE GOOGLE SHEETS (2026-11-27): snapshot local + sync manual /
+  // AUTO SYNC (server/sc-sheets-zocalos.js). Nunca participa del TAKE.
+  await registerScSheetsZocalos(app, { requireSc, broadcastMessage, active });
 
   if (active) {
     publish();

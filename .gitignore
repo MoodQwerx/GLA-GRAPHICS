@@ -6,6 +6,12 @@ node_modules/
 .env.*
 !.env.example
 
+# Credenciales de Google Sheets (Service Account): NUNCA al repo.
+# Ver docs/GOOGLE-SHEETS.md. Va en secrets/google-service-account.json.
+/secrets/
+*service-account*.json
+*.pem
+
 # Logs de gestores de paquetes y de ejecución
 *.log
 npm-debug.log*

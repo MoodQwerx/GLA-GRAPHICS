@@ -2,6 +2,18 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## [Unreleased] - 2026-11-27 (125)
+
+### Agregado — GLA SUPERCOPA: ZÓCALOS desde GOOGLE SHEETS (solo el sistema [5]; los demás sistemas sin cambios)
+
+- **Flujo**: GOOGLE SHEETS (pestaña ZOCALOS: ID / ACTIVO / TIPO / LINEA_1 / LINEA_2 / CATEGORIA / ORDEN / NOTAS) -> sincronización EN EL SERVIDOR -> snapshot local `data/supercopa/google-zocalos-cache.json` -> Master -> Preview / Program. El TAKE nunca consulta Google: sale de la copia local del zócalo elegido. Si Google falla (sin internet, 503, timeout, planilla vacía o inválida) queda el último snapshot válido, también después de reiniciar.
+- **Master > ZÓCALO CORTO / ZÓCALO LARGO**: FUENTE DE DATOS LOCAL (los campos de siempre, nunca se pisan; volver es instantáneo) o GOOGLE SHEETS: ESTADO (SIN CONFIGURAR / CONECTANDO / CONECTADO / ERROR / USANDO CACHE; nunca CONECTADO solo por el cache), ÚLTIMA ACTUALIZACIÓN, ACTUALIZAR AHORA ("ACTUALIZADO · N ZÓCALOS · HH:MM:SS" o "ERROR GOOGLE SHEETS · USANDO ÚLTIMA COPIA LOCAL · ÚLTIMA SYNC"), AUTO SYNC (apagado por defecto; 30 / 60 / 120 / 300 s, en segundo plano), lista con BUSCAR (sin tildes; ID, texto, notas), CATEGORÍA y SOLO ACTIVOS (ACTIVO = NO queda en el snapshot y no aparece por defecto). TIPO CORTO -> ZÓCALO CORTO, TIPO DOBLE -> ZÓCALO LARGO (mismas placas, animaciones y ajustes; campo `fuente` / `gs` del módulo, `program/js/renderers/scZocalos.js` zocaloLines).
+- **Pieza al aire**: una sync nunca la cambia; el zócalo elegido se refresca solo fuera del aire (al aire: aviso; el texto nuevo sale cuando el operador lo elige y hace PREVIEW / TAKE / ACTUALIZAR).
+- **Normalización**: filas vacías e inválidas ignoradas (sin ID, ID duplicado, LINEA_1 vacía, TIPO desconocido; avisos en Master), trim de bordes, ACTIVO / TIPO / CATEGORIA normalizados, ORDEN numérico (orden por ORDEN y después ID), texto editorial intacto (tildes, ñ, signos).
+- **Seguridad**: Service Account sin OAuth interactivo; credenciales solo en el servidor (`secrets/google-service-account.json` o variables GOOGLE_SERVICE_ACCOUNT_EMAIL / GOOGLE_PRIVATE_KEY; GOOGLE_SHEETS_SPREADSHEET_ID en `.env`, del que solo se leen las claves GOOGLE_*). `/secrets/`, `*service-account*.json` y `*.pem` en `.gitignore`; `.env.example` sin secretos. Sin dependencias nuevas (JWT RS256 con node:crypto).
+- **Capa reutilizable** `server/google-sheets.js` (credenciales, token en caché, `fetchSheetValues(range)`, errores claros: permisos, API desactivada, planilla / pestaña inexistente, red, timeout) + `server/sc-sheets-zocalos.js` (zócalos). Guía corta `docs/GOOGLE-SHEETS.md`; plantillas `docs/templates/` (CSV de ZOCALOS y CONFIG + `softx-sheets-setup.gs`, que arma la planilla con desplegables, ID único, filtros y encabezado fijo). CONFIG queda de referencia (todavía no se lee).
+- **Prueba** `performance-lab/supercopa-gsheets-test.mjs` (instancia aislada + Google simulado).
+
 ## [Unreleased] - 2026-11-25 (124)
 
 ### Agregado — GLA SUPERCOPA: PANTALLA SORTEO (solo el sistema [5]; los demás sistemas sin cambios)

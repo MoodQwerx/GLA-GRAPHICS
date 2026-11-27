@@ -395,7 +395,7 @@
           "n": 8,
           "desc": "MOSCA nueva (MOSCA_SUPERCOPA) con la HORA ARGENTINA HH:MM en el recuadro blanco (PC simulada en Tokio)",
           "ok": true,
-          "detail": "{\"time\":\"18:04\",\"box\":[1703,87,1799,120],\"png\":[\"mosca.png\",\"mosca.png\",\"mosca.png\"],\"browser\":6,\"ar\":\"18:04\"}"
+          "detail": "{\"time\":\"13:06\",\"box\":[1703,87,1799,120],\"png\":[\"mosca.png\",\"mosca.png\",\"mosca.png\"],\"browser\":1,\"ar\":\"13:06\"}"
         },
         {
           "n": 9,
@@ -523,7 +523,7 @@
           "n": 6,
           "desc": "GRUPOS -> FIXTURE L: la placa L_DERECHA nunca desaparece ni se re-anima (0 cuadros sin placa); sale solo el contenido de GRUPOS",
           "ok": true,
-          "detail": "{\"frames\":230,\"gaps\":0,\"inAnimated\":false,\"outSeenOut\":true,\"endIn\":true,\"endOutHidden\":true,\"slices\":1}"
+          "detail": "{\"frames\":229,\"gaps\":0,\"inAnimated\":false,\"outSeenOut\":true,\"endIn\":true,\"endOutHidden\":true,\"slices\":1}"
         },
         {
           "n": 7,
@@ -571,7 +571,7 @@
           "n": 14,
           "desc": "FIXTURE L -> GRUPOS: mismo relevo inverso (placa fija, 0 cuadros sin placa)",
           "ok": true,
-          "detail": "{\"frames\":227,\"gaps\":0,\"inAnimated\":false,\"outSeenOut\":true,\"endIn\":true,\"endOutHidden\":true,\"slices\":1}"
+          "detail": "{\"frames\":231,\"gaps\":0,\"inAnimated\":false,\"outSeenOut\":true,\"endIn\":true,\"endOutHidden\":true,\"slices\":1}"
         },
         {
           "n": 15,
@@ -583,7 +583,7 @@
           "n": 16,
           "desc": "PREVIEW = PROGRAM: mismos renglones de GRUPOS y el mismo relevo con la placa fija en los dos sentidos",
           "ok": true,
-          "detail": "{\"same\":true,\"h3\":{\"frames\":232,\"gaps\":0,\"inAnimated\":false,\"outSeenOut\":true,\"endIn\":true,\"endOutHidden\":true,\"slices\":1},\"h4\":{\"frames\":231,\"gaps\":0,\"inAnimated\":false,\"outSeenOut\":true,\"endIn\":true,\"endOutHidden\":true,\"slices\":1}}"
+          "detail": "{\"same\":true,\"h3\":{\"frames\":231,\"gaps\":0,\"inAnimated\":false,\"outSeenOut\":true,\"endIn\":true,\"endOutHidden\":true,\"slices\":1},\"h4\":{\"frames\":231,\"gaps\":0,\"inAnimated\":false,\"outSeenOut\":true,\"endIn\":true,\"endOutHidden\":true,\"slices\":1}}"
         },
         {
           "n": 17,

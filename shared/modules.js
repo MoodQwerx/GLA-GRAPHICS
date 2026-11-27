@@ -2774,7 +2774,9 @@ export const MODULES = {
       { key: 'linea1', label: 'Nombre', type: FIELD_TYPES.TEXT },
       { key: 'linea2', label: 'Cargo (vacío = placa simple, solo el nombre)', type: FIELD_TYPES.TEXT },
     ],
-    defaults: { linea1: 'NOMBRE APELLIDO', linea2: 'CARGO / DESCRIPCIÓN', ...SC_LAYER },
+    // fuente: 'local' (estos campos) | 'google' (gs = copia local del zócalo
+    // elegido de GOOGLE SHEETS, ver server/sc-sheets-zocalos.js). TIPO CORTO.
+    defaults: { linea1: 'NOMBRE APELLIDO', linea2: 'CARGO / DESCRIPCIÓN', fuente: 'local', gs: null, ...SC_LAYER },
   },
 
   // TALENTOS: 1 / 2 / 3 / 4 placas CORTO DOBLE simétricas (la mitad derecha
@@ -2826,7 +2828,8 @@ export const MODULES = {
       { key: 'linea1', label: 'Texto principal', type: FIELD_TYPES.TEXT },
       { key: 'linea2', label: 'Texto secundario (vacío = placa simple)', type: FIELD_TYPES.TEXT },
     ],
-    defaults: { linea1: 'GLA SUPERCOPA', linea2: '', ...SC_LAYER },
+    // fuente / gs: igual que ZÓCALO CORTO. Recibe el TIPO DOBLE de GOOGLE SHEETS.
+    defaults: { linea1: 'GLA SUPERCOPA', linea2: '', fuente: 'local', gs: null, ...SC_LAYER },
   },
 
   // ZÓCALO L (compuesto, franja inferior): izquierda SUPERCOPA (emblema GLA +

@@ -58,6 +58,7 @@ import { renderScLayerAdjust } from './sc/sc-layer-adjust.js';
 import { renderScFixturePanel, renderScZocaloLPanel, renderScInfoPanel } from './sc/sc-misc-panels.js';
 import { renderScGruposPanel, renderScFixtureLPanel } from './sc/sc-lateral-panels.js';
 import { renderScSorteoPanel } from './sc/sc-sorteo-panel.js';
+import { renderScGsheetsZocalosPanel, handleGsheetsMessage } from './sc/sc-gsheets-zocalos-panel.js';
 import { createPanelLifecycle, setCurrentPanelLifecycle } from './panel-lifecycle.js';
 import { renderJugadoresPanel } from './jugadores-panel.js';
 import { renderZocaloEscudosPanel } from './zocalo-escudos-panel.js';
@@ -2483,6 +2484,10 @@ function renderPanel() {
     renderScFixtureLPanel(extraContainer, bbPanelContext());
   } else if (activeId === 'scSorteo') {
     renderScSorteoPanel(extraContainer, bbPanelContext());
+  } else if ((activeId === 'scZocaloCorto' || activeId === 'scZocaloLargo') && isScTheme()) {
+    // FUENTE DE DATOS (2026-11-27): LOCAL (los campos de siempre) o GOOGLE
+    // SHEETS (lista del snapshot local; el TAKE nunca consulta Google).
+    renderScGsheetsZocalosPanel(fieldsContainer, bbPanelContext(), { activeId, fieldsContainer, selectModule });
   } else if (['scVsPrepartido', 'scVsResultado', 'scPresentacion', 'scPlacaResultado'].includes(activeId)) {
     renderScInfoPanel(extraContainer, bbPanelContext(), activeId);
   } else if (activeId === 'c4nMarcador') {
@@ -2668,6 +2673,10 @@ const ws = connect({
         renderPanel();
         renderC4nPreviewBar();
       }
+    } else if (msg.type === 'SC_GSHEETS_ZOCALOS') {
+      // ZÓCALOS DESDE GOOGLE SHEETS (SUPERCOPA): nuevo snapshot / estado de la
+      // sync. Solo cambia la lista (y el zócalo elegido FUERA del aire).
+      if (isScTheme()) handleGsheetsMessage(msg, bbPanelContext());
     } else if (msg.type === 'C4N_LIVE_STATUS') {
       // Sync en vivo de incidencias C4N (servidor, una consulta cada ~10 s):
       // solo se refresca la sección WEB de ENTRETIEMPO / FINAL si está abierta.
