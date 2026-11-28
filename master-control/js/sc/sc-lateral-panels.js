@@ -13,6 +13,7 @@ import {
   SC_GROUPS, SC_SUNDAY, SC_SEED_MAP, normalizeSlots, seedingIssues, deriveSaturday, deriveSunday, matchesOfSlot, defaultSaturdayTime,
 } from '../../../shared/sc-seeding.js';
 import { el, section, statusLine, teamLabel, visibleTeams, teamById } from './sc-common.js';
+import { TEAMS } from '../../../shared/teams.js';
 
 const TIME_OK = (v) => /^([01]?\d|2[0-3]):[0-5]\d$/.test(v);
 const abbr = (id) => (id ? (teamById(id)?.abbr || teamLabel(id)) : '');
@@ -126,10 +127,20 @@ export function renderScFixtureLPanel(container, ctx) {
 
   function saturday() {
     const slots = ctx.draft.scGrupos?.slots;
-    const list = deriveSaturday(slots, data.sabado);
-    return section('SÁBADO 28 — P1 a P9 (equipos desde GRUPOS)', [
+    const list = deriveSaturday(slots, data.sabado, TEAMS);
+    // P10 FIJO (2026-11-27): fuera del seeding; solo horario y resultado a mano.
+    const fixedRow = (m) => el('div', { class: 'sc-fx-edit', dataset: { key: `fl-${m.id}` } }, [
+      el('div', { class: 'bb-actions' }, [
+        el('b', { text: `${m.id} · ${m.label}` }),
+        el('label', { class: 'bb-field' }, [el('span', { text: 'HORARIO (a confirmar)' }), timeInput(m.time, 'HH:MM', (v) => patch('sabado', m.id, { time: v }), `fl-${m.id}-hora`)]),
+        el('div', { class: 'bb-field grow', dataset: { key: `fl-${m.id}-equipos` } }, [el('span', { text: 'PARTIDO FIJO (no depende del sorteo)' }), el('b', { text: `${teamById(m.homeTeamId)?.name || m.homeName} vs ${teamById(m.awayTeamId)?.name || m.awayName}` })]),
+        el('label', { class: 'bb-field' }, [el('span', { text: 'RESULTADO' }), scoreInputs(m.score, (s) => patch('sabado', m.id, { score: s }))]),
+        data.sabado[m.id] ? el('button', { type: 'button', class: 'bb-btn mini', text: 'QUITAR AJUSTES', onclick: () => { delete data.sabado[m.id]; data.sabado = { ...data.sabado }; live(ctx, 'scFixtureL'); render(); } }) : null,
+      ]),
+    ]);
+    return section('SÁBADO 28 — P1 a P9 (equipos desde GRUPOS) + P10 FIJO', [
       el('p', { class: 'bb-desc', text: 'Los equipos salen del seeding de GRUPOS. Los ajustes de esta lista (horario, local, visitante, resultado) se guardan aparte: reasignar un lugar en GRUPOS cambia solo los equipos derivados de ese lugar.' }),
-      ...list.map((m, i) => el('div', { class: 'sc-fx-edit', dataset: { key: `fl-${m.id}` } }, [
+      ...list.map((m, i) => (m.fixed ? fixedRow(m) : el('div', { class: 'sc-fx-edit', dataset: { key: `fl-${m.id}` } }, [
         el('div', { class: 'bb-actions' }, [
           el('b', { text: m.id }),
           el('label', { class: 'bb-field' }, [el('span', { text: `HORARIO (${defaultSaturdayTime(i)})` }), timeInput(m.timeOverride ? m.time : '', defaultSaturdayTime(i), (v) => patch('sabado', m.id, { time: v }), `fl-${m.id}-hora`)]),
@@ -138,7 +149,7 @@ export function renderScFixtureLPanel(container, ctx) {
           el('label', { class: 'bb-field' }, [el('span', { text: 'RESULTADO' }), scoreInputs(m.score, (s) => patch('sabado', m.id, { score: s }))]),
           data.sabado[m.id] ? el('button', { type: 'button', class: 'bb-btn mini', text: 'QUITAR AJUSTES', onclick: () => { delete data.sabado[m.id]; data.sabado = { ...data.sabado }; live(ctx, 'scFixtureL'); render(); } }) : null,
         ]),
-      ])),
+      ]))),
     ]);
   }
 

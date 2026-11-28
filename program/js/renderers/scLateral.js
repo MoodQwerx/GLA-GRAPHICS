@@ -16,6 +16,16 @@
 import { SC_LDER } from '../../../shared/sc-assets.js';
 import { SC_GROUPS, SC_DAYS, normalizeSlots, deriveSaturday, deriveSunday } from '../../../shared/sc-seeding.js';
 import { team, anim, crestHtml, escapeHtml, upper, shell, fitFontPx, contentSignature, renderIfChanged, renderSwappable, swapBox, backgroundUrl, adj, tadj, SC_FONT_TEXT } from './sc-common.js';
+import { TEAMS } from '../../../shared/teams.js';
+
+// P10 FIJO: equipo todavía fuera del catálogo = su nombre / sigla (monograma).
+const matchTeam = (m, side) => {
+  const id = side === 'home' ? m.homeTeamId : m.awayTeamId;
+  if (!id) return null;
+  const t = team(id);
+  if (!m.fixed || t.name) return t;
+  return { ...t, name: side === 'home' ? m.homeName : m.awayName, abbr: side === 'home' ? m.homeAbbr : m.awayAbbr };
+};
 
 const C = SC_LDER.content;
 const at = (r, extra = '') => `left:${r[0]}px;top:${r[1]}px;width:${r[2] - r[0]}px;height:${r[3] - r[1]}px;${extra}`;
@@ -90,8 +100,8 @@ function saturdayRows(matches) {
   const X = { info: [C[0], C[0] + 70], crestA: C[0] + 74, abbrA: [C[0] + 120, C[0] + 182], center: [C[0] + 182, C[0] + 242], abbrB: [C[0] + 242, C[0] + 304], crestB: C[0] + 308 };
   return matches.map((m, i) => {
     const y = top + i * rowH;
-    const a = m.homeTeamId ? team(m.homeTeamId) : null;
-    const b = m.awayTeamId ? team(m.awayTeamId) : null;
+    const a = matchTeam(m, 'home');
+    const b = matchTeam(m, 'away');
     const center = m.score ? `${m.score.home}-${m.score.away}` : 'VS';
     const d = 0.5 + i * 0.05;
     const cy = rowH / 2;
@@ -132,8 +142,8 @@ function sundayBlocks(matches) {
 export function renderScFixtureL(contentEl, data, justTaken, _onEnded, allData) {
   const dia = data?.dia === 'domingo' ? 'domingo' : 'sabado';
   const slots = allData?.scGrupos?.slots;
-  const matches = dia === 'domingo' ? deriveSunday(data?.domingo) : deriveSaturday(slots, data?.sabado);
-  const resolved = matches.map((m) => ({ ...m, a: m.homeTeamId ? team(m.homeTeamId) : null, b: m.awayTeamId ? team(m.awayTeamId) : null }));
+  const matches = dia === 'domingo' ? deriveSunday(data?.domingo) : deriveSaturday(slots, data?.sabado, TEAMS);
+  const resolved = matches.map((m) => ({ ...m, a: matchTeam(m, 'home'), b: matchTeam(m, 'away') }));
   const sub = upper(String(data?.titulo || '').trim()) || (dia === 'domingo' ? 'SEMIFINALES Y FINAL' : 'FASE DE GRUPOS');
   const sig = contentSignature('scFixtureL', [dia, sub, resolved]);
   renderIfChanged(contentEl, justTaken, sig, data, () => shell('scFixtureL', 'ld', data, `

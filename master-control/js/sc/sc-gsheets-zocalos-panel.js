@@ -13,9 +13,11 @@
 // sale con la próxima elección / TAKE / ACTUALIZAR).
 import { api, el, section, statusLine } from './sc-common.js';
 
-export const GS_TARGET = { CORTO: 'scZocaloCorto', DOBLE: 'scZocaloLargo' };
-const ZOC_IDS = Object.values(GS_TARGET);
-const TARGET_LABEL = { scZocaloCorto: 'ZÓCALO CORTO', scZocaloLargo: 'ZÓCALO LARGO' };
+// TIPO -> módulo (2026-11-27): DOBLE sigue igual; LARGO = ZÓCALO LARGO solo
+// con LINEA_1 (LINEA_2 se ignora en pantalla); EN L = ZÓCALO L (renglón 1 / 2).
+export const GS_TARGET = { CORTO: 'scZocaloCorto', DOBLE: 'scZocaloLargo', LARGO: 'scZocaloLargo', 'EN L': 'scZocaloL' };
+const ZOC_IDS = [...new Set(Object.values(GS_TARGET))];
+const TARGET_LABEL = { scZocaloCorto: 'ZÓCALO CORTO', scZocaloLargo: 'ZÓCALO LARGO', scZocaloL: 'ZÓCALO L' };
 const CATEGORIAS = ['GENERAL', 'PARTIDO', 'RESULTADO', 'INFORMACION', 'SPONSOR', 'URGENTE', 'OTRO'];
 const STATE = {
   'sin-configurar': ['SIN CONFIGURAR', '#8a8a8a'],
@@ -200,19 +202,46 @@ export function renderScGsheetsZocalosPanel(anchor, ctx, { activeId, fieldsConta
     return node;
   }
 
+  // LINK DE LA PLANILLA (2026-11-27): armado SOLO desde
+  // GOOGLE_SHEETS_SPREADSHEET_ID (status del servidor), visible completo con
+  // COPIAR LINK / ABRIR SHEET (se ve en LOCAL y en GOOGLE SHEETS).
+  function sheetLinkBlock() {
+    const id = String(latest?.status?.spreadsheetId || '').trim();
+    if (!latest?.status) return null;
+    if (!id) return el('div', { class: 'bb-status warn', dataset: { key: 'gs-link-missing' }, text: 'GOOGLE SHEET: falta GOOGLE_SHEETS_SPREADSHEET_ID en .env.' });
+    const url = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(id)}/edit`;
+    const input = el('input', { type: 'text', readOnly: true, value: url, dataset: { key: 'gs-link' }, style: 'width:100%;font-family:monospace;font-size:12px', onfocus: (e) => e.target.select() });
+    const copy = async () => {
+      let ok = false;
+      try { await navigator.clipboard.writeText(url); ok = true; } catch { /* fallback abajo */ }
+      if (!ok) {
+        input.focus();
+        input.select();
+        try { ok = document.execCommand('copy'); } catch { ok = false; }
+      }
+      status.set(ok ? 'ok' : 'error', ok ? `LINK COPIADO: ${url}` : 'NO SE PUDO COPIAR: seleccioná el link y Ctrl+C.');
+    };
+    return el('div', { class: 'bb-actions', dataset: { key: 'gs-link-row' } }, [
+      el('label', { class: 'bb-field grow' }, [el('span', { text: 'GOOGLE SHEET:' }), input]),
+      el('button', { type: 'button', class: 'bb-btn primary', text: 'COPIAR LINK', dataset: { key: 'gs-copy-link' }, onclick: copy }),
+      el('button', { type: 'button', class: 'bb-btn', text: 'ABRIR SHEET', dataset: { key: 'gs-open-link' }, onclick: () => window.open(url, '_blank', 'noopener') }),
+    ]);
+  }
+
   let listBox = null;
   const renderList = () => { if (listBox) listBox.replaceChildren(list()); };
 
   function render(extraNotes) {
     if (Array.isArray(extraNotes)) notes = extraNotes;
     const f = fuente();
-    fieldsContainer.classList.toggle('sc-gs-dim', f === 'google');
+    // ZÓCALO L: sus otros campos (izquierda, sponsors) siguen en uso con GOOGLE.
+    fieldsContainer.classList.toggle('sc-gs-dim', f === 'google' && activeId !== 'scZocaloL');
     const head = el('div', { class: 'bb-actions' }, [
       el('span', { class: 'bb-field-label', text: 'FUENTE DE DATOS' }),
       el('button', { type: 'button', class: `bb-btn${f === 'local' ? ' active' : ''}`, text: 'LOCAL', dataset: { key: 'gs-fuente-local' }, onclick: () => setFuente('local') }),
       el('button', { type: 'button', class: `bb-btn${f === 'google' ? ' active' : ''}`, text: 'GOOGLE SHEETS', dataset: { key: 'gs-fuente-google' }, onclick: () => setFuente('google') }),
     ]);
-    const children = [head];
+    const children = [head, sheetLinkBlock()];
     if (f === 'local') {
       children.push(el('p', { class: 'bb-desc', text: 'LOCAL: el texto sale de los campos de abajo, como siempre.' }));
     } else {

@@ -21,7 +21,11 @@ import { fetchSheetValues, getGoogleSheetsConfig, GoogleSheetsError } from './go
 
 export const ZOCALOS_SHEET = 'ZOCALOS';
 const RANGE = `${ZOCALOS_SHEET}!A1:H2000`;
-export const ZOC_TIPOS = ['CORTO', 'DOBLE'];
+// TIPO (2026-11-27): CORTO -> ZÓCALO CORTO · DOBLE -> ZÓCALO LARGO (como
+// siempre) · LARGO -> ZÓCALO LARGO solo LINEA_1 · EN L -> ZÓCALO L.
+export const ZOC_TIPOS = ['CORTO', 'DOBLE', 'LARGO', 'EN L'];
+// Exactamente esos 4 (normalizados: trim, mayúsculas, espacios -> "_").
+const TIPO_ALIASES = { CORTO: 'CORTO', DOBLE: 'DOBLE', LARGO: 'LARGO', EN_L: 'EN L' };
 export const ZOC_CATEGORIAS = ['GENERAL', 'PARTIDO', 'RESULTADO', 'INFORMACION', 'SPONSOR', 'URGENTE', 'OTRO'];
 export const AUTO_SYNC_OPTIONS = [0, 30, 60, 120, 300];
 const COLUMNS = ['ID', 'ACTIVO', 'TIPO', 'LINEA_1', 'LINEA_2', 'CATEGORIA', 'ORDEN', 'NOTAS'];
@@ -77,8 +81,8 @@ export function normalizeZocalosRows(rows) {
     else if (activoRaw && !SI.has(activoRaw)) warnings.push(`Fila ${fila} (${id}): ACTIVO "${cell('ACTIVO')}" no es SI / NO (se toma SI).`);
     const tipoRaw = key(cell('TIPO'));
     let tipo = 'CORTO';
-    if (ZOC_TIPOS.includes(tipoRaw)) tipo = tipoRaw;
-    else if (tipoRaw) { warnings.push(`Fila ${fila} (${id}): TIPO "${cell('TIPO')}" inválido (CORTO / DOBLE; no se usa).`); continue; }
+    if (TIPO_ALIASES[tipoRaw]) tipo = TIPO_ALIASES[tipoRaw];
+    else if (tipoRaw) { warnings.push(`Fila ${fila} (${id}): TIPO "${cell('TIPO')}" inválido (CORTO / DOBLE / LARGO / EN L; no se usa).`); continue; }
     const catRaw = key(cell('CATEGORIA'));
     let categoria = 'GENERAL';
     if (ZOC_CATEGORIAS.includes(catRaw)) categoria = catRaw;

@@ -2712,10 +2712,12 @@ export const MODULES = {
         ],
       },
       { key: 'faseTexto', label: 'Fase MANUAL (con "MANUAL")', type: FIELD_TYPES.TEXT },
+      // TÍTULO / ENCABEZADO (2026-11-27): antes fijo "PRESENTACIÓN"; vacío = oculto.
+      { key: 'encabezado', label: 'TÍTULO / ENCABEZADO (vacío = oculto)', type: FIELD_TYPES.TEXT },
       { key: 'titulo', label: 'Título de la cabecera', type: FIELD_TYPES.TEXT },
       { key: 'detalle', label: 'Día / horario (cabecera; vacío = el del fixture)', type: FIELD_TYPES.TEXT },
     ],
-    defaults: { fase: 'auto', faseTexto: '', titulo: 'GLA SUPERCOPA', detalle: '', ...SC_LAYER },
+    defaults: { fase: 'auto', faseTexto: '', encabezado: 'PRESENTACIÓN', titulo: 'GLA SUPERCOPA', detalle: '', ...SC_LAYER },
   },
 
   // PLACA VS RESULTADO (v3): misma familia que PRESENTACIÓN DE PARTIDO, con el
@@ -2758,9 +2760,11 @@ export const MODULES = {
         ],
       },
       { key: 'faseTexto', label: 'Fase MANUAL (con "MANUAL")', type: FIELD_TYPES.TEXT },
+      // TÍTULO / ENCABEZADO (2026-11-27): antes fijo "RESULTADO"; vacío = oculto.
+      { key: 'encabezado', label: 'TÍTULO / ENCABEZADO (vacío = oculto)', type: FIELD_TYPES.TEXT },
       { key: 'titulo', label: 'Título de la cabecera', type: FIELD_TYPES.TEXT },
     ],
-    defaults: { resultado: 'auto', penLocal: '', penVisitante: '', fase: 'auto', faseTexto: '', titulo: 'GLA SUPERCOPA', estadoModo: 'auto', estadoManual: '', ...SC_LAYER },
+    defaults: { resultado: 'auto', penLocal: '', penVisitante: '', fase: 'auto', faseTexto: '', encabezado: 'RESULTADO', titulo: 'GLA SUPERCOPA', estadoModo: 'auto', estadoManual: '', ...SC_LAYER },
   },
 
   // ZÓCALO CORTO: una persona. Con CARGO usa la placa CORTO DOBLE; sin cargo,
@@ -2865,7 +2869,8 @@ export const MODULES = {
       },
       { key: 'intervaloSec', label: 'Segundos por sponsor (2 a 60)', type: FIELD_TYPES.TEXT },
     ],
-    defaults: { izquierda: 'supercopa', texto: 'GLA SUPERCOPA', texto2: 'EL TORNEO DE LOS CAMPEONES', sponsorsRotacion: 'si', intervaloSec: '6', ...SC_LAYER },
+    // fuente / gs: igual que ZÓCALO CORTO. Recibe el TIPO EN L de GOOGLE SHEETS.
+    defaults: { izquierda: 'supercopa', texto: 'GLA SUPERCOPA', texto2: 'EL TORNEO DE LOS CAMPEONES', sponsorsRotacion: 'si', intervaloSec: '6', fuente: 'local', gs: null, ...SC_LAYER },
   },
 
   // MOSCA v2 (MOSCA_SUPERCOPA.png): emblema GLA + LocalStrike + VIVO; en el

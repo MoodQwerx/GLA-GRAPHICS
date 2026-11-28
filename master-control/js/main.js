@@ -699,6 +699,7 @@ function sendPreviewUpdateIfActive(moduleId) {
 }
 
 const saveTimers = {};
+let myWsClientId = null; // ID de esta conexión (STATE_SNAPSHOT del servidor)
 function scheduleAutoSave(moduleId) {
   if (moduleId === 'abreviaturas' || moduleId === 'jugadoresAdmin' || moduleId === 'actualizadorDatos') return;
   clearTimeout(saveTimers[moduleId]);
@@ -2478,6 +2479,8 @@ function renderPanel() {
     renderScFixturePanel(extraContainer, bbPanelContext());
   } else if (activeId === 'scZocaloL') {
     renderScZocaloLPanel(extraContainer, bbPanelContext());
+    // FUENTE DE DATOS: GOOGLE SHEETS también para TIPO EN L (2026-11-27).
+    if (isScTheme()) renderScGsheetsZocalosPanel(fieldsContainer, bbPanelContext(), { activeId, fieldsContainer, selectModule });
   } else if (activeId === 'scGrupos') {
     renderScGruposPanel(extraContainer, bbPanelContext());
   } else if (activeId === 'scFixtureL') {
@@ -2716,6 +2719,7 @@ const ws = connect({
       // se pierde nada persistido).
       const isThemeSwitch = msg.theme && draftThemeId !== null && msg.theme !== draftThemeId;
       if (msg.theme) draftThemeId = msg.theme;
+      if (msg.clientId) myWsClientId = msg.clientId;
       // "forceDraftResync" (auditoria final de perfiles, 2026-09-09): lo
       // manda el servidor tras APLICAR PERFIL -- un reemplazo total e
       // intencional del estado, igual que un cambio de theme -- para que el
@@ -2787,6 +2791,19 @@ const ws = connect({
       const previousShortDoubleAirMode = serverState.shortDouble?.data?.airMode;
       const previousMarcadorZocaloStatus = serverState.marcadorZocalo?.status;
       serverState[msg.moduleId] = msg.moduleState;
+      // SUPERCOPA — AJUSTES VISUALES ENTRE MASTERS (2026-11-27): si OTRO Master
+      // guardó posición / escala de un módulo, esta copia los adopta (en el
+      // mismo objeto del draft) para no pisarlos después con valores viejos.
+      if (msg.from && myWsClientId && msg.from !== myWsClientId && isScModuleId(msg.moduleId)
+        && !saveTimers[msg.moduleId] && msg.moduleState?.data && draft[msg.moduleId]) {
+        let visualChanged = false;
+        for (const [k, v] of Object.entries(msg.moduleState.data)) {
+          if (!/(OffsetX|OffsetY|Scale)$/.test(k) || draft[msg.moduleId][k] === v) continue;
+          draft[msg.moduleId][k] = v;
+          visualChanged = true;
+        }
+        if (visualChanged && msg.moduleId === activeId) renderPanel();
+      }
       // PARTIDOS SORTEO (2026-10-22, SOLO GLA): el servidor reasigno equipos
       // del SORTEO a partir de Grupos -- la copia local de Master Control se
       // refresca para no reenviar equipos viejos en la proxima edicion.

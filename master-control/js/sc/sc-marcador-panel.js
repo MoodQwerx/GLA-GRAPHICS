@@ -408,7 +408,11 @@ export function renderScMarcadorPanel(container, ctx) {
         commit();
         render();
       },
-    }, options.map((t) => el('option', { value: t.id, text: t.name })));
+    }, [
+      // Sin equipo elegido, el selector no muestra el primero como si lo estuviera.
+      m[key] ? null : el('option', { value: '', text: '— ELEGIR EQUIPO —' }),
+      ...options.map((t) => el('option', { value: t.id, text: t.name })),
+    ]);
     sel.value = m[key] || '';
     return sel;
   }

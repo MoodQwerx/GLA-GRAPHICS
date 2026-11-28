@@ -1132,11 +1132,16 @@ function checkTiempoAdicionalAutoTake() {
 }
 setInterval(checkTiempoAdicionalAutoTake, 400);
 
+let wsClientSeq = 0;
 wss.on('connection', (socket) => {
+  // ID de esta conexión (2026-11-27): cada MODULE_UPDATE dice qué cliente lo
+  // generó ("from"), así otro Master abierto adopta los ajustes visuales
+  // nuevos en vez de pisarlos con su copia vieja (ver master-control/js/main.js).
+  socket.softxClientId = `c${++wsClientSeq}`;
   // Versiones de recursos ANTES del snapshot: el primer render de Program ya
   // usa las URLs versionadas (cache busting, ver program/js/asset-versions.js).
   socket.send(JSON.stringify({ type: WS_MSG.ASSET_VERSIONS, versions: getAssetVersions(), changedPaths: [] }));
-  socket.send(JSON.stringify({ type: WS_MSG.STATE_SNAPSHOT, state: getSnapshot(), theme: getActiveThemeId() }));
+  socket.send(JSON.stringify({ type: WS_MSG.STATE_SNAPSHOT, state: getSnapshot(), theme: getActiveThemeId(), clientId: socket.softxClientId }));
   socket.send(JSON.stringify({ type: 'TEAM_CATALOG_UPDATE', catalog: getTeamCatalog(getActiveThemeId()) }));
   socket.send(JSON.stringify({ type: WS_MSG.ACTIVE_MATCH_PROFILE_UPDATE, slug: getActiveMatchProfileSlug(), name: null }));
 
@@ -1376,7 +1381,7 @@ wss.on('connection', (socket) => {
       return;
     }
 
-    broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId, moduleState, isAutoSave, isExplicitUpdate });
+    broadcast({ type: WS_MSG.MODULE_UPDATE, moduleId, moduleState, isAutoSave, isExplicitUpdate, from: socket.softxClientId });
 
     // BRACKETS: ESCUDOS AUTOMATICOS (2026-09-24, pedido explicito del
     // usuario, exclusivo GLA -- ver syncBracketCrestsFromGrupos en

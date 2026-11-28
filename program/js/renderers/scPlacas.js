@@ -384,7 +384,7 @@ function plateHead(label, titulo, right, d = 0.32) {
   const tpx = fitFontPx(titulo, { maxPx: 50, minPx: 24, maxWidth: 640, letterSpacing: 0.04 });
   const lpx = fitSub(label, 24, 12, 300);
   const rpx = right ? fitSub(right, 20, 11, 400) : 20;
-  return adj('Head', `<div class="sc-mp-hl sc-a m-sw" ${anim(d, 0.16, at([H[0] + 34, H[1], H[0] + 360, H[3]], pxStyle(lpx)))}>${escapeHtml(label)}</div>
+  return adj('Head', `${label ? `<div class="sc-mp-hl sc-a m-sw" ${anim(d, 0.16, at([H[0] + 34, H[1], H[0] + 360, H[3]], pxStyle(lpx)))}>${escapeHtml(label)}</div>` : ''}
     ${titulo ? `<div class="sc-pl-title sc-a m-sw" ${anim(d + 0.08, 0.12, at([640, H[1], 1280, H[3]], pxStyle(tpx)))}>${escapeHtml(titulo)}</div>` : ''}
     ${right ? `<div class="sc-mp-hr sc-a m-sw" ${anim(d + 0.16, 0.08, at([H[2] - 450, H[1], H[2] - 34, H[3]], pxStyle(rpx)))}>${escapeHtml(right)}</div>` : ''}`);
 }
@@ -414,9 +414,11 @@ export function renderScPresentacion(contentEl, data, justTaken, _onEnded, allDa
   const fase = plateFase(data, allData);
   const titulo = upper(String(data?.titulo ?? 'GLA SUPERCOPA').trim());
   const detalle = upper(String(data?.detalle || '').trim() || (fx ? [fx.day, fx.time ? `${fx.time} HS` : ''].filter(Boolean).join(' · ') : ''));
-  const sig = contentSignature('scPresentacion', [a, b, fase, titulo, detalle]);
+  // TÍTULO / ENCABEZADO editable (vacío = oculto).
+  const encabezado = upper(String(data?.encabezado ?? 'PRESENTACIÓN').trim());
+  const sig = contentSignature('scPresentacion', [a, b, fase, titulo, detalle, encabezado]);
   renderIfChanged(contentEl, justTaken, sig, data, () => shell('scPresentacion', 'mp', data, `
-    ${plateHead('PRESENTACIÓN', titulo, detalle)}
+    ${plateHead(encabezado, titulo, detalle)}
     ${plateTeams(a, b)}
     ${adj('Center', `<div class="sc-mp-vs sc-a m-mo" ${anim(0.74, 0.04, at([840, MP.cy - 70, 1080, MP.cy + 70]))}>VS</div>`)}
     ${plateFaseHtml(fase, 0.86)}
@@ -447,11 +449,13 @@ export function renderScPlacaResultado(contentEl, data, justTaken, _onEnded, all
   const fase = plateFase(data, allData);
   const titulo = upper(String(data?.titulo ?? 'GLA SUPERCOPA').trim());
   const estadoText = estado.id === 'ninguno' ? '' : estado.text;
-  const sig = contentSignature('scPlacaResultado', [a, b, state.score, pens, estadoText, fase, titulo]);
+  // TÍTULO / ENCABEZADO editable (vacío = oculto).
+  const encabezado = upper(String(data?.encabezado ?? 'RESULTADO').trim());
+  const sig = contentSignature('scPlacaResultado', [a, b, state.score, pens, estadoText, fase, titulo, encabezado]);
   renderIfChanged(contentEl, justTaken, sig, data, () => {
     const cell = (goals, pen) => `<div class="sc-mp-cell"><b>${escapeHtml(String(goals))}</b>${pens.show ? `<i>(${escapeHtml(String(pen))})</i>` : ''}</div>`;
     return shell('scPlacaResultado', 'mp', data, `
-      ${plateHead('RESULTADO', titulo, estadoText)}
+      ${plateHead(encabezado, titulo, estadoText)}
       ${plateTeams(a, b)}
       ${adj('Score', `<div class="sc-mp-scorewrap" style="${at([560, MP.cy - 78, 1360, MP.cy + 78])}">
         <div class="sc-mp-score${pens.show ? ' has-pens' : ''} sc-a m-sc" ${anim(0.72, 0.04)}>

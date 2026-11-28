@@ -38,7 +38,10 @@ function plateBg(url, size, { mirror = false, crop = null, d = 0 } = {}) {
 // con LOCAL, los campos de siempre (linea1 / linea2, que nunca se pisan).
 // Misma placa, mismas animaciones y ajustes: solo cambia de dónde sale el texto.
 export function zocaloLines(data) {
-  return data?.fuente === 'google' && data.gs && typeof data.gs === 'object' ? data.gs : (data || {});
+  const gs = data?.fuente === 'google' && data.gs && typeof data.gs === 'object' ? data.gs : null;
+  if (!gs) return data || {};
+  // TIPO LARGO (2026-11-27): una sola línea; LINEA_2 queda en la planilla.
+  return gs.tipo === 'LARGO' ? { ...gs, linea2: '' } : gs;
 }
 
 // --- ZÓCALO CORTO ---
@@ -153,8 +156,10 @@ function brandEmblem(cls = '') {
 
 export function renderScZocaloL(contentEl, data, justTaken, _onEnded, allData) {
   const mode = data?.izquierda === 'partido' ? 'partido' : 'supercopa';
-  const l1 = upper(String(data?.texto || '').trim());
-  const l2 = upper(String(data?.texto2 || '').trim());
+  // GOOGLE SHEETS (TIPO EN L, 2026-11-27): renglón 1 / 2 = LINEA_1 / LINEA_2.
+  const gs = data?.fuente === 'google' && data.gs && typeof data.gs === 'object' ? data.gs : null;
+  const l1 = upper(String((gs ? gs.linea1 : data?.texto) || '').trim());
+  const l2 = upper(String((gs ? gs.linea2 : data?.texto2) || '').trim());
   const sp = sponsorsHtml(allData, data);
   const m = allData?.scMarcador || {};
   const a = team(m.teamA);

@@ -7,7 +7,8 @@
 // (pedido del organizador):
 //   P1 A1-A2 · P2 B1-B2 · P3 A3-B3 · P4 A2-B2 · P5 B1-B3
 //   P6 A1-A3 · P7 B2-B3 · P8 A2-A3 · P9 A1-B1
-// SÁBADO 28: P1 11:00 ... P9 19:00 (una hora entre partidos).
+// SÁBADO 28: P1 12:00 ... P9 20:00 (una hora entre partidos) + P10 FIJO
+// (FINAL TORNEO EXPRESS, CF TEAM vs OXEN FC, fuera del seeding).
 // DOMINGO 29: SEMIFINAL 1, SEMIFINAL 2 y GRAN FINAL (A CONFIRMAR hasta que el
 // operador defina los 4 clasificados y los finalistas; sin estadísticas).
 //
@@ -38,9 +39,26 @@ export const SC_DAYS = {
   domingo: { id: 'domingo', label: 'DOMINGO 29', date: '2026-11-29' },
 };
 
-// Horario por defecto del sábado: P1 11:00, una hora entre partidos.
+// Horario por defecto del sábado (2026-11-27: una hora más tarde): P1 12:00
+// ... P9 20:00, una hora entre partidos.
 export function defaultSaturdayTime(index) {
-  return `${String(11 + index).padStart(2, '0')}:00`;
+  return `${String(12 + index).padStart(2, '0')}:00`;
+}
+
+// PARTIDO 10 (2026-11-27): FIJO, independiente del seeding / sorteo (nunca
+// se deriva de A1/A2/B1...). Equipos vinculados por ID o por NOMBRE con el
+// catálogo de SUPERCOPA: si todavía no están cargados, se muestran con su
+// nombre y monograma, y toman el escudo real apenas aparezcan en EQUIPOS.
+// Sin horario confirmado: queda vacío (se carga a mano en FIXTURE L).
+export const SC_FIXED_SATURDAY = [
+  { id: 'P10', label: 'FINAL TORNEO EXPRESS', home: { id: 'cf-team', name: 'CF TEAM', abbr: 'CFT' }, away: { id: 'oxen-fc', name: 'OXEN FC', abbr: 'OXE' } },
+];
+const normName = (v) => String(v || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+function fixedTeamId(spec, teams) {
+  const list = Array.isArray(teams) ? teams : [];
+  if (list.some((t) => t.id === spec.id)) return spec.id;
+  const k = normName(spec.name);
+  return list.find((t) => normName(t.name) === k || normName(t.id) === k)?.id || spec.id;
 }
 
 export const SC_SUNDAY = [
@@ -78,9 +96,34 @@ export function seedingIssues(slots) {
 }
 
 // SÁBADO derivado. overrides[P#] = { time, label, homeTeamId, awayTeamId, score }.
-export function deriveSaturday(slots, overrides = {}) {
+// "teams" (opcional): catálogo para vincular por nombre los equipos del P10.
+export function deriveSaturday(slots, overrides = {}, teams = []) {
   const s = normalizeSlots(slots);
-  return SC_SEED_MAP.map((m, i) => {
+  const fixed = SC_FIXED_SATURDAY.map((f, j) => {
+    const o = overrides?.[f.id] || {};
+    const time = cleanTime(o.time);
+    return {
+      id: f.id,
+      day: 'sabado',
+      number: SC_SEED_MAP.length + j + 1,
+      label: String(o.label || '').trim().toUpperCase() || f.label,
+      time,
+      timeOverride: Boolean(time),
+      fixed: true,
+      homeSlot: '',
+      awaySlot: '',
+      homeTeamId: fixedTeamId(f.home, teams),
+      awayTeamId: fixedTeamId(f.away, teams),
+      homeName: f.home.name,
+      awayName: f.away.name,
+      homeAbbr: f.home.abbr,
+      awayAbbr: f.away.abbr,
+      homeOverride: false,
+      awayOverride: false,
+      score: cleanScore(o.score),
+    };
+  });
+  return [...SC_SEED_MAP.map((m, i) => {
     const o = overrides?.[m.id] || {};
     const homeOverride = typeof o.homeTeamId === 'string' && o.homeTeamId !== '';
     const awayOverride = typeof o.awayTeamId === 'string' && o.awayTeamId !== '';
@@ -100,7 +143,7 @@ export function deriveSaturday(slots, overrides = {}) {
       awayOverride,
       score: cleanScore(o.score),
     };
-  });
+  }), ...fixed];
 }
 
 // DOMINGO: domingo[SF1|SF2|FINAL] = { homeTeamId, awayTeamId, time, label, score }.

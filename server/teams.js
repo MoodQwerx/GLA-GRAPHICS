@@ -237,7 +237,17 @@ function manualThemeCatalog(themeId) {
   const overrides = themeTeamOverrides[themeId] || {};
   const extended = EXTENDED_MANUAL_THEMES.has(themeId);
   const crestFiles = extended ? listThemeCrestFiles(themeId) : [];
-  const assignedFiles = extended ? Object.values(overrides).map((o) => o?.crestFile).filter((f) => crestFiles.includes(f)) : [];
+  // Solo cuenta como "asignado" (y deja de descubrirse como equipo propio) un
+  // escudo elegido para OTRO equipo. Un equipo descubierto que guarda su propio
+  // PNG como escudo NO se saca del catálogo (bug SUPERCOPA 2026-11-27: al
+  // GUARDAR, el equipo desaparecía). Comparación sin mayúsculas (Windows).
+  const ownSlug = (file) => slugifyFilename(path.basename(file, path.extname(file)));
+  const assignedFiles = extended
+    ? Object.entries(overrides)
+      .map(([id, o]) => [id, crestFiles.find((f) => f.toLowerCase() === String(o?.crestFile || '').toLowerCase())])
+      .filter(([id, f]) => f && ownSlug(f) !== id)
+      .map(([, f]) => f)
+    : [];
   const all = [...baseTeams.map((t) => ({ ...t, discovered: false })), ...discoverThemeCrests(themeId, baseTeams, assignedFiles)];
   const catalog = all.map((team) => {
     const o = overrides[team.id] || {};
@@ -247,7 +257,9 @@ function manualThemeCatalog(themeId) {
     // el operador confirme sus datos en EQUIPOS; los equipos base siempre
     // estuvieron visibles, asi que su default sigue siendo visible.
     const pending = team.discovered && !o.confirmed;
-    const visible = typeof o.visible === 'boolean' ? o.visible : !pending;
+    // SUPERCOPA (2026-11-27, pedido del usuario): todo equipo nuevo nace
+    // VISIBLE = SÍ (disponible ya en los selectores MANUAL).
+    const visible = typeof o.visible === 'boolean' ? o.visible : (themeId === 'supercopa' ? true : !pending);
     return {
       id: team.id,
       name,
@@ -276,7 +288,8 @@ function manualThemeCatalog(themeId) {
 function extendedTeamFields(themeId, team, o, crestFiles) {
   const config = THEME_CREST_DIRS[themeId];
   const ownFile = team.file ? decodeURIComponent(team.file.split('/').pop()) : null;
-  const crestFile = crestFiles.includes(o.crestFile) ? o.crestFile : (crestFiles.includes(ownFile) ? ownFile : null);
+  const findFile = (f) => (f ? crestFiles.find((c) => c.toLowerCase() === String(f).toLowerCase()) : null);
+  const crestFile = findFile(o.crestFile) || findFile(ownFile) || null;
   return {
     file: crestFile ? `${config.url}${encodeURIComponent(crestFile)}` : null,
     crestFile,
